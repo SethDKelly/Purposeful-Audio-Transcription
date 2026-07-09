@@ -10,10 +10,13 @@ from ui.api_client import (
     API_BASE,
     create_transcript,
     fetch_health,
+    fetch_modules,
     fetch_ollama_models,
     fetch_workflows,
     get_workflow_synthesis,
     iter_transcribe_audio,
+    module_display_name,
+    module_name_map,
     run_workflow,
     transcribe_audio,
     update_transcript_speakers,
@@ -56,6 +59,11 @@ def _cached_ollama_models() -> list[str]:
 @st.cache_data(ttl=30, show_spinner=False)
 def _cached_workflows() -> list[dict]:
     return fetch_workflows()
+
+
+@st.cache_data(ttl=30, show_spinner=False)
+def _cached_modules() -> list[dict]:
+    return fetch_modules()
 
 
 def _apply_transcript_bundle(bundle: dict, *, source_name: str = "transcript") -> None:
@@ -101,13 +109,17 @@ def render_sidebar() -> None:
         st.sidebar.caption("No workflows configured")
 
 
-def _render_workflow_progress(workflow_run: dict) -> None:
+def _render_workflow_progress(
+    workflow_run: dict,
+    module_names: dict[str, str],
+) -> None:
     st.markdown("### Workflow progress")
     for module_run in workflow_run.get("module_runs", []):
         status = module_run.get("status", "unknown")
         module_id = module_run.get("module_id", "module")
+        label = module_display_name(module_id, module_names)
         icon = "✅" if status == "completed" else "❌" if status == "failed" else "⏳"
-        st.markdown(f"{icon} **{module_id}** — {status}")
+        st.markdown(f"{icon} **{label}** — {status}")
 
 
 def _render_report_dashboard(
@@ -117,21 +129,23 @@ def _render_report_dashboard(
     speakers: list[dict],
     workflow_name: str,
     *,
+    module_names: dict[str, str] | None = None,
     transcript_id: str | None = None,
     ollama_models: list[str] | None = None,
     default_model: str | None = None,
 ) -> None:
     render_safety_disclaimer()
+    names = module_names or {}
 
     if workflow_run.get("status") != "completed":
         st.warning(
             f"Workflow status: {workflow_run.get('status')}. "
             f"{workflow_run.get('error_log') or ''}"
         )
-        _render_workflow_progress(workflow_run)
+        _render_workflow_progress(workflow_run, names)
         return
 
-    _render_workflow_progress(workflow_run)
+    _render_workflow_progress(workflow_run, names)
 
     overview_tab, modules_tab, evidence_tab, synthesis_tab, explore_tab = st.tabs(
         ["Overview", "Module reports", "Evidence map", "Synthesis", "Explore"]
@@ -274,6 +288,7 @@ def main() -> None:
 
     workflows = _cached_workflows()
     ollama_models = _cached_ollama_models()
+    module_names = module_name_map(_cached_modules())
     workflow_options = {workflow["name"]: workflow for workflow in workflows}
 
     for key, default in (
@@ -462,8 +477,12 @@ def main() -> None:
         if recommended:
             st.caption(f"Recommended model: {recommended}")
         st.caption(
-            f"Modules: {', '.join(workflow.get('modules', []))} · "
-            f"Est. {workflow.get('estimated_runtime', 'n/a')}"
+            "Modules: "
+            + ", ".join(
+                module_display_name(module_id, module_names)
+                for module_id in workflow.get("modules", [])
+            )
+            + f" · Est. {workflow.get('estimated_runtime', 'n/a')}"
         )
 
         default_model = settings.default_ollama_model or ollama_models[0]
@@ -488,7 +507,8 @@ def main() -> None:
             with st.status(f"Running {selected_workflow_name}...", expanded=True) as status:
                 try:
                     for module_id in workflow.get("modules", []):
-                        st.write(f"Running {module_id}...")
+                        label = module_display_name(module_id, module_names)
+                        st.write(f"Running {label}...")
                     result = run_workflow(
                         transcript_id=transcript_id,
                         workflow_id=workflow["id"],
@@ -532,6 +552,7 @@ def main() -> None:
             quotes_by_id,
             speakers,
             workflow_name,
+            module_names=module_names,
             transcript_id=st.session_state.transcript_meta.get("transcript_id"),
             ollama_models=ollama_models,
             default_model=settings.default_ollama_model or (ollama_models[0] if ollama_models else None),
