@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from backend.domain.enums import ModuleRunStatus
+from backend.domain.finding import ModuleRun
 from backend.repositories.module_run_repository import utc_now
 from backend.services.synthesis_preprocessor import SynthesisPreprocessor
 
