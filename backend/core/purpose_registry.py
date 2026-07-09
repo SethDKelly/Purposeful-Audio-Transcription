@@ -5,8 +5,11 @@ from pathlib import Path
 
 import yaml
 
-from config.settings import settings
 from backend.core.exceptions import PurposeNotFoundError
+from backend.core.module_registry import AnalysisModule, module_registry
+from backend.domain.transcript import TranscriptBundle
+from backend.services.prompt_compiler import CompiledPrompt, prompt_compiler
+from config.settings import settings
 
 
 @dataclass(frozen=True)
@@ -25,9 +28,13 @@ class PurposeRegistry:
         self,
         purposes_path: Path | None = None,
         prompts_dir: Path | None = None,
+        registry=module_registry,
+        compiler=prompt_compiler,
     ) -> None:
         self._purposes_path = purposes_path or settings.purposes_file
         self._prompts_dir = prompts_dir or settings.prompts_dir
+        self._module_registry = registry
+        self._compiler = compiler
         self._purposes = self._load()
 
     def _load_prompt_file(self, filename: str) -> str:
@@ -66,6 +73,7 @@ class PurposeRegistry:
 
     def reload(self) -> None:
         self._purposes = self._load()
+        self._module_registry.reload()
 
     def list_purposes(self, enabled_only: bool = True) -> list[Purpose]:
         purposes = list(self._purposes.values())
@@ -81,6 +89,15 @@ class PurposeRegistry:
             raise PurposeNotFoundError(f"Purpose is disabled: {purpose_id}")
         return purpose
 
+    def has_module(self, purpose_id: str) -> bool:
+        return self._module_registry.has(purpose_id)
+
+    def get_module(self, module_id: str) -> AnalysisModule:
+        return self._module_registry.get(module_id)
+
+    def list_modules(self, enabled_only: bool = True) -> list[AnalysisModule]:
+        return self._module_registry.list_modules(enabled_only=enabled_only)
+
     def build_messages(self, purpose_id: str, transcript: str) -> list[dict[str, str]]:
         purpose = self.get(purpose_id)
         user_content = purpose.user_prompt_template.format(transcript=transcript)
@@ -88,6 +105,22 @@ class PurposeRegistry:
             {"role": "system", "content": purpose.system_prompt},
             {"role": "user", "content": user_content},
         ]
+
+    def build_compiled_messages(
+        self,
+        module_id: str,
+        bundle: TranscriptBundle,
+    ) -> CompiledPrompt:
+        module = self._module_registry.get(module_id)
+        return self._compiler.compile_for_transcript(module, bundle)
+
+    def build_compiled_synthesis_messages(
+        self,
+        module_id: str,
+        module_outputs: str,
+    ) -> CompiledPrompt:
+        module = self._module_registry.get(module_id)
+        return self._compiler.compile_for_module_outputs(module, module_outputs)
 
 
 purpose_registry = PurposeRegistry()

@@ -1,0 +1,26 @@
+{
+  "module_id": "meta_synthesis",
+  "module_version": "1.0.0",
+  "executive_summary": "Modules converge on a concern-defend-repair pattern with opportunities for clearer needs expression.",
+  "findings": [
+    {
+      "id": "F001",
+      "type": "interaction_cycle",
+      "title": "Cross-module convergence on repair",
+      "summary": "Multiple modules identify concern, clarification, and acknowledgment moving toward repair.",
+      "confidence": "moderate",
+      "evidence_quote_ids": ["Q001", "Q004"],
+      "alternative_explanations": ["limited transcript length"],
+      "limitations": ["synthesis based on module outputs only"]
+    }
+  ],
+  "constructs": [],
+  "relationships": [],
+  "recommendations": [
+    "Continue validating concerns before explaining intent."
+  ],
+  "limitations": [
+    "Synthesis does not re-analyze the raw transcript."
+  ],
+  "raw_markdown_report": "## Integrated View\nThe conversation shows repair potential by the final turn."
+}

@@ -64,6 +64,63 @@ def transcribe_audio(file_bytes: bytes, filename: str) -> dict:
     return response.json()
 
 
+def create_transcript(
+    raw_text: str,
+    source_type: str = "paste",
+    title: str | None = None,
+    language: str | None = None,
+) -> dict:
+    payload = {
+        "raw_text": raw_text,
+        "source_type": source_type,
+        "title": title,
+        "language": language,
+    }
+    response = httpx.post(f"{API_BASE}/api/transcripts", json=payload, timeout=30.0)
+    if response.status_code >= 400:
+        detail = response.json().get("detail", response.text)
+        raise RuntimeError(detail)
+    return response.json()
+
+
+def upload_transcript_text(file_bytes: bytes, filename: str, title: str | None = None) -> dict:
+    response = httpx.post(
+        f"{API_BASE}/api/transcripts/upload",
+        files={"file": (filename, file_bytes)},
+        data={"title": title or filename},
+        timeout=30.0,
+    )
+    if response.status_code >= 400:
+        detail = response.json().get("detail", response.text)
+        raise RuntimeError(detail)
+    return response.json()
+
+
+def update_transcript_speakers(transcript_id: str, speakers: list[dict]) -> dict:
+    response = httpx.patch(
+        f"{API_BASE}/api/transcripts/{transcript_id}/speakers",
+        json={"speakers": speakers},
+        timeout=30.0,
+    )
+    if response.status_code >= 400:
+        detail = response.json().get("detail", response.text)
+        raise RuntimeError(detail)
+    return response.json()
+
+
+def _apply_transcript_bundle(bundle: dict, *, source_name: str = "transcript") -> None:
+    st.session_state.transcript = bundle["transcript"]["raw_text"]
+    st.session_state.transcript_bundle = bundle
+    st.session_state.transcript_meta = {
+        "filename": source_name,
+        "language": bundle["transcript"].get("language"),
+        "transcript_id": bundle["transcript"]["id"],
+        "speakers": bundle.get("speakers", []),
+        "evidence_quotes": bundle.get("evidence_quotes", []),
+    }
+    st.session_state.analysis = None
+
+
 def analyze_transcript(transcript: str, purpose_id: str, model: str | None) -> dict:
     payload = {
         "transcript": transcript,
@@ -231,18 +288,70 @@ def main() -> None:
         st.session_state.transcript_meta = {}
     if "analysis" not in st.session_state:
         st.session_state.analysis = None
+    if "transcript_bundle" not in st.session_state:
+        st.session_state.transcript_bundle = None
 
-    st.subheader("Step 1: Upload Audio")
-    uploaded = st.file_uploader(
-        "Choose an audio file",
-        type=[ext.lstrip(".") for ext in ALLOWED_EXTENSIONS],
-        help=f"Supported formats: {', '.join(ALLOWED_EXTENSIONS)}",
-    )
+    st.subheader("Step 1: Provide Transcript")
+    input_tab_audio, input_tab_text = st.tabs(["Audio", "Paste or upload text"])
 
-    if uploaded is not None:
-        st.audio(uploaded)
-        st.caption(f"{uploaded.name} ({uploaded.size / (1024 * 1024):.2f} MB)")
+    uploaded = None
+    with input_tab_audio:
+        uploaded = st.file_uploader(
+            "Choose an audio file",
+            type=[ext.lstrip(".") for ext in ALLOWED_EXTENSIONS],
+            help=f"Supported formats: {', '.join(ALLOWED_EXTENSIONS)}",
+            key="audio_uploader",
+        )
+        if uploaded is not None:
+            st.audio(uploaded)
+            st.caption(f"{uploaded.name} ({uploaded.size / (1024 * 1024):.2f} MB)")
 
+    pasted_text = ""
+    text_upload = None
+    with input_tab_text:
+        pasted_text = st.text_area(
+            "Paste transcript",
+            height=200,
+            placeholder="Person A: Hello...\nPerson B: Hi...",
+            key="pasted_transcript",
+        )
+        text_upload = st.file_uploader(
+            "Or upload a .txt transcript",
+            type=["txt"],
+            key="text_uploader",
+        )
+        text_cols = st.columns(2)
+        ingest_paste_clicked = text_cols[0].button(
+            "Prepare pasted transcript",
+            disabled=not pasted_text.strip(),
+            use_container_width=True,
+        )
+        ingest_file_clicked = text_cols[1].button(
+            "Prepare uploaded transcript",
+            disabled=text_upload is None,
+            use_container_width=True,
+        )
+
+        if ingest_paste_clicked and pasted_text.strip():
+            try:
+                bundle = create_transcript(pasted_text.strip(), source_type="paste")
+                _apply_transcript_bundle(bundle, source_name="pasted_transcript.txt")
+                st.success("Transcript prepared with speakers and evidence quotes.")
+            except (RuntimeError, httpx.HTTPError) as exc:
+                st.error(str(exc))
+
+        if ingest_file_clicked and text_upload is not None:
+            try:
+                bundle = upload_transcript_text(
+                    text_upload.getvalue(),
+                    text_upload.name,
+                )
+                _apply_transcript_bundle(bundle, source_name=text_upload.name)
+                st.success("Transcript prepared with speakers and evidence quotes.")
+            except (RuntimeError, httpx.HTTPError) as exc:
+                st.error(str(exc))
+
+    st.subheader("Step 1b: Transcribe Audio (optional)")
     one_shot_purpose = None
     one_shot_model = None
     if purposes and ollama_models:
@@ -291,14 +400,18 @@ def main() -> None:
             st.write("Uploading file to API...")
             try:
                 result = transcribe_audio(uploaded.getvalue(), uploaded.name)
-                st.session_state.transcript = result.get("transcript", "")
-                st.session_state.transcript_meta = {
-                    "language": result.get("language"),
+                transcript_text = result.get("transcript", "")
+                bundle = create_transcript(
+                    transcript_text,
+                    source_type="audio",
+                    title=uploaded.name,
+                    language=result.get("language"),
+                )
+                _apply_transcript_bundle(bundle, source_name=uploaded.name)
+                st.session_state.transcript_meta.update({
                     "duration_seconds": result.get("duration_seconds"),
                     "segments": result.get("segments", []),
-                    "filename": uploaded.name,
-                }
-                st.session_state.analysis = None
+                })
                 status.update(label="Transcription complete", state="complete")
             except RuntimeError as exc:
                 status.update(label="Transcription failed", state="error")
@@ -352,6 +465,31 @@ def main() -> None:
         if meta.get("filename"):
             cols[2].metric("Source", meta["filename"])
 
+        bundle = st.session_state.get("transcript_bundle")
+        if bundle and bundle.get("speakers"):
+            st.markdown("**Speakers**")
+            speaker_updates: list[dict] = []
+            for speaker in bundle["speakers"]:
+                display_name = st.text_input(
+                    f"Display name for {speaker['label']}",
+                    value=speaker.get("display_name") or speaker["label"],
+                    key=f"speaker_{speaker['id']}",
+                )
+                speaker_updates.append(
+                    {"id": speaker["id"], "display_name": display_name}
+                )
+            if st.button("Save speaker names"):
+                try:
+                    updated = update_transcript_speakers(
+                        bundle["transcript"]["id"],
+                        speaker_updates,
+                    )
+                    st.session_state.transcript_bundle = updated
+                    st.session_state.transcript_meta["speakers"] = updated["speakers"]
+                    st.success("Speaker names updated.")
+                except (RuntimeError, httpx.HTTPError) as exc:
+                    st.error(str(exc))
+
         st.caption("Edit the transcript before analysis if needed.")
         st.session_state.transcript = st.text_area(
             "Transcript",
@@ -370,6 +508,14 @@ def main() -> None:
             mime="text/plain",
         )
 
+        evidence_quotes = meta.get("evidence_quotes", [])
+        if evidence_quotes:
+            with st.expander("View evidence quotes"):
+                for quote in evidence_quotes:
+                    st.markdown(
+                        f"**{quote['quote_id']}** — {quote['text']}"
+                    )
+
         segments = meta.get("segments", [])
         if segments:
             with st.expander("View segments with timestamps"):
@@ -379,7 +525,9 @@ def main() -> None:
                     text = segment.get("text", "")
                     st.markdown(f"**[{start:.1f}s - {end:.1f}s]** {text}")
     else:
-        st.info("Upload an audio file and click Transcribe to see results here.")
+        st.info(
+            "Paste or upload a transcript, or transcribe audio to see results here."
+        )
 
     st.subheader("Step 3: Analyze")
 

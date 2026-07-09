@@ -1,0 +1,35 @@
+{
+  "executive_summary": "Modules converge on a concern-defend-repair pattern with opportunities for clearer needs expression.",
+  "high_confidence_findings": [],
+  "moderate_confidence_findings": [
+    {
+      "id": "SF001",
+      "type": "interaction_cycle",
+      "title": "Cross-module convergence on repair",
+      "summary": "Multiple modules identify concern, clarification, and acknowledgment moving toward repair.",
+      "confidence": "moderate",
+      "evidence_quote_ids": ["Q001", "Q004"],
+      "alternative_explanations": ["limited transcript length"],
+      "limitations": ["synthesis based on module outputs only"]
+    }
+  ],
+  "exploratory_hypotheses": [],
+  "convergence": [
+    "Relationship and NVC modules both highlight repair movement by the final turn."
+  ],
+  "divergence": [
+    "Systems module emphasizes feedback loops while NVC emphasizes unmet needs."
+  ],
+  "integrated_model": [
+    "Concern raises interpretation, which shapes response, which can reinforce or repair the cycle."
+  ],
+  "interventions": [
+    "Continue validating concerns before explaining intent."
+  ],
+  "outstanding_questions": [
+    "How often do plan changes occur outside this excerpt?"
+  ],
+  "limitations": [
+    "Synthesis does not re-analyze the raw transcript."
+  ]
+}

@@ -1,0 +1,32 @@
+id: relationship_conversation_analysis
+name: "Relationship Conversation Analysis"
+version: "1.0.0"
+enabled: true
+description: >
+  Objective, evidence-based analysis of communication patterns, emotional
+  dynamics, escalation cycles, repair attempts, and relationship strengths.
+primary_lens: "Relationship Communication"
+analytical_level: observable
+unit_of_analysis: interaction
+primary_question: "What communication patterns, emotional dynamics, and interaction cycles appear in this conversation?"
+secondary_questions:
+  - Where does escalation or de-escalation occur?
+  - What repair attempts or strengths are visible?
+  - What opportunities exist for healthier communication?
+required_constructs:
+  - communication_pattern
+  - escalation_cycle
+  - repair_attempt
+  - emotional_dynamic
+output_schema: module_output_v1
+recommended_companions:
+  - nvc_analysis
+  - systems_analysis
+  - bias_epistemic_quality
+inference_depth: medium
+confidence_ceiling: moderate
+dependencies:
+  - transcript_preprocessing
+prompt_file: "01 Relationship Conversation Analysis.md"
+ollama_model: null
+input_type: transcript

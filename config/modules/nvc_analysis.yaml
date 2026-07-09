@@ -1,0 +1,31 @@
+id: nvc_analysis
+name: "NVC Analysis"
+version: "1.0.0"
+enabled: true
+description: >
+  Nonviolent Communication analysis of observations, feelings, needs, and
+  requests within the interaction.
+primary_lens: "Nonviolent Communication"
+analytical_level: relational
+unit_of_analysis: interaction
+primary_question: "What observations, feelings, needs, and requests appear in this interaction?"
+secondary_questions:
+  - Where do judgments mask observations?
+  - What unmet needs may be driving the exchange?
+  - What requests or implicit demands appear?
+required_constructs:
+  - observation
+  - feeling
+  - need
+  - request
+output_schema: module_output_v1
+recommended_companions:
+  - relationship_conversation_analysis
+  - emotional_needs_values
+inference_depth: medium
+confidence_ceiling: moderate
+dependencies:
+  - transcript_preprocessing
+prompt_file: "07 NVC Analysis.md"
+ollama_model: null
+input_type: transcript

@@ -1,0 +1,28 @@
+id: meta_synthesis
+name: "Meta-Synthesis"
+version: "1.0.0"
+enabled: true
+description: >
+  Integrates multiple prior analysis outputs into a coherent formulation.
+  Receives structured module outputs only, not the raw transcript.
+primary_lens: "Integrative Synthesis"
+analytical_level: integrative
+unit_of_analysis: multi_module_outputs
+primary_question: "What convergent themes, divergences, and integrated understanding emerge across module outputs?"
+secondary_questions:
+  - Where do modules agree or disagree?
+  - What high-confidence findings should be prioritized?
+  - What interventions or next questions follow?
+required_constructs:
+  - convergence
+  - divergence
+  - integrated_model
+output_schema: module_output_v1
+recommended_companions: []
+inference_depth: high
+confidence_ceiling: moderate
+dependencies:
+  - prior_module_runs
+prompt_file: "13 Meta-Synthesis.md"
+ollama_model: null
+input_type: module_outputs

@@ -5,7 +5,8 @@ from fastapi.responses import JSONResponse
 
 from config.settings import settings
 from backend.core.exceptions import AppError
-from backend.api.routes import analyze, health, models, process, purposes, transcribe
+from backend.api.routes import analyze, health, models, modules, process, purposes, transcribe, transcripts, workflows
+from backend.db.base import init_db
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper(), logging.INFO),
@@ -15,15 +16,23 @@ logging.basicConfig(
 app = FastAPI(
     title="Purposeful Audio Transcription",
     description="Local audio transcription with Whisper and Ollama-powered analysis",
-    version="0.1.0",
+    version="0.2.0",
 )
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    init_db()
 
 app.include_router(health.router)
 app.include_router(models.router)
 app.include_router(transcribe.router)
 app.include_router(purposes.router)
+app.include_router(modules.router)
+app.include_router(workflows.router)
 app.include_router(analyze.router)
 app.include_router(process.router)
+app.include_router(transcripts.router)
 
 
 @app.exception_handler(AppError)

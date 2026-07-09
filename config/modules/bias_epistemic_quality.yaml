@@ -1,0 +1,31 @@
+id: bias_epistemic_quality
+name: "Bias & Epistemic Quality"
+version: "1.0.0"
+enabled: true
+description: >
+  Analysis of bias, reliability, assumptions, and epistemic quality in how
+  participants interpret and argue within the conversation.
+primary_lens: "Epistemic Quality Audit"
+analytical_level: methodological
+unit_of_analysis: reasoning
+primary_question: "What biases, assumptions, and reliability issues affect how this conversation is interpreted?"
+secondary_questions:
+  - Where does reasoning overreach the evidence?
+  - What missing context limits conclusions?
+  - What interpretive risks should downstream synthesis account for?
+required_constructs:
+  - bias
+  - assumption
+  - evidence_gap
+  - reliability_issue
+output_schema: module_output_v1
+recommended_companions:
+  - relationship_conversation_analysis
+  - meta_synthesis
+inference_depth: medium
+confidence_ceiling: high
+dependencies:
+  - transcript_preprocessing
+prompt_file: "12 Bias & Epistemic Quality.md"
+ollama_model: null
+input_type: transcript

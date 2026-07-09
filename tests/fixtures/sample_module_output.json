@@ -1,0 +1,46 @@
+{
+  "module_id": "relationship_conversation_analysis",
+  "module_version": "1.0.0",
+  "executive_summary": "The exchange shows one partner expressing feeling unheard and the other attempting repair.",
+  "findings": [
+    {
+      "id": "F001",
+      "type": "emotion",
+      "title": "Feeling unheard",
+      "summary": "Person A states they feel unheard when plans change without discussion.",
+      "confidence": "observed",
+      "evidence_quote_ids": ["Q001"],
+      "alternative_explanations": [],
+      "limitations": []
+    },
+    {
+      "id": "F002",
+      "type": "repair_attempt",
+      "title": "Acknowledgment and future check-in",
+      "summary": "Person B acknowledges the concern and offers to check in before changes.",
+      "confidence": "observed",
+      "evidence_quote_ids": ["Q004"],
+      "alternative_explanations": [],
+      "limitations": []
+    },
+    {
+      "id": "F003",
+      "type": "interaction_cycle",
+      "title": "Concern-defend-repair pattern",
+      "summary": "A concern is raised, met with clarification, and followed by acknowledgment.",
+      "confidence": "moderate",
+      "evidence_quote_ids": ["Q001", "Q002", "Q004"],
+      "alternative_explanations": ["stress", "habitual planning style"],
+      "limitations": ["tone unavailable"]
+    }
+  ],
+  "constructs": [],
+  "relationships": [],
+  "recommendations": [
+    "Validate feelings before explaining intent when plans change."
+  ],
+  "limitations": [
+    "This analysis is based only on the transcript provided."
+  ],
+  "raw_markdown_report": "## Executive Summary\nA brief repair-oriented exchange appears by the end of the conversation."
+}

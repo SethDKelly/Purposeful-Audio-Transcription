@@ -22,7 +22,12 @@ class Settings(BaseSettings):
     streamlit_port: int = 8501
     prompts_dir: Path = Path("./config/prompts")
     purposes_file: Path = Path("./config/purposes.yaml")
+    modules_dir: Path = Path("./config/modules")
+    framework_dir: Path = Path("./config/framework")
+    workflows_dir: Path = Path("./config/workflows")
     default_ollama_model: str = ""
+    database_url: str = "sqlite:///./data/rre.db"
+    module_run_max_retries: int = 2
 
     allowed_extensions: frozenset[str] = frozenset(
         {".mp3", ".wav", ".m4a", ".flac", ".ogg", ".webm", ".mp4"}

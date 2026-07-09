@@ -77,6 +77,10 @@ Analysis prompts are stored in `config/prompts/` and linked from `config/purpose
 | `GET` | `/api/health` | Check ffmpeg, Ollama, and Whisper status |
 | `GET` | `/api/models/ollama` | List available Ollama models |
 | `GET` | `/api/purposes` | List configured analysis purposes |
+| `POST` | `/api/transcripts` | Create transcript with speakers, turns, and quote IDs |
+| `GET` | `/api/transcripts/{id}` | Get transcript bundle |
+| `PATCH` | `/api/transcripts/{id}/speakers` | Update speaker display names |
+| `POST` | `/api/transcripts/upload` | Upload `.txt` transcript file |
 | `POST` | `/api/transcribe` | Upload audio file and get transcript |
 | `POST` | `/api/analyze` | Analyze a transcript for a given purpose |
 | `POST` | `/api/analyze/stream` | Stream analysis tokens as plain text |
@@ -110,8 +114,10 @@ See `.env.example` for available settings:
 ## Project Structure
 
 ```
-doc/implementation-plan.md   Full implementation plan and phase tracker
-doc/backlog-analysis-suite.md  Backlog: multi-analysis suites
+doc/implementation_plan.md     Active MVP implementation plan
+doc/12_mvp_build_plan.md          MVP goals and phases
+doc/01–16_*.md                    RRE design package
+doc/archived/                     Earlier plans and backlogs
 backend/                     FastAPI application
 config/                      Settings and future purpose configs
 ui/                          Streamlit UI
@@ -120,10 +126,8 @@ scripts/                     Utility scripts
 
 ## Implementation Status
 
-See [doc/implementation-plan.md](doc/implementation-plan.md) for the full plan.
+See [doc/implementation_plan.md](doc/implementation_plan.md) for the active MVP plan.
 
-- **Phase 1** — Foundation (API, Whisper, Ollama services) ✓
-- **Phase 2** — Streamlit UI ✓
-- **Phase 3** — Transcript analysis pipeline ✓
-- **Phase 4** — Purpose registration and polish ✓ (set models when ready)
-- **Phase 5** — Hardening (optional)
+- **Phases 1–4** — Audio transcription + single-purpose analysis ✓
+- **Phase A (M1)** — Transcript ingestion + evidence indexing ✓
+- **Phase B+** — Module registry, structured workflows (next)

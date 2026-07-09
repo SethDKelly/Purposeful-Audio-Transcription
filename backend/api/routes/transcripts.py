@@ -1,0 +1,67 @@
+from fastapi import APIRouter, File, Form, UploadFile
+
+from backend.api.schemas import (
+    CreateTranscriptRequest,
+    TranscriptBundleResponse,
+    UpdateSpeakersRequest,
+    bundle_to_response,
+)
+from backend.core.exceptions import TranscriptValidationError
+from backend.domain.enums import SourceType
+from backend.domain.transcript import Speaker
+from backend.services.transcript_service import transcript_service
+
+router = APIRouter(prefix="/api", tags=["transcripts"])
+
+
+@router.post("/transcripts", response_model=TranscriptBundleResponse)
+def create_transcript(request: CreateTranscriptRequest) -> TranscriptBundleResponse:
+    bundle = transcript_service.ingest(
+        raw_text=request.raw_text,
+        source_type=request.source_type,
+        title=request.title,
+        language=request.language,
+    )
+    return bundle_to_response(bundle)
+
+
+@router.post("/transcripts/upload", response_model=TranscriptBundleResponse)
+async def upload_transcript_file(
+    file: UploadFile = File(...),
+    title: str | None = Form(None),
+) -> TranscriptBundleResponse:
+    if not file.filename:
+        raise TranscriptValidationError("No filename provided")
+    if not file.filename.lower().endswith(".txt"):
+        raise TranscriptValidationError("Only .txt transcript files are supported")
+
+    content = (await file.read()).decode("utf-8")
+    bundle = transcript_service.ingest(
+        raw_text=content,
+        source_type=SourceType.FILE,
+        title=title or file.filename,
+    )
+    return bundle_to_response(bundle)
+
+
+@router.get("/transcripts/{transcript_id}", response_model=TranscriptBundleResponse)
+def get_transcript(transcript_id: str) -> TranscriptBundleResponse:
+    bundle = transcript_service.get(transcript_id)
+    return bundle_to_response(bundle)
+
+
+@router.patch("/transcripts/{transcript_id}/speakers", response_model=TranscriptBundleResponse)
+def update_speakers(
+    transcript_id: str, request: UpdateSpeakersRequest
+) -> TranscriptBundleResponse:
+    updates = [
+        Speaker(
+            id=item.id,
+            transcript_id=transcript_id,
+            label=item.label or "",
+            display_name=item.display_name,
+        )
+        for item in request.speakers
+    ]
+    bundle = transcript_service.update_speakers(transcript_id, updates)
+    return bundle_to_response(bundle)

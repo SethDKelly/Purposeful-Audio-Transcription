@@ -1,5 +1,7 @@
 # 12 — MVP Build Plan
 
+> **Active implementation plan:** [implementation_plan.md](implementation_plan.md)
+
 ## MVP Goal
 
 Build a working application that can analyze a transcript using a small but representative subset of the framework.

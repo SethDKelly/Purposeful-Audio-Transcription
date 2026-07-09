@@ -1,0 +1,32 @@
+id: systems_analysis
+name: "Systems Analysis"
+version: "1.0.0"
+enabled: true
+description: >
+  Analyze the relationship as a dynamic system, identifying feedback loops,
+  interaction patterns, and opportunities to interrupt unhelpful cycles.
+primary_lens: "Systems Theory"
+analytical_level: relational
+unit_of_analysis: relationship
+primary_question: "What feedback loops maintain or change the interaction pattern?"
+secondary_questions:
+  - What roles appear in the system?
+  - What balancing loops reduce escalation?
+  - What leverage points could change the pattern?
+required_constructs:
+  - interaction_cycle
+  - feedback_loop
+  - role
+  - boundary
+  - leverage_point
+output_schema: module_output_v1
+recommended_companions:
+  - nvc_analysis
+  - relationship_conversation_analysis
+inference_depth: medium
+confidence_ceiling: moderate
+dependencies:
+  - transcript_preprocessing
+prompt_file: "04 Systems Analysis.md"
+ollama_model: null
+input_type: transcript

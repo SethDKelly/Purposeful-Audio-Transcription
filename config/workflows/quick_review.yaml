@@ -1,0 +1,11 @@
+id: quick_review
+name: "Quick Review"
+version: "1.0.0"
+enabled: true
+description: "Fast, practical communication insight."
+estimated_runtime: "1-3 min"
+modules:
+  - relationship_conversation_analysis
+  - nvc_analysis
+  - bias_epistemic_quality
+meta_synthesis: false
