@@ -1,0 +1,200 @@
+# Purpose definitions link analysis goals to prompt files in config/prompts/.
+# Set ollama_model per purpose or use DEFAULT_OLLAMA_MODEL in .env when ready.
+# Quote filenames that contain spaces or special characters.
+
+purposes:
+  relationship_conversation_analysis:
+    name: "Relationship Conversation Analysis"
+    description: >
+      Objective, evidence-based analysis of communication patterns, emotional
+      dynamics, escalation cycles, repair attempts, and relationship strengths.
+    enabled: true
+    ollama_model: null
+    system_prompt_file: "01 Relationship Conversation Analysis.md"
+    user_prompt_template: |
+      Analyze the following conversation transcript according to your instructions.
+
+      ---
+      {transcript}
+      ---
+
+  exploratory_psychological_formulation:
+    name: "Exploratory Psychological Formulation"
+    description: >
+      Non-diagnostic exploration of possible psychological frameworks that may
+      help explain the interaction, grounded in evidence and uncertainty.
+    enabled: true
+    ollama_model: null
+    system_prompt_file: "02 Exploratory Psychological Formulation.md"
+    user_prompt_template: |
+      Formulate an exploratory psychological analysis of the following transcript
+      according to your instructions.
+
+      ---
+      {transcript}
+      ---
+
+  cognitive_analysis:
+    name: "Cognitive Analysis"
+    description: >
+      Analyze thinking patterns including cognitive distortions, automatic thoughts,
+      assumptions, attribution patterns, and possible core beliefs.
+    enabled: true
+    ollama_model: null
+    system_prompt_file: "03 Cognitive Analysis.md"
+    user_prompt_template: |
+      Analyze the following conversation transcript according to your instructions.
+
+      ---
+      {transcript}
+      ---
+
+  systems_analysis:
+    name: "Systems Analysis"
+    description: >
+      Analyze the relationship as a dynamic system, identifying feedback loops,
+      interaction patterns, and opportunities to interrupt unhelpful cycles.
+    enabled: true
+    ollama_model: null
+    system_prompt_file: "04 Systems Analysis.md"
+    user_prompt_template: |
+      Analyze the following conversation transcript according to your instructions.
+
+      ---
+      {transcript}
+      ---
+
+  mediation_analysis:
+    name: "Mediation Analysis"
+    description: >
+      Neutral conflict mediation lens on underlying issues, interests, positions,
+      misunderstandings, and pathways toward resolution.
+    enabled: true
+    ollama_model: null
+    system_prompt_file: "05 Mediation Analysis.md"
+    user_prompt_template: |
+      Analyze the following conversation transcript according to your instructions.
+
+      ---
+      {transcript}
+      ---
+
+  gottman_analysis:
+    name: "Gottman Analysis"
+    description: >
+      Gottman Method lens on communication patterns, repair attempts, and
+      behaviors that strengthen or weaken the relationship system.
+    enabled: true
+    ollama_model: null
+    system_prompt_file: "06 Gottman Analysis.md"
+    user_prompt_template: |
+      Analyze the following conversation transcript according to your instructions.
+
+      ---
+      {transcript}
+      ---
+
+  nvc_analysis:
+    name: "NVC Analysis"
+    description: >
+      Nonviolent Communication analysis of observations, feelings, needs, and
+      requests within the interaction.
+    enabled: true
+    ollama_model: null
+    system_prompt_file: "07 NVC Analysis.md"
+    user_prompt_template: |
+      Analyze the following conversation transcript according to your instructions.
+
+      ---
+      {transcript}
+      ---
+
+  attachment_interaction_matrix:
+    name: "Attachment Interaction Matrix"
+    description: >
+      Attachment-informed analysis of interaction patterns, bids for connection,
+      and relational dynamics between participants.
+    enabled: true
+    ollama_model: null
+    system_prompt_file: "08 Attachment Interaction Matrix.md"
+    user_prompt_template: |
+      Analyze the following conversation transcript according to your instructions.
+
+      ---
+      {transcript}
+      ---
+
+  trauma_informed_communication:
+    name: "Trauma-Informed Communication"
+    description: >
+      Trauma-informed lens on safety, threat responses, communication triggers,
+      and opportunities for emotionally safer dialogue.
+    enabled: true
+    ollama_model: null
+    system_prompt_file: "09 Trauma-Informed Communication.md"
+    user_prompt_template: |
+      Analyze the following conversation transcript according to your instructions.
+
+      ---
+      {transcript}
+      ---
+
+  emotional_needs_values:
+    name: "Emotional Needs & Values"
+    description: >
+      Analysis of emotional needs, values, and how they shape communication
+      and conflict in the interaction.
+    enabled: true
+    ollama_model: null
+    system_prompt_file: "10 Emotional Needs & Values.md"
+    user_prompt_template: |
+      Analyze the following conversation transcript according to your instructions.
+
+      ---
+      {transcript}
+      ---
+
+  narrative_identity_analysis:
+    name: "Narrative Identity Analysis"
+    description: >
+      Narrative and identity lens on meaning-making, personal stories, and how
+      each participant frames themselves and the relationship.
+    enabled: true
+    ollama_model: null
+    system_prompt_file: "11 Narrative Identity Analysis.md"
+    user_prompt_template: |
+      Analyze the following conversation transcript according to your instructions.
+
+      ---
+      {transcript}
+      ---
+
+  bias_epistemic_quality:
+    name: "Bias & Epistemic Quality"
+    description: >
+      Analysis of bias, reliability, assumptions, and epistemic quality in how
+      participants interpret and argue within the conversation.
+    enabled: true
+    ollama_model: null
+    system_prompt_file: "12 Bias & Epistemic Quality.md"
+    user_prompt_template: |
+      Analyze the following conversation transcript according to your instructions.
+
+      ---
+      {transcript}
+      ---
+
+  meta_synthesis:
+    name: "Meta-Synthesis"
+    description: >
+      Integrates multiple prior analysis outputs into a coherent formulation.
+      Provide analysis outputs (not the raw transcript) as input.
+    enabled: true
+    ollama_model: null
+    system_prompt_file: "13 Meta-Synthesis.md"
+    user_prompt_template: |
+      Synthesize the following analytical outputs according to your instructions.
+
+      ---
+      {transcript}
+      ---
