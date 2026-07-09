@@ -58,17 +58,14 @@ streamlit run ui/streamlit_app.py
 
 1. Open [http://localhost:8501](http://localhost:8501)
 2. Check the sidebar for ffmpeg, Ollama, and Whisper status
-3. Upload an audio file (wav, mp3, m4a, flac, ogg, webm, mp4)
-4. Click **Transcribe**
-5. Review the transcript and download it as a `.txt` file
-6. Select an analysis purpose and an Ollama model (or set `DEFAULT_OLLAMA_MODEL` in `.env`)
-7. Optionally edit the transcript before analysis
-8. Click **Analyze transcript** (streaming enabled by default) or use **Transcribe + Analyze** for one-shot processing
-9. Export the result as `.md` or `.json`
+3. **Ingest** — upload audio or paste/upload a transcript
+4. **Prepare** — edit speaker names and review evidence quote IDs
+5. **Analyze** — select a workflow (`quick_review` or `full_mvp`) and Ollama model
+6. **Report** — explore findings, synthesis, evidence drill-down; export `.md` / `.json`
 
 ## Prompt storage
 
-Analysis prompts are stored in `config/prompts/` and linked from `config/purposes.yaml`. See [config/prompts/README.md](config/prompts/README.md) for how to add new purposes.
+Analysis prompts are stored in `config/prompts/` and linked from `config/modules/*.yaml`. See [config/prompts/README.md](config/prompts/README.md) for how to add new modules.
 
 ## API Endpoints
 
@@ -76,15 +73,18 @@ Analysis prompts are stored in `config/prompts/` and linked from `config/purpose
 |--------|----------|-------------|
 | `GET` | `/api/health` | Check ffmpeg, Ollama, and Whisper status |
 | `GET` | `/api/models/ollama` | List available Ollama models |
-| `GET` | `/api/purposes` | List configured analysis purposes |
+| `GET` | `/api/modules` | List analysis modules |
+| `GET` | `/api/workflows` | List workflows |
 | `POST` | `/api/transcripts` | Create transcript with speakers, turns, and quote IDs |
 | `GET` | `/api/transcripts/{id}` | Get transcript bundle |
 | `PATCH` | `/api/transcripts/{id}/speakers` | Update speaker display names |
 | `POST` | `/api/transcripts/upload` | Upload `.txt` transcript file |
 | `POST` | `/api/transcribe` | Upload audio file and get transcript |
-| `POST` | `/api/analyze` | Analyze a transcript for a given purpose |
-| `POST` | `/api/analyze/stream` | Stream analysis tokens as plain text |
-| `POST` | `/api/process` | Upload audio + purpose → transcript + analysis |
+| `POST` | `/api/workflows/{id}/run` | Run structured analysis workflow |
+| `GET` | `/api/workflow-runs/{id}/synthesis` | Get synthesis report |
+| `POST` | `/api/modules/{id}/stream` | Stream single-module LLM output |
+| `POST` | `/api/process` | Upload audio + workflow → transcript + analysis |
+| `GET` | `/api/purposes` | Deprecated alias for `/api/modules` |
 
 Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) for interactive API documentation.
 
@@ -109,7 +109,7 @@ See `.env.example` for available settings:
 | `API_HOST` | `127.0.0.1` | API bind address |
 | `API_PORT` | `8000` | API port |
 | `STREAMLIT_PORT` | `8501` | Streamlit UI port |
-| `DEFAULT_OLLAMA_MODEL` | _(empty)_ | Default model for analysis when not set in purpose config |
+| `DEFAULT_OLLAMA_MODEL` | _(empty)_ | Default model for workflows when not set in module YAML |
 
 ## Project Structure
 
@@ -132,8 +132,9 @@ Model configuration: [doc/MODEL_SETUP.md](doc/MODEL_SETUP.md).
 
 ## Implementation Status
 
-See [doc/implementation_plan.md](doc/implementation_plan.md) for the active MVP plan.
+See [doc/implementation_plan.md](doc/implementation_plan.md) for the active MVP plan and post-MVP roadmap (phases H–L).
 
 - **Phases 1–4** — Audio transcription + single-purpose analysis ✓
 - **Phases A–G** — RRE MVP (transcripts, modules, workflows, synthesis, report UI, testing) ✓
+- **Phase H** — Legacy cleanup ✓
 - **Release** — `v0.2.0`

@@ -242,17 +242,9 @@ def workflow_run_to_response(
     )
 
 
-class AnalyzeRequest(BaseModel):
+class StreamModuleRequest(BaseModel):
     transcript: str
-    purpose_id: str
     model: str | None = None
-
-
-class AnalyzeResponse(BaseModel):
-    purpose_id: str
-    purpose_name: str
-    model: str
-    analysis: str
 
 
 class ProcessResponse(BaseModel):
@@ -262,8 +254,6 @@ class ProcessResponse(BaseModel):
     duration_seconds: float | None = None
     model: str
     analysis: str
-    purpose_id: str | None = None
-    purpose_name: str | None = None
     workflow_id: str | None = None
     workflow_name: str | None = None
     workflow_run_id: str | None = None

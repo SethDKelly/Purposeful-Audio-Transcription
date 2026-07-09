@@ -7,7 +7,7 @@ from backend.api.schemas import (
     RunModuleRequest,
     module_run_to_response,
 )
-from backend.core.purpose_registry import purpose_registry
+from backend.core.module_registry import module_registry
 from backend.services.module_runner import module_runner
 
 router = APIRouter(prefix="/api", tags=["modules"])
@@ -31,7 +31,7 @@ def list_modules() -> ModulesResponse:
             input_type=module.config.input_type,
             recommended_companions=module.config.recommended_companions,
         )
-        for module in purpose_registry.list_modules()
+        for module in module_registry.list_modules()
     ]
     return ModulesResponse(modules=modules)
 

@@ -118,7 +118,8 @@ Legacy single-purpose analysis remains available via sidebar toggle. Prefer work
 | `GET` | `/api/workflow-runs/{id}` | Poll workflow status |
 | `GET` | `/api/workflow-runs/{id}/synthesis` | Synthesis report |
 | `POST` | `/api/transcribe` | Audio → transcript |
-| `POST` | `/api/analyze` | **Deprecated** — use workflows |
+| `POST` | `/api/modules/{id}/stream` | Stream single-module LLM output |
+| `GET` | `/api/purposes` | Deprecated alias for `/api/modules` |
 
 ## Pre-flight checklist
 

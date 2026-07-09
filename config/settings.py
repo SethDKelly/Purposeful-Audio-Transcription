@@ -21,7 +21,6 @@ class Settings(BaseSettings):
     api_port: int = 8000
     streamlit_port: int = 8501
     prompts_dir: Path = Path("./config/prompts")
-    purposes_file: Path = Path("./config/purposes.yaml")
     modules_dir: Path = Path("./config/modules")
     framework_dir: Path = Path("./config/framework")
     workflows_dir: Path = Path("./config/workflows")

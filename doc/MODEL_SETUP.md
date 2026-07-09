@@ -21,7 +21,14 @@ Model resolution follows this order (first non-empty value wins):
 | Module | `ollama_model` in `config/modules/*.yaml` | `ollama_model: llama3.2` |
 | Environment | `DEFAULT_OLLAMA_MODEL` in `.env` | `DEFAULT_OLLAMA_MODEL=llama3.2` |
 
-Legacy single-purpose analysis (`POST /api/analyze`, deprecated) also checks `ollama_model` in `config/purposes.yaml`.
+Legacy single-purpose analysis has been removed. Use module YAML for configuration.
+
+## Recommended workflow
+
+1. Set `DEFAULT_OLLAMA_MODEL` in `.env` for day-to-day use.
+2. Override only modules that need a heavier or more structured model (often `meta_synthesis`).
+3. Run workflows via `POST /api/workflows/{workflow_id}/run`.
+4. Stream a single module's raw LLM output via `POST /api/modules/{module_id}/stream` when needed.
 
 ## Per-module overrides
 
@@ -33,12 +40,6 @@ ollama_model: llama3.1:8b
 ```
 
 Leave `ollama_model: null` to inherit `DEFAULT_OLLAMA_MODEL`.
-
-## Recommended workflow
-
-1. Set `DEFAULT_OLLAMA_MODEL` in `.env` for day-to-day use.
-2. Override only modules that need a heavier or more structured model (often `meta_synthesis`).
-3. Run workflows via `POST /api/workflows/{workflow_id}/run` rather than the deprecated `/api/analyze` endpoint.
 
 ## Verify setup
 

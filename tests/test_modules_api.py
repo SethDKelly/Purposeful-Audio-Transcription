@@ -19,8 +19,9 @@ def test_list_modules_api() -> None:
     assert module["input_type"] == "transcript"
 
 
-def test_list_purposes_still_works() -> None:
+def test_list_purposes_deprecated_alias_for_modules() -> None:
     client = TestClient(app)
     response = client.get("/api/purposes")
     assert response.status_code == 200
-    assert len(response.json()["purposes"]) >= 5
+    assert response.headers.get("Deprecation") == "true"
+    assert len(response.json()["purposes"]) == 5

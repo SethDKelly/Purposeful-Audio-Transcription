@@ -1,14 +1,11 @@
 """Shared API client helpers for the Streamlit UI."""
 
-from collections.abc import Iterator
-
 import httpx
 
 from config.settings import settings
 
 API_BASE = f"http://{settings.api_host}:{settings.api_port}"
 TRANSCRIBE_TIMEOUT = 600.0
-ANALYZE_TIMEOUT = 600.0
 PROCESS_TIMEOUT = 1200.0
 WORKFLOW_TIMEOUT = 1800.0
 
@@ -38,16 +35,6 @@ def fetch_ollama_models() -> list[str]:
         response = httpx.get(f"{API_BASE}/api/models/ollama", timeout=5.0)
         if response.status_code == 200:
             return response.json().get("models", [])
-    except httpx.HTTPError:
-        pass
-    return []
-
-
-def fetch_purposes() -> list[dict]:
-    try:
-        response = httpx.get(f"{API_BASE}/api/purposes", timeout=5.0)
-        if response.status_code == 200:
-            return response.json().get("purposes", [])
     except httpx.HTTPError:
         pass
     return []
@@ -111,59 +98,13 @@ def update_transcript_speakers(transcript_id: str, speakers: list[dict]) -> dict
     return response.json()
 
 
-def analyze_transcript(transcript: str, purpose_id: str, model: str | None) -> dict:
-    payload = {
-        "transcript": transcript,
-        "purpose_id": purpose_id,
-        "model": model,
-    }
-    response = httpx.post(
-        f"{API_BASE}/api/analyze",
-        json=payload,
-        timeout=ANALYZE_TIMEOUT,
-    )
-    _raise_for_status(response)
-    return response.json()
-
-
-def stream_analyze_transcript(
-    transcript: str, purpose_id: str, model: str | None
-) -> Iterator[str]:
-    payload = {
-        "transcript": transcript,
-        "purpose_id": purpose_id,
-        "model": model,
-    }
-    with httpx.stream(
-        "POST",
-        f"{API_BASE}/api/analyze/stream",
-        json=payload,
-        timeout=ANALYZE_TIMEOUT,
-    ) as response:
-        if response.status_code >= 400:
-            error_body = response.read().decode("utf-8")
-            try:
-                import json
-
-                detail = json.loads(error_body).get("detail", error_body)
-            except Exception:
-                detail = error_body
-            raise RuntimeError(detail)
-        yield from response.iter_text()
-
-
 def process_audio(
     file_bytes: bytes,
     filename: str,
-    purpose_id: str | None = None,
-    workflow_id: str | None = None,
+    workflow_id: str,
     model: str | None = None,
 ) -> dict:
-    data: dict[str, str] = {}
-    if purpose_id:
-        data["purpose_id"] = purpose_id
-    if workflow_id:
-        data["workflow_id"] = workflow_id
+    data: dict[str, str] = {"workflow_id": workflow_id}
     if model:
         data["model"] = model
     response = httpx.post(

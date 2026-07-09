@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 
 from config.settings import settings
 from backend.core.exceptions import AppError
-from backend.api.routes import analyze, health, models, modules, process, purposes, transcribe, transcripts, workflows
+from backend.api.routes import health, models, module_stream, modules, process, purposes, transcribe, transcripts, workflows
 from backend.db.base import init_db
 
 logging.basicConfig(
@@ -29,8 +29,8 @@ app.include_router(models.router)
 app.include_router(transcribe.router)
 app.include_router(purposes.router)
 app.include_router(modules.router)
+app.include_router(module_stream.router)
 app.include_router(workflows.router)
-app.include_router(analyze.router)
 app.include_router(process.router)
 app.include_router(transcripts.router)
 
