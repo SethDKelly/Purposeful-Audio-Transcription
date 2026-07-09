@@ -1,0 +1,31 @@
+id: mediation_analysis
+name: "Mediation Analysis"
+version: "1.0.0"
+enabled: true
+description: >
+  Neutral conflict mediation lens on underlying issues, interests, positions,
+  misunderstandings, and pathways toward resolution.
+primary_lens: "Conflict Mediation"
+analytical_level: relational
+unit_of_analysis: conflict
+primary_question: "What interests, positions, and resolution pathways appear in this conflict?"
+secondary_questions:
+  - Where are misunderstandings or framing differences visible?
+  - What shared interests might exist beneath positions?
+  - What mediation-oriented next steps are plausible?
+required_constructs:
+  - position
+  - interest
+  - misunderstanding
+  - resolution_pathway
+output_schema: module_output_v1
+recommended_companions:
+  - nvc_analysis
+  - systems_analysis
+inference_depth: medium
+confidence_ceiling: moderate
+dependencies:
+  - transcript_preprocessing
+prompt_file: "05 Mediation Analysis.md"
+ollama_model: null
+input_type: transcript

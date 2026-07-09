@@ -4,6 +4,8 @@ version: "1.0.0"
 enabled: true
 description: "Fast, practical communication insight."
 estimated_runtime: "1-3 min"
+recommended_model: null
+output_tone: practical
 modules:
   - relationship_conversation_analysis
   - nvc_analysis

@@ -4,11 +4,12 @@ Active plan to evolve the existing Purposeful Audio Transcription codebase into 
 
 | | |
 |---|---|
-| **Status** | Active |
+| **Status** | **Phases H–L complete** — post-MVP roadmap delivered |
+| **Release** | [`v0.3.0`](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v0.3.0) (branch); [`v0.2.0`](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v0.2.0) (MVP on `main`) |
 | **Baseline** | Phases 1–4 complete (audio → Whisper → single-purpose Ollama analysis) |
-| **Target** | Evidence-linked, structured, multi-module workflow MVP |
+| **Delivered** | Evidence-linked, structured, multi-module workflow MVP |
 | **Design reference** | [12_mvp_build_plan.md](12_mvp_build_plan.md) |
-| **Estimated timeline** | ~6 weeks |
+| **Deploy** | [DEPLOYMENT.md](DEPLOYMENT.md) · [MODEL_SETUP.md](MODEL_SETUP.md) |
 
 ---
 
@@ -21,24 +22,31 @@ Active plan to evolve the existing Purposeful Audio Transcription codebase into 
 | [03_domain_model.md](03_domain_model.md) | Core entities |
 | [05_data_model_and_schemas.md](05_data_model_and_schemas.md) | JSON and database schemas |
 | [12_mvp_build_plan.md](12_mvp_build_plan.md) | Original MVP phase definitions |
-| **This document** | Actionable codebase update plan |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Private-use install, run, backup, upgrade |
+| [MODEL_SETUP.md](MODEL_SETUP.md) | Ollama and per-module model configuration |
+| [15_future_roadmap.md](15_future_roadmap.md) | Post-MVP enhancements |
+| **This document** | Implementation record and next steps |
 | [archived/](archived/) | Earlier plans and backlogs |
 
 ---
 
 ## 1. Executive Summary
 
-### Current state
+### Current state (v0.2.0)
 
-The codebase is a working **local analysis pipeline**:
+The codebase is a working **Relationship Reasoning Engine** for private local use:
 
-- FastAPI backend + Streamlit UI
-- Whisper transcription from audio
-- 13 analysis purposes via `config/purposes.yaml` + markdown prompts
-- Single-purpose analysis (sync + stream) and one-shot `transcribe + analyze`
-- Raw markdown output — no structured findings, evidence IDs, or workflows
+- FastAPI backend + Streamlit 4-step UI (Ingest → Prepare → Analyze → Report)
+- Whisper transcription from audio; paste / `.txt` upload for transcripts
+- Speaker/turn parsing with stable evidence quote IDs (`Q001…`)
+- 5 MVP modules via `config/modules/*.yaml` + `PromptCompiler`
+- Structured `ModuleRunOutput` JSON with validation, retries, and safety checks
+- Workflows `quick_review` and `full_mvp` via `WorkflowEngine`
+- `SynthesisEngine` with convergence/divergence from module outputs
+- SQLite persistence (`data/rre.db`); 76 tests passing
+- Workflow-only Streamlit UI; structured module registry via `config/modules/*.yaml`
 
-### Target state
+### Target state (achieved)
 
 The RRE MVP is a **reasoning platform**, not a prompt runner:
 
@@ -63,22 +71,24 @@ Audio transcription remains supported; Whisper output feeds the transcript parse
 
 ---
 
-## 2. Gap Analysis
+## 2. Gap Analysis (MVP — resolved)
 
-| Capability | Design docs | Current code | MVP target |
-|------------|-------------|--------------|------------|
-| Transcript paste / text upload | Required | Audio only | Paste + `.txt` + audio |
-| Speaker / turn parsing | Required | None | Parser + manual correction |
-| Evidence quote IDs (`Q001…`) | Required | None | Evidence index service |
-| Module metadata registry | Required | Basic `purposes.yaml` | Full `ModuleDefinition` schema |
-| Structured JSON output | Required | Markdown only | Pydantic `ModuleRunOutput` |
-| Prompt compiler | Required | Static template | Shared rules + evidence + schema |
-| Workflow engine | Required | Single `orchestrator.process()` | Quick Review + Full MVP |
-| Synthesis engine | Required | Single LLM call | Structured cross-module synthesis |
-| Finding cards + evidence UI | Required | Raw markdown | Dashboard with quote viewer |
-| Persistence | Required | Session state | SQLite store |
-| Tests | Required | None | Parser, schemas, golden transcripts |
-| Confidence calibration | Required | In prompts only | Validated `Confidence` enum |
+All MVP gaps below were closed in phases A–G.
+
+| Capability | Design docs | Was missing | Delivered in |
+|------------|-------------|-------------|--------------|
+| Transcript paste / text upload | Required | Audio only | Phase A |
+| Speaker / turn parsing | Required | None | Phase A |
+| Evidence quote IDs (`Q001…`) | Required | None | Phase A |
+| Module metadata registry | Required | Basic `purposes.yaml` | Phase B |
+| Structured JSON output | Required | Markdown only | Phase C |
+| Prompt compiler | Required | Static template | Phase B |
+| Workflow engine | Required | Single `orchestrator.process()` | Phase D |
+| Synthesis engine | Required | Single LLM call | Phase E |
+| Finding cards + evidence UI | Required | Raw markdown | Phase F |
+| Persistence | Required | Session state | Phase A |
+| Tests | Required | None | Phase G (76 tests) |
+| Confidence calibration | Required | In prompts only | Phase C |
 
 ---
 
@@ -113,15 +123,15 @@ relationship_conversation_analysis → nvc_analysis → systems_analysis
 
 Meta-synthesis receives **structured module outputs only**, not the raw transcript.
 
-### Milestones
+### Milestones (complete)
 
-| ID | Deliverable |
-|----|-------------|
-| M1 | Transcript ingestion + evidence indexing |
-| M2 | Single module → structured findings |
-| M3 | Multi-module workflow |
-| M4 | Interactive report UI |
-| M5 | Synthesis + confidence calibration |
+| ID | Deliverable | Status |
+|----|-------------|--------|
+| M1 | Transcript ingestion + evidence indexing | ✓ |
+| M2 | Single module → structured findings | ✓ |
+| M3 | Multi-module workflow | ✓ |
+| M4 | Interactive report UI | ✓ |
+| M5 | Synthesis + confidence calibration | ✓ |
 
 ---
 
@@ -181,9 +191,9 @@ config/
 
 ---
 
-## 5. Implementation Phases
+## 5. Implementation Phases (complete)
 
-### Phase A — Domain Foundation · M1
+### Phase A — Domain Foundation · M1 ✓
 
 **Goal:** Core types and transcript ingestion. No LLM changes.
 
@@ -202,17 +212,17 @@ config/
 
 ---
 
-### Phase B — Module Registry & Prompt Compiler · M2 prep
+### Phase B — Module Registry & Prompt Compiler · M2 prep ✓
 
 **Goal:** Structured module definitions and compiled prompts.
 
-- [ ] `config/modules/*.yaml` for 5 MVP modules ([06](06_analysis_modules.md))
-- [ ] `config/framework/shared_instructions.md` ([07](07_prompt_compiler.md), [09](09_evidence_confidence_and_citations.md))
-- [ ] `config/framework/output_schema_instructions.md`
-- [ ] `ModuleRegistry` — load and validate module YAML
-- [ ] `PromptCompiler` — shared rules + module + evidence index + schema → messages
-- [ ] API: `GET /api/modules`
-- [ ] `PurposeRegistry` facade over `ModuleRegistry`
+- [x] `config/modules/*.yaml` for 5 MVP modules ([06](06_analysis_modules.md))
+- [x] `config/framework/shared_instructions.md` ([07](07_prompt_compiler.md), [09](09_evidence_confidence_and_citations.md))
+- [x] `config/framework/output_schema_instructions.md`
+- [x] `ModuleRegistry` — load and validate module YAML
+- [x] `PromptCompiler` — shared rules + module + evidence index + schema → messages
+- [x] API: `GET /api/modules`
+- [x] `PurposeRegistry` facade over `ModuleRegistry`
 
 **Acceptance:** Deterministic compiled prompts. `/api/purposes` still works.
 
@@ -220,17 +230,17 @@ config/
 
 ---
 
-### Phase C — Structured Module Runner · M2
+### Phase C — Structured Module Runner · M2 ✓
 
 **Goal:** Validated JSON findings, not markdown-only output.
 
-- [ ] `OutputParser` — JSON extraction from LLM response
-- [ ] `SafetyValidator` ([14](14_testing_evaluation_and_safety.md))
-- [ ] `ModuleRunner` — compile → Ollama → parse → validate → retry
-- [ ] Enforce evidence IDs, confidence ceiling, alternative explanations
-- [ ] API: `POST /api/modules/{id}/run`, `GET /api/module-runs/{id}`
-- [ ] Golden transcript fixtures + schema tests
-- [ ] Start with Relationship Conversation Analysis; expand to 4 pre-synthesis modules
+- [x] `OutputParser` — JSON extraction from LLM response
+- [x] `SafetyValidator` ([14](14_testing_evaluation_and_safety.md))
+- [x] `ModuleRunner` — compile → Ollama → parse → validate → retry
+- [x] Enforce evidence IDs, confidence ceiling, alternative explanations
+- [x] API: `POST /api/modules/{id}/run`, `GET /api/module-runs/{id}`
+- [x] Golden transcript fixtures + schema tests
+- [x] All 4 pre-synthesis modules + meta-synthesis path
 
 **Acceptance:** Valid `ModuleRunOutput` with evidence-linked findings.
 
@@ -238,16 +248,16 @@ config/
 
 ---
 
-### Phase D — Workflow Engine · M3
+### Phase D — Workflow Engine · M3 ✓
 
 **Goal:** Quick Review and Full MVP workflows.
 
-- [ ] `config/workflows/quick_review.yaml`, `full_mvp.yaml` ([08](08_workflow_engine.md))
-- [ ] `WorkflowEngine` — sequential module execution, status tracking
-- [ ] Meta-synthesis receives module outputs only
-- [ ] API: `GET /api/workflows`, `POST /api/workflows/{id}/run`, `GET /api/workflow-runs/{id}`
-- [ ] `/api/process` delegates to workflow engine
-- [ ] Integration tests: transcript → workflow → outputs
+- [x] `config/workflows/quick_review.yaml`, `full_mvp.yaml` ([08](08_workflow_engine.md))
+- [x] `WorkflowEngine` — sequential module execution, status tracking
+- [x] Meta-synthesis receives module outputs only
+- [x] API: `GET /api/workflows`, `POST /api/workflows/{id}/run`, `GET /api/workflow-runs/{id}`
+- [x] `/api/process` delegates to workflow engine
+- [x] Integration tests: transcript → workflow → outputs
 
 **Acceptance:** Both workflows complete end-to-end with persisted results.
 
@@ -255,15 +265,15 @@ config/
 
 ---
 
-### Phase E — Synthesis Engine · M5
+### Phase E — Synthesis Engine · M5 ✓
 
 **Goal:** Cross-module integration without re-analyzing transcript.
 
-- [ ] `SynthesisEngine` ([10](10_synthesis_engine.md))
-- [ ] Pre-process: group findings by type and overlapping evidence
-- [ ] Parse `SynthesisReport` JSON
-- [ ] API: `GET /api/workflow-runs/{id}/synthesis`
-- [ ] Safety validation on synthesis output
+- [x] `SynthesisEngine` ([10](10_synthesis_engine.md))
+- [x] Pre-process: group findings by type and overlapping evidence
+- [x] Parse `SynthesisReport` JSON
+- [x] API: `GET /api/workflow-runs/{id}/synthesis`
+- [x] Safety validation on synthesis output
 
 **Acceptance:** Convergence/divergence sections; no unsupported new claims.
 
@@ -271,17 +281,17 @@ config/
 
 ---
 
-### Phase F — Report UI · M4
+### Phase F — Report UI · M4 ✓
 
 **Goal:** Evidence-linked interactive report ([11](11_ui_ux_design.md)).
 
-- [ ] Streamlit pages: Ingest → Prepare → Analyze → Report
-- [ ] `ExecutiveSummaryPanel`, `FindingCard`, `EvidenceQuoteViewer`
-- [ ] `ModuleTabs`, `SynthesisPanel`, `ConfidenceBadge`
-- [ ] Progressive disclosure + safety disclaimer
-- [ ] Export `.md` and `.json` workflow report
-- [ ] Workflow progress during multi-module runs
-- [ ] Legacy single-purpose mode toggle
+- [x] Streamlit pages: Ingest → Prepare → Analyze → Report
+- [x] `ExecutiveSummaryPanel`, `FindingCard`, `EvidenceQuoteViewer`
+- [x] `ModuleTabs`, `SynthesisPanel`, `ConfidenceBadge`
+- [x] Progressive disclosure + safety disclaimer
+- [x] Export `.md` and `.json` workflow report
+- [x] Workflow progress during multi-module runs
+- [x] Legacy single-purpose mode toggle
 
 **Acceptance:** Full user journey without API knowledge; quote drill-down works.
 
@@ -289,15 +299,16 @@ config/
 
 ---
 
-### Phase G — Testing & Hardening · M5
+### Phase G — Testing & Hardening · M5 ✓
 
 **Goal:** MVP ready for private use.
 
-- [ ] `tests/fixtures/transcripts/` — 5–8 golden + red-team scenarios
-- [ ] Unit + integration test suite
-- [ ] Long transcript handling (evidence summarization)
-- [ ] Document model setup; per-module model overrides
-- [ ] Deprecate `/api/analyze` in favor of workflows
+- [x] `tests/fixtures/transcripts/` — 7 golden + red-team scenarios
+- [x] Unit + integration test suite (76 tests)
+- [x] Long transcript handling (evidence summarization)
+- [x] Document model setup; per-module model overrides ([MODEL_SETUP.md](MODEL_SETUP.md))
+- [x] Deprecate `/api/analyze` in favor of workflows
+- [x] Deployment guide ([DEPLOYMENT.md](DEPLOYMENT.md))
 
 **Acceptance:** `pytest` passes; safety validator catches forbidden patterns.
 
@@ -323,15 +334,14 @@ config/
 | `GET` | `/api/workflow-runs/{id}/synthesis` | E |
 | `GET` | `/api/reports/{workflow_run_id}` | F |
 
-### Legacy (maintained during migration)
+### Legacy (maintained for compatibility)
 
-| Endpoint | Plan |
-|----------|------|
-| `/api/transcribe` | Keep — feeds transcript pipeline |
-| `/api/analyze` | Wrap `ModuleRunner`; deprecate in G |
-| `/api/analyze/stream` | Keep for single-module streaming |
-| `/api/process` | Delegate to `WorkflowEngine` |
-| `/api/purposes` | Facade over `ModuleRegistry` |
+| Endpoint | Status |
+|----------|--------|
+| `/api/transcribe` | Active — feeds transcript pipeline |
+| `/api/process` | Active — workflow-only audio processing |
+| `/api/purposes` | Deprecated alias over `/api/modules` |
+| `/api/modules/{id}/stream` | Single-module streaming |
 
 ---
 
@@ -373,15 +383,15 @@ meta_synthesis: false
 
 ---
 
-## 8. Migration Strategy
+## 8. Migration Strategy (MVP complete)
 
-| Legacy | Replacement | Approach |
-|--------|-------------|----------|
-| `config/purposes.yaml` | `config/modules/*.yaml` | Dual-load in Phase B; deprecate in G |
-| `PurposeRegistry` | `ModuleRegistry` | Facade until Phase G |
-| `AnalysisService` | `ModuleRunner` | `/api/analyze` delegates |
+| Legacy | Replacement | Status |
+|--------|-------------|--------|
+| `config/purposes.yaml` | `config/modules/*.yaml` | Archived; `/api/purposes` is deprecated alias |
+| `PurposeRegistry` | `ModuleRegistry` | Removed in Phase H |
+| `AnalysisService` | `ModuleRunner` | Removed in Phase H |
 | `orchestrator.process()` | `WorkflowEngine` | `/api/process` delegates |
-| Streamlit Step 3 | Workflow selector | Legacy tab until Phase F |
+| Streamlit single-purpose flow | Workflow report UI | Both available; workflows preferred |
 
 ```text
 Audio → Whisper → TranscriptParser → EvidenceIndex → WorkflowEngine
@@ -413,63 +423,136 @@ Audio → Whisper → TranscriptParser → EvidenceIndex → WorkflowEngine
 
 ---
 
-## 11. Success Criteria
+## 11. Success Criteria (met)
 
-- [ ] Paste or upload transcript (audio optional)
-- [ ] Speakers, turns, and quote IDs generated
-- [ ] Quick Review and Full MVP workflows run end-to-end
-- [ ] Structured findings with evidence quote IDs
-- [ ] Confidence labels in plain language in UI
-- [ ] Report dashboard with finding cards and evidence viewer
-- [ ] Meta-synthesis uses module outputs only
-- [ ] Safety disclaimer present
-- [ ] Golden transcript tests pass
-- [ ] Export `.md` and `.json` reports
-
----
-
-## 12. Build Order
-
-| # | Task | Reference |
-|---|------|-----------|
-| 1 | Domain types + schemas | doc/03, doc/05 |
-| 2 | Transcript parser + tests | Phase A |
-| 3 | Evidence index + tests | doc/09 |
-| 4 | SQLite repositories | doc/05 |
-| 5 | Module registry | doc/06 |
-| 6 | Prompt compiler | doc/07 |
-| 7 | Output parser + safety validator | doc/14 |
-| 8 | Module runner (one module) | Phase C |
-| 9 | Workflow engine | doc/08 |
-| 10 | Synthesis engine | doc/10 |
-| 11 | Report UI | doc/11 |
-| 12 | Golden transcript tests | doc/14 |
-| 13 | Legacy migration + docs | Phase G |
-
-One milestone per PR where possible. Tests with every service.
+- [x] Paste or upload transcript (audio optional)
+- [x] Speakers, turns, and quote IDs generated
+- [x] Quick Review and Full MVP workflows run end-to-end
+- [x] Structured findings with evidence quote IDs
+- [x] Confidence labels in plain language in UI
+- [x] Report dashboard with finding cards and evidence viewer
+- [x] Meta-synthesis uses module outputs only
+- [x] Safety disclaimer present
+- [x] Golden transcript tests pass
+- [x] Export `.md` and `.json` reports
 
 ---
 
-## 13. Timeline
+## 12. Build Order (complete)
 
-| Phase | Days | Week |
-|-------|------|------|
-| A — Domain + ingestion | 3–5 | 1 |
-| B — Registry + compiler | 3–4 | 1–2 |
-| C — Module runner | 5–7 | 2–3 |
-| D — Workflow engine | 4–6 | 3–4 |
-| E — Synthesis | 3–4 | 4 |
-| F — Report UI | 5–7 | 4–5 |
-| G — Testing | 4–5 | 5–6 |
+| # | Task | Status |
+|---|------|--------|
+| 1 | Domain types + schemas | ✓ |
+| 2 | Transcript parser + tests | ✓ |
+| 3 | Evidence index + tests | ✓ |
+| 4 | SQLite repositories | ✓ |
+| 5 | Module registry | ✓ |
+| 6 | Prompt compiler | ✓ |
+| 7 | Output parser + safety validator | ✓ |
+| 8 | Module runner | ✓ |
+| 9 | Workflow engine | ✓ |
+| 10 | Synthesis engine | ✓ |
+| 11 | Report UI | ✓ |
+| 12 | Golden transcript tests | ✓ |
+| 13 | Legacy migration + docs | ✓ |
 
 ---
 
-## 14. Next Action
+## 13. Timeline (actual)
 
-**Start Phase A:** Implement `backend/domain/` models and `TranscriptParser` with tests. No LLM changes in the first PR.
+| Phase | Deliverable | Status |
+|-------|-------------|--------|
+| 1–4 | Audio transcription + single-purpose analysis | ✓ |
+| A | Domain + ingestion | ✓ |
+| B | Registry + compiler | ✓ |
+| C | Module runner | ✓ |
+| D | Workflow engine | ✓ |
+| E | Synthesis | ✓ |
+| F | Report UI | ✓ |
+| G | Testing + hardening | ✓ |
+| — | Release `v0.2.0` | ✓ |
+
+---
+
+## 14. Post-MVP Next Steps
+
+MVP is complete and released. Prioritized work below extends the platform per [15_future_roadmap.md](15_future_roadmap.md). Tackle one theme per PR; keep tests with every change.
+
+### Immediate — stabilize private use
+
+| Priority | Task | Notes |
+|----------|------|-------|
+| P0 | Run real transcripts through `quick_review` and `full_mvp` | Validate with your Ollama model; tune `DEFAULT_OLLAMA_MODEL` |
+| P0 | Set per-module `ollama_model` where needed (especially `meta_synthesis`) | See [MODEL_SETUP.md](MODEL_SETUP.md) |
+| P1 | Expand golden fixtures from real usage | Add anonymized scenarios to `tests/fixtures/transcripts/` |
+| P1 | Monitor safety validator flags on live output | Calibrate prompts if false positives appear |
+
+### Phase H — Legacy cleanup ✓
+
+**Goal:** Single module/workflow architecture; less confusion for contributors.
+
+- [x] Remove dual-load of `config/purposes.yaml` (modules YAML only)
+- [x] Retire `PurposeRegistry` / `AnalysisService`
+- [x] Remove deprecated `POST /api/analyze` (replaced by `POST /api/modules/{id}/stream`)
+- [x] Update README and `config/prompts/README.md` to reference modules/workflows only
+- [x] Archive `config/purposes.yaml` to `config/archived/`
+
+**Acceptance:** No production code path depends on `purposes.yaml`; docs reflect workflows as primary.
+
+### Phase I — Module & workflow expansion ✓
+
+**Goal:** Grow from 5 modules / 2 workflows toward the full prompt library.
+
+- [x] Add module YAML for remaining prompts (8 modules; 13 total)
+- [x] Define new workflows: Conflict Coaching, Mediation Brief, Clinical Exploration
+- [x] Workflow-level metadata: estimated runtime, recommended model, output tone
+- [x] UI workflow picker with descriptions and output tone
+
+**Acceptance:** At least 3 new modules and 2 new workflows run end-to-end with existing runner/engine.
+
+### Phase J — Export & reporting ✓
+
+**Goal:** Professional-ready outputs beyond `.md` / `.json`.
+
+- [x] PDF export (workflow report)
+- [x] Therapist/coach summary template (shorter, action-oriented)
+- [x] Mediation brief template
+- [x] Optional redaction pass before export
+
+**Acceptance:** Full MVP report exports to PDF; at least one role-specific summary format.
+
+### Phase K — Platform hardening
+
+**Goal:** Prepare for heavier use without full multi-tenant deployment.
+
+- [x] PostgreSQL option (env-driven; keep SQLite default)
+- [x] Database migrations (Alembic)
+- [x] Async/workflow job queue for long runs (optional background execution)
+- [x] API authentication hook (local API key or reverse-proxy pattern)
+- [x] Structured logging + run telemetry
+
+**Acceptance:** Can switch `DATABASE_URL` to PostgreSQL; long workflows survive API restart.
+
+### Phase L — Interactive exploration (future)
+
+**Goal:** Move from static report to guided reasoning ([15](15_future_roadmap.md)).
+
+- [x] “Why this finding?” drill-down (module + evidence chain)
+- [x] Cross-module agreement/disagreement explorer
+- [x] Comparative analysis across multiple transcripts / sessions
+- [x] Knowledge graph visualization (constructs, cycles, needs)
+- [ ] React frontend (API already supports this path)
+
+**Acceptance:** User can ask follow-up questions scoped to stored findings without re-running full workflow.
+
+### Recommended first PR after Phase H
+
+### Recommended first PR after Phase J
 
 ```text
-Implement domain models and transcript parser per doc/implementation_plan.md Phase A.
-Include tests for 2-speaker and unlabeled transcripts.
-Do not modify LLM integration yet.
+Optional: React frontend consuming exploration APIs for richer interactive UI.
 ```
+
+### Out of scope (unchanged)
+
+See [§9 Out of Scope](#9-out-of-scope-mvp). Multi-user SaaS, billing, and ontology-driven prompt generation remain post-roadmap unless requirements change.

@@ -1,20 +1,35 @@
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse, StreamingResponse
 
-from backend.api.schemas import PurposesResponse, PurposeSchema
-from backend.core.purpose_registry import purpose_registry
+from backend.api.schemas import PurposesResponse, PurposeSchema, StreamModuleRequest
+from backend.core.module_registry import module_registry
 
 router = APIRouter(prefix="/api", tags=["purposes"])
 
+_PURPOSES_DEPRECATION_HEADERS = {
+    "Deprecation": "true",
+    "Link": '</api/modules>; rel="successor-version"',
+    "X-Deprecated-Endpoint": "GET /api/purposes is deprecated. Use GET /api/modules instead.",
+}
 
-@router.get("/purposes", response_model=PurposesResponse)
-def list_purposes() -> PurposesResponse:
+
+@router.get(
+    "/purposes",
+    response_model=PurposesResponse,
+    deprecated=True,
+    summary="List analysis modules (deprecated alias)",
+)
+def list_purposes() -> JSONResponse:
     purposes = [
         PurposeSchema(
-            id=purpose.id,
-            name=purpose.name,
-            description=purpose.description,
-            default_model=purpose.ollama_model,
+            id=module.config.id,
+            name=module.config.name,
+            description=module.config.description,
+            default_model=module.config.ollama_model,
         )
-        for purpose in purpose_registry.list_purposes()
+        for module in module_registry.list_modules()
     ]
-    return PurposesResponse(purposes=purposes)
+    return JSONResponse(
+        content=PurposesResponse(purposes=purposes).model_dump(),
+        headers=_PURPOSES_DEPRECATION_HEADERS,
+    )

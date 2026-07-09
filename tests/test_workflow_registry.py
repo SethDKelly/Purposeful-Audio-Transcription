@@ -6,12 +6,18 @@ from backend.core.exceptions import WorkflowNotFoundError
 from backend.core.workflow_registry import WorkflowRegistry
 
 
-def test_workflow_registry_loads_mvp_workflows() -> None:
+def test_workflow_registry_loads_all_workflows() -> None:
     registry = WorkflowRegistry()
     workflows = registry.list_workflows()
-    assert len(workflows) == 2
+    assert len(workflows) == 5
     ids = {workflow.config.id for workflow in workflows}
-    assert ids == {"quick_review", "full_mvp"}
+    assert ids == {
+        "quick_review",
+        "full_mvp",
+        "conflict_coaching",
+        "mediation_brief",
+        "clinical_exploration",
+    }
 
 
 def test_workflow_registry_get_quick_review() -> None:
@@ -23,12 +29,21 @@ def test_workflow_registry_get_quick_review() -> None:
         "bias_epistemic_quality",
     ]
     assert workflow.config.meta_synthesis is False
+    assert workflow.config.output_tone == "practical"
 
 
 def test_workflow_registry_get_full_mvp() -> None:
     registry = WorkflowRegistry()
     workflow = registry.get("full_mvp")
     assert workflow.module_sequence[-1] == "meta_synthesis"
+
+
+def test_workflow_registry_get_clinical_exploration() -> None:
+    registry = WorkflowRegistry()
+    workflow = registry.get("clinical_exploration")
+    assert workflow.config.meta_synthesis is True
+    assert workflow.config.output_tone == "clinical_exploratory"
+    assert "exploratory_psychological_formulation" in workflow.module_sequence
 
 
 def test_workflow_registry_unknown() -> None:

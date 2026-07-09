@@ -2,14 +2,15 @@
 
 import json
 import logging
+from collections.abc import Iterator
 from typing import Any
 
 from config.settings import settings
 from backend.core.exceptions import ModuleRunError, OllamaError
 from backend.core.module_registry import AnalysisModule, module_registry
-from backend.core.purpose_registry import purpose_registry
+from backend.services.prompt_compiler import PromptCompiler, prompt_compiler
 from backend.db.base import get_session
-from backend.domain.enums import TRANSCRIPT_RUNNABLE_MODULES, ModuleRunStatus
+from backend.domain.enums import ModuleRunStatus, SourceType
 from backend.domain.finding import ModuleRun
 from backend.repositories.module_run_repository import ModuleRunRepository, utc_now
 from backend.schemas.module_output_v1 import ModuleRunOutput
@@ -34,7 +35,7 @@ class ModuleRunner:
     def __init__(
         self,
         registry=module_registry,
-        purposes=purpose_registry,
+        compiler: PromptCompiler | None = None,
         transcripts: TranscriptService | None = None,
         parser: OutputParser | None = None,
         validator: ModuleOutputValidator | None = None,
@@ -43,7 +44,7 @@ class ModuleRunner:
         repository: ModuleRunRepository | None = None,
     ) -> None:
         self._registry = registry
-        self._purposes = purposes
+        self._compiler = compiler or prompt_compiler
         self._transcripts = transcripts or transcript_service
         self._parser = parser or output_parser
         self._validator = validator or module_output_validator
@@ -63,7 +64,7 @@ class ModuleRunner:
 
         bundle = self._transcripts.get(transcript_id)
         resolved_model = self._resolve_model(module, model)
-        compiled = self._purposes.build_compiled_messages(module_id, bundle)
+        compiled = self._compiler.compile_for_transcript(module, bundle)
         valid_quote_ids = {quote.quote_id for quote in bundle.evidence_quotes}
 
         return self._execute(
@@ -91,7 +92,7 @@ class ModuleRunner:
         bundle = self._transcripts.get(transcript_id)
         resolved_model = self._resolve_model(module, model)
         outputs_text = json.dumps(prior_outputs, indent=2)
-        compiled = self._purposes.build_compiled_synthesis_messages(module_id, outputs_text)
+        compiled = self._compiler.compile_for_module_outputs(module, outputs_text)
         valid_quote_ids = {quote.quote_id for quote in bundle.evidence_quotes}
         valid_quote_ids |= collect_quote_ids(prior_outputs)
 
@@ -104,6 +105,27 @@ class ModuleRunner:
             workflow_run_id=workflow_run_id,
             require_evidence=False,
         )
+
+    def stream_for_transcript_text(
+        self,
+        module_id: str,
+        transcript: str,
+        model: str | None = None,
+    ) -> Iterator[str]:
+        module = self._registry.get(module_id)
+        self._ensure_transcript_runnable(module)
+
+        transcript = transcript.strip()
+        if not transcript:
+            raise ModuleRunError("Transcript is empty")
+
+        bundle = self._transcripts.ingest(transcript, source_type=SourceType.PASTE)
+        resolved_model = self._resolve_model(module, model)
+        compiled = self._compiler.compile_for_transcript(module, bundle)
+        try:
+            yield from self._llm.chat_stream(resolved_model, compiled.messages)
+        except OllamaError as exc:
+            raise ModuleRunError(f"Ollama chat failed: {exc.message}") from exc
 
     def get(self, run_id: str) -> ModuleRun:
         with get_session() as session:
@@ -194,13 +216,14 @@ class ModuleRunner:
         )
 
     def _ensure_transcript_runnable(self, module: AnalysisModule) -> None:
-        if module.config.id not in TRANSCRIPT_RUNNABLE_MODULES:
-            if module.config.input_type == "module_outputs":
-                raise ModuleRunError(
-                    f"Module {module.config.id} requires prior module outputs; "
-                    "use the synthesis workflow instead."
-                )
-            raise ModuleRunError(f"Module {module.config.id} is not enabled for direct runs")
+        if module.config.input_type == "transcript":
+            return
+        if module.config.input_type == "module_outputs":
+            raise ModuleRunError(
+                f"Module {module.config.id} requires prior module outputs; "
+                "use the synthesis workflow instead."
+            )
+        raise ModuleRunError(f"Module {module.config.id} is not enabled for direct runs")
 
     def _resolve_model(self, module: AnalysisModule, model: str | None) -> str:
         resolved = model or module.config.ollama_model or settings.default_ollama_model or None

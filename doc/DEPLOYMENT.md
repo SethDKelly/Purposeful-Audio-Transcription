@@ -53,6 +53,11 @@ Copy `.env.example` to `.env`. Key settings for deployment:
 |----------|---------|-------|
 | `DEFAULT_OLLAMA_MODEL` | _(empty)_ | **Set this** before running workflows |
 | `DATABASE_URL` | `sqlite:///./data/rre.db` | Persists transcripts, runs, synthesis |
+| `DATABASE_POOL_SIZE` | `5` | PostgreSQL connection pool size |
+| `ALEMBIC_AUTO_UPGRADE` | `false` | Set `true` with PostgreSQL to run migrations on startup |
+| `API_KEY` | _(empty)_ | When set, require `X-API-Key` header on API routes |
+| `LOG_JSON` | `false` | Emit structured JSON logs when `true` |
+| `WORKFLOW_BACKGROUND_DEFAULT` | `false` | Queue workflow runs in background by default |
 | `API_HOST` | `127.0.0.1` | Keep on localhost for private use |
 | `API_PORT` | `8000` | FastAPI port |
 | `STREAMLIT_PORT` | `8501` | UI port |
@@ -103,7 +108,7 @@ Keep both terminals open. Bind to `127.0.0.1` / `localhost` only unless you unde
 1. **Ingest** — paste or upload a transcript (or transcribe audio)
 2. **Prepare** — edit speaker names; review quote IDs
 3. **Analyze** — run `quick_review` or `full_mvp` workflow
-4. **Report** — review module findings, synthesis, evidence drill-down; export `.md` / `.json`
+4. **Report** — review module findings, synthesis, evidence drill-down, interactive exploration; export `.md` / `.json` / `.pdf`
 
 Legacy single-purpose analysis remains available via sidebar toggle. Prefer workflows for structured output.
 
@@ -114,11 +119,15 @@ Legacy single-purpose analysis remains available via sidebar toggle. Prefer work
 | `GET` | `/api/health` | ffmpeg, Ollama, Whisper status |
 | `POST` | `/api/transcripts` | Ingest transcript |
 | `GET` | `/api/workflows` | List workflows |
-| `POST` | `/api/workflows/{id}/run` | Run analysis workflow |
+| `POST` | `/api/workflows/{id}/run` | Run analysis workflow (`background: true` for async) |
 | `GET` | `/api/workflow-runs/{id}` | Poll workflow status |
 | `GET` | `/api/workflow-runs/{id}/synthesis` | Synthesis report |
+| `GET` | `/api/workflow-runs/{id}/exploration/findings` | Indexed findings |
+| `POST` | `/api/workflow-runs/{id}/exploration/ask` | Follow-up Q&A on stored findings |
+| `POST` | `/api/exploration/compare` | Compare workflow runs |
 | `POST` | `/api/transcribe` | Audio → transcript |
-| `POST` | `/api/analyze` | **Deprecated** — use workflows |
+| `POST` | `/api/modules/{id}/stream` | Stream single-module LLM output |
+| `GET` | `/api/purposes` | Deprecated alias for `/api/modules` |
 
 ## Pre-flight checklist
 
@@ -141,7 +150,7 @@ copy data\rre.db data\rre.db.backup
 
 **Restore:** stop API/UI, replace `data/rre.db`, restart.
 
-No migration tooling is included in MVP — treat the database as disposable during upgrades unless you back up first.
+No migration tooling is required for SQLite-only dev — treat the database as disposable during upgrades unless you back up first. For PostgreSQL, set `ALEMBIC_AUTO_UPGRADE=true` or run `alembic upgrade head` before starting the API.
 
 ## Upgrade procedure
 
@@ -157,8 +166,9 @@ If schema changes occur in a future release, delete `data/rre.db` and re-ingest 
 
 ## Security notes
 
-- **No authentication** — intended for single-user local use only.
-- **Do not expose** API/UI to the public internet without adding auth, TLS, and rate limiting.
+- **Optional API key** — set `API_KEY` in `.env` to require `X-API-Key` on protected routes (`/api/health` and docs remain public). For Streamlit, pass the header if you add a custom API client.
+- **Default is open** — when `API_KEY` is empty, the API is unauthenticated (single-user local use).
+- **Do not expose** API/UI to the public internet without auth, TLS, and rate limiting.
 - Transcripts may contain sensitive personal data; disk encryption and access control are your responsibility.
 - LLM output is analytical, not clinical or legal advice; safety validation reduces but does not eliminate risk.
 

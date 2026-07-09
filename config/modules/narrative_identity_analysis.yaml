@@ -1,0 +1,31 @@
+id: narrative_identity_analysis
+name: "Narrative Identity Analysis"
+version: "1.0.0"
+enabled: true
+description: >
+  Narrative and identity lens on meaning-making, personal stories, and how each
+  participant frames themselves and the relationship.
+primary_lens: "Narrative Identity"
+analytical_level: integrative
+unit_of_analysis: narrative
+primary_question: "What narratives and identity themes shape this conversation?"
+secondary_questions:
+  - What stories do participants tell about themselves or each other?
+  - Where do meaning-making patterns converge or diverge?
+  - What narrative reframes might be constructive?
+required_constructs:
+  - personal_narrative
+  - identity_theme
+  - meaning_making
+  - narrative_reframe
+output_schema: module_output_v1
+recommended_companions:
+  - exploratory_psychological_formulation
+  - systems_analysis
+inference_depth: high
+confidence_ceiling: moderate
+dependencies:
+  - transcript_preprocessing
+prompt_file: "11 Narrative Identity Analysis.md"
+ollama_model: null
+input_type: transcript

@@ -1,0 +1,15 @@
+id: mediation_brief
+name: "Mediation Brief"
+version: "1.0.0"
+enabled: true
+description: >
+  Neutral mediation-oriented brief covering positions, systemic patterns, and
+  interpretive reliability for dispute resolution prep.
+estimated_runtime: "3-5 min"
+recommended_model: null
+output_tone: mediation
+modules:
+  - mediation_analysis
+  - systems_analysis
+  - bias_epistemic_quality
+meta_synthesis: false

@@ -8,15 +8,12 @@ import streamlit as st
 from config.settings import settings
 from ui.api_client import (
     API_BASE,
-    analyze_transcript,
     create_transcript,
     fetch_health,
     fetch_ollama_models,
-    fetch_purposes,
     fetch_workflows,
     get_workflow_synthesis,
     run_workflow,
-    stream_analyze_transcript,
     transcribe_audio,
     update_transcript_speakers,
     upload_transcript_text,
@@ -26,8 +23,15 @@ from ui.components.evidence_quote_viewer import (
     index_modules_by_quote,
     render_evidence_quote_viewer,
 )
+from ui.components.exploration_panel import render_exploration_panel
 from ui.components.module_tabs import render_module_tabs
-from ui.components.report_exports import build_workflow_report_json, build_workflow_report_markdown
+from ui.components.report_exports import (
+    build_coach_summary_markdown,
+    build_mediation_brief_markdown,
+    build_workflow_report_json,
+    build_workflow_report_markdown,
+    build_workflow_report_pdf,
+)
 from ui.components.safety_disclaimer import render_safety_disclaimer
 from ui.components.synthesis_panel import render_synthesis_panel
 
@@ -49,11 +53,6 @@ def _cached_ollama_models() -> list[str]:
 
 
 @st.cache_data(ttl=30, show_spinner=False)
-def _cached_purposes() -> list[dict]:
-    return fetch_purposes()
-
-
-@st.cache_data(ttl=30, show_spinner=False)
 def _cached_workflows() -> list[dict]:
     return fetch_workflows()
 
@@ -68,17 +67,8 @@ def _apply_transcript_bundle(bundle: dict, *, source_name: str = "transcript") -
         "speakers": bundle.get("speakers", []),
         "evidence_quotes": bundle.get("evidence_quotes", []),
     }
-    st.session_state.analysis = None
     st.session_state.workflow_run = None
     st.session_state.synthesis_report = None
-
-
-def _default_model(purpose: dict | None, ollama_models: list[str]) -> str | None:
-    if purpose and purpose.get("default_model"):
-        return purpose["default_model"]
-    if settings.default_ollama_model:
-        return settings.default_ollama_model
-    return ollama_models[0] if ollama_models else None
 
 
 def render_sidebar() -> None:
@@ -110,32 +100,6 @@ def render_sidebar() -> None:
         st.sidebar.caption("No workflows configured")
 
 
-def _render_legacy_analysis_exports(analysis: dict, base_name: str, *, show_content: bool) -> None:
-    if show_content:
-        st.markdown("### Analysis result")
-        st.caption(f"{analysis.get('purpose_name')} · {analysis.get('model')}")
-        st.markdown(analysis.get("analysis", ""))
-
-    export_md = (
-        f"# {analysis.get('purpose_name')}\n\n"
-        f"**Model:** {analysis.get('model')}\n\n"
-        f"{analysis.get('analysis', '')}"
-    )
-    col_md, col_json = st.columns(2)
-    col_md.download_button(
-        label="Download analysis (.md)",
-        data=export_md,
-        file_name=f"{base_name}_analysis.md",
-        mime="text/markdown",
-    )
-    col_json.download_button(
-        label="Download analysis (.json)",
-        data=json.dumps(analysis, indent=2),
-        file_name=f"{base_name}_analysis.json",
-        mime="application/json",
-    )
-
-
 def _render_workflow_progress(workflow_run: dict) -> None:
     st.markdown("### Workflow progress")
     for module_run in workflow_run.get("module_runs", []):
@@ -151,6 +115,10 @@ def _render_report_dashboard(
     quotes_by_id: dict[str, dict],
     speakers: list[dict],
     workflow_name: str,
+    *,
+    transcript_id: str | None = None,
+    ollama_models: list[str] | None = None,
+    default_model: str | None = None,
 ) -> None:
     render_safety_disclaimer()
 
@@ -164,8 +132,8 @@ def _render_report_dashboard(
 
     _render_workflow_progress(workflow_run)
 
-    overview_tab, modules_tab, evidence_tab, synthesis_tab = st.tabs(
-        ["Overview", "Module reports", "Evidence map", "Synthesis"]
+    overview_tab, modules_tab, evidence_tab, synthesis_tab, explore_tab = st.tabs(
+        ["Overview", "Module reports", "Evidence map", "Synthesis", "Explore"]
     )
 
     with overview_tab:
@@ -194,21 +162,67 @@ def _render_report_dashboard(
         else:
             st.info("No synthesis report is available for this workflow.")
 
+    with explore_tab:
+        render_exploration_panel(
+            workflow_run,
+            transcript_id=transcript_id,
+            quotes_by_id=quotes_by_id,
+            ollama_models=ollama_models or [],
+            default_model=default_model,
+        )
+
     base_name = (
         st.session_state.transcript_meta.get("filename", "workflow_report")
         .rsplit(".", 1)[0]
+    )
+    redact_exports = st.checkbox(
+        "Redact speaker labels and omit raw module reports from exports",
+        value=False,
+        key="export_redact",
     )
     export_md = build_workflow_report_markdown(
         workflow_run,
         synthesis,
         workflow_name=workflow_name,
+        redact=redact_exports,
     )
     export_json = build_workflow_report_json(
         workflow_run,
         synthesis,
         transcript_meta=st.session_state.transcript_meta,
+        redact=redact_exports,
     )
-    col_md, col_json = st.columns(2)
+    export_pdf = build_workflow_report_pdf(
+        workflow_run,
+        synthesis,
+        workflow_name=workflow_name,
+        redact=redact_exports,
+    )
+    coach_summary = build_coach_summary_markdown(
+        workflow_run,
+        synthesis,
+        workflow_name=workflow_name,
+        redact=redact_exports,
+    )
+    show_mediation_brief = (
+        workflow_run.get("workflow_id") == "mediation_brief"
+        or any(
+            module_run.get("module_id") == "mediation_analysis"
+            for module_run in workflow_run.get("module_runs", [])
+        )
+    )
+    mediation_brief = (
+        build_mediation_brief_markdown(
+            workflow_run,
+            synthesis,
+            workflow_name=workflow_name,
+            redact=redact_exports,
+        )
+        if show_mediation_brief
+        else None
+    )
+
+    col_md, col_json, col_pdf = st.columns(3)
     col_md.download_button(
         "Download workflow report (.md)",
         data=export_md,
@@ -221,6 +235,27 @@ def _render_report_dashboard(
         file_name=f"{base_name}_workflow_report.json",
         mime="application/json",
     )
+    col_pdf.download_button(
+        "Download workflow report (.pdf)",
+        data=export_pdf,
+        file_name=f"{base_name}_workflow_report.pdf",
+        mime="application/pdf",
+    )
+
+    col_coach, col_mediation = st.columns(2)
+    col_coach.download_button(
+        "Download coach summary (.md)",
+        data=coach_summary,
+        file_name=f"{base_name}_coach_summary.md",
+        mime="text/markdown",
+    )
+    if show_mediation_brief and mediation_brief:
+        col_mediation.download_button(
+            "Download mediation brief (.md)",
+            data=mediation_brief,
+            file_name=f"{base_name}_mediation_brief.md",
+            mime="text/markdown",
+        )
 
 
 def main() -> None:
@@ -236,20 +271,16 @@ def main() -> None:
     render_sidebar()
     render_safety_disclaimer()
 
-    purposes = _cached_purposes()
     workflows = _cached_workflows()
     ollama_models = _cached_ollama_models()
-    purpose_options = {purpose["name"]: purpose for purpose in purposes}
     workflow_options = {workflow["name"]: workflow for workflow in workflows}
 
     for key, default in (
         ("transcript", ""),
         ("transcript_meta", {}),
         ("transcript_bundle", None),
-        ("analysis", None),
         ("workflow_run", None),
         ("synthesis_report", None),
-        ("analysis_mode", "workflow"),
     ):
         if key not in st.session_state:
             st.session_state[key] = default
@@ -363,135 +394,75 @@ def main() -> None:
 
     # --- Step 3: Analyze ---
     st.subheader("Step 3 · Analyze")
-    analysis_mode = st.radio(
-        "Analysis mode",
-        options=["workflow", "legacy"],
-        format_func=lambda value: "Structured workflow (recommended)"
-        if value == "workflow"
-        else "Legacy single-purpose analysis",
-        horizontal=True,
-        key="analysis_mode",
-    )
 
     if not st.session_state.transcript:
         st.info("Prepare a transcript first.")
     elif not ollama_models:
         st.warning("No Ollama models available.")
-    elif analysis_mode == "workflow":
-        if not workflows:
-            st.warning("No workflows configured.")
-        else:
-            selected_workflow_name = st.selectbox(
-                "Workflow",
-                options=list(workflow_options.keys()),
-            )
-            workflow = workflow_options[selected_workflow_name]
-            st.caption(workflow.get("description", ""))
-            st.caption(
-                f"Modules: {', '.join(workflow.get('modules', []))} · "
-                f"Est. {workflow.get('estimated_runtime', 'n/a')}"
-            )
-
-            default_model = settings.default_ollama_model or ollama_models[0]
-            model_index = (
-                ollama_models.index(default_model)
-                if default_model in ollama_models
-                else 0
-            )
-            selected_model = st.selectbox("Ollama model", options=ollama_models, index=model_index)
-
-            transcript_id = st.session_state.transcript_meta.get("transcript_id")
-            bundle_text = (st.session_state.transcript_bundle or {}).get("transcript", {}).get(
-                "raw_text", ""
-            )
-            if transcript_id and bundle_text.strip() != st.session_state.transcript.strip():
-                st.warning(
-                    "Transcript text was edited after preparation. Re-prepare to refresh "
-                    "evidence quotes, or run with the stored transcript ID."
-                )
-
-            if st.button("Run workflow", type="primary", disabled=not transcript_id):
-                with st.status(f"Running {selected_workflow_name}...", expanded=True) as status:
-                    try:
-                        for module_id in workflow.get("modules", []):
-                            st.write(f"Running {module_id}...")
-                        result = run_workflow(
-                            transcript_id=transcript_id,
-                            workflow_id=workflow["id"],
-                            model=selected_model,
-                        )
-                        st.session_state.workflow_run = result
-                        st.session_state.synthesis_report = None
-                        if result.get("status") == "completed":
-                            try:
-                                st.session_state.synthesis_report = get_workflow_synthesis(
-                                    result["id"]
-                                )
-                            except RuntimeError:
-                                pass
-                            status.update(label="Workflow complete", state="complete")
-                        else:
-                            status.update(label="Workflow failed", state="error")
-                            st.error(result.get("error_log") or "Workflow failed.")
-                    except (RuntimeError, httpx.HTTPError) as exc:
-                        status.update(label="Workflow failed", state="error")
-                        st.error(str(exc))
+    elif not workflows:
+        st.warning("No workflows configured.")
     else:
-        if not purposes:
-            st.warning("No analysis purposes configured.")
-        else:
-            selected_name = st.selectbox("Analysis purpose", options=list(purpose_options.keys()))
-            selected_purpose = purpose_options[selected_name]
-            st.caption(selected_purpose.get("description", ""))
-            default_model = _default_model(selected_purpose, ollama_models)
-            model_index = (
-                ollama_models.index(default_model)
-                if default_model in ollama_models
-                else 0
+        selected_workflow_name = st.selectbox(
+            "Workflow",
+            options=list(workflow_options.keys()),
+        )
+        workflow = workflow_options[selected_workflow_name]
+        st.caption(workflow.get("description", ""))
+        tone = workflow.get("output_tone")
+        if tone:
+            st.caption(f"Output tone: {tone.replace('_', ' ')}")
+        recommended = workflow.get("recommended_model")
+        if recommended:
+            st.caption(f"Recommended model: {recommended}")
+        st.caption(
+            f"Modules: {', '.join(workflow.get('modules', []))} · "
+            f"Est. {workflow.get('estimated_runtime', 'n/a')}"
+        )
+
+        default_model = settings.default_ollama_model or ollama_models[0]
+        model_index = (
+            ollama_models.index(default_model)
+            if default_model in ollama_models
+            else 0
+        )
+        selected_model = st.selectbox("Ollama model", options=ollama_models, index=model_index)
+
+        transcript_id = st.session_state.transcript_meta.get("transcript_id")
+        bundle_text = (st.session_state.transcript_bundle or {}).get("transcript", {}).get(
+            "raw_text", ""
+        )
+        if transcript_id and bundle_text.strip() != st.session_state.transcript.strip():
+            st.warning(
+                "Transcript text was edited after preparation. Re-prepare to refresh "
+                "evidence quotes, or run with the stored transcript ID."
             )
-            selected_model = st.selectbox("Ollama model", options=ollama_models, index=model_index)
-            use_streaming = st.checkbox("Stream analysis output", value=True)
 
-            if st.button("Analyze transcript", type="primary"):
-                transcript = st.session_state.transcript.strip()
-                if not transcript:
-                    st.error("Transcript is empty.")
-                else:
-                    try:
-                        if use_streaming:
-                            st.markdown("### Analysis result")
-                            st.caption(f"{selected_name} · {selected_model}")
-                            analysis_text = st.write_stream(
-                                stream_analyze_transcript(
-                                    transcript,
-                                    selected_purpose["id"],
-                                    selected_model,
-                                )
+        if st.button("Run workflow", type="primary", disabled=not transcript_id):
+            with st.status(f"Running {selected_workflow_name}...", expanded=True) as status:
+                try:
+                    for module_id in workflow.get("modules", []):
+                        st.write(f"Running {module_id}...")
+                    result = run_workflow(
+                        transcript_id=transcript_id,
+                        workflow_id=workflow["id"],
+                        model=selected_model,
+                    )
+                    st.session_state.workflow_run = result
+                    st.session_state.synthesis_report = None
+                    if result.get("status") == "completed":
+                        try:
+                            st.session_state.synthesis_report = get_workflow_synthesis(
+                                result["id"]
                             )
-                            st.session_state.analysis = {
-                                "purpose_id": selected_purpose["id"],
-                                "purpose_name": selected_name,
-                                "model": selected_model,
-                                "analysis": analysis_text,
-                            }
-                        else:
-                            st.session_state.analysis = analyze_transcript(
-                                transcript,
-                                selected_purpose["id"],
-                                selected_model,
-                            )
-                    except (RuntimeError, httpx.HTTPError) as exc:
-                        st.error(str(exc))
-
-            if st.session_state.analysis:
-                base_name = st.session_state.transcript_meta.get("filename", "analysis").rsplit(
-                    ".", 1
-                )[0]
-                _render_legacy_analysis_exports(
-                    st.session_state.analysis,
-                    base_name,
-                    show_content=not use_streaming,
-                )
+                        except RuntimeError:
+                            pass
+                        status.update(label="Workflow complete", state="complete")
+                    else:
+                        status.update(label="Workflow failed", state="error")
+                        st.error(result.get("error_log") or "Workflow failed.")
+                except (RuntimeError, httpx.HTTPError) as exc:
+                    status.update(label="Workflow failed", state="error")
+                    st.error(str(exc))
 
     # --- Step 4: Report ---
     st.subheader("Step 4 · Report")
@@ -514,9 +485,10 @@ def main() -> None:
             quotes_by_id,
             speakers,
             workflow_name,
+            transcript_id=st.session_state.transcript_meta.get("transcript_id"),
+            ollama_models=ollama_models,
+            default_model=settings.default_ollama_model or (ollama_models[0] if ollama_models else None),
         )
-    elif st.session_state.analysis:
-        st.caption("Legacy markdown analysis is shown in Step 3.")
     else:
         st.info("Run a workflow to explore the evidence-linked report dashboard.")
 

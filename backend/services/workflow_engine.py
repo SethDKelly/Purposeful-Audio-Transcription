@@ -1,6 +1,7 @@
 """Orchestrate multi-module analysis workflows."""
 
 import logging
+import time
 
 from backend.core.exceptions import WorkflowRunError
 from backend.core.module_registry import module_registry
@@ -31,13 +32,13 @@ class WorkflowEngine:
         self._transcripts = transcripts or transcript_service
         self._repository = repository or WorkflowRunRepository()
 
-    def run(
+    def create_run(
         self,
         workflow_id: str,
         transcript_id: str,
         model: str | None = None,
     ) -> WorkflowRun:
-        workflow = self._workflows.get(workflow_id)
+        self._workflows.get(workflow_id)
         self._transcripts.get(transcript_id)
 
         with get_session() as session:
@@ -49,12 +50,105 @@ class WorkflowEngine:
             )
             workflow_run.status = WorkflowRunStatus.RUNNING_MODULES.value
             self._repository.save(session, workflow_run)
+        return workflow_run
 
-        module_runs: list[ModuleRun] = []
-        prior_outputs: list[dict] = []
+    def run(
+        self,
+        workflow_id: str,
+        transcript_id: str,
+        model: str | None = None,
+        *,
+        run_id: str | None = None,
+    ) -> WorkflowRun:
+        workflow = self._workflows.get(workflow_id)
+        self._transcripts.get(transcript_id)
+
+        if run_id:
+            workflow_run = self.get(run_id)
+            if workflow_run.workflow_id != workflow_id:
+                raise WorkflowRunError("Workflow run does not match workflow_id")
+            if workflow_run.transcript_id != transcript_id:
+                raise WorkflowRunError("Workflow run does not match transcript_id")
+            existing_module_runs = self._runner.list_by_workflow_run(run_id)
+            resolved_model = model or workflow_run.model_used
+        else:
+            workflow_run = self.create_run(workflow_id, transcript_id, model=model)
+            existing_module_runs = []
+            resolved_model = model
+
+        return self._execute(
+            workflow,
+            workflow_run,
+            existing_module_runs,
+            resolved_model,
+        )
+
+    def get(self, run_id: str) -> WorkflowRun:
+        with get_session() as session:
+            return self._repository.get(session, run_id)
+
+    def get_with_module_runs(self, run_id: str) -> tuple[WorkflowRun, list[ModuleRun]]:
+        workflow_run = self.get(run_id)
+        module_runs = self._runner.list_by_workflow_run(run_id)
+        return workflow_run, module_runs
+
+    def list_incomplete(self) -> list[WorkflowRun]:
+        with get_session() as session:
+            return self._repository.list_incomplete(session)
+
+    def _execute(
+        self,
+        workflow: WorkflowDefinition,
+        workflow_run: WorkflowRun,
+        existing_module_runs: list[ModuleRun],
+        model: str | None,
+    ) -> WorkflowRun:
+        started = time.monotonic()
+        transcript_id = workflow_run.transcript_id
+        completed_module_ids = {
+            module_run.module_id
+            for module_run in existing_module_runs
+            if module_run.status == ModuleRunStatus.COMPLETED.value
+        }
+        prior_outputs = [
+            module_run.parsed_output
+            for module_run in existing_module_runs
+            if module_run.parsed_output
+            and module_run.status == ModuleRunStatus.COMPLETED.value
+        ]
+        module_runs = list(existing_module_runs)
+
+        logger.info(
+            "Workflow run %s starting modules for %s",
+            workflow_run.id,
+            workflow.config.id,
+            extra={
+                "event": "workflow.run.started",
+                "run_id": workflow_run.id,
+                "workflow_id": workflow.config.id,
+                "status": workflow_run.status,
+            },
+        )
+
+        workflow_run.status = WorkflowRunStatus.RUNNING_MODULES.value
+        self._persist(workflow_run)
 
         try:
             for module_id in workflow.module_sequence:
+                if module_id in completed_module_ids:
+                    logger.info(
+                        "Skipping completed module %s for workflow run %s",
+                        module_id,
+                        workflow_run.id,
+                        extra={
+                            "event": "workflow.module.skipped",
+                            "run_id": workflow_run.id,
+                            "workflow_id": workflow.config.id,
+                            "module_id": module_id,
+                        },
+                    )
+                    continue
+
                 module = self._modules.get(module_id)
                 if module.config.input_type == "module_outputs":
                     workflow_run.status = WorkflowRunStatus.SYNTHESIZING.value
@@ -80,12 +174,13 @@ class WorkflowEngine:
                         workflow_run,
                         module_run,
                         f"Module {module_id} failed",
+                        started,
                     )
 
                 if module_run.parsed_output:
                     prior_outputs.append(module_run.parsed_output)
 
-            return self._complete_workflow(workflow_run, module_runs)
+            return self._complete_workflow(workflow_run, module_runs, started)
         except WorkflowRunError:
             raise
         except Exception as exc:
@@ -96,28 +191,28 @@ class WorkflowEngine:
             self._persist(workflow_run)
             raise WorkflowRunError(f"Workflow failed: {exc}") from exc
 
-    def get(self, run_id: str) -> WorkflowRun:
-        with get_session() as session:
-            return self._repository.get(session, run_id)
-
-    def get_with_module_runs(self, run_id: str) -> tuple[WorkflowRun, list[ModuleRun]]:
-        workflow_run = self.get(run_id)
-        module_runs = self._runner.list_by_workflow_run(run_id)
-        return workflow_run, module_runs
-
     def _complete_workflow(
         self,
         workflow_run: WorkflowRun,
         module_runs: list[ModuleRun],
+        started: float,
     ) -> WorkflowRun:
         workflow_run.status = WorkflowRunStatus.COMPLETED.value
         workflow_run.completed_at = utc_now()
         workflow_run.error_log = None
         self._persist(workflow_run)
+        duration_ms = int((time.monotonic() - started) * 1000)
         logger.info(
             "Workflow run %s completed with %s module runs",
             workflow_run.id,
             len(module_runs),
+            extra={
+                "event": "workflow.run.completed",
+                "run_id": workflow_run.id,
+                "workflow_id": workflow_run.workflow_id,
+                "status": workflow_run.status,
+                "duration_ms": duration_ms,
+            },
         )
         return workflow_run
 
@@ -126,17 +221,27 @@ class WorkflowEngine:
         workflow_run: WorkflowRun,
         module_run: ModuleRun,
         message: str,
+        started: float,
     ) -> WorkflowRun:
         workflow_run.status = WorkflowRunStatus.FAILED.value
         workflow_run.completed_at = utc_now()
         errors = module_run.validation_errors or [message]
         workflow_run.error_log = "; ".join(errors)
         self._persist(workflow_run)
+        duration_ms = int((time.monotonic() - started) * 1000)
         logger.warning(
             "Workflow run %s failed at module %s: %s",
             workflow_run.id,
             module_run.module_id,
             workflow_run.error_log,
+            extra={
+                "event": "workflow.run.failed",
+                "run_id": workflow_run.id,
+                "workflow_id": workflow_run.workflow_id,
+                "module_id": module_run.module_id,
+                "status": workflow_run.status,
+                "duration_ms": duration_ms,
+            },
         )
         return workflow_run
 

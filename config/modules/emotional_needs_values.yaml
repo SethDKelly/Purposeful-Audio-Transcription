@@ -1,0 +1,31 @@
+id: emotional_needs_values
+name: "Emotional Needs & Values"
+version: "1.0.0"
+enabled: true
+description: >
+  Analysis of emotional needs, values, and how they shape communication and
+  conflict in the interaction.
+primary_lens: "Needs and Values"
+analytical_level: relational
+unit_of_analysis: interaction
+primary_question: "What emotional needs and values shape this conversation?"
+secondary_questions:
+  - Which needs appear met or unmet?
+  - Where do value conflicts or alignments show up?
+  - What needs-aware interventions might help?
+required_constructs:
+  - emotional_need
+  - value
+  - unmet_need
+  - value_conflict
+output_schema: module_output_v1
+recommended_companions:
+  - nvc_analysis
+  - mediation_analysis
+inference_depth: medium
+confidence_ceiling: moderate
+dependencies:
+  - transcript_preprocessing
+prompt_file: "10 Emotional Needs & Values.md"
+ollama_model: null
+input_type: transcript

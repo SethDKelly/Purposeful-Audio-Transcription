@@ -1,0 +1,31 @@
+id: gottman_analysis
+name: "Gottman Analysis"
+version: "1.0.0"
+enabled: true
+description: >
+  Gottman Method lens on communication patterns, repair attempts, and behaviors
+  that strengthen or weaken the relationship system.
+primary_lens: "Gottman Method"
+analytical_level: relational
+unit_of_analysis: interaction
+primary_question: "What Gottman-informed interaction patterns and repair dynamics appear?"
+secondary_questions:
+  - Where do escalation or withdrawal patterns show up?
+  - What repair attempts or positive bids are visible?
+  - What relationship-maintaining behaviors deserve attention?
+required_constructs:
+  - communication_pattern
+  - repair_attempt
+  - bid_for_connection
+  - escalation_pattern
+output_schema: module_output_v1
+recommended_companions:
+  - relationship_conversation_analysis
+  - attachment_interaction_matrix
+inference_depth: medium
+confidence_ceiling: moderate
+dependencies:
+  - transcript_preprocessing
+prompt_file: "06 Gottman Analysis.md"
+ollama_model: null
+input_type: transcript

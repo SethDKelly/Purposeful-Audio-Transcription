@@ -85,3 +85,13 @@ class SynthesisNotFoundError(AppError):
 class SynthesisError(AppError):
     def __init__(self, message: str):
         super().__init__(message, status_code=400)
+
+
+class FindingNotFoundError(AppError):
+    def __init__(self, message: str):
+        super().__init__(message, status_code=404)
+
+
+class ExplorationError(AppError):
+    def __init__(self, message: str):
+        super().__init__(message, status_code=400)
