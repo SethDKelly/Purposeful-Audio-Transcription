@@ -2,6 +2,7 @@
 
 import shutil
 import sys
+import warnings
 
 import httpx
 
@@ -61,31 +62,40 @@ def check_ollama_models() -> bool:
 
 
 def check_diarization() -> bool:
-    from backend.services.diarization_service import diarization_service
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning, module=r"pyannote\.audio\.core\.io")
+        from backend.services.diarization_service import diarization_service
 
-    if not settings.diarization_enabled:
-        print("  [INFO] Diarization disabled (DIARIZATION_ENABLED=false)")
-        return True
+        if not settings.diarization_enabled:
+            print("  [INFO] Diarization disabled (DIARIZATION_ENABLED=false)")
+            return True
 
-    if diarization_service.is_available():
-        print(f"  [OK] Diarization ready (model: {settings.diarization_model})")
-        return True
+        if diarization_service.is_available():
+            print(f"  [OK] Diarization ready (model: {settings.diarization_model})")
+            print("         Audio decoding uses ffmpeg/ffprobe (torchcodec not required)")
+            return True
 
-    try:
-        import pyannote.audio  # noqa: F401
+        try:
+            import pyannote.audio  # noqa: F401
 
-        has_pyannote = True
-    except ImportError:
-        has_pyannote = False
+            has_pyannote = True
+        except ImportError:
+            has_pyannote = False
 
-    if not has_pyannote:
-        print("  [WARN] pyannote.audio not installed")
-        print("         Optional: pip install -e \".[diarization]\"")
-    elif not settings.hf_token:
-        print("  [WARN] HF_TOKEN not set (required for pyannote models)")
-        print("         Accept model terms at huggingface.co/pyannote and add HF_TOKEN to .env")
-    else:
-        print("  [WARN] Diarization dependencies present but not fully ready")
+        if not has_pyannote:
+            print("  [WARN] pyannote.audio not installed")
+            print("         Optional: pip install -e \".[diarization]\"")
+        elif not settings.hf_token:
+            print("  [WARN] HF_TOKEN not set (required for pyannote models)")
+            print("         Accept model terms at huggingface.co/pyannote and add HF_TOKEN to .env")
+        else:
+            access_error = diarization_service.model_access_error()
+            if access_error:
+                print(f"  [WARN] Hugging Face model access blocked: {access_error}")
+            elif not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+                print("  [WARN] ffmpeg/ffprobe required for diarization audio decoding")
+            else:
+                print("  [WARN] Diarization dependencies present but not fully ready")
     return True
 
 

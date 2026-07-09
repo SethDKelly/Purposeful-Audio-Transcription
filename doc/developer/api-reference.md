@@ -78,6 +78,8 @@ When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected r
 | `POST` | `/api/transcribe` | Audio → labeled transcript (Whisper + optional diarization) |
 | `POST` | `/api/process` | Audio + workflow → full pipeline |
 
+Optional form field `num_speakers` (1–10) hints diarization when the speaker count is known. Omit for auto-detect.
+
 `TranscribeResponse` includes `speaker_count`, `speaker_labels`, and `diarization_applied` when diarization runs.
 
 ## Examples

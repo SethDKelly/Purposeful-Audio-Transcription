@@ -20,7 +20,9 @@ When pyannote is installed, audio uploads are automatically split into **Person 
    ```powershell
    pip install -e ".[diarization]"
    ```
-2. Accept the model terms for [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1) on Hugging Face.
+2. Accept the model terms on Hugging Face (logged in as the same account as `HF_TOKEN`):
+   - [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1)
+   - [pyannote/segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
 3. Add your token to `.env`:
    ```env
    HF_TOKEN=your_huggingface_token
@@ -32,7 +34,11 @@ When pyannote is installed, audio uploads are automatically split into **Person 
 | `DIARIZATION_ENABLED` | `true` | Set `false` to skip diarization |
 | `DIARIZATION_MODEL` | `pyannote/speaker-diarization-3.1` | Hugging Face pipeline id |
 | `DIARIZATION_SPEAKER_PREFIX` | `Person` | Labels become Person A, Person B, … |
+| `DIARIZATION_MIN_SPEAKERS` | _(empty)_ | Default min speakers when no per-upload hint |
+| `DIARIZATION_MAX_SPEAKERS` | _(empty)_ | Default max speakers when no per-upload hint |
 | `HF_TOKEN` | _(empty)_ | Required for gated pyannote models |
+
+On Windows, pyannote may warn that **torchcodec** is unavailable. The app decodes audio with **ffmpeg/ffprobe** (same tools used for transcription) before running diarization. Ensure both are on `PATH`.
 
 If diarization is unavailable, transcription still works with a single **Speaker 1** label. The sidebar shows **Diarization: Connected** when ready.
 

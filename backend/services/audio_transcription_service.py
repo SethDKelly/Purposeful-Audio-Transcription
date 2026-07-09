@@ -19,10 +19,16 @@ class AudioTranscriptionResult:
     speaker_count: int = 1
     speaker_labels: list[str] = field(default_factory=list)
     diarization_applied: bool = False
+    diarization_skip_reason: str | None = None
 
 
 class AudioTranscriptionService:
-    def transcribe(self, audio_path: Path) -> AudioTranscriptionResult:
+    def transcribe(
+        self,
+        audio_path: Path,
+        *,
+        num_speakers: int | None = None,
+    ) -> AudioTranscriptionResult:
         whisper_result = whisper_service.transcribe(audio_path)
         base = AudioTranscriptionResult(
             text=whisper_result.text,
@@ -35,19 +41,31 @@ class AudioTranscriptionService:
         )
 
         if not settings.diarization_enabled:
+            base.diarization_skip_reason = "Diarization is disabled in settings"
+            return base
+
+        model_access_error = diarization_service.model_access_error()
+        if model_access_error:
+            logger.warning(
+                "Skipping diarization for %s: %s",
+                audio_path.name,
+                model_access_error,
+            )
+            base.diarization_skip_reason = model_access_error
             return base
 
         if not diarization_service.is_available():
-            logger.info(
-                "Skipping diarization for %s (install pyannote extras and set HF_TOKEN)",
-                audio_path.name,
-            )
+            reason = "Diarization dependencies are not available"
+            logger.info("Skipping diarization for %s (%s)", audio_path.name, reason)
+            base.diarization_skip_reason = reason
             return base
 
         try:
-            timeline = diarization_service.diarize(audio_path)
+            timeline = diarization_service.diarize(audio_path, num_speakers=num_speakers)
             if not timeline:
-                logger.warning("Diarization returned no intervals for %s", audio_path.name)
+                reason = "Diarization returned no speaker intervals"
+                logger.warning("%s for %s", reason, audio_path.name)
+                base.diarization_skip_reason = reason
                 return base
 
             labeled = build_labeled_transcript(
@@ -56,6 +74,7 @@ class AudioTranscriptionService:
                 speaker_prefix=settings.diarization_speaker_prefix,
             )
             if not labeled.text.strip():
+                base.diarization_skip_reason = "Speaker alignment produced no labeled text"
                 return base
 
             speaker_count = len(labeled.speaker_labels) or 1
@@ -69,11 +88,13 @@ class AudioTranscriptionService:
                 diarization_applied=True,
             )
         except Exception as exc:
+            reason = str(exc)
             logger.warning(
                 "Diarization failed for %s, using single-speaker transcript: %s",
                 audio_path.name,
                 exc,
             )
+            base.diarization_skip_reason = reason
             return base
 
 

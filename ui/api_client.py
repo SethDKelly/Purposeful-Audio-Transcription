@@ -68,10 +68,20 @@ def module_display_name(module_id: str, names: dict[str, str]) -> str:
     return names.get(module_id, module_id.replace("_", " ").title())
 
 
-def transcribe_audio(file_bytes: bytes, filename: str) -> dict:
+def transcribe_audio(
+    file_bytes: bytes,
+    filename: str,
+    *,
+    num_speakers: int | None = None,
+) -> dict:
+    data: dict[str, str] = {}
+    if num_speakers is not None:
+        data["num_speakers"] = str(num_speakers)
+
     response = httpx.post(
         f"{API_BASE}/api/transcribe",
         files={"file": (filename, file_bytes)},
+        data=data,
         timeout=TRANSCRIBE_TIMEOUT,
     )
     _raise_for_status(response)

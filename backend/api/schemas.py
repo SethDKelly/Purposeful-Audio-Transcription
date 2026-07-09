@@ -25,6 +25,7 @@ class TranscribeResponse(BaseModel):
     speaker_count: int = 1
     speaker_labels: list[str] = Field(default_factory=list)
     diarization_applied: bool = False
+    diarization_skip_reason: str | None = None
 
 
 class OllamaModelsResponse(BaseModel):

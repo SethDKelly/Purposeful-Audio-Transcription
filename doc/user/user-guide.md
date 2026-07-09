@@ -10,7 +10,7 @@ Ingest → Prepare → Analyze → Report
 
 ### 1. Ingest
 
-**Audio tab** — upload `.mp3`, `.wav`, `.m4a`, etc. Click **Transcribe audio** to run Whisper. When diarization is enabled (see [model-setup.md](model-setup.md)), the app labels turns as **Person A**, **Person B**, etc. Otherwise you get a single-speaker transcript you can edit manually in Step 2.
+**Audio tab** — upload `.mp3`, `.wav`, `.m4a`, etc. If you know how many people spoke, choose **Expected speakers** (2, 3, 4, or a custom count) before transcribing; otherwise leave **Auto-detect**. Click **Transcribe audio** to run Whisper. When diarization is enabled (see [model-setup.md](model-setup.md)), the app labels turns as **Person A**, **Person B**, etc. Otherwise you get a single-speaker transcript you can edit manually in Step 2.
 
 **Paste / upload tab** — paste labeled dialogue or upload a `.txt` file. Preferred format:
 
