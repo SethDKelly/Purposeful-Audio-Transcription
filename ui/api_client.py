@@ -1,8 +1,5 @@
 """Shared API client helpers for the Streamlit UI."""
 
-import json
-from collections.abc import Iterator
-
 import httpx
 
 from config.settings import settings
@@ -17,14 +14,9 @@ def _raise_for_status(response: httpx.Response) -> None:
     if response.status_code < 400:
         return
     try:
-        response.read()
-        payload = response.json()
-        detail = payload.get("detail", response.text) if isinstance(payload, dict) else response.text
+        detail = response.json().get("detail", response.text)
     except Exception:
-        try:
-            detail = response.text
-        except Exception:
-            detail = f"HTTP {response.status_code}"
+        detail = response.text
     raise RuntimeError(detail)
 
 
@@ -84,32 +76,6 @@ def transcribe_audio(file_bytes: bytes, filename: str) -> dict:
     )
     _raise_for_status(response)
     return response.json()
-
-
-def iter_transcribe_audio(file_bytes: bytes, filename: str) -> Iterator[dict]:
-    """Stream NDJSON transcription events from /api/transcribe/stream."""
-    with httpx.Client(timeout=TRANSCRIBE_TIMEOUT) as client:
-        with client.stream(
-            "POST",
-            f"{API_BASE}/api/transcribe/stream",
-            files={"file": (filename, file_bytes)},
-        ) as response:
-            if response.status_code >= 400:
-                body = response.read().decode("utf-8", errors="replace")
-                try:
-                    payload = json.loads(body)
-                    detail = (
-                        payload.get("detail", body)
-                        if isinstance(payload, dict)
-                        else body
-                    )
-                except json.JSONDecodeError:
-                    detail = body or f"HTTP {response.status_code}"
-                raise RuntimeError(detail)
-            for line in response.iter_lines():
-                if not line:
-                    continue
-                yield json.loads(line)
 
 
 def create_transcript(

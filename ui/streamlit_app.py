@@ -14,7 +14,6 @@ from ui.api_client import (
     fetch_ollama_models,
     fetch_workflows,
     get_workflow_synthesis,
-    iter_transcribe_audio,
     module_display_name,
     module_name_map,
     run_workflow,
@@ -344,54 +343,8 @@ def main() -> None:
 
     if uploaded is not None and st.button("Transcribe audio", type="primary"):
         with st.status("Transcribing...", expanded=True) as status:
-            progress_bar = st.progress(0.0, text="Starting transcription...")
-            metrics = st.empty()
             try:
-                result: dict | None = None
-                for event in iter_transcribe_audio(uploaded.getvalue(), uploaded.name):
-                    event_type = event.get("type")
-                    elapsed = event.get("elapsed_seconds", 0.0)
-                    if event_type == "started":
-                        duration = event.get("duration_seconds")
-                        if duration:
-                            metrics.caption(
-                                f"Audio duration: {duration:.0f}s · Whisper model: "
-                                f"{settings.whisper_model}"
-                            )
-                        else:
-                            metrics.caption(f"Elapsed: {elapsed:.0f}s")
-                    elif event_type == "progress":
-                        ratio = event.get("progress_ratio")
-                        segment_index = event.get("segment_index", 0)
-                        audio_pos = event.get("audio_position_seconds", 0.0)
-                        duration = event.get("duration_seconds")
-                        if ratio is not None:
-                            progress_bar.progress(
-                                min(float(ratio), 1.0),
-                                text=f"Transcribing… {int(ratio * 100)}% of audio",
-                            )
-                            metrics.caption(
-                                f"Elapsed: {elapsed:.0f}s · "
-                                f"Processed: {audio_pos:.0f}s / {duration:.0f}s · "
-                                f"Segments: {segment_index}"
-                            )
-                        else:
-                            progress_bar.progress(0.0, text="Transcribing audio...")
-                            metrics.caption(
-                                f"Elapsed: {elapsed:.0f}s · Segments: {segment_index}"
-                            )
-                    elif event_type == "complete":
-                        result = event.get("result", {})
-                        progress_bar.progress(1.0, text="Transcription complete")
-                        metrics.caption(
-                            f"Finished in {event.get('elapsed_seconds', elapsed):.0f}s"
-                        )
-                    elif event_type == "error":
-                        raise RuntimeError(event.get("message", "Transcription failed"))
-
-                if not result:
-                    raise RuntimeError("Transcription finished without a result")
-
+                result = transcribe_audio(uploaded.getvalue(), uploaded.name)
                 bundle = create_transcript(
                     result.get("transcript", ""),
                     source_type="audio",

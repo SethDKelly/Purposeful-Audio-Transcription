@@ -134,8 +134,8 @@ Audio
 
 - Extend `whisper_service` / `orchestrator` / `transcript_service.ingest_from_whisper`:
   - Run diarization before or in parallel with Whisper (parallel when GPU allows; sequential on CPU to avoid OOM)
-  - `POST /api/transcribe` and `/api/transcribe/stream` return `speaker_count` and per-turn labels in `complete` event
-- Stream progress events: `diarization_started`, `diarization_complete`, then existing Whisper `progress` events
+  - `POST /api/transcribe` returns `speaker_count` and per-turn labels
+- Stream progress events: `diarization_started`, `diarization_complete`, then Whisper transcription status as needed
 - `scripts/check_prerequisites.py`: verify `HF_TOKEN`, pyannote import, CUDA optional
 
 ### M4 — UI & docs
@@ -377,7 +377,7 @@ Unchanged from original MVP boundaries unless requirements shift:
 [ ] Add optional dependency group [diarization] (pyannote.audio, torch constraints)
 [ ] DIARIZATION_* and HF_TOKEN settings + .env.example
 [ ] diarization_service.py + transcript_alignment_service.py
-[ ] Integrate with whisper orchestrator + /api/transcribe/stream events
+[ ] Integrate with whisper orchestrator + transcription API
 [ ] Health check + check_prerequisites.py
 [ ] Streamlit: speaker count + fallback messaging
 [ ] tests: alignment unit tests + mocked integration

@@ -62,7 +62,7 @@ Allow advanced users to:
 
 ### Audio/Video Inputs
 
-**Status:** Whisper transcription + streaming progress shipped; **speaker diarization planned (Phase M)**.
+**Status:** Whisper transcription shipped; **speaker diarization planned (Phase M)**.
 
 Potential future features beyond diarization:
 - timing analysis

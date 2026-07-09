@@ -75,20 +75,8 @@ When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected r
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/transcribe` | Audio → transcript (blocking JSON) |
-| `POST` | `/api/transcribe/stream` | Audio → NDJSON stream (`started`, `progress`, `complete`, `error`) |
+| `POST` | `/api/transcribe` | Audio → transcript |
 | `POST` | `/api/process` | Audio + workflow → full pipeline |
-
-### Transcribe stream events
-
-Each line is JSON (NDJSON). Event types:
-
-| `type` | Fields | Description |
-|--------|--------|-------------|
-| `started` | `duration_seconds`, `language` | Transcription began |
-| `progress` | `elapsed_seconds`, `segment_index`, `audio_position_seconds`, `progress_ratio` | Segment completed |
-| `complete` | `elapsed_seconds`, `result` | Final transcript (same shape as `/api/transcribe`) |
-| `error` | `message` | Failure |
 
 ## Examples
 

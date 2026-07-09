@@ -59,11 +59,7 @@ See [model-setup.md](model-setup.md) for Ollama configuration.
 | `API_HOST` / `API_PORT` | `127.0.0.1` / `8000` | Keep on localhost |
 | `STREAMLIT_PORT` | `8501` | UI port |
 | `OLLAMA_HOST` | `http://localhost:11434` | Ollama API |
-| `WHISPER_MODEL` | `base` | Transcription quality (`tiny`/`base` faster; `small`/`medium` slower) |
-| `WHISPER_BEAM_SIZE` | `1` | Lower = faster; `5` is more accurate but slower |
-| `WHISPER_VAD_FILTER` | `true` | Skip silent regions (usually faster on speech with pauses) |
-| `WHISPER_DEVICE` | `auto` | Set `cuda` when an NVIDIA GPU is available |
-| `WHISPER_COMPUTE_TYPE` | `int8` | Use `float16` on GPU for speed/quality balance |
+| `WHISPER_MODEL` | `base` | Transcription quality |
 | `MAX_UPLOAD_MB` | `100` | Audio upload limit |
 | `EVIDENCE_PROMPT_MAX_QUOTES` | `120` | Long-transcript summarization |
 
