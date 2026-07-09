@@ -61,7 +61,7 @@ streamlit run ui/streamlit_app.py
 3. **Ingest** — upload audio or paste/upload a transcript
 4. **Prepare** — edit speaker names and review evidence quote IDs
 5. **Analyze** — select a workflow (`quick_review` or `full_mvp`) and Ollama model
-6. **Report** — explore findings, synthesis, evidence drill-down; export `.md` / `.json`
+6. **Report** — explore findings, synthesis, evidence drill-down, interactive follow-up; export `.md` / `.json` / `.pdf`
 
 ## Prompt storage
 
@@ -82,6 +82,13 @@ Analysis prompts are stored in `config/prompts/` and linked from `config/modules
 | `POST` | `/api/transcribe` | Upload audio file and get transcript |
 | `POST` | `/api/workflows/{id}/run` | Run structured analysis workflow |
 | `GET` | `/api/workflow-runs/{id}/synthesis` | Get synthesis report |
+| `GET` | `/api/workflow-runs/{id}/exploration/findings` | List indexed findings for exploration |
+| `GET` | `/api/workflow-runs/{id}/exploration/findings/{key}` | Finding drill-down with evidence chain |
+| `GET` | `/api/workflow-runs/{id}/exploration/cross-module` | Cross-module agreement/tension explorer |
+| `GET` | `/api/workflow-runs/{id}/exploration/knowledge-graph` | Construct relationship graph |
+| `POST` | `/api/workflow-runs/{id}/exploration/ask` | Ask follow-up questions scoped to stored findings |
+| `POST` | `/api/exploration/compare` | Compare multiple workflow runs |
+| `GET` | `/api/transcripts/{id}/workflow-runs` | List completed runs for a transcript |
 | `POST` | `/api/modules/{id}/stream` | Stream single-module LLM output |
 | `POST` | `/api/process` | Upload audio + workflow → transcript + analysis |
 | `GET` | `/api/purposes` | Deprecated alias for `/api/modules` |
@@ -139,4 +146,6 @@ See [doc/implementation_plan.md](doc/implementation_plan.md) for the active MVP 
 - **Phase H** — Legacy cleanup ✓
 - **Phase I** — Full module library (13 modules) + 5 workflows ✓
 - **Phase J** — PDF export, coach/mediation summaries, redaction ✓
+- **Phase K** — PostgreSQL, Alembic, background workflows, API auth ✓
+- **Phase L** — Interactive exploration (drill-down, cross-module, follow-up Q&A) ✓
 - **Release** — `v0.2.0`

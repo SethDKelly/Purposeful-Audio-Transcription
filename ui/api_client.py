@@ -138,3 +138,79 @@ def get_workflow_synthesis(run_id: str) -> dict:
     response = httpx.get(f"{API_BASE}/api/workflow-runs/{run_id}/synthesis", timeout=30.0)
     _raise_for_status(response)
     return response.json()
+
+
+def fetch_exploration_findings(run_id: str) -> list[dict]:
+    response = httpx.get(
+        f"{API_BASE}/api/workflow-runs/{run_id}/exploration/findings",
+        timeout=30.0,
+    )
+    _raise_for_status(response)
+    return response.json().get("findings", [])
+
+
+def fetch_finding_drilldown(run_id: str, finding_key: str) -> dict:
+    response = httpx.get(
+        f"{API_BASE}/api/workflow-runs/{run_id}/exploration/findings/{finding_key}",
+        timeout=30.0,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
+def fetch_cross_module_alignment(run_id: str) -> dict:
+    response = httpx.get(
+        f"{API_BASE}/api/workflow-runs/{run_id}/exploration/cross-module",
+        timeout=30.0,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
+def fetch_knowledge_graph(run_id: str) -> dict:
+    response = httpx.get(
+        f"{API_BASE}/api/workflow-runs/{run_id}/exploration/knowledge-graph",
+        timeout=30.0,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
+def fetch_transcript_workflow_runs(transcript_id: str) -> list[dict]:
+    response = httpx.get(
+        f"{API_BASE}/api/transcripts/{transcript_id}/workflow-runs",
+        timeout=30.0,
+    )
+    _raise_for_status(response)
+    return response.json().get("workflow_runs", [])
+
+
+def compare_workflow_runs(workflow_run_ids: list[str]) -> dict:
+    response = httpx.post(
+        f"{API_BASE}/api/exploration/compare",
+        json={"workflow_run_ids": workflow_run_ids},
+        timeout=60.0,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
+def ask_workflow_followup(
+    run_id: str,
+    question: str,
+    *,
+    model: str | None = None,
+    finding_key: str | None = None,
+) -> dict:
+    payload: dict[str, str] = {"question": question}
+    if model:
+        payload["model"] = model
+    if finding_key:
+        payload["finding_key"] = finding_key
+    response = httpx.post(
+        f"{API_BASE}/api/workflow-runs/{run_id}/exploration/ask",
+        json=payload,
+        timeout=120.0,
+    )
+    _raise_for_status(response)
+    return response.json()

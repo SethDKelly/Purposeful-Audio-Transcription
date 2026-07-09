@@ -23,6 +23,7 @@ from ui.components.evidence_quote_viewer import (
     index_modules_by_quote,
     render_evidence_quote_viewer,
 )
+from ui.components.exploration_panel import render_exploration_panel
 from ui.components.module_tabs import render_module_tabs
 from ui.components.report_exports import (
     build_coach_summary_markdown,
@@ -114,6 +115,10 @@ def _render_report_dashboard(
     quotes_by_id: dict[str, dict],
     speakers: list[dict],
     workflow_name: str,
+    *,
+    transcript_id: str | None = None,
+    ollama_models: list[str] | None = None,
+    default_model: str | None = None,
 ) -> None:
     render_safety_disclaimer()
 
@@ -127,8 +132,8 @@ def _render_report_dashboard(
 
     _render_workflow_progress(workflow_run)
 
-    overview_tab, modules_tab, evidence_tab, synthesis_tab = st.tabs(
-        ["Overview", "Module reports", "Evidence map", "Synthesis"]
+    overview_tab, modules_tab, evidence_tab, synthesis_tab, explore_tab = st.tabs(
+        ["Overview", "Module reports", "Evidence map", "Synthesis", "Explore"]
     )
 
     with overview_tab:
@@ -156,6 +161,15 @@ def _render_report_dashboard(
             render_synthesis_panel(synthesis, quotes_by_id)
         else:
             st.info("No synthesis report is available for this workflow.")
+
+    with explore_tab:
+        render_exploration_panel(
+            workflow_run,
+            transcript_id=transcript_id,
+            quotes_by_id=quotes_by_id,
+            ollama_models=ollama_models or [],
+            default_model=default_model,
+        )
 
     base_name = (
         st.session_state.transcript_meta.get("filename", "workflow_report")
@@ -471,6 +485,9 @@ def main() -> None:
             quotes_by_id,
             speakers,
             workflow_name,
+            transcript_id=st.session_state.transcript_meta.get("transcript_id"),
+            ollama_models=ollama_models,
+            default_model=settings.default_ollama_model or (ollama_models[0] if ollama_models else None),
         )
     else:
         st.info("Run a workflow to explore the evidence-linked report dashboard.")

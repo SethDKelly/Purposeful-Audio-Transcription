@@ -108,7 +108,7 @@ Keep both terminals open. Bind to `127.0.0.1` / `localhost` only unless you unde
 1. **Ingest** — paste or upload a transcript (or transcribe audio)
 2. **Prepare** — edit speaker names; review quote IDs
 3. **Analyze** — run `quick_review` or `full_mvp` workflow
-4. **Report** — review module findings, synthesis, evidence drill-down; export `.md` / `.json`
+4. **Report** — review module findings, synthesis, evidence drill-down, interactive exploration; export `.md` / `.json` / `.pdf`
 
 Legacy single-purpose analysis remains available via sidebar toggle. Prefer workflows for structured output.
 
@@ -122,6 +122,9 @@ Legacy single-purpose analysis remains available via sidebar toggle. Prefer work
 | `POST` | `/api/workflows/{id}/run` | Run analysis workflow (`background: true` for async) |
 | `GET` | `/api/workflow-runs/{id}` | Poll workflow status |
 | `GET` | `/api/workflow-runs/{id}/synthesis` | Synthesis report |
+| `GET` | `/api/workflow-runs/{id}/exploration/findings` | Indexed findings |
+| `POST` | `/api/workflow-runs/{id}/exploration/ask` | Follow-up Q&A on stored findings |
+| `POST` | `/api/exploration/compare` | Compare workflow runs |
 | `POST` | `/api/transcribe` | Audio → transcript |
 | `POST` | `/api/modules/{id}/stream` | Stream single-module LLM output |
 | `GET` | `/api/purposes` | Deprecated alias for `/api/modules` |

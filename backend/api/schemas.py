@@ -325,6 +325,140 @@ class TranscriptBundleResponse(BaseModel):
     evidence_quotes: list[EvidenceQuoteResponse] = Field(default_factory=list)
 
 
+class ExplorationFindingSummary(BaseModel):
+    finding_key: str
+    module_id: str
+    module_run_id: str
+    id: str | None = None
+    type: str | None = None
+    title: str | None = None
+    summary: str | None = None
+    confidence: str | None = None
+    evidence_quote_ids: list[str] = Field(default_factory=list)
+
+
+class ExplorationFindingsResponse(BaseModel):
+    workflow_run_id: str
+    findings: list[ExplorationFindingSummary] = Field(default_factory=list)
+
+
+class ExplorationEvidenceQuote(BaseModel):
+    quote_id: str
+    text: str
+    speaker: str
+    turn_index: int
+    context_before: str | None = None
+    context_after: str | None = None
+
+
+class ExplorationRelatedFinding(BaseModel):
+    finding_key: str
+    module_id: str
+    title: str | None = None
+    shared_evidence_quote_ids: list[str] = Field(default_factory=list)
+
+
+class FindingDrilldownResponse(BaseModel):
+    finding_key: str
+    finding: dict
+    module_id: str
+    module_run_id: str
+    workflow_run_id: str
+    transcript_id: str
+    evidence_chain: list[ExplorationEvidenceQuote] = Field(default_factory=list)
+    related_findings: list[ExplorationRelatedFinding] = Field(default_factory=list)
+    linked_constructs: list[dict] = Field(default_factory=list)
+
+
+class CrossModuleAlignmentGroup(BaseModel):
+    finding_keys: list[str] = Field(default_factory=list)
+    modules: list[str] = Field(default_factory=list)
+    shared_evidence_quote_ids: list[str] = Field(default_factory=list)
+    shared_title_terms: list[str] = Field(default_factory=list)
+    alignment: str
+    notes: list[str] = Field(default_factory=list)
+
+
+class CrossModuleAlignmentResponse(BaseModel):
+    workflow_run_id: str
+    agreements: list[CrossModuleAlignmentGroup] = Field(default_factory=list)
+    disagreements: list[CrossModuleAlignmentGroup] = Field(default_factory=list)
+    synthesis: dict | None = None
+
+
+class KnowledgeGraphNode(BaseModel):
+    id: str
+    type: str
+    label: str
+    module_id: str
+    confidence: str | None = None
+    evidence_quote_ids: list[str] = Field(default_factory=list)
+
+
+class KnowledgeGraphEdge(BaseModel):
+    source: str
+    target: str
+    relationship_type: str
+    module_id: str
+    confidence: str | None = None
+
+
+class KnowledgeGraphResponse(BaseModel):
+    workflow_run_id: str
+    nodes: list[KnowledgeGraphNode] = Field(default_factory=list)
+    edges: list[KnowledgeGraphEdge] = Field(default_factory=list)
+
+
+class CompareWorkflowRunsRequest(BaseModel):
+    workflow_run_ids: list[str] = Field(min_length=2)
+
+
+class CompareWorkflowRunSummary(BaseModel):
+    workflow_run_id: str
+    workflow_id: str
+    transcript_id: str
+    completed_at: str | None = None
+    finding_count: int
+    findings: list[ExplorationFindingSummary] = Field(default_factory=list)
+
+
+class CompareWorkflowRunsResponse(BaseModel):
+    workflow_run_ids: list[str]
+    runs: list[CompareWorkflowRunSummary] = Field(default_factory=list)
+    shared_themes: list[dict] = Field(default_factory=list)
+    recurring_evidence_quote_ids: list[dict] = Field(default_factory=list)
+
+
+class AskFollowupRequest(BaseModel):
+    question: str
+    model: str | None = None
+    finding_key: str | None = None
+
+
+class AskFollowupResponse(BaseModel):
+    workflow_run_id: str
+    finding_key: str | None = None
+    question: str
+    answer: str
+    model_used: str
+    context_scope: str | None = None
+
+
+class TranscriptWorkflowRunSummary(BaseModel):
+    id: str
+    workflow_id: str
+    transcript_id: str
+    status: str
+    model_used: str | None = None
+    started_at: str
+    completed_at: str | None = None
+
+
+class TranscriptWorkflowRunsResponse(BaseModel):
+    transcript_id: str
+    workflow_runs: list[TranscriptWorkflowRunSummary] = Field(default_factory=list)
+
+
 def bundle_to_response(bundle) -> TranscriptBundleResponse:
     transcript = bundle.transcript
     return TranscriptBundleResponse(

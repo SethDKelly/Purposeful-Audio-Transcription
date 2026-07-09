@@ -59,6 +59,19 @@ class WorkflowRunRepository:
         ).all()
         return [_from_row(row) for row in rows]
 
+    def list_by_transcript_id(
+        self,
+        session: Session,
+        transcript_id: str,
+        *,
+        status: str | None = None,
+    ) -> list[WorkflowRun]:
+        query = select(WorkflowRunRow).where(WorkflowRunRow.transcript_id == transcript_id)
+        if status is not None:
+            query = query.where(WorkflowRunRow.status == status)
+        rows = session.scalars(query.order_by(WorkflowRunRow.started_at.desc())).all()
+        return [_from_row(row) for row in rows]
+
 
 def new_workflow_run_id() -> str:
     return str(uuid.uuid4())

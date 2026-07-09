@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from backend.api.middleware import APIKeyMiddleware
-from backend.api.routes import health, models, module_stream, modules, process, purposes, transcribe, transcripts, workflows
+from backend.api.routes import exploration, health, models, module_stream, modules, process, purposes, transcribe, transcripts, workflows
 from backend.core.exceptions import AppError
 from backend.core.logging_config import configure_logging
 from backend.db.base import init_db
@@ -37,6 +37,7 @@ app.include_router(purposes.router)
 app.include_router(modules.router)
 app.include_router(module_stream.router)
 app.include_router(workflows.router)
+app.include_router(exploration.router)
 app.include_router(process.router)
 app.include_router(transcripts.router)
 

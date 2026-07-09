@@ -537,10 +537,10 @@ MVP is complete and released. Prioritized work below extends the platform per [1
 
 **Goal:** Move from static report to guided reasoning ([15](15_future_roadmap.md)).
 
-- [ ] “Why this finding?” drill-down (module + evidence chain)
-- [ ] Cross-module agreement/disagreement explorer
-- [ ] Comparative analysis across multiple transcripts / sessions
-- [ ] Knowledge graph visualization (constructs, cycles, needs)
+- [x] “Why this finding?” drill-down (module + evidence chain)
+- [x] Cross-module agreement/disagreement explorer
+- [x] Comparative analysis across multiple transcripts / sessions
+- [x] Knowledge graph visualization (constructs, cycles, needs)
 - [ ] React frontend (API already supports this path)
 
 **Acceptance:** User can ask follow-up questions scoped to stored findings without re-running full workflow.
@@ -550,7 +550,7 @@ MVP is complete and released. Prioritized work below extends the platform per [1
 ### Recommended first PR after Phase J
 
 ```text
-Phase L: Interactive exploration — drill-down, cross-module comparison, and guided follow-up.
+Optional: React frontend consuming exploration APIs for richer interactive UI.
 ```
 
 ### Out of scope (unchanged)
