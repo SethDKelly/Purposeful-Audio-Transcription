@@ -4,7 +4,7 @@ Active plan to evolve the existing Purposeful Audio Transcription codebase into 
 
 | | |
 |---|---|
-| **Status** | **Phase I complete** — post-MVP expansion (phases J–L) |
+| **Status** | **Phase J complete** — post-MVP expansion (phases K–L) |
 | **Release** | [`v0.2.0`](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v0.2.0) |
 | **Baseline** | Phases 1–4 complete (audio → Whisper → single-purpose Ollama analysis) |
 | **Delivered** | Evidence-linked, structured, multi-module workflow MVP |
@@ -510,14 +510,14 @@ MVP is complete and released. Prioritized work below extends the platform per [1
 
 **Acceptance:** At least 3 new modules and 2 new workflows run end-to-end with existing runner/engine.
 
-### Phase J — Export & reporting
+### Phase J — Export & reporting ✓
 
 **Goal:** Professional-ready outputs beyond `.md` / `.json`.
 
-- [ ] PDF export (workflow report)
-- [ ] Therapist/coach summary template (shorter, action-oriented)
-- [ ] Mediation brief template
-- [ ] Optional redaction pass before export
+- [x] PDF export (workflow report)
+- [x] Therapist/coach summary template (shorter, action-oriented)
+- [x] Mediation brief template
+- [x] Optional redaction pass before export
 
 **Acceptance:** Full MVP report exports to PDF; at least one role-specific summary format.
 
@@ -547,10 +547,10 @@ MVP is complete and released. Prioritized work below extends the platform per [1
 
 ### Recommended first PR after Phase H
 
-### Recommended first PR after Phase I
+### Recommended first PR after Phase J
 
 ```text
-Phase J: Add PDF export for workflow reports and a therapist/coach summary template.
+Phase K: Add PostgreSQL option with Alembic migrations and env-driven DATABASE_URL switching.
 ```
 
 ### Out of scope (unchanged)

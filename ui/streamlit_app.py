@@ -24,7 +24,13 @@ from ui.components.evidence_quote_viewer import (
     render_evidence_quote_viewer,
 )
 from ui.components.module_tabs import render_module_tabs
-from ui.components.report_exports import build_workflow_report_json, build_workflow_report_markdown
+from ui.components.report_exports import (
+    build_coach_summary_markdown,
+    build_mediation_brief_markdown,
+    build_workflow_report_json,
+    build_workflow_report_markdown,
+    build_workflow_report_pdf,
+)
 from ui.components.safety_disclaimer import render_safety_disclaimer
 from ui.components.synthesis_panel import render_synthesis_panel
 
@@ -155,17 +161,54 @@ def _render_report_dashboard(
         st.session_state.transcript_meta.get("filename", "workflow_report")
         .rsplit(".", 1)[0]
     )
+    redact_exports = st.checkbox(
+        "Redact speaker labels and omit raw module reports from exports",
+        value=False,
+        key="export_redact",
+    )
     export_md = build_workflow_report_markdown(
         workflow_run,
         synthesis,
         workflow_name=workflow_name,
+        redact=redact_exports,
     )
     export_json = build_workflow_report_json(
         workflow_run,
         synthesis,
         transcript_meta=st.session_state.transcript_meta,
+        redact=redact_exports,
     )
-    col_md, col_json = st.columns(2)
+    export_pdf = build_workflow_report_pdf(
+        workflow_run,
+        synthesis,
+        workflow_name=workflow_name,
+        redact=redact_exports,
+    )
+    coach_summary = build_coach_summary_markdown(
+        workflow_run,
+        synthesis,
+        workflow_name=workflow_name,
+        redact=redact_exports,
+    )
+    show_mediation_brief = (
+        workflow_run.get("workflow_id") == "mediation_brief"
+        or any(
+            module_run.get("module_id") == "mediation_analysis"
+            for module_run in workflow_run.get("module_runs", [])
+        )
+    )
+    mediation_brief = (
+        build_mediation_brief_markdown(
+            workflow_run,
+            synthesis,
+            workflow_name=workflow_name,
+            redact=redact_exports,
+        )
+        if show_mediation_brief
+        else None
+    )
+
+    col_md, col_json, col_pdf = st.columns(3)
     col_md.download_button(
         "Download workflow report (.md)",
         data=export_md,
@@ -178,6 +221,27 @@ def _render_report_dashboard(
         file_name=f"{base_name}_workflow_report.json",
         mime="application/json",
     )
+    col_pdf.download_button(
+        "Download workflow report (.pdf)",
+        data=export_pdf,
+        file_name=f"{base_name}_workflow_report.pdf",
+        mime="application/pdf",
+    )
+
+    col_coach, col_mediation = st.columns(2)
+    col_coach.download_button(
+        "Download coach summary (.md)",
+        data=coach_summary,
+        file_name=f"{base_name}_coach_summary.md",
+        mime="text/markdown",
+    )
+    if show_mediation_brief and mediation_brief:
+        col_mediation.download_button(
+            "Download mediation brief (.md)",
+            data=mediation_brief,
+            file_name=f"{base_name}_mediation_brief.md",
+            mime="text/markdown",
+        )
 
 
 def main() -> None:
