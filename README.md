@@ -124,10 +124,16 @@ ui/                          Streamlit UI
 scripts/                     Utility scripts
 ```
 
+## Deployment
+
+For private-use setup, configuration, backup, and upgrade steps, see [doc/DEPLOYMENT.md](doc/DEPLOYMENT.md).
+
+Model configuration: [doc/MODEL_SETUP.md](doc/MODEL_SETUP.md).
+
 ## Implementation Status
 
 See [doc/implementation_plan.md](doc/implementation_plan.md) for the active MVP plan.
 
 - **Phases 1–4** — Audio transcription + single-purpose analysis ✓
-- **Phase A (M1)** — Transcript ingestion + evidence indexing ✓
-- **Phase B+** — Module registry, structured workflows (next)
+- **Phases A–G** — RRE MVP (transcripts, modules, workflows, synthesis, report UI, testing) ✓
+- **Release** — `v0.2.0`
