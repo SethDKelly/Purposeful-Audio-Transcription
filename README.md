@@ -80,7 +80,7 @@ Summary in [doc/developer/api-reference.md](doc/developer/api-reference.md). Int
 ## Roadmap
 
 - **History:** [doc/planning/implementation_plan.md](doc/planning/implementation_plan.md) (phases A–L)
-- **Next:** [doc/planning/18_post_v0.3_plan.md](doc/planning/18_post_v0.3_plan.md) (phases M–R)
+- **Next:** [doc/planning/18_post_v0.3_plan.md](doc/planning/18_post_v0.3_plan.md) (phases M–S; **M** = speaker diarization)
 
 ## Prompt storage
 

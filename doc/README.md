@@ -54,7 +54,7 @@ Product and technical design (`doc/01`–`doc/16`):
 | Document | Description |
 |----------|-------------|
 | [planning/implementation_plan.md](planning/implementation_plan.md) | Full implementation history (phases A–L) |
-| [planning/18_post_v0.3_plan.md](planning/18_post_v0.3_plan.md) | **Active forward plan** (phases M–R) |
+| [planning/18_post_v0.3_plan.md](planning/18_post_v0.3_plan.md) | **Active forward plan** (phases M–S) |
 | [planning/15_future_roadmap.md](planning/15_future_roadmap.md) | Long-term roadmap |
 | [planning/12_mvp_build_plan.md](planning/12_mvp_build_plan.md) | Original MVP build plan |
 | [releases/v0.3.0.md](releases/v0.3.0.md) | v0.3.0 release notes |

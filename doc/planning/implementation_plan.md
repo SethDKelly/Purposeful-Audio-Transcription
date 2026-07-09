@@ -24,7 +24,7 @@ Active plan to evolve the existing Purposeful Audio Transcription codebase into 
 | [../design/03_domain_model.md](../design/03_domain_model.md) | Core entities |
 | [12_mvp_build_plan.md](12_mvp_build_plan.md) | Original MVP phase definitions |
 | [15_future_roadmap.md](15_future_roadmap.md) | Long-term roadmap |
-| [18_post_v0.3_plan.md](18_post_v0.3_plan.md) | **Active forward plan** (phases M–R) |
+| [18_post_v0.3_plan.md](18_post_v0.3_plan.md) | **Active forward plan** (phases M–S) |
 | **This document** | Implementation record and history |
 | [../archived/](../archived/) | Earlier plans and backlogs |
 
@@ -548,7 +548,7 @@ MVP is complete and released. Prioritized work below extends the platform per [1
 
 ### Recommended first PR after v0.3.0
 
-See **[18_post_v0.3_plan.md](18_post_v0.3_plan.md)** — Phase **M** (full multidisciplinary workflow).
+See **[18_post_v0.3_plan.md](18_post_v0.3_plan.md)** — Phase **M** (speaker diarization + Whisper segment alignment).
 
 ### Out of scope (unchanged)
 

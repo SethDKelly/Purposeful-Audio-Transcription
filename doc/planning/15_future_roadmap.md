@@ -12,6 +12,18 @@
 
 ## Near-Term Enhancements (remaining)
 
+### Speaker diarization (next — Phase M)
+
+**Status:** Not implemented. Audio upload produces a single **Speaker 1** block; Whisper does not identify who spoke when.
+
+Planned:
+
+- [pyannote.audio](https://github.com/pyannote/pyannote-audio) diarization (local, `HF_TOKEN` for model access)
+- Align diarization timeline with Whisper segments → `Person A` / `Person B` labeled turns
+- Integrate with existing transcript parser and evidence index
+
+See [18_post_v0.3_plan.md](18_post_v0.3_plan.md) §4.
+
 ### Workflow library (gaps)
 
 - **Full Multidisciplinary Suite** — all transcript modules + meta-synthesis
@@ -21,7 +33,7 @@
 
 Show relationships between needs, behaviors, emotions, cycles, narratives, interventions.
 
-**Status:** API + basic Streamlit Mermaid in v0.3.0; needs richer construct population (see Phase N in [18_post_v0.3_plan.md](18_post_v0.3_plan.md)).
+**Status:** API + basic Streamlit Mermaid in v0.3.0; needs richer construct population (see Phase O in [18_post_v0.3_plan.md](18_post_v0.3_plan.md)).
 
 ### Interactive Exploration
 
@@ -50,9 +62,9 @@ Allow advanced users to:
 
 ### Audio/Video Inputs
 
-Potential future features:
+**Status:** Whisper transcription + streaming progress shipped; **speaker diarization planned (Phase M)**.
 
-- transcription
+Potential future features beyond diarization:
 - timing analysis
 - interruption detection
 - pause detection

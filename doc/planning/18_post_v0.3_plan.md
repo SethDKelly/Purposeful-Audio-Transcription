@@ -36,6 +36,7 @@ Forward plan after merging **v0.3.0** (phases H–L) to `main`. Supersedes the �
 | **Longitudinal / progress tracking** | Compare runs on one transcript only; no cross-transcript case view |
 | **Module customization** | Workflows are fixed YAML only |
 | **Professional mode** | Exports exist; no case files, session series, or finding feedback |
+| **Segment speakers from audio** ([01](../design/01_product_vision_and_scope.md), [16](../design/16_additional_thoughts.md)) | Whisper outputs unlabeled text; parser assigns **Speaker 1** for entire audio |
 | **React frontend** | Deferred; Streamlit remains primary UI |
 
 ### Documentation (resolved in M0)
@@ -48,16 +49,17 @@ Documentation is organized under [doc/README.md](../README.md) with **user**, **
 
 ```text
 M0  Doc & release alignment     ✓ complete
-M   Full suite workflows       (product completeness — next)
-N   Ontology & constructs      (unlocks knowledge graph value)
-O   Cases & longitudinal view  (professional / repeat use)
-P   Custom workflows           (power users)
-Q   UX hardening               (Streamlit polish)
-R   React frontend             (parallel track, larger)
+M   Speaker diarization        (audio ingest — next)
+N   Full suite workflows       (product completeness)
+O   Ontology & constructs      (unlocks knowledge graph value)
+P   Cases & longitudinal view  (professional / repeat use)
+Q   Custom workflows           (power users)
+R   UX hardening               (Streamlit polish)
+S   React frontend             (parallel track, larger)
 —   Evaluation loop            (ongoing, every phase)
 ```
 
-**Recommended next implementation PR:** **Phase M** (full multidisciplinary workflow).
+**Recommended next implementation PR:** **Phase M** (speaker diarization + Whisper segment alignment).
 
 ---
 
@@ -77,11 +79,99 @@ R   React frontend             (parallel track, larger)
 
 ---
 
-## 4. Phase M — Workflow completeness
+## 4. Phase M — Speaker diarization & labeled audio ingest
+
+**Goal:** Close the audio-ingest gap: detect **who spoke when**, align with Whisper segments, and produce **multi-speaker labeled turns** for the evidence index — per [01_product_vision](../design/01_product_vision_and_scope.md) (“segment speakers”) and [16_additional_thoughts](../design/16_additional_thoughts.md).
+
+### Problem (current behavior)
+
+```text
+Audio → Whisper (faster-whisper) → single text blob → TranscriptParser → Speaker 1
+```
+
+Whisper (any model size, including `large-v3`) transcribes words only; it does **not** identify speakers. Upgrading `WHISPER_MODEL` improves word accuracy but does not fix diarization.
+
+### Target pipeline
+
+```text
+Audio
+  → (optional) VAD / channel prep
+  → Diarization (pyannote) → speaker timeline [{speaker, start, end}, …]
+  → Whisper → segments [{text, start, end}, …]
+  → Alignment service → labeled turns (Person A / Person B or Speaker 1 / Speaker 2)
+  → TranscriptParser-compatible text → existing ingest + evidence index
+```
+
+### M1 — Diarization service
+
+- Add `backend/services/diarization_service.py` wrapping [pyannote.audio](https://github.com/pyannote/pyannote-audio) (or compatible pipeline)
+- Default model: `pyannote/speaker-diarization-3.1` (configurable via `DIARIZATION_MODEL`)
+- Settings in `config/settings.py` + `.env.example`:
+  - `DIARIZATION_ENABLED` (default `true` when deps present)
+  - `HF_TOKEN` — required for gated pyannote models on Hugging Face
+  - `DIARIZATION_MIN_SPEAKERS` / `DIARIZATION_MAX_SPEAKERS` (optional bounds)
+- Lazy model load (same pattern as `WhisperService`)
+- Health check: `GET /api/health` reports `diarization_ready`
+- Graceful fallback: if pyannote unavailable or `HF_TOKEN` missing, skip diarization and keep current single-speaker behavior (log warning)
+
+### M2 — Segment alignment
+
+- Add `backend/services/transcript_alignment_service.py`:
+  - Input: diarization timeline + Whisper `TranscriptSegment` list
+  - Assign each Whisper segment to the diarization label with maximum temporal overlap
+  - Merge consecutive segments with the same speaker into turns
+  - Emit labeled text:
+
+    ```text
+    Person A: First speaker's words…
+    Person B: Second speaker's words…
+    ```
+
+- Map anonymous diarization labels (`SPEAKER_00`, `SPEAKER_01`) → `Person A`, `Person B`, … (configurable prefix)
+- Preserve segment timestamps on turns/quotes where useful for future UI (optional metadata on ingest)
+
+### M3 — API & orchestration
+
+- Extend `whisper_service` / `orchestrator` / `transcript_service.ingest_from_whisper`:
+  - Run diarization before or in parallel with Whisper (parallel when GPU allows; sequential on CPU to avoid OOM)
+  - `POST /api/transcribe` and `/api/transcribe/stream` return `speaker_count` and per-turn labels in `complete` event
+- Stream progress events: `diarization_started`, `diarization_complete`, then existing Whisper `progress` events
+- `scripts/check_prerequisites.py`: verify `HF_TOKEN`, pyannote import, CUDA optional
+
+### M4 — UI & docs
+
+- Streamlit Ingest: show detected speaker count after transcription; caption when diarization skipped
+- Step 2 Prepare: pre-populated `Person A` / `Person B` labels (existing speaker rename UI)
+- [user/model-setup.md](../user/model-setup.md): pyannote + `HF_TOKEN` setup
+- [user/user-guide.md](../user/user-guide.md): note that audio diarization is automatic; manual edit still supported
+- Fixture: short two-speaker audio sample in `tests/fixtures/audio/` (or synthetic mock for CI)
+
+### Dependencies & ops
+
+| Item | Notes |
+|------|-------|
+| `pyannote.audio` | Optional extra: `pip install -e ".[diarization]"` |
+| Hugging Face token | Accept pyannote model terms; set `HF_TOKEN` in `.env` |
+| GPU | Recommended for pyannote + Whisper on long files; CPU fallback supported |
+| Privacy | All processing remains local; no audio sent to cloud APIs |
+
+### Testing
+
+- Unit: alignment logic (mock diarization + Whisper segments, overlap edge cases)
+- Integration: mocked pyannote pipeline → ingest → ≥2 speakers in bundle
+- Regression: diarization disabled → existing `Speaker 1` fallback unchanged
+
+**Acceptance:** Two-speaker test audio → stored transcript with ≥2 speakers, labeled turns, and valid quote IDs; workflows run without manual relabeling.
+
+**Effort:** 5–8 days
+
+---
+
+## 5. Phase N — Workflow completeness
 
 **Goal:** Close product vision use cases **5 (Full Multidisciplinary Suite)** and add a research-oriented option.
 
-### M1 — `full_multidisciplinary` workflow
+### N1 — `full_multidisciplinary` workflow
 
 ```text
 All transcript-input modules (12) → meta_synthesis
@@ -92,7 +182,7 @@ All transcript-input modules (12) → meta_synthesis
 - Default `background: true` in API/UI for this workflow
 - Integration test with mocked LLM (pattern from existing workflow tests)
 
-### M2 — `research_oriented` workflow (optional but small)
+### N2 — `research_oriented` workflow (optional but small)
 
 Suggested module chain:
 
@@ -103,7 +193,7 @@ relationship_conversation_analysis → cognitive_analysis → narrative_identity
 
 Targets researchers / pattern study without clinical-heavy modules.
 
-### M3 — Workflow guardrails
+### N3 — Workflow guardrails
 
 - Max modules per synchronous run (env `WORKFLOW_SYNC_MODULE_LIMIT`)
 - UI warning for long suites; progress polling when `background=true`
@@ -114,7 +204,7 @@ Targets researchers / pattern study without clinical-heavy modules.
 
 ---
 
-## 5. Phase N — Ontology & construct population
+## 6. Phase O — Ontology & construct population
 
 **Goal:** Make knowledge graph and cross-module reasoning **data-rich**, per [04_knowledge_ontology.md](04_knowledge_ontology.md) and [16_additional_thoughts.md](16_additional_thoughts.md).
 
@@ -122,18 +212,18 @@ Targets researchers / pattern study without clinical-heavy modules.
 
 Exploration `knowledge-graph` endpoints work, but LLM outputs usually return empty `constructs` / `relationships`, so the graph UI is empty in practice.
 
-### N1 — Compiler & schema nudges
+### O1 — Compiler & schema nudges
 
 - Extend `output_schema_instructions.md` with construct minimums for relational modules
 - `PromptCompiler` optional section: ontology cheat-sheet (construct categories)
 - Validator soft warnings → retry when `constructs` empty for modules that require them (config flag per module YAML: `expects_constructs: true`)
 
-### N2 — Finding ↔ construct linking
+### O2 — Finding ↔ construct linking
 
 - Post-parse pass: auto-suggest `construct_ids` on findings from title/type keywords (ontology map in `config/framework/construct_ontology.yaml`)
 - Drill-down API returns populated `linked_constructs` more often
 
-### N3 — Exploration presets
+### O3 — Exploration presets
 
 Add structured follow-up templates (not free-form only):
 
@@ -152,11 +242,11 @@ API: `POST .../exploration/ask` accepts `preset` enum; UI buttons in Explore tab
 
 ---
 
-## 6. Phase O — Cases & longitudinal analysis
+## 7. Phase P — Cases & longitudinal analysis
 
 **Goal:** Support **multiple transcripts over time** ([15](15_future_roadmap.md) comparative analysis).
 
-### O1 — Domain model
+### P1 — Domain model
 
 ```text
 Case
@@ -167,14 +257,14 @@ Transcript.case_id (optional FK)
 - Alembic migration `002_cases.py`
 - API: `POST/GET /api/cases`, `PATCH /api/transcripts/{id}` to assign case
 
-### O2 — Longitudinal comparison
+### P2 — Longitudinal comparison
 
 Extend exploration service:
 
 - `POST /api/exploration/compare-transcripts` — findings/themes across transcripts in a case
 - Metrics: recurring quote IDs, new vs resolved themes, confidence shifts (heuristic)
 
-### O3 — Streamlit
+### P3 — Streamlit
 
 - Optional “Assign to case” on ingest
 - Case dashboard: list transcripts, runs, trend summary
@@ -185,7 +275,7 @@ Extend exploration service:
 
 ---
 
-## 7. Phase P — Custom workflows
+## 8. Phase Q — Custom workflows
 
 **Goal:** [Module customization](15_future_roadmap.md) without editing YAML.
 
@@ -200,7 +290,7 @@ Extend exploration service:
 
 ---
 
-## 8. Phase Q — UX & professional polish (Streamlit)
+## 9. Phase R — UX & professional polish (Streamlit)
 
 **Goal:** Close gaps in [11_ui_ux_design.md](11_ui_ux_design.md) without React.
 
@@ -219,7 +309,7 @@ Extend exploration service:
 
 ---
 
-## 9. Phase R — React frontend (parallel track)
+## 10. Phase S — React frontend (parallel track)
 
 **Goal:** Exploration-first SPA consuming existing APIs ([implementation_plan](implementation_plan.md) Phase L deferral).
 
@@ -241,7 +331,7 @@ Extend exploration service:
 
 ---
 
-## 10. Ongoing — Evaluation & real-world hardening
+## 11. Ongoing — Evaluation & real-world hardening
 
 Run alongside every phase ([14_testing_evaluation_and_safety.md](14_testing_evaluation_and_safety.md)):
 
@@ -255,7 +345,7 @@ Run alongside every phase ([14_testing_evaluation_and_safety.md](14_testing_eval
 
 ---
 
-## 11. Explicitly out of scope (v0.4+)
+## 12. Explicitly out of scope (v0.4+)
 
 Unchanged from original MVP boundaries unless requirements shift:
 
@@ -267,39 +357,46 @@ Unchanged from original MVP boundaries unless requirements shift:
 
 ---
 
-## 12. Suggested release milestones
+## 13. Suggested release milestones
 
 | Release | Phases | Theme |
 |---------|--------|-------|
 | **v0.3.1** | M0 | Docs only |
-| **v0.4.0** | M + N | Full suite + ontology-rich outputs |
-| **v0.5.0** | O + P | Cases + custom workflows |
-| **v0.6.0** | Q | Streamlit professional polish |
-| **v1.0.0** | R | React UI + stable API contract |
+| **v0.4.0** | M | Speaker diarization + labeled audio ingest |
+| **v0.4.1** | N | Full multidisciplinary workflow + research-oriented option |
+| **v0.5.0** | O + P | Ontology-rich outputs + cases / custom workflows |
+| **v0.6.0** | Q + R | Streamlit professional polish |
+| **v1.0.0** | S | React UI + stable API contract |
 
 ---
 
-## 13. Next PR checklist (Phase M)
+## 14. Next PR checklist (Phase M — diarization)
 
 ```text
 [ ] git checkout main && pull
-- [x] Documentation organized under `doc/` (M0)
-[ ] Add config/workflows/full_multidisciplinary.yaml
-[ ] Optional: research_oriented.yaml
-[ ] Wire background default for long workflow in UI
-[ ] tests/test_workflow_registry.py + integration test
+[ ] Add optional dependency group [diarization] (pyannote.audio, torch constraints)
+[ ] DIARIZATION_* and HF_TOKEN settings + .env.example
+[ ] diarization_service.py + transcript_alignment_service.py
+[ ] Integrate with whisper orchestrator + /api/transcribe/stream events
+[ ] Health check + check_prerequisites.py
+[ ] Streamlit: speaker count + fallback messaging
+[ ] tests: alignment unit tests + mocked integration
 [ ] pytest tests/ -q
-[ ] doc/releases/v0.4.0.md draft (when M+N complete)
+[ ] doc/user/model-setup.md + user-guide.md updates
 ```
 
 ---
 
-## 14. Decision log
+## 15. Decision log
 
 | Decision | Rationale |
 |----------|-----------|
+| Diarization before full-suite workflow | Audio ingest is broken for multi-speaker use cases; modules need labeled turns |
+| pyannote over Whisper-only | Whisper does not diarize; pyannote is the standard local OSS path |
+| Align diarization → Whisper segments | Reuse existing segment timestamps; avoid re-architecting evidence index |
+| Graceful fallback | Users without HF_TOKEN or GPU still get transcription (Speaker 1) |
 | Streamlit before React | Faster iteration; APIs already exploration-ready |
 | Constructs before React | Graph UI useless without data |
 | Cases before custom workflows | Longitudinal use is higher value for coach/therapist personas |
 | SQLite remains default | PostgreSQL path exists; no forced migration |
-| Full multidisciplinary before new modules | All prompts already shipped; missing workflow is the main gap |
+| Full multidisciplinary after diarization | All prompts shipped; workflow YAML is a smaller gap once audio ingest works |
