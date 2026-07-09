@@ -1,8 +1,26 @@
 # Model setup
 
-The Relationship Reasoning Engine (RRE) uses [Ollama](https://ollama.com/) for local LLM inference.
+The Relationship Reasoning Engine (RRE) uses **Whisper** (via [faster-whisper](https://github.com/SYSTRAN/faster-whisper)) for local audio transcription and [Ollama](https://ollama.com/) for local LLM inference.
 
-## Prerequisites
+## Whisper (transcription)
+
+Configure in `.env` (see `.env.example`):
+
+| Variable | Default | Notes |
+|----------|---------|-------|
+| `WHISPER_MODEL` | `base` | `tiny`/`base` are faster; `small`/`medium` are slower and more accurate |
+| `WHISPER_BEAM_SIZE` | `1` | Lower = faster; `5` is more accurate but slower |
+| `WHISPER_VAD_FILTER` | `true` | Skips silent regions (often faster on speech with pauses) |
+| `WHISPER_DEVICE` | `auto` | Set `cuda` when an NVIDIA GPU is available |
+| `WHISPER_COMPUTE_TYPE` | `int8` | Use `float16` on GPU for a speed/quality balance |
+
+The Streamlit UI calls `POST /api/transcribe/stream` and shows live progress (elapsed time, % of audio processed, segment count). The blocking `POST /api/transcribe` endpoint remains available for API clients.
+
+Restart the API after changing Whisper settings.
+
+## Ollama (analysis)
+
+### Prerequisites
 
 1. Install and start Ollama.
 2. Pull at least one chat model, for example:
@@ -11,7 +29,7 @@ The Relationship Reasoning Engine (RRE) uses [Ollama](https://ollama.com/) for l
    ```
 3. Copy `.env.example` to `.env` and set a default model if you want one globally.
 
-## Configuration layers
+### Configuration layers
 
 Model resolution follows this order (first non-empty value wins):
 

@@ -32,10 +32,11 @@ Full instructions: **[doc/user/getting-started.md](doc/user/getting-started.md)*
 
 - 13 analysis modules · 5 workflows · meta-synthesis
 - Evidence quote IDs (`Q001…`) on every finding
+- Live transcription progress (elapsed time, audio %, segments)
 - Streamlit report + **Explore** tab (drill-down, follow-up Q&A)
 - Exports: Markdown, JSON, PDF, coach summary, mediation brief
 - Optional PostgreSQL, background jobs, API key auth
-- 96 automated tests
+- 99 automated tests
 
 ## Prerequisites
 
@@ -50,6 +51,8 @@ See `.env.example`. Key settings:
 | Variable | Purpose |
 |----------|---------|
 | `DEFAULT_OLLAMA_MODEL` | Default LLM for workflows |
+| `WHISPER_MODEL` | Whisper model size (`base`, `tiny`, etc.) |
+| `WHISPER_BEAM_SIZE` | Speed vs accuracy (default `1`) |
 | `DATABASE_URL` | SQLite (default) or PostgreSQL |
 | `API_KEY` | Optional API authentication |
 

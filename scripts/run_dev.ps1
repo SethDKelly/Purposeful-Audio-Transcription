@@ -12,6 +12,9 @@ if (-not (Test-Path $python)) {
     Write-Error "Virtual environment not found. Run: python -m venv .venv; pip install -e ."
 }
 
+# Pick up PATH changes (e.g. ffmpeg installed via winget) in child processes.
+$env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [Environment]::GetEnvironmentVariable("Path", "User")
+
 $apiHost = if ($env:API_HOST) { $env:API_HOST } else { "127.0.0.1" }
 $apiPort = if ($env:API_PORT) { $env:API_PORT } else { "8000" }
 $uiPort = if ($env:STREAMLIT_PORT) { $env:STREAMLIT_PORT } else { "8501" }

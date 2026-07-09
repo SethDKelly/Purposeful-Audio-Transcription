@@ -12,6 +12,8 @@ Ingest → Prepare → Analyze → Report
 
 **Audio tab** — upload `.mp3`, `.wav`, `.m4a`, etc. Click **Transcribe audio** to run Whisper, then the app creates a structured transcript.
 
+While transcription runs, the UI shows a **progress bar**, **elapsed time**, and segment count. Long files can take several minutes on CPU; tune Whisper in `.env` (see [model-setup.md](model-setup.md) and [deployment.md](deployment.md)).
+
 **Paste / upload tab** — paste labeled dialogue or upload a `.txt` file. Preferred format:
 
 ```text
@@ -103,6 +105,7 @@ For serious safety concerns, consult qualified professionals.
 ## Tips
 
 - Start with short transcripts until you trust your model choice.
+- For faster transcription, use `WHISPER_MODEL=base` or `tiny`, `WHISPER_BEAM_SIZE=1`, and `WHISPER_VAD_FILTER=true` in `.env`. Use a GPU with `WHISPER_DEVICE=cuda` when available.
 - Set `DEFAULT_OLLAMA_MODEL` in `.env`; use a larger model for `meta_synthesis` if JSON quality is weak.
 - Re-run the same transcript with different workflows to compare lenses.
 - Back up `data/rre.db` before upgrades — see [deployment.md](deployment.md).

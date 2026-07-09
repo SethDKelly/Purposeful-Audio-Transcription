@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     whisper_model: str = "base"
     whisper_device: str = "auto"
     whisper_compute_type: str = "int8"
+    whisper_beam_size: int = 1
+    whisper_vad_filter: bool = True
     max_upload_mb: int = 100
     temp_dir: Path = Path("./data/temp")
     log_level: str = "INFO"
