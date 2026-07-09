@@ -1,0 +1,31 @@
+id: attachment_interaction_matrix
+name: "Attachment Interaction Matrix"
+version: "1.0.0"
+enabled: true
+description: >
+  Attachment-informed analysis of interaction patterns, bids for connection,
+  and relational dynamics between participants.
+primary_lens: "Attachment Dynamics"
+analytical_level: relational
+unit_of_analysis: interaction
+primary_question: "What attachment-informed interaction patterns and bids appear?"
+secondary_questions:
+  - Where do pursuit, withdrawal, or protest patterns emerge?
+  - What bids for connection or reassurance are visible?
+  - What repair opportunities appear attachment-relevant?
+required_constructs:
+  - bid_for_connection
+  - protest_behavior
+  - withdrawal_pattern
+  - repair_opportunity
+output_schema: module_output_v1
+recommended_companions:
+  - gottman_analysis
+  - emotional_needs_values
+inference_depth: medium
+confidence_ceiling: moderate
+dependencies:
+  - transcript_preprocessing
+prompt_file: "08 Attachment Interaction Matrix.md"
+ollama_model: null
+input_type: transcript

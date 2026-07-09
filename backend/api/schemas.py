@@ -111,6 +111,8 @@ class WorkflowSchema(BaseModel):
     version: str
     description: str
     estimated_runtime: str
+    recommended_model: str | None = None
+    output_tone: str = ""
     modules: list[str] = Field(default_factory=list)
     meta_synthesis: bool
     enabled: bool

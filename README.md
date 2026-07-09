@@ -137,4 +137,5 @@ See [doc/implementation_plan.md](doc/implementation_plan.md) for the active MVP 
 - **Phases 1–4** — Audio transcription + single-purpose analysis ✓
 - **Phases A–G** — RRE MVP (transcripts, modules, workflows, synthesis, report UI, testing) ✓
 - **Phase H** — Legacy cleanup ✓
+- **Phase I** — Full module library (13 modules) + 5 workflows ✓
 - **Release** — `v0.2.0`

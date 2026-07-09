@@ -1,0 +1,18 @@
+id: clinical_exploration
+name: "Clinical Exploration"
+version: "1.0.0"
+enabled: true
+description: >
+  Exploratory, non-diagnostic multidisciplinary review with integrative
+  synthesis across psychological, cognitive, attachment, and narrative lenses.
+estimated_runtime: "5-8 min"
+recommended_model: null
+output_tone: clinical_exploratory
+modules:
+  - exploratory_psychological_formulation
+  - cognitive_analysis
+  - attachment_interaction_matrix
+  - narrative_identity_analysis
+  - bias_epistemic_quality
+  - meta_synthesis
+meta_synthesis: true

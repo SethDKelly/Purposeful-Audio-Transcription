@@ -4,7 +4,7 @@ Active plan to evolve the existing Purposeful Audio Transcription codebase into 
 
 | | |
 |---|---|
-| **Status** | **Phase H complete** — post-MVP expansion (phases I–L) |
+| **Status** | **Phase I complete** — post-MVP expansion (phases J–L) |
 | **Release** | [`v0.2.0`](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v0.2.0) |
 | **Baseline** | Phases 1–4 complete (audio → Whisper → single-purpose Ollama analysis) |
 | **Delivered** | Evidence-linked, structured, multi-module workflow MVP |
@@ -499,14 +499,14 @@ MVP is complete and released. Prioritized work below extends the platform per [1
 
 **Acceptance:** No production code path depends on `purposes.yaml`; docs reflect workflows as primary.
 
-### Phase I — Module & workflow expansion
+### Phase I — Module & workflow expansion ✓
 
 **Goal:** Grow from 5 modules / 2 workflows toward the full prompt library.
 
-- [ ] Add module YAML for remaining prompts (Cognitive, Gottman, Attachment, Trauma-Informed, etc.)
-- [ ] Define new workflows: Conflict Coaching, Mediation Brief, Clinical Exploration ([15](15_future_roadmap.md))
-- [ ] Workflow-level metadata: estimated runtime, recommended model, output tone
-- [ ] UI workflow picker with descriptions
+- [x] Add module YAML for remaining prompts (8 modules; 13 total)
+- [x] Define new workflows: Conflict Coaching, Mediation Brief, Clinical Exploration
+- [x] Workflow-level metadata: estimated runtime, recommended model, output tone
+- [x] UI workflow picker with descriptions and output tone
 
 **Acceptance:** At least 3 new modules and 2 new workflows run end-to-end with existing runner/engine.
 
@@ -547,9 +547,10 @@ MVP is complete and released. Prioritized work below extends the platform per [1
 
 ### Recommended first PR after Phase H
 
+### Recommended first PR after Phase I
+
 ```text
-Phase I: Add module YAML for the next prompt (e.g. Cognitive Analysis)
-and wire it into a new workflow definition.
+Phase J: Add PDF export for workflow reports and a therapist/coach summary template.
 ```
 
 ### Out of scope (unchanged)

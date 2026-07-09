@@ -25,6 +25,8 @@ def list_workflows() -> WorkflowsResponse:
             version=workflow.config.version,
             description=workflow.config.description,
             estimated_runtime=workflow.config.estimated_runtime,
+            recommended_model=workflow.config.recommended_model,
+            output_tone=workflow.config.output_tone,
             modules=workflow.module_sequence,
             meta_synthesis=workflow.config.meta_synthesis,
             enabled=workflow.config.enabled,

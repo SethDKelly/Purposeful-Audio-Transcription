@@ -1,0 +1,31 @@
+id: trauma_informed_communication
+name: "Trauma-Informed Communication"
+version: "1.0.0"
+enabled: true
+description: >
+  Trauma-informed lens on safety, threat responses, communication triggers,
+  and opportunities for emotionally safer dialogue.
+primary_lens: "Trauma-Informed Communication"
+analytical_level: relational
+unit_of_analysis: interaction
+primary_question: "What trauma-informed communication patterns and safety dynamics appear?"
+secondary_questions:
+  - Where might threat or dysregulation cues be present?
+  - What triggers or sensitivities are suggested by the evidence?
+  - What safer communication opportunities are visible?
+required_constructs:
+  - safety_cue
+  - trigger_pattern
+  - dysregulation_signal
+  - co_regulation_opportunity
+output_schema: module_output_v1
+recommended_companions:
+  - nvc_analysis
+  - emotional_needs_values
+inference_depth: high
+confidence_ceiling: low
+dependencies:
+  - transcript_preprocessing
+prompt_file: "09 Trauma-Informed Communication.md"
+ollama_model: null
+input_type: transcript

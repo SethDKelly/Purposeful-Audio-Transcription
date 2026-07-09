@@ -10,7 +10,7 @@ from backend.core.exceptions import ModuleRunError, OllamaError
 from backend.core.module_registry import AnalysisModule, module_registry
 from backend.services.prompt_compiler import PromptCompiler, prompt_compiler
 from backend.db.base import get_session
-from backend.domain.enums import TRANSCRIPT_RUNNABLE_MODULES, ModuleRunStatus, SourceType
+from backend.domain.enums import ModuleRunStatus, SourceType
 from backend.domain.finding import ModuleRun
 from backend.repositories.module_run_repository import ModuleRunRepository, utc_now
 from backend.schemas.module_output_v1 import ModuleRunOutput
@@ -216,13 +216,14 @@ class ModuleRunner:
         )
 
     def _ensure_transcript_runnable(self, module: AnalysisModule) -> None:
-        if module.config.id not in TRANSCRIPT_RUNNABLE_MODULES:
-            if module.config.input_type == "module_outputs":
-                raise ModuleRunError(
-                    f"Module {module.config.id} requires prior module outputs; "
-                    "use the synthesis workflow instead."
-                )
-            raise ModuleRunError(f"Module {module.config.id} is not enabled for direct runs")
+        if module.config.input_type == "transcript":
+            return
+        if module.config.input_type == "module_outputs":
+            raise ModuleRunError(
+                f"Module {module.config.id} requires prior module outputs; "
+                "use the synthesis workflow instead."
+            )
+        raise ModuleRunError(f"Module {module.config.id} is not enabled for direct runs")
 
     def _resolve_model(self, module: AnalysisModule, model: str | None) -> str:
         resolved = model or module.config.ollama_model or settings.default_ollama_model or None

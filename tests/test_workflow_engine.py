@@ -143,7 +143,7 @@ def test_workflows_api(monkeypatch) -> None:
     client = TestClient(app)
     list_response = client.get("/api/workflows")
     assert list_response.status_code == 200
-    assert len(list_response.json()["workflows"]) == 2
+    assert len(list_response.json()["workflows"]) == 5
 
     transcript_response = client.post(
         "/api/transcripts",

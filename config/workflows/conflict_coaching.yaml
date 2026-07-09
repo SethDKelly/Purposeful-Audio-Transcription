@@ -1,0 +1,16 @@
+id: conflict_coaching
+name: "Conflict Coaching"
+version: "1.0.0"
+enabled: true
+description: >
+  Practical coaching-oriented review of communication patterns, needs, and
+  epistemic quality for conflict de-escalation.
+estimated_runtime: "2-4 min"
+recommended_model: null
+output_tone: coaching
+modules:
+  - relationship_conversation_analysis
+  - nvc_analysis
+  - emotional_needs_values
+  - bias_epistemic_quality
+meta_synthesis: false

@@ -9,7 +9,7 @@ def test_list_modules_api() -> None:
     assert response.status_code == 200
 
     payload = response.json()
-    assert len(payload["modules"]) == 5
+    assert len(payload["modules"]) == 13
 
     module = next(
         item for item in payload["modules"] if item["id"] == "relationship_conversation_analysis"
@@ -24,4 +24,4 @@ def test_list_purposes_deprecated_alias_for_modules() -> None:
     response = client.get("/api/purposes")
     assert response.status_code == 200
     assert response.headers.get("Deprecation") == "true"
-    assert len(response.json()["purposes"]) == 5
+    assert len(response.json()["purposes"]) == 13

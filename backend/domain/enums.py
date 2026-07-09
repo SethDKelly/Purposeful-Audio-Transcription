@@ -82,12 +82,3 @@ CONFIDENCE_RANK: dict[Confidence, int] = {
     Confidence.OBSERVED: 6,
 }
 
-
-TRANSCRIPT_RUNNABLE_MODULES = frozenset(
-    {
-        "relationship_conversation_analysis",
-        "nvc_analysis",
-        "systems_analysis",
-        "bias_epistemic_quality",
-    }
-)

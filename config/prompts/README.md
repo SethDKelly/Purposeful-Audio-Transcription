@@ -20,28 +20,7 @@ Prompt files use **numbered, descriptive names** with spaces:
 ## Adding a new module
 
 1. Create a prompt file here, e.g. `14 Meeting Summary Analysis.md`
-2. Add a module entry in `config/modules/meeting_summary.yaml`:
-
-```yaml
-id: meeting_summary
-name: "Meeting Summary"
-version: "1.0.0"
-enabled: true
-description: "Summarize key decisions and action items."
-primary_lens: "Meeting facilitation"
-analytical_level: observable
-unit_of_analysis: interaction
-primary_question: "What decisions and action items appear in this conversation?"
-confidence_ceiling: moderate
-inference_depth: low
-dependencies:
-  - transcript_preprocessing
-output_schema: module_output_v1
-prompt_file: "14 Meeting Summary Analysis.md"
-ollama_model: null
-input_type: transcript
-```
-
+2. Add a module entry in `config/modules/meeting_summary.yaml` (see existing modules for fields)
 3. Optionally add the module to a workflow in `config/workflows/`
 4. Restart the API (or rely on reload in dev mode)
 
@@ -49,20 +28,30 @@ Set `ollama_model` per module when ready, or use `DEFAULT_OLLAMA_MODEL` in `.env
 
 ## Current prompts
 
-| File | Module |
-|------|--------|
+| File | Module ID |
+|------|-----------|
 | `01 Relationship Conversation Analysis.md` | `relationship_conversation_analysis` |
-| `02 Exploratory Psychological Formulation.md` | _(not in MVP module set)_ |
-| `03 Cognitive Analysis.md` | _(not in MVP module set)_ |
+| `02 Exploratory Psychological Formulation.md` | `exploratory_psychological_formulation` |
+| `03 Cognitive Analysis.md` | `cognitive_analysis` |
 | `04 Systems Analysis.md` | `systems_analysis` |
-| `05 Mediation Analysis.md` | _(not in MVP module set)_ |
-| `06 Gottman Analysis.md` | _(not in MVP module set)_ |
+| `05 Mediation Analysis.md` | `mediation_analysis` |
+| `06 Gottman Analysis.md` | `gottman_analysis` |
 | `07 NVC Analysis.md` | `nvc_analysis` |
-| `08 Attachment Interaction Matrix.md` | _(not in MVP module set)_ |
-| `09 Trauma-Informed Communication.md` | _(not in MVP module set)_ |
-| `10 Emotional Needs & Values.md` | _(not in MVP module set)_ |
-| `11 Narrative Identity Analysis.md` | _(not in MVP module set)_ |
+| `08 Attachment Interaction Matrix.md` | `attachment_interaction_matrix` |
+| `09 Trauma-Informed Communication.md` | `trauma_informed_communication` |
+| `10 Emotional Needs & Values.md` | `emotional_needs_values` |
+| `11 Narrative Identity Analysis.md` | `narrative_identity_analysis` |
 | `12 Bias & Epistemic Quality.md` | `bias_epistemic_quality` |
 | `13 Meta-Synthesis.md` | `meta_synthesis` |
 
 Structured modules use the prompt compiler with shared framework instructions and evidence-indexed transcripts. Meta-synthesis receives prior module JSON outputs, not the raw transcript.
+
+## Workflows
+
+| Workflow | Modules |
+|----------|---------|
+| `quick_review` | relationship, NVC, bias |
+| `full_mvp` | relationship, NVC, systems, bias, meta-synthesis |
+| `conflict_coaching` | relationship, NVC, needs/values, bias |
+| `mediation_brief` | mediation, systems, bias |
+| `clinical_exploration` | formulation, cognitive, attachment, narrative, bias, meta-synthesis |

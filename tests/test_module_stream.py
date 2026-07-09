@@ -37,4 +37,4 @@ def test_purposes_endpoint_is_deprecated_alias() -> None:
     response = client.get("/api/purposes")
     assert response.status_code == 200
     assert response.headers.get("Deprecation") == "true"
-    assert len(response.json()["purposes"]) == 5
+    assert len(response.json()["purposes"]) == 13

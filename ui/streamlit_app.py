@@ -330,6 +330,12 @@ def main() -> None:
         )
         workflow = workflow_options[selected_workflow_name]
         st.caption(workflow.get("description", ""))
+        tone = workflow.get("output_tone")
+        if tone:
+            st.caption(f"Output tone: {tone.replace('_', ' ')}")
+        recommended = workflow.get("recommended_model")
+        if recommended:
+            st.caption(f"Recommended model: {recommended}")
         st.caption(
             f"Modules: {', '.join(workflow.get('modules', []))} · "
             f"Est. {workflow.get('estimated_runtime', 'n/a')}"

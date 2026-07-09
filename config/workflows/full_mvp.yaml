@@ -4,6 +4,8 @@ version: "1.0.0"
 enabled: true
 description: "Comprehensive MVP workflow with cross-module synthesis."
 estimated_runtime: "3-8 min"
+recommended_model: null
+output_tone: integrative
 modules:
   - relationship_conversation_analysis
   - nvc_analysis

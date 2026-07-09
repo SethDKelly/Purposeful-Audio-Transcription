@@ -1,0 +1,31 @@
+id: exploratory_psychological_formulation
+name: "Exploratory Psychological Formulation"
+version: "1.0.0"
+enabled: true
+description: >
+  Non-diagnostic exploration of possible psychological frameworks that may help
+  explain the interaction, grounded in evidence and uncertainty.
+primary_lens: "Exploratory Formulation"
+analytical_level: integrative
+unit_of_analysis: individual
+primary_question: "What exploratory psychological patterns may help explain this interaction?"
+secondary_questions:
+  - What hypotheses are best supported by the evidence?
+  - What remains uncertain or underdetermined?
+  - What alternative formulations should be considered?
+required_constructs:
+  - formulation_hypothesis
+  - protective_factor
+  - vulnerability_pattern
+  - uncertainty
+output_schema: module_output_v1
+recommended_companions:
+  - cognitive_analysis
+  - attachment_interaction_matrix
+inference_depth: high
+confidence_ceiling: low
+dependencies:
+  - transcript_preprocessing
+prompt_file: "02 Exploratory Psychological Formulation.md"
+ollama_model: null
+input_type: transcript

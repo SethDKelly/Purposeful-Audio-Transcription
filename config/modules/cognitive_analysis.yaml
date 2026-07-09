@@ -1,0 +1,31 @@
+id: cognitive_analysis
+name: "Cognitive Analysis"
+version: "1.0.0"
+enabled: true
+description: >
+  Analyze thinking patterns including cognitive distortions, automatic thoughts,
+  assumptions, attribution patterns, and possible core beliefs.
+primary_lens: "Cognitive Patterns"
+analytical_level: individual
+unit_of_analysis: cognition
+primary_question: "What cognitive patterns, distortions, and assumptions appear in this conversation?"
+secondary_questions:
+  - What automatic thoughts or attributions are visible?
+  - Where might core beliefs be shaping the exchange?
+  - What alternative interpretations remain plausible?
+required_constructs:
+  - cognitive_distortion
+  - automatic_thought
+  - assumption
+  - core_belief
+output_schema: module_output_v1
+recommended_companions:
+  - exploratory_psychological_formulation
+  - bias_epistemic_quality
+inference_depth: medium
+confidence_ceiling: moderate
+dependencies:
+  - transcript_preprocessing
+prompt_file: "03 Cognitive Analysis.md"
+ollama_model: null
+input_type: transcript
