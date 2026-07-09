@@ -22,8 +22,11 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
                      PromptCompiler      WorkflowJobService
                      OutputParser
                      SafetyValidator
-                           │
-                     OllamaService (LLM)
+     ┌─────────────────┴─────────────────┐
+     ▼                                     ▼
+ AudioTranscriptionService            OllamaService (LLM)
+   WhisperService · DiarizationService
+   TranscriptAlignmentService
                            │
                      SQLite / PostgreSQL (SQLAlchemy + Alembic)
 ```
@@ -32,6 +35,10 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 
 | Service | Role |
 |---------|------|
+| `AudioTranscriptionService` | Whisper + optional pyannote diarization → labeled transcript |
+| `WhisperService` | faster-whisper transcription with segment timestamps |
+| `DiarizationService` | pyannote speaker timeline (optional; requires `HF_TOKEN`) |
+| `TranscriptAlignmentService` | Map Whisper segments to speaker labels (Person A / B) |
 | `TranscriptService` | Parse, ingest, store transcripts with speakers, turns, quotes |
 | `EvidenceIndexService` | Assign `Q001…` quote IDs with context |
 | `ModuleRegistry` | Load `config/modules/*.yaml` |

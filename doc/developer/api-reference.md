@@ -8,7 +8,7 @@ When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected r
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/health` | ffmpeg, Ollama, Whisper status |
+| `GET` | `/api/health` | ffmpeg, Ollama, Whisper, diarization status |
 | `GET` | `/api/models/ollama` | List Ollama models |
 
 ## Transcripts
@@ -75,8 +75,10 @@ When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected r
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/transcribe` | Audio → transcript |
+| `POST` | `/api/transcribe` | Audio → labeled transcript (Whisper + optional diarization) |
 | `POST` | `/api/process` | Audio + workflow → full pipeline |
+
+`TranscribeResponse` includes `speaker_count`, `speaker_labels`, and `diarization_applied` when diarization runs.
 
 ## Examples
 

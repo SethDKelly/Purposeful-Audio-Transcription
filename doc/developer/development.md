@@ -15,6 +15,14 @@ copy .env.example .env
 
 Set `DEFAULT_OLLAMA_MODEL` in `.env` for integration tests that call Ollama (most tests mock the LLM).
 
+For speaker diarization during audio ingest (Phase M):
+
+```powershell
+pip install -e ".[diarization]"
+```
+
+Set `HF_TOKEN` in `.env` after accepting pyannote model terms. See [../user/model-setup.md](../user/model-setup.md).
+
 ## Run locally
 
 ```powershell

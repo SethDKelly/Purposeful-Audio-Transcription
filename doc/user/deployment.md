@@ -60,6 +60,8 @@ See [model-setup.md](model-setup.md) for Ollama configuration.
 | `STREAMLIT_PORT` | `8501` | UI port |
 | `OLLAMA_HOST` | `http://localhost:11434` | Ollama API |
 | `WHISPER_MODEL` | `base` | Transcription quality |
+| `DIARIZATION_ENABLED` | `true` | Speaker diarization for audio uploads |
+| `HF_TOKEN` | _(empty)_ | Hugging Face token for pyannote models |
 | `MAX_UPLOAD_MB` | `100` | Audio upload limit |
 | `EVIDENCE_PROMPT_MAX_QUOTES` | `120` | Long-transcript summarization |
 

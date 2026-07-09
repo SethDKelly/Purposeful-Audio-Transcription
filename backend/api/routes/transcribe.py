@@ -3,7 +3,7 @@ from fastapi import APIRouter, File, UploadFile
 from backend.api.schemas import TranscribeResponse, TranscriptSegmentSchema
 from backend.core.exceptions import AudioValidationError
 from backend.services.audio_service import saved_upload
-from backend.services.whisper_service import whisper_service
+from backend.services.audio_transcription_service import audio_transcription_service
 
 router = APIRouter(prefix="/api", tags=["transcribe"])
 
@@ -15,7 +15,7 @@ async def transcribe(file: UploadFile = File(...)) -> TranscribeResponse:
 
     content = await file.read()
     with saved_upload(content, file.filename) as audio_path:
-        result = whisper_service.transcribe(audio_path)
+        result = audio_transcription_service.transcribe(audio_path)
 
     return TranscribeResponse(
         transcript=result.text,
@@ -29,4 +29,7 @@ async def transcribe(file: UploadFile = File(...)) -> TranscribeResponse:
         ],
         language=result.language,
         duration_seconds=result.duration_seconds,
+        speaker_count=result.speaker_count,
+        speaker_labels=result.speaker_labels,
+        diarization_applied=result.diarization_applied,
     )

@@ -60,6 +60,35 @@ def check_ollama_models() -> bool:
         return False
 
 
+def check_diarization() -> bool:
+    from backend.services.diarization_service import diarization_service
+
+    if not settings.diarization_enabled:
+        print("  [INFO] Diarization disabled (DIARIZATION_ENABLED=false)")
+        return True
+
+    if diarization_service.is_available():
+        print(f"  [OK] Diarization ready (model: {settings.diarization_model})")
+        return True
+
+    try:
+        import pyannote.audio  # noqa: F401
+
+        has_pyannote = True
+    except ImportError:
+        has_pyannote = False
+
+    if not has_pyannote:
+        print("  [WARN] pyannote.audio not installed")
+        print("         Optional: pip install -e \".[diarization]\"")
+    elif not settings.hf_token:
+        print("  [WARN] HF_TOKEN not set (required for pyannote models)")
+        print("         Accept model terms at huggingface.co/pyannote and add HF_TOKEN to .env")
+    else:
+        print("  [WARN] Diarization dependencies present but not fully ready")
+    return True
+
+
 def check_whisper_model() -> bool:
     print(f"  [INFO] Whisper model configured: {settings.whisper_model}")
     print(f"  [INFO] Whisper device: {settings.whisper_device}")
@@ -83,6 +112,7 @@ def main() -> int:
         check_ollama(),
         check_ollama_models(),
         check_whisper_model(),
+        check_diarization(),
         check_temp_dir(),
     ]
 

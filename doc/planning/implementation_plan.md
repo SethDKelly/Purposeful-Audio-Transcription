@@ -4,9 +4,9 @@ Active plan to evolve the existing Purposeful Audio Transcription codebase into 
 
 | | |
 |---|---|
-| **Status** | **v0.3.0 on `main`** — phases A–L complete; **M0** documentation complete |
+| **Status** | **v0.4.0 in progress** — Phase M (diarization) complete; Phase N next |
 | **Release** | [`v0.3.0`](../releases/v0.3.0.md) · [`v0.2.0`](../releases/v0.2.0.md) |
-| **Next plan** | [18_post_v0.3_plan.md](18_post_v0.3_plan.md) (Phase M onward) |
+| **Next plan** | [18_post_v0.3_plan.md](18_post_v0.3_plan.md) (Phase N onward) |
 | **Docs** | [../README.md](../README.md) |
 | **Deploy** | [../user/deployment.md](../user/deployment.md) · [../user/model-setup.md](../user/model-setup.md) |
 
@@ -546,9 +546,22 @@ MVP is complete and released. Prioritized work below extends the platform per [1
 
 **Acceptance:** User can ask follow-up questions scoped to stored findings without re-running full workflow.
 
-### Recommended first PR after v0.3.0
+### Recommended next PR after v0.3.0
 
-See **[18_post_v0.3_plan.md](18_post_v0.3_plan.md)** — Phase **M** (speaker diarization + Whisper segment alignment).
+See **[18_post_v0.3_plan.md](18_post_v0.3_plan.md)** — Phase **N** (full multidisciplinary workflow).
+
+### Phase M — Speaker diarization (complete)
+
+**Goal:** Label multi-speaker audio ingest with diarization + Whisper alignment.
+
+- [x] `diarization_service` (pyannote, lazy load, `HF_TOKEN`)
+- [x] `transcript_alignment_service` (overlap alignment → Person A / Person B)
+- [x] `audio_transcription_service` orchestrates Whisper + diarization with fallback
+- [x] `POST /api/transcribe` returns `speaker_count`, `speaker_labels`, `diarization_applied`
+- [x] Health check `diarization_ready`; Streamlit speaker metadata
+- [x] Optional `[diarization]` extra in `pyproject.toml`; tests and docs
+
+**Acceptance:** Two-speaker audio → ≥2 labeled speakers in transcript bundle when pyannote is configured.
 
 ### Out of scope (unchanged)
 

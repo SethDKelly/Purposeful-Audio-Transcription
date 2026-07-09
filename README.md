@@ -32,10 +32,11 @@ Full instructions: **[doc/user/getting-started.md](doc/user/getting-started.md)*
 
 - 13 analysis modules · 5 workflows · meta-synthesis
 - Evidence quote IDs (`Q001…`) on every finding
+- Speaker diarization for multi-speaker audio (pyannote, optional)
 - Streamlit report + **Explore** tab (drill-down, follow-up Q&A)
 - Exports: Markdown, JSON, PDF, coach summary, mediation brief
 - Optional PostgreSQL, background jobs, API key auth
-- 98 automated tests
+- 104 automated tests
 
 ## Prerequisites
 
@@ -78,7 +79,7 @@ Summary in [doc/developer/api-reference.md](doc/developer/api-reference.md). Int
 ## Roadmap
 
 - **History:** [doc/planning/implementation_plan.md](doc/planning/implementation_plan.md) (phases A–L)
-- **Next:** [doc/planning/18_post_v0.3_plan.md](doc/planning/18_post_v0.3_plan.md) (phases M–S; **M** = speaker diarization)
+- **Next:** [doc/planning/18_post_v0.3_plan.md](doc/planning/18_post_v0.3_plan.md) (Phase M ✓; **N** = full multidisciplinary workflow)
 
 ## Prompt storage
 

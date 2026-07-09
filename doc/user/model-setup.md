@@ -1,8 +1,46 @@
 # Model setup
 
-The Relationship Reasoning Engine (RRE) uses [Ollama](https://ollama.com/) for local LLM inference.
+The Relationship Reasoning Engine (RRE) uses **Whisper** (via [faster-whisper](https://github.com/SYSTRAN/faster-whisper)) for local audio transcription and [Ollama](https://ollama.com/) for local LLM inference.
 
-## Prerequisites
+## Whisper (transcription)
+
+Configure in `.env` (see `.env.example`):
+
+| Variable | Default | Notes |
+|----------|---------|-------|
+| `WHISPER_MODEL` | `base` | `tiny`/`base` faster; `small`/`medium` more accurate |
+| `WHISPER_DEVICE` | `auto` | Set `cuda` when an NVIDIA GPU is available |
+| `WHISPER_COMPUTE_TYPE` | `int8` | Use `float16` on GPU |
+
+## Speaker diarization (optional)
+
+When pyannote is installed, audio uploads are automatically split into **Person A / Person B** turns using local speaker diarization.
+
+1. Install optional dependencies:
+   ```powershell
+   pip install -e ".[diarization]"
+   ```
+2. Accept the model terms for [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1) on Hugging Face.
+3. Add your token to `.env`:
+   ```env
+   HF_TOKEN=your_huggingface_token
+   DIARIZATION_ENABLED=true
+   ```
+
+| Variable | Default | Notes |
+|----------|---------|-------|
+| `DIARIZATION_ENABLED` | `true` | Set `false` to skip diarization |
+| `DIARIZATION_MODEL` | `pyannote/speaker-diarization-3.1` | Hugging Face pipeline id |
+| `DIARIZATION_SPEAKER_PREFIX` | `Person` | Labels become Person A, Person B, … |
+| `HF_TOKEN` | _(empty)_ | Required for gated pyannote models |
+
+If diarization is unavailable, transcription still works with a single **Speaker 1** label. The sidebar shows **Diarization: Connected** when ready.
+
+Restart the API after changing these settings.
+
+## Ollama (analysis)
+
+### Prerequisites
 
 1. Install and start Ollama.
 2. Pull at least one chat model, for example:
@@ -11,7 +49,7 @@ The Relationship Reasoning Engine (RRE) uses [Ollama](https://ollama.com/) for l
    ```
 3. Copy `.env.example` to `.env` and set a default model if you want one globally.
 
-## Configuration layers
+### Configuration layers
 
 Model resolution follows this order (first non-empty value wins):
 

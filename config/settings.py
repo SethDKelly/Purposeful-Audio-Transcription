@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     whisper_model: str = "base"
     whisper_device: str = "auto"
     whisper_compute_type: str = "int8"
+    diarization_enabled: bool = True
+    diarization_model: str = "pyannote/speaker-diarization-3.1"
+    diarization_speaker_prefix: str = "Person"
+    diarization_min_speakers: int | None = None
+    diarization_max_speakers: int | None = None
+    hf_token: str = ""
     max_upload_mb: int = 100
     temp_dir: Path = Path("./data/temp")
     log_level: str = "INFO"

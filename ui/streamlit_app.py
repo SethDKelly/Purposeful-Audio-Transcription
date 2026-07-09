@@ -97,6 +97,10 @@ def render_sidebar() -> None:
     st.sidebar.markdown(
         f"- **Whisper:** {_status_indicator(health.get('whisper_ready', False))}"
     )
+    diarization_ready = health.get("diarization_ready", False)
+    st.sidebar.markdown(
+        f"- **Diarization:** {_status_indicator(diarization_ready)}"
+    )
 
     workflows = _cached_workflows()
     st.sidebar.divider()
@@ -356,8 +360,22 @@ def main() -> None:
                     {
                         "duration_seconds": result.get("duration_seconds"),
                         "segments": result.get("segments", []),
+                        "speaker_count": result.get("speaker_count"),
+                        "speaker_labels": result.get("speaker_labels", []),
+                        "diarization_applied": result.get("diarization_applied", False),
                     }
                 )
+                if result.get("diarization_applied"):
+                    labels = result.get("speaker_labels") or []
+                    status.write(
+                        f"Detected {result.get('speaker_count', len(labels))} speaker(s): "
+                        + ", ".join(labels)
+                    )
+                else:
+                    status.write(
+                        "Speaker diarization skipped — transcript uses a single speaker label. "
+                        "Install pyannote extras and set HF_TOKEN in `.env` to enable."
+                    )
                 status.update(label="Transcription complete", state="complete")
             except (RuntimeError, httpx.HTTPError) as exc:
                 status.update(label="Failed", state="error")
@@ -376,6 +394,16 @@ def main() -> None:
             cols[1].metric("Transcript ID", meta["transcript_id"][:8] + "…")
         if meta.get("filename"):
             cols[2].metric("Source", meta["filename"])
+        if meta.get("speaker_count"):
+            st.caption(
+                "Speakers: "
+                + ", ".join(meta.get("speaker_labels") or [])
+                + (
+                    " (diarized)"
+                    if meta.get("diarization_applied")
+                    else " (single-speaker fallback)"
+                )
+            )
 
         bundle = st.session_state.transcript_bundle
         if bundle and bundle.get("speakers"):

@@ -3,16 +3,19 @@ from pathlib import Path
 
 from backend.core.exceptions import AnalysisError
 from backend.core.workflow_registry import workflow_registry
+from backend.services.audio_transcription_service import (
+    AudioTranscriptionResult,
+    audio_transcription_service,
+)
 from backend.services.transcript_service import transcript_service
-from backend.services.whisper_service import TranscriptResult, whisper_service
 from backend.services.workflow_engine import build_workflow_analysis_text, workflow_engine
 
 logger = logging.getLogger(__name__)
 
 
 class Orchestrator:
-    def transcribe(self, audio_path: Path) -> TranscriptResult:
-        return whisper_service.transcribe(audio_path)
+    def transcribe(self, audio_path: Path) -> AudioTranscriptionResult:
+        return audio_transcription_service.transcribe(audio_path)
 
     def process_workflow(
         self,
@@ -47,6 +50,9 @@ class Orchestrator:
             ],
             "language": transcript_result.language,
             "duration_seconds": transcript_result.duration_seconds,
+            "speaker_count": transcript_result.speaker_count,
+            "speaker_labels": transcript_result.speaker_labels,
+            "diarization_applied": transcript_result.diarization_applied,
             "model": resolved_model,
             "analysis": analysis,
             "workflow_id": workflow.config.id,

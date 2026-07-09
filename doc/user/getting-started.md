@@ -10,6 +10,7 @@ Quick path from clone to your first workflow report.
 | [ffmpeg](https://ffmpeg.org/download.html) | On `PATH` for audio |
 | [Ollama](https://ollama.com/) | Running locally |
 | Chat model | e.g. `ollama pull llama3.2` |
+| Speaker diarization (optional) | `pip install -e ".[diarization]"` + `HF_TOKEN` — see [model-setup.md](model-setup.md) |
 
 ## Install
 
@@ -52,7 +53,7 @@ DEFAULT_OLLAMA_MODEL=llama3.2
 
 ## First workflow (5 minutes)
 
-1. Open the UI and confirm the sidebar shows **Ollama** and **ffmpeg** as connected.
+1. Open the UI and confirm the sidebar shows **Ollama**, **ffmpeg**, and optionally **Diarization** as connected.
 2. **Ingest** — paste a short two-speaker transcript or upload `tests/fixtures/golden_transcript.txt`.
 3. **Prepare** — optionally rename speakers; click through to keep quote IDs.
 4. **Analyze** — choose **Quick Review** and your Ollama model; click **Run workflow**.

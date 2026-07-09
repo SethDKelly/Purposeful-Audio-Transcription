@@ -36,7 +36,7 @@ Forward plan after merging **v0.3.0** (phases H–L) to `main`. Supersedes the �
 | **Longitudinal / progress tracking** | Compare runs on one transcript only; no cross-transcript case view |
 | **Module customization** | Workflows are fixed YAML only |
 | **Professional mode** | Exports exist; no case files, session series, or finding feedback |
-| **Segment speakers from audio** ([01](../design/01_product_vision_and_scope.md), [16](../design/16_additional_thoughts.md)) | Whisper outputs unlabeled text; parser assigns **Speaker 1** for entire audio |
+| **Segment speakers from audio** ([01](../design/01_product_vision_and_scope.md), [16](../design/16_additional_thoughts.md)) | ✓ pyannote diarization + alignment (optional; requires `pip install -e ".[diarization]"` and `HF_TOKEN`) |
 | **React frontend** | Deferred; Streamlit remains primary UI |
 
 ### Documentation (resolved in M0)
@@ -49,8 +49,8 @@ Documentation is organized under [doc/README.md](../README.md) with **user**, **
 
 ```text
 M0  Doc & release alignment     ✓ complete
-M   Speaker diarization        (audio ingest — next)
-N   Full suite workflows       (product completeness)
+M   Speaker diarization        ✓ complete
+N   Full suite workflows       (product completeness — next)
 O   Ontology & constructs      (unlocks knowledge graph value)
 P   Cases & longitudinal view  (professional / repeat use)
 Q   Custom workflows           (power users)
@@ -59,7 +59,7 @@ S   React frontend             (parallel track, larger)
 —   Evaluation loop            (ongoing, every phase)
 ```
 
-**Recommended next implementation PR:** **Phase M** (speaker diarization + Whisper segment alignment).
+**Recommended next implementation PR:** **Phase N** (full multidisciplinary workflow).
 
 ---
 
@@ -79,11 +79,13 @@ S   React frontend             (parallel track, larger)
 
 ---
 
-## 4. Phase M — Speaker diarization & labeled audio ingest
+## 4. Phase M — Speaker diarization & labeled audio ingest ✓
 
 **Goal:** Close the audio-ingest gap: detect **who spoke when**, align with Whisper segments, and produce **multi-speaker labeled turns** for the evidence index — per [01_product_vision](../design/01_product_vision_and_scope.md) (“segment speakers”) and [16_additional_thoughts](../design/16_additional_thoughts.md).
 
-### Problem (current behavior)
+**Status:** Shipped. See [model-setup.md](../user/model-setup.md) for `HF_TOKEN` and optional `pip install -e ".[diarization]"`.
+
+### Problem (resolved)
 
 ```text
 Audio → Whisper (faster-whisper) → single text blob → TranscriptParser → Speaker 1
@@ -362,7 +364,7 @@ Unchanged from original MVP boundaries unless requirements shift:
 | Release | Phases | Theme |
 |---------|--------|-------|
 | **v0.3.1** | M0 | Docs only |
-| **v0.4.0** | M | Speaker diarization + labeled audio ingest |
+| **v0.4.0** | M | Speaker diarization + labeled audio ingest ✓ |
 | **v0.4.1** | N | Full multidisciplinary workflow + research-oriented option |
 | **v0.5.0** | O + P | Ontology-rich outputs + cases / custom workflows |
 | **v0.6.0** | Q + R | Streamlit professional polish |
@@ -370,19 +372,27 @@ Unchanged from original MVP boundaries unless requirements shift:
 
 ---
 
-## 14. Next PR checklist (Phase M — diarization)
+## 14. Next PR checklist (Phase N — full suite workflow)
 
 ```text
 [ ] git checkout main && pull
-[ ] Add optional dependency group [diarization] (pyannote.audio, torch constraints)
-[ ] DIARIZATION_* and HF_TOKEN settings + .env.example
-[ ] diarization_service.py + transcript_alignment_service.py
-[ ] Integrate with whisper orchestrator + transcription API
-[ ] Health check + check_prerequisites.py
-[ ] Streamlit: speaker count + fallback messaging
-[ ] tests: alignment unit tests + mocked integration
+[ ] Add config/workflows/full_multidisciplinary.yaml
+[ ] Optional: research_oriented.yaml
+[ ] Wire background default for long workflow in UI
+[ ] tests/test_workflow_registry.py + integration test
 [ ] pytest tests/ -q
-[ ] doc/user/model-setup.md + user-guide.md updates
+```
+
+### Phase M checklist (completed)
+
+```text
+[x] Optional dependency group [diarization] (pyannote.audio, torch)
+[x] DIARIZATION_* and HF_TOKEN settings + .env.example
+[x] diarization_service.py + transcript_alignment_service.py + audio_transcription_service.py
+[x] /api/transcribe speaker metadata + health diarization_ready
+[x] Streamlit speaker count + fallback messaging
+[x] tests: alignment unit tests + mocked integration
+[x] doc/user/model-setup.md + user-guide.md + deployment.md updates
 ```
 
 ---

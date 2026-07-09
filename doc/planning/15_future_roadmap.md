@@ -12,17 +12,11 @@
 
 ## Near-Term Enhancements (remaining)
 
-### Speaker diarization (next — Phase M)
+### Speaker diarization (Phase M — shipped)
 
-**Status:** Not implemented. Audio upload produces a single **Speaker 1** block; Whisper does not identify who spoke when.
+**Status:** Implemented. Audio upload runs Whisper + optional [pyannote.audio](https://github.com/pyannote/pyannote-audio) diarization, aligns segments to **Person A / Person B** turns, and ingests labeled quotes.
 
-Planned:
-
-- [pyannote.audio](https://github.com/pyannote/pyannote-audio) diarization (local, `HF_TOKEN` for model access)
-- Align diarization timeline with Whisper segments → `Person A` / `Person B` labeled turns
-- Integrate with existing transcript parser and evidence index
-
-See [18_post_v0.3_plan.md](18_post_v0.3_plan.md) §4.
+Setup: `pip install -e ".[diarization]"`, accept Hugging Face model terms, set `HF_TOKEN` in `.env`. See [18_post_v0.3_plan.md](18_post_v0.3_plan.md) §4 and [user/model-setup.md](../user/model-setup.md).
 
 ### Workflow library (gaps)
 
@@ -62,7 +56,7 @@ Allow advanced users to:
 
 ### Audio/Video Inputs
 
-**Status:** Whisper transcription shipped; **speaker diarization planned (Phase M)**.
+**Status:** Whisper transcription + optional speaker diarization (Phase M) shipped.
 
 Potential future features beyond diarization:
 - timing analysis

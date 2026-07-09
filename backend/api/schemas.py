@@ -8,6 +8,7 @@ class HealthResponse(BaseModel):
     ffmpeg_available: bool
     ollama_available: bool
     whisper_ready: bool
+    diarization_ready: bool = False
 
 
 class TranscriptSegmentSchema(BaseModel):
@@ -21,6 +22,9 @@ class TranscribeResponse(BaseModel):
     segments: list[TranscriptSegmentSchema]
     language: str | None = None
     duration_seconds: float | None = None
+    speaker_count: int = 1
+    speaker_labels: list[str] = Field(default_factory=list)
+    diarization_applied: bool = False
 
 
 class OllamaModelsResponse(BaseModel):
