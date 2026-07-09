@@ -1,5 +1,6 @@
 from collections.abc import Generator
 from contextlib import contextmanager
+from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
@@ -11,11 +12,17 @@ class Base(DeclarativeBase):
     pass
 
 
-connect_args = {}
-if settings.database_url.startswith("sqlite"):
-    connect_args = {"check_same_thread": False}
+def _engine_kwargs() -> dict:
+    if settings.is_sqlite:
+        return {"connect_args": {"check_same_thread": False}}
+    return {
+        "pool_pre_ping": True,
+        "pool_size": settings.database_pool_size,
+        "max_overflow": settings.database_pool_size,
+    }
 
-engine = create_engine(settings.database_url, connect_args=connect_args)
+
+engine = create_engine(settings.database_url, **_engine_kwargs())
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
@@ -23,12 +30,17 @@ def init_db() -> None:
     from backend.db import models  # noqa: F401
 
     settings.temp_dir.mkdir(parents=True, exist_ok=True)
-    db_path_parent = settings.database_url.replace("sqlite:///", "")
-    if db_path_parent and not db_path_parent.startswith(":"):
-        from pathlib import Path
+    if settings.is_sqlite:
+        db_path_parent = settings.database_url.replace("sqlite:///", "")
+        if db_path_parent and not db_path_parent.startswith(":"):
+            Path(db_path_parent).parent.mkdir(parents=True, exist_ok=True)
 
-        Path(db_path_parent).parent.mkdir(parents=True, exist_ok=True)
-    Base.metadata.create_all(bind=engine)
+    if settings.alembic_auto_upgrade:
+        from backend.db.migrations import upgrade_head
+
+        upgrade_head()
+    else:
+        Base.metadata.create_all(bind=engine)
 
 
 @contextmanager

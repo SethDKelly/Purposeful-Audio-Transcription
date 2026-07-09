@@ -9,6 +9,13 @@ from backend.db.models import WorkflowRunRow
 from backend.domain.enums import WorkflowRunStatus
 from backend.domain.workflow import WorkflowRun
 
+_INCOMPLETE_STATUSES = (
+    WorkflowRunStatus.CREATED.value,
+    WorkflowRunStatus.PREPROCESSING.value,
+    WorkflowRunStatus.RUNNING_MODULES.value,
+    WorkflowRunStatus.SYNTHESIZING.value,
+)
+
 
 class WorkflowRunRepository:
     def create(
@@ -45,6 +52,12 @@ class WorkflowRunRepository:
         if row is None:
             raise WorkflowRunNotFoundError(f"Workflow run not found: {run_id}")
         return _from_row(row)
+
+    def list_incomplete(self, session: Session) -> list[WorkflowRun]:
+        rows = session.scalars(
+            select(WorkflowRunRow).where(WorkflowRunRow.status.in_(_INCOMPLETE_STATUSES))
+        ).all()
+        return [_from_row(row) for row in rows]
 
 
 def new_workflow_run_id() -> str:

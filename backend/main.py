@@ -1,28 +1,34 @@
-import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from config.settings import settings
-from backend.core.exceptions import AppError
+from backend.api.middleware import APIKeyMiddleware
 from backend.api.routes import health, models, module_stream, modules, process, purposes, transcribe, transcripts, workflows
+from backend.core.exceptions import AppError
+from backend.core.logging_config import configure_logging
 from backend.db.base import init_db
+from backend.services.workflow_job_service import workflow_job_service
+from config.settings import settings
 
-logging.basicConfig(
-    level=getattr(logging, settings.log_level.upper(), logging.INFO),
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    init_db()
+    workflow_job_service.resume_incomplete()
+    yield
+    workflow_job_service.shutdown()
+
+
+configure_logging()
 
 app = FastAPI(
     title="Purposeful Audio Transcription",
     description="Local audio transcription with Whisper and Ollama-powered analysis",
     version="0.2.0",
+    lifespan=lifespan,
 )
-
-
-@app.on_event("startup")
-def on_startup() -> None:
-    init_db()
+app.add_middleware(APIKeyMiddleware)
 
 app.include_router(health.router)
 app.include_router(models.router)
@@ -49,4 +55,5 @@ def root() -> dict[str, str]:
         "name": "Purposeful Audio Transcription",
         "docs": "/docs",
         "health": "/api/health",
+        "database": "postgresql" if not settings.is_sqlite else "sqlite",
     }

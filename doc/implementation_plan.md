@@ -525,11 +525,11 @@ MVP is complete and released. Prioritized work below extends the platform per [1
 
 **Goal:** Prepare for heavier use without full multi-tenant deployment.
 
-- [ ] PostgreSQL option (env-driven; keep SQLite default)
-- [ ] Database migrations (Alembic)
-- [ ] Async/workflow job queue for long runs (optional background execution)
-- [ ] API authentication hook (local API key or reverse-proxy pattern)
-- [ ] Structured logging + run telemetry
+- [x] PostgreSQL option (env-driven; keep SQLite default)
+- [x] Database migrations (Alembic)
+- [x] Async/workflow job queue for long runs (optional background execution)
+- [x] API authentication hook (local API key or reverse-proxy pattern)
+- [x] Structured logging + run telemetry
 
 **Acceptance:** Can switch `DATABASE_URL` to PostgreSQL; long workflows survive API restart.
 
@@ -550,7 +550,7 @@ MVP is complete and released. Prioritized work below extends the platform per [1
 ### Recommended first PR after Phase J
 
 ```text
-Phase K: Add PostgreSQL option with Alembic migrations and env-driven DATABASE_URL switching.
+Phase L: Interactive exploration — drill-down, cross-module comparison, and guided follow-up.
 ```
 
 ### Out of scope (unchanged)

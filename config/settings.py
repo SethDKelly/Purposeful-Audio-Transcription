@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     workflows_dir: Path = Path("./config/workflows")
     default_ollama_model: str = ""
     database_url: str = "sqlite:///./data/rre.db"
+    database_pool_size: int = 5
+    alembic_auto_upgrade: bool = False
+    api_key: str = ""
+    log_json: bool = False
+    workflow_background_default: bool = False
     module_run_max_retries: int = 2
     evidence_prompt_max_quotes: int = 120
     evidence_prompt_head_quotes: int = 80
@@ -38,6 +43,14 @@ class Settings(BaseSettings):
     @property
     def max_upload_bytes(self) -> int:
         return self.max_upload_mb * 1024 * 1024
+
+    @property
+    def is_sqlite(self) -> bool:
+        return self.database_url.startswith("sqlite")
+
+    @property
+    def api_auth_enabled(self) -> bool:
+        return bool(self.api_key)
 
 
 settings = Settings()

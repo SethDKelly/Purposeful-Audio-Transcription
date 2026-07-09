@@ -12,6 +12,8 @@ from backend.api.schemas import (
 from backend.core.workflow_registry import workflow_registry
 from backend.services.synthesis_engine import synthesis_engine
 from backend.services.workflow_engine import workflow_engine
+from backend.services.workflow_job_service import workflow_job_service
+from config.settings import settings
 
 router = APIRouter(prefix="/api", tags=["workflows"])
 
@@ -38,11 +40,23 @@ def list_workflows() -> WorkflowsResponse:
 
 @router.post("/workflows/{workflow_id}/run", response_model=WorkflowRunResponse)
 def run_workflow(workflow_id: str, request: RunWorkflowRequest) -> WorkflowRunResponse:
-    workflow_run = workflow_engine.run(
-        workflow_id=workflow_id,
-        transcript_id=request.transcript_id,
-        model=request.model,
+    use_background = (
+        request.background
+        if request.background is not None
+        else settings.workflow_background_default
     )
+    if use_background:
+        workflow_run = workflow_job_service.start_background_run(
+            workflow_id=workflow_id,
+            transcript_id=request.transcript_id,
+            model=request.model,
+        )
+    else:
+        workflow_run = workflow_engine.run(
+            workflow_id=workflow_id,
+            transcript_id=request.transcript_id,
+            model=request.model,
+        )
     _, module_runs = workflow_engine.get_with_module_runs(workflow_run.id)
     return workflow_run_to_response(workflow_run, module_runs)
 

@@ -125,6 +125,7 @@ class WorkflowsResponse(BaseModel):
 class RunWorkflowRequest(BaseModel):
     transcript_id: str
     model: str | None = None
+    background: bool | None = None
 
 
 class WorkflowRunModuleSummary(BaseModel):

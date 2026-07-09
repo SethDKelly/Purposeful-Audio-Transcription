@@ -16,6 +16,8 @@ dependencies = [
     "streamlit>=1.40",
     "sqlalchemy>=2.0",
     "fpdf2>=2.8",
+    "alembic>=1.14",
+    "psycopg[binary]>=3.2",
 ]
 
 [project.optional-dependencies]
