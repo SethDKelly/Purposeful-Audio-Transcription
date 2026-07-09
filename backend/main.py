@@ -25,7 +25,7 @@ configure_logging()
 app = FastAPI(
     title="Purposeful Audio Transcription",
     description="Local audio transcription with Whisper and Ollama-powered analysis",
-    version="0.2.0",
+    version="0.3.0",
     lifespan=lifespan,
 )
 app.add_middleware(APIKeyMiddleware)

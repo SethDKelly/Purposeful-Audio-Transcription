@@ -4,8 +4,8 @@ Active plan to evolve the existing Purposeful Audio Transcription codebase into 
 
 | | |
 |---|---|
-| **Status** | **Phase J complete** — post-MVP expansion (phases K–L) |
-| **Release** | [`v0.2.0`](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v0.2.0) |
+| **Status** | **Phases H–L complete** — post-MVP roadmap delivered |
+| **Release** | [`v0.3.0`](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v0.3.0) (branch); [`v0.2.0`](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v0.2.0) (MVP on `main`) |
 | **Baseline** | Phases 1–4 complete (audio → Whisper → single-purpose Ollama analysis) |
 | **Delivered** | Evidence-linked, structured, multi-module workflow MVP |
 | **Design reference** | [12_mvp_build_plan.md](12_mvp_build_plan.md) |

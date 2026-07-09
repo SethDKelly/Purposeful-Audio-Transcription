@@ -148,4 +148,4 @@ See [doc/implementation_plan.md](doc/implementation_plan.md) for the active MVP 
 - **Phase J** — PDF export, coach/mediation summaries, redaction ✓
 - **Phase K** — PostgreSQL, Alembic, background workflows, API auth ✓
 - **Phase L** — Interactive exploration (drill-down, cross-module, follow-up Q&A) ✓
-- **Release** — `v0.2.0`
+- **Release** — `v0.3.0` (phases H–L on `phase-h-legacy-cleanup`); `v0.2.0` (MVP on `main`)
