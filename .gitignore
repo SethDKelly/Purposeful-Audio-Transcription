@@ -220,3 +220,6 @@ __marimo__/
 # Application data
 data/
 .env
+
+# Local tooling (portable gh CLI, etc.)
+.tools/
