@@ -1,7 +1,7 @@
 from collections.abc import Iterator
 
 from fastapi import APIRouter
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from backend.api.schemas import AnalyzeRequest, AnalyzeResponse
 from backend.core.exceptions import AnalysisError
@@ -9,15 +9,31 @@ from backend.services.analysis_service import analysis_service
 
 router = APIRouter(prefix="/api", tags=["analyze"])
 
+_ANALYZE_DEPRECATION_HEADERS = {
+    "Deprecation": "true",
+    "Link": '</api/workflows>; rel="successor-version"',
+    "X-Deprecated-Endpoint": (
+        "POST /api/analyze is deprecated. Use POST /api/workflows/{workflow_id}/run instead."
+    ),
+}
 
-@router.post("/analyze", response_model=AnalyzeResponse)
-def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
+
+@router.post(
+    "/analyze",
+    response_model=AnalyzeResponse,
+    deprecated=True,
+    summary="Run legacy single-purpose analysis (deprecated)",
+)
+def analyze(request: AnalyzeRequest) -> JSONResponse:
     result = analysis_service.analyze(
         transcript=request.transcript,
         purpose_id=request.purpose_id,
         model=request.model,
     )
-    return AnalyzeResponse(**result)
+    return JSONResponse(
+        content=AnalyzeResponse(**result).model_dump(),
+        headers=_ANALYZE_DEPRECATION_HEADERS,
+    )
 
 
 @router.post("/analyze/stream")

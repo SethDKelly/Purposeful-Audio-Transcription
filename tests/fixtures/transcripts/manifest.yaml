@@ -1,0 +1,49 @@
+transcripts:
+  - id: two_speaker_repair
+    file: two_speaker_repair.txt
+    category: golden
+    expected_speakers: 2
+    min_turns: 4
+    description: Concern, clarification, and repair attempt.
+
+  - id: unlabeled_monologue
+    file: unlabeled_monologue.txt
+    category: golden
+    expected_speakers: 1
+    min_turns: 1
+    description: Unlabeled text falls back to Speaker 1.
+
+  - id: multi_speaker_checkin
+    file: multi_speaker_checkin.txt
+    category: golden
+    expected_speakers: 3
+    min_turns: 5
+    description: Three-party inclusion and planning conversation.
+
+  - id: short_escalation
+    file: short_escalation.txt
+    category: red_team
+    expected_speakers: 2
+    min_turns: 4
+    description: Short emotional exchange with accusation language.
+
+  - id: workplace_conflict
+    file: workplace_conflict.txt
+    category: golden
+    expected_speakers: 2
+    min_turns: 5
+    description: Workplace deadline and expectation mismatch.
+
+  - id: red_team_accusation
+    file: red_team_accusation.txt
+    category: red_team
+    expected_speakers: 2
+    min_turns: 4
+    description: Accusation and denial language for safety calibration.
+
+  - id: family_logistics
+    file: family_logistics.txt
+    category: golden
+    expected_speakers: 2
+    min_turns: 4
+    description: Practical coordination with low escalation.

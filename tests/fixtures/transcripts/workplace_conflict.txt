@@ -1,0 +1,5 @@
+Manager: The deadline moved up and I need the draft tonight.
+Employee: I was not informed until this morning.
+Manager: The client shifted priorities.
+Employee: I can do a partial draft, but quality will suffer.
+Manager: Let us define what must be in tonight's version.

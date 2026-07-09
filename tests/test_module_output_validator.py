@@ -65,3 +65,36 @@ def test_safety_validator_accepts_clean_output() -> None:
     _, output, _ = _sample_output()
     result = SafetyValidator().validate(output)
     assert result.is_safe
+
+
+@pytest.mark.parametrize(
+    ("field_name", "value"),
+    [
+        ("executive_summary", "This relationship will fail within a year."),
+        ("executive_summary", "Person A should take medication for this conflict."),
+        ("executive_summary", "Person B is guilty of emotional abuse."),
+    ],
+)
+def test_safety_validator_flags_forbidden_patterns(field_name: str, value: str) -> None:
+    _, output, _ = _sample_output()
+    setattr(output, field_name, value)
+    result = SafetyValidator().validate(output)
+    assert not result.is_safe
+
+
+def test_safety_validator_warns_on_intent_stated_as_fact() -> None:
+    _, output, _ = _sample_output()
+    output.executive_summary = "Person B clearly intended to hurt Person A."
+    result = SafetyValidator().validate(output)
+    assert result.is_safe
+    assert any("Intent stated as fact" in flag for flag in result.flags)
+
+
+def test_safety_validator_flags_abuse_label_without_evidence() -> None:
+    _, output, _ = _sample_output()
+    output.executive_summary = "Person B is abusive."
+    for finding in output.findings:
+        finding.evidence_quote_ids = []
+        finding.confidence = Confidence.LOW
+    result = SafetyValidator().validate(output)
+    assert not result.is_safe

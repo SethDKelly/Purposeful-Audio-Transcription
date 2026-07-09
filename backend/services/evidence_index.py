@@ -2,6 +2,7 @@ import uuid
 
 from backend.domain.transcript import EvidenceQuote, Speaker, TranscriptBundle
 from backend.services.transcript_parser import ParsedTurn
+from config.settings import settings
 
 
 class EvidenceIndexService:
@@ -47,12 +48,64 @@ class EvidenceIndexService:
                 return quote
         return None
 
-    def format_for_prompt(self, quotes: list[EvidenceQuote], speakers: list[Speaker]) -> str:
+    def select_quotes_for_prompt(
+        self,
+        quotes: list[EvidenceQuote],
+        *,
+        max_quotes: int | None = None,
+        head_quotes: int | None = None,
+        tail_quotes: int | None = None,
+    ) -> tuple[list[EvidenceQuote], str | None]:
+        """Return a head/tail subset when the evidence index exceeds prompt limits."""
+        max_q = max_quotes if max_quotes is not None else settings.evidence_prompt_max_quotes
+        if len(quotes) <= max_q:
+            return quotes, None
+
+        head = head_quotes if head_quotes is not None else settings.evidence_prompt_head_quotes
+        tail = tail_quotes if tail_quotes is not None else settings.evidence_prompt_tail_quotes
+        head = min(head, len(quotes))
+        tail = min(tail, max(0, len(quotes) - head))
+
+        if head + tail >= len(quotes):
+            return quotes, None
+
+        selected = quotes[:head] + quotes[len(quotes) - tail :]
+        omitted = len(quotes) - len(selected)
+        note = (
+            f"[... {omitted} of {len(quotes)} evidence quotes omitted for prompt length; "
+            "full index is retained in the database ...]"
+        )
+        return selected, note
+
+    def format_for_prompt(
+        self,
+        quotes: list[EvidenceQuote],
+        speakers: list[Speaker],
+        *,
+        max_quotes: int | None = None,
+        head_quotes: int | None = None,
+        tail_quotes: int | None = None,
+    ) -> str:
         speaker_names = {
             speaker.id: speaker.display_name or speaker.label for speaker in speakers
         }
+        selected, omission_note = self.select_quotes_for_prompt(
+            quotes,
+            max_quotes=max_quotes,
+            head_quotes=head_quotes,
+            tail_quotes=tail_quotes,
+        )
         lines: list[str] = []
-        for quote in quotes:
+        head_count = 0
+        if omission_note:
+            head_count = min(
+                head_quotes if head_quotes is not None else settings.evidence_prompt_head_quotes,
+                len(quotes),
+            )
+
+        for index, quote in enumerate(selected):
+            if omission_note and index == head_count:
+                lines.append(omission_note)
             name = speaker_names.get(quote.speaker_id, "Unknown")
             lines.append(f"[{quote.quote_id}] {name}: {quote.text}")
         return "\n".join(lines)

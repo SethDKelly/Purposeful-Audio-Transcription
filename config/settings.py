@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     default_ollama_model: str = ""
     database_url: str = "sqlite:///./data/rre.db"
     module_run_max_retries: int = 2
+    evidence_prompt_max_quotes: int = 120
+    evidence_prompt_head_quotes: int = 80
+    evidence_prompt_tail_quotes: int = 40
 
     allowed_extensions: frozenset[str] = frozenset(
         {".mp3", ".wav", ".m4a", ".flac", ".ogg", ".webm", ".mp4"}

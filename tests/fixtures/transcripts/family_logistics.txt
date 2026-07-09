@@ -1,0 +1,5 @@
+Parent: Who is picking up the kids on Thursday?
+Teen: I thought you were.
+Parent: I have a late meeting.
+Teen: I can ask a friend, but I need to know by tonight.
+Parent: Thank you. Let me confirm and text you.
