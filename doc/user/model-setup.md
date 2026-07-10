@@ -106,8 +106,15 @@ Model resolution follows this order (first non-empty value wins):
 | Request | API body `model` field | `"llama3.2"` |
 | Module | `ollama_model` in `config/modules/*.yaml` | `ollama_model: llama3.2` |
 | Environment | `DEFAULT_OLLAMA_MODEL` in `.env` | `DEFAULT_OLLAMA_MODEL=llama3.2` |
+| Thinking | `OLLAMA_THINK` in `.env` | `OLLAMA_THINK=false` (recommended) |
 
 Legacy single-purpose analysis has been removed. Use module YAML for configuration.
+
+### Gemma 4 and thinking models
+
+Some Ollama models (notably **Gemma 4**) enable built-in **thinking** by default. On long module prompts, thinking can consume the token budget and leave `message.content` empty while reasoning appears in `message.thinking`. Quick Review and other JSON workflows then fail with an empty response.
+
+RRE passes `think=false` to Ollama by default (`OLLAMA_THINK=false`). Leave this off for structured analysis. Set `OLLAMA_THINK=true` only if you explicitly want thinking mode and accept the risk of empty content on long prompts.
 
 ## Recommended workflow
 

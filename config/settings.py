@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     framework_dir: Path = Path("./config/framework")
     workflows_dir: Path = Path("./config/workflows")
     default_ollama_model: str = ""
+    # Disable Ollama "thinking" mode for structured JSON module output (Gemma 4 etc.).
+    ollama_think: bool = False
     database_url: str = "sqlite:///./data/rre.db"
     database_pool_size: int = 5
     alembic_auto_upgrade: bool = False
