@@ -11,6 +11,10 @@ Configure in `.env` (see `.env.example`):
 | `WHISPER_MODEL` | `base` | `tiny`/`base` faster; `small`/`medium` more accurate |
 | `WHISPER_DEVICE` | `auto` | `auto` picks CUDA if available, else CPU |
 | `WHISPER_COMPUTE_TYPE` | `int8` | On CUDA, `int8` is automatically promoted to `float16` |
+| `TRANSCRIPTION_MODE` | `sliced` | `sliced` = diarize then Whisper per speaker interval; `overlap` = full-file Whisper + alignment |
+| `WHISPER_MIN_SLICE_DURATION` | `0.5` | Skip diarization intervals shorter than this before Whisper (seconds) |
+| `WHISPER_BATCH_SIZE` | `8` | CUDA batched Whisper slice count (ignored on CPU) |
+| `WHISPER_MAX_SLICES` | `200` | Cap diarization slices per upload |
 
 ## GPU / accelerator setup
 

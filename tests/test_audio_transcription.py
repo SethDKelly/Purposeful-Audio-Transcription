@@ -16,6 +16,7 @@ def test_transcribe_applies_diarization_when_available(
 ) -> None:
     mock_settings.diarization_enabled = True
     mock_settings.diarization_speaker_prefix = "Person"
+    mock_settings.transcription_mode = "overlap"
     mock_diarization.model_access_error.return_value = None
     mock_diarization.is_available.return_value = True
     mock_diarization.diarize.return_value = [
@@ -50,6 +51,7 @@ def test_transcribe_falls_back_when_diarization_unavailable(
     mock_settings: MagicMock,
 ) -> None:
     mock_settings.diarization_enabled = True
+    mock_settings.transcription_mode = "overlap"
     mock_diarization.model_access_error.return_value = None
     mock_diarization.is_available.return_value = False
     mock_whisper.transcribe.return_value = TranscriptResult(
@@ -103,6 +105,7 @@ def test_transcribe_passes_speaker_hint_to_diarization(
 ) -> None:
     mock_settings.diarization_enabled = True
     mock_settings.diarization_speaker_prefix = "Person"
+    mock_settings.transcription_mode = "overlap"
     mock_diarization.model_access_error.return_value = None
     mock_diarization.is_available.return_value = True
     mock_diarization.diarize.return_value = [
@@ -122,6 +125,47 @@ def test_transcribe_passes_speaker_hint_to_diarization(
     audio_transcription_service.transcribe(Path("sample.wav"), num_speakers=2)
 
     mock_diarization.diarize.assert_called_once_with(Path("sample.wav"), num_speakers=2)
+
+
+@patch("backend.services.audio_transcription_service.settings")
+@patch("backend.services.audio_transcription_service.diarization_service")
+@patch("backend.services.audio_transcription_service.whisper_service")
+def test_transcribe_uses_sliced_mode_when_configured(
+    mock_whisper: MagicMock,
+    mock_diarization: MagicMock,
+    mock_settings: MagicMock,
+) -> None:
+    from backend.services.whisper_service import TaggedSegment, TranscriptSegment
+
+    mock_settings.diarization_enabled = True
+    mock_settings.diarization_speaker_prefix = "Person"
+    mock_settings.transcription_mode = "sliced"
+    mock_diarization.model_access_error.return_value = None
+    mock_diarization.is_available.return_value = True
+    mock_diarization.diarize.return_value = [
+        SpeakerInterval(speaker="SPEAKER_00", start=0.0, end=2.0),
+        SpeakerInterval(speaker="SPEAKER_01", start=2.0, end=4.0),
+    ]
+    segment_a = TranscriptSegment(start=0.0, end=1.5, text="Hello.")
+    segment_b = TranscriptSegment(start=2.0, end=3.5, text="Hi.")
+    mock_whisper.transcribe_speaker_intervals.return_value = TranscriptResult(
+        text="Hello. Hi.",
+        segments=[segment_a, segment_b],
+        language="en",
+        duration_seconds=4.0,
+        tagged_segments=[
+            TaggedSegment(segment=segment_a, speaker="SPEAKER_00"),
+            TaggedSegment(segment=segment_b, speaker="SPEAKER_01"),
+        ],
+    )
+
+    result = audio_transcription_service.transcribe(Path("sample.wav"))
+
+    assert result.transcription_mode == "sliced"
+    assert result.diarization_applied is True
+    assert "Person A: Hello." in result.text
+    mock_whisper.transcribe.assert_not_called()
+    mock_whisper.transcribe_speaker_intervals.assert_called_once()
 
 
 @patch("backend.api.routes.transcribe.audio_transcription_service")

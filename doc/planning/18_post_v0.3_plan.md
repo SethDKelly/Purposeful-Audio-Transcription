@@ -422,9 +422,11 @@ Unchanged from original MVP boundaries unless requirements shift:
 
 ---
 
-## 14c. Phase M2 — pyannote-first sliced transcription (planned)
+## 14c. Phase M2 — pyannote-first sliced transcription (in progress)
 
 **Goal:** Improve speaker attribution and turn boundaries by **diarizing first**, then transcribing each speaker interval with Whisper — instead of full-file Whisper + overlap alignment.
+
+**Status:** Core pipeline shipped (`TRANSCRIPTION_MODE=sliced` default). Streamlit progress and fixture validation remain.
 
 ### Problem with current pipeline (post M1.5)
 

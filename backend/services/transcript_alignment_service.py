@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from backend.services.diarization_service import SpeakerInterval
-from backend.services.whisper_service import TranscriptSegment
+from backend.services.diarization_timeline import SpeakerInterval
+from backend.services.whisper_service import TaggedSegment, TranscriptSegment
 
 
 @dataclass(frozen=True)
@@ -72,6 +72,40 @@ def build_labeled_transcript(
         else:
             display_label = _display_label(raw_speaker, speaker_order, speaker_prefix)
 
+        if turns and turns[-1][0] == display_label:
+            turns[-1] = (display_label, f"{turns[-1][1]} {text}".strip())
+        else:
+            turns.append((display_label, text))
+
+    if not turns:
+        return LabeledTranscript(text="", speaker_labels=[])
+
+    lines = [f"{label}: {text}" for label, text in turns]
+    labels: list[str] = []
+    for label, _text in turns:
+        if label not in labels:
+            labels.append(label)
+    return LabeledTranscript(text="\n".join(lines), speaker_labels=labels)
+
+
+def build_labeled_transcript_from_tagged(
+    tagged_segments: list[TaggedSegment],
+    *,
+    speaker_prefix: str = "Person",
+) -> LabeledTranscript:
+    """Build labeled turns when each segment already has a diarization speaker id."""
+    if not tagged_segments:
+        return LabeledTranscript(text="", speaker_labels=[])
+
+    speaker_order: dict[str, str] = {}
+    turns: list[tuple[str, str]] = []
+
+    for tagged in tagged_segments:
+        text = tagged.segment.text.strip()
+        if not text:
+            continue
+
+        display_label = _display_label(tagged.speaker, speaker_order, speaker_prefix)
         if turns and turns[-1][0] == display_label:
             turns[-1] = (display_label, f"{turns[-1][1]} {text}".strip())
         else:

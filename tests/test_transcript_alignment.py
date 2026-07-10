@@ -2,8 +2,9 @@ from backend.services.diarization_service import SpeakerInterval
 from backend.services.transcript_alignment_service import (
     assign_speaker,
     build_labeled_transcript,
+    build_labeled_transcript_from_tagged,
 )
-from backend.services.whisper_service import TranscriptSegment
+from backend.services.whisper_service import TaggedSegment, TranscriptSegment
 
 
 def test_assign_speaker_uses_max_overlap() -> None:
@@ -48,3 +49,21 @@ def test_build_labeled_transcript_merges_consecutive_same_speaker() -> None:
 
     assert labeled.text == "Person A: One. Two."
     assert labeled.speaker_labels == ["Person A"]
+
+
+def test_build_labeled_transcript_from_tagged_segments() -> None:
+    tagged = [
+        TaggedSegment(
+            segment=TranscriptSegment(start=0.0, end=2.0, text="Hello there."),
+            speaker="SPEAKER_00",
+        ),
+        TaggedSegment(
+            segment=TranscriptSegment(start=2.0, end=4.0, text="Hi back."),
+            speaker="SPEAKER_01",
+        ),
+    ]
+
+    labeled = build_labeled_transcript_from_tagged(tagged)
+
+    assert labeled.speaker_labels == ["Person A", "Person B"]
+    assert labeled.text == "Person A: Hello there.\nPerson B: Hi back."

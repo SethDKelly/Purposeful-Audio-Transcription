@@ -578,9 +578,15 @@ See **[15_future_roadmap.md](15_future_roadmap.md)** (Platform, deployment & dat
 - [x] `DIARIZATION_MIN_DURATION_ON` / `DIARIZATION_MIN_DURATION_OFF` settings
 - [x] Applied after every `diarize()` call; unit tests
 
-### Phase M2 — pyannote-first sliced transcription (planned)
+### Phase M2 — pyannote-first sliced transcription (in progress)
 
-See [18_post_v0.3_plan.md](18_post_v0.3_plan.md) §14c: diarize → slice audio → batched Whisper per speaker interval; `TRANSCRIPTION_MODE=overlap|sliced`.
+- [x] `audio_slicing.py` — filter/cap diarization intervals for Whisper
+- [x] `whisper_service.transcribe_speaker_intervals()` — sequential CPU + batched CUDA
+- [x] `audio_transcription_service` — `TRANSCRIPTION_MODE=sliced|overlap` with fallback
+- [x] `build_labeled_transcript_from_tagged()` for sliced segments
+- [x] `POST /api/transcribe` returns `transcription_mode`
+- [ ] Streamlit progress for diarize → transcribe slices
+- [ ] Fixture audio validation vs overlap mode
 
 ### Out of scope (unchanged)
 

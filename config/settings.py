@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Merge same-speaker intervals separated by gaps shorter than this (seconds).
     diarization_min_duration_off: float = 0.2
     hf_token: str = ""
+    transcription_mode: str = "sliced"
+    whisper_min_slice_duration: float = 0.5
+    whisper_batch_size: int = 8
+    whisper_max_slices: int = 200
     max_upload_mb: int = 100
     temp_dir: Path = Path("./data/temp")
     log_level: str = "INFO"

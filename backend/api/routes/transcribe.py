@@ -47,4 +47,5 @@ async def transcribe(
         speaker_labels=result.speaker_labels,
         diarization_applied=result.diarization_applied,
         diarization_skip_reason=result.diarization_skip_reason,
+        transcription_mode=result.transcription_mode,
     )

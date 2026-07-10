@@ -30,6 +30,7 @@ class TranscribeResponse(BaseModel):
     speaker_labels: list[str] = Field(default_factory=list)
     diarization_applied: bool = False
     diarization_skip_reason: str | None = None
+    transcription_mode: str = "overlap"
 
 
 class OllamaModelsResponse(BaseModel):
