@@ -144,6 +144,8 @@ Review [releases/v0.3.0.md](../releases/v0.3.0.md). SQLite: backup first; Alembi
 - **Do not expose** to the public internet without TLS, auth, and rate limiting.
 - Transcripts may contain sensitive data; encrypt disk and control access.
 - LLM output is not clinical or legal advice.
+- **Local-first** — audio and transcripts are stored on your machine in `data/`; processing uses local Whisper and Ollama unless you configure external endpoints.
+- **Air-gapped / offline** — planned hardening: containerized deploy, pre-staged models, no outbound HTTP. See [planning/18_post_v0.3_plan.md](../planning/18_post_v0.3_plan.md) Phases T–U and [planning/15_future_roadmap.md](../planning/15_future_roadmap.md).
 
 ## Troubleshooting
 

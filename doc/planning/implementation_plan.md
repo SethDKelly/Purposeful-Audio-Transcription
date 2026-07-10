@@ -550,6 +550,15 @@ MVP is complete and released. Prioritized work below extends the platform per [1
 
 See **[18_post_v0.3_plan.md](18_post_v0.3_plan.md)** — Phase **N** (full multidisciplinary workflow).
 
+### Backlog — platform reliability & data sovereignty
+
+See **[15_future_roadmap.md](15_future_roadmap.md)** (Platform, deployment & data sovereignty) and **[18_post_v0.3_plan.md](18_post_v0.3_plan.md)** Phases **T** (containerization) and **U** (air-gapped / secure storage).
+
+| Phase | Theme | Why |
+|-------|-------|-----|
+| **T** | Docker/Compose, pinned deps, model volumes | ffmpeg/torch/pyannote/Ollama vary by host; improves diarization reliability |
+| **U** | Air-gapped deploy, temp-data guarantees, retention | Users must trust audio/transcripts never leave their environment |
+
 ### Phase M — Speaker diarization (complete)
 
 **Goal:** Label multi-speaker audio ingest with diarization + Whisper alignment.

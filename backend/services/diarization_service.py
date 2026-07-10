@@ -1,5 +1,6 @@
 import logging
 import os
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock
@@ -22,9 +23,9 @@ class SpeakerInterval:
 
 
 def diarization_speaker_kwargs(num_speakers: int | None = None) -> dict[str, int]:
-    """Build pyannote min/max speaker hints from a request or settings."""
+    """Build pyannote speaker hints from a request or settings."""
     if num_speakers is not None:
-        return {"min_speakers": num_speakers, "max_speakers": num_speakers}
+        return {"num_speakers": num_speakers}
 
     kwargs: dict[str, int] = {}
     if settings.diarization_min_speakers is not None:
@@ -32,6 +33,17 @@ def diarization_speaker_kwargs(num_speakers: int | None = None) -> dict[str, int
     if settings.diarization_max_speakers is not None:
         kwargs["max_speakers"] = settings.diarization_max_speakers
     return kwargs
+
+
+def annotation_from_pipeline_output(output) -> object:
+    """Normalize pyannote 4.x DiarizeOutput (or legacy Annotation) to an Annotation."""
+    exclusive = getattr(output, "exclusive_speaker_diarization", None)
+    if exclusive is not None:
+        return exclusive
+    speaker = getattr(output, "speaker_diarization", None)
+    if speaker is not None:
+        return speaker
+    return output
 
 
 class DiarizationService:
@@ -114,7 +126,16 @@ class DiarizationService:
             )
 
         audio_input = load_waveform_for_diarization(audio_path)
-        annotation = pipeline(audio_input, **kwargs)
+        with warnings.catch_warnings():
+            # Harmless on short/edge segments during embedding pooling.
+            warnings.filterwarnings(
+                "ignore",
+                message=r".*std\(\): degrees of freedom is <= 0.*",
+                category=UserWarning,
+            )
+            output = pipeline(audio_input, **kwargs)
+
+        annotation = annotation_from_pipeline_output(output)
         intervals: list[SpeakerInterval] = []
         for segment, _track, label in annotation.itertracks(yield_label=True):
             intervals.append(

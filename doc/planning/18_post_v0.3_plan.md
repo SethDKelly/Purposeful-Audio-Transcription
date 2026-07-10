@@ -38,6 +38,8 @@ Forward plan after merging **v0.3.0** (phases H–L) to `main`. Supersedes the �
 | **Professional mode** | Exports exist; no case files, session series, or finding feedback |
 | **Segment speakers from audio** ([01](../design/01_product_vision_and_scope.md), [16](../design/16_additional_thoughts.md)) | ✓ pyannote diarization + alignment (optional; requires `pip install -e ".[diarization]"` and `HF_TOKEN`) |
 | **React frontend** | Deferred; Streamlit remains primary UI |
+| **Reproducible deployment** | Manual venv + host ffmpeg/HF; no containers or lockfiles |
+| **Air-gapped / data sovereignty** | No offline bundle guide; users may worry audio/transcripts leave their environment |
 
 ### Documentation (resolved in M0)
 
@@ -56,6 +58,8 @@ P   Cases & longitudinal view  (professional / repeat use)
 Q   Custom workflows           (power users)
 R   UX hardening               (Streamlit polish)
 S   React frontend             (parallel track, larger)
+T   Containerization           (reproducible deps, Compose)
+U   Air-gapped & data security (privacy, offline deploy)
 —   Evaluation loop            (ongoing, every phase)
 ```
 
@@ -368,6 +372,8 @@ Unchanged from original MVP boundaries unless requirements shift:
 | **v0.4.1** | N | Full multidisciplinary workflow + research-oriented option |
 | **v0.5.0** | O + P | Ontology-rich outputs + cases / custom workflows |
 | **v0.6.0** | Q + R | Streamlit professional polish |
+| **v0.7.0** | T | Container images + Compose (reproducible ffmpeg/torch/diarization) |
+| **v0.8.0** | U | Air-gapped deploy guide, temp-data hardening, retention/privacy controls |
 | **v1.0.0** | S | React UI + stable API contract |
 
 ---
@@ -410,3 +416,70 @@ Unchanged from original MVP boundaries unless requirements shift:
 | Cases before custom workflows | Longitudinal use is higher value for coach/therapist personas |
 | SQLite remains default | PostgreSQL path exists; no forced migration |
 | Full multidisciplinary after diarization | All prompts shipped; workflow YAML is a smaller gap once audio ingest works |
+| Containerization before public multi-user | Pin ffmpeg/torch/pyannote/Ollama versions; reduce “works on my machine” support burden |
+| Air-gapped docs before regulated sales | Therapists/clinics need clear data-sovereignty story; audio must not imply cloud upload |
+
+---
+
+## 16. Phase T — Containerization & deployment reliability (backlog)
+
+**Goal:** Package the app so operators do not rely on host PATH, manual venv steps, or runtime Hugging Face downloads. Improves reliability after Phase M diarization (ffmpeg, torch, pyannote coupling).
+
+### T1 — Container images
+
+- `Dockerfile` for API: Python 3.12 slim + apt ffmpeg/ffprobe; `pip install -e ".[diarization]"` or slim variant without diarization
+- Optional `Dockerfile.ui` for Streamlit (or single image with both entrypoints)
+- Build args: `TORCH_VARIANT=cpu|cuda`, `INCLUDE_DIARIZATION=true|false`
+- Non-root user, `data/` and model cache volumes
+
+### T2 — Compose & operations
+
+- `docker-compose.yml`: `api`, `streamlit`, `ollama` (profile), `postgres` (profile)
+- `.env.docker.example` mapping existing settings
+- `scripts/docker-smoke.sh` / PowerShell equivalent: health + fixture transcribe
+- Document GPU passthrough for Whisper/diarization when needed
+
+### T3 — Model & dependency strategy
+
+- Volume mounts: `HF_HOME`, `WHISPER_CACHE`, Ollama `~/.ollama`
+- Optional “offline bundle” script: export models on connected machine, import on air-gapped host
+- Lockfile generation in CI; image tags per release
+
+**Acceptance:** `docker compose up` on a clean Linux host completes ingest + `quick_review` with pre-pulled Ollama model.
+
+**Effort:** 1–2 weeks
+
+---
+
+## 17. Phase U — Secure air-gapped deployment & storage (backlog)
+
+**Goal:** Give privacy-sensitive users confidence that audio and transcripts are not exposed to the vendor or the public internet. Complements local-first architecture in [01_product_vision](../design/01_product_vision_and_scope.md).
+
+### U1 — Data handling hardening
+
+- Ensure `saved_upload` / temp audio always deleted in `finally` (audit all code paths)
+- Setting `DELETE_TEMP_ON_COMPLETE=true` (default) with optional secure overwrite
+- Log redaction: never log transcript text or audio paths with identifiable filenames in production mode
+- Document what is stored in `data/rre.db` vs ephemeral temp
+
+### U2 — Air-gapped operator docs
+
+- `doc/user/air-gapped-deployment.md`: staged models (Ollama, Whisper, pyannote), internal registry, HF license acceptance on connected staging machine only
+- Checklist: disable outbound DNS/HTTP, verify with `check_prerequisites.py` + dry-run transcribe
+- Clarify diarization without runtime HF (pre-baked pipeline in image/volume)
+
+### U3 — Retention, encryption, and user trust
+
+- API: `DELETE /api/transcripts/{id}` (if not present) with cascade to runs/reports
+- Optional `TRANSCRIPT_RETENTION_DAYS` + cleanup job
+- Deployment guide section: encrypt `data/` at rest; backup encryption; API key rotation
+- Streamlit privacy blurb on ingest step: “Processed locally; not sent to Purposeful Audio cloud”
+
+### U4 — Network & egress controls
+
+- Setting `ALLOW_OUTBOUND_HTTP=false` blocks HF model download at startup (require pre-staged models)
+- Default bind `127.0.0.1`; document reverse proxy + TLS only when operator intentionally exposes LAN
+
+**Acceptance:** Security reviewer can follow air-gapped doc and threat model; operator can delete all transcript data via API; temp audio not present after transcribe.
+
+**Effort:** 3–5 days (docs + hardening); retention/encryption +1 week

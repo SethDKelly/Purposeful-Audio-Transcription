@@ -5,7 +5,8 @@ import httpx
 from config.settings import settings
 
 API_BASE = f"http://{settings.api_host}:{settings.api_port}"
-TRANSCRIBE_TIMEOUT = 600.0
+# Whisper + CPU diarization on long audio can exceed 10 minutes on first model load.
+TRANSCRIBE_TIMEOUT = 1800.0
 PROCESS_TIMEOUT = 1200.0
 WORKFLOW_TIMEOUT = 1800.0
 

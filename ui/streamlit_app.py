@@ -371,6 +371,15 @@ def main() -> None:
 
         with st.status("Transcribing...", expanded=True) as status:
             try:
+                if num_speakers is not None:
+                    status.write(
+                        f"Running Whisper + diarization (hint: {num_speakers} speakers). "
+                        "First run can take several minutes on CPU."
+                    )
+                else:
+                    status.write(
+                        "Running Whisper + diarization. First run can take several minutes on CPU."
+                    )
                 result = transcribe_audio(
                     uploaded.getvalue(),
                     uploaded.name,
@@ -412,6 +421,13 @@ def main() -> None:
                             "Install pyannote extras and set HF_TOKEN in `.env` to enable."
                         )
                 status.update(label="Transcription complete", state="complete")
+            except httpx.TimeoutException:
+                status.update(label="Timed out", state="error")
+                st.error(
+                    "Transcription timed out. Speaker diarization on CPU can take a long time "
+                    "for longer audio — try a shorter clip, wait for a retry (models stay loaded), "
+                    "or set Expected speakers to speed clustering."
+                )
             except (RuntimeError, httpx.HTTPError) as exc:
                 status.update(label="Failed", state="error")
                 st.error(str(exc))

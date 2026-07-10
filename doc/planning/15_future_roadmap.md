@@ -54,6 +54,51 @@ Allow advanced users to:
 
 ## Long-Term Enhancements
 
+### Platform, deployment & data sovereignty (backlog)
+
+**Status:** Backlog — improves reliability of complex dependencies (ffmpeg, torch, pyannote, Ollama) and addresses user concerns that audio/transcript data could leave their environment.
+
+**Problem today:** Private installs depend on host PATH (ffmpeg/ffprobe), optional Hugging Face downloads at runtime, manually aligned Python/torch/pyannote versions, and ad hoc `.env` secrets. Diarization on Windows exposed torchcodec/FFmpeg fragility; reliability varies by machine.
+
+#### T — Containerization & reproducible deployments
+
+| Item | Notes |
+|------|-------|
+| **Dockerfile(s)** | Multi-stage image: API (FastAPI), optional Streamlit UI, pinned Python + system ffmpeg |
+| **Compose stack** | `docker compose` with services: `api`, `ui`, `ollama` (or document external Ollama), `postgres` (optional) |
+| **Dependency bundling** | Ship ffmpeg/ffprobe inside image; optional CPU/GPU torch variants; `[diarization]` extra as image tag (`:diarization`) |
+| **Model volumes** | Mount or init-container for Whisper, pyannote, and Ollama model weights — avoid re-download on every pod restart |
+| **Offline model bake** | Build-time or registry image that includes gated HF models after license acceptance (no runtime `hf_hub_download`) |
+| **Health & startup order** | `depends_on` + readiness: Ollama up → API healthy → UI; document first-run model pull vs pre-seeded image |
+| **Pinned lockfiles** | `requirements.lock` / `uv.lock` or conda export for reproducible transitive deps (torch, torchaudio, pyannote) |
+| **CI image smoke tests** | `pytest` in container; transcribe fixture without host-specific PATH |
+| **Helm chart (optional)** | For clinic/org deploys: ingress, secrets, PVC for `data/` and model cache |
+
+**Acceptance:** Fresh machine with only Docker runs full ingest → workflow on a fixture transcript without manual ffmpeg/HF setup.
+
+**Effort:** 1–2 weeks (Compose MVP); Helm optional +1 week.
+
+#### U — Secure & air-gapped operation
+
+| Item | Notes |
+|------|-------|
+| **Air-gapped install guide** | Document transfer of Ollama blobs, Whisper weights, pyannote pipeline files, and app image via removable media or internal registry |
+| **No-egress mode** | Settings flag + startup check: fail or warn if outbound HTTP detected (HF, telemetry); all inference local-only |
+| **Bind-local defaults** | API/UI listen on `127.0.0.1` unless explicitly configured; deployment doc warns against public exposure |
+| **Secrets management** | Replace plain `.env` in production with Docker secrets, K8s secrets, or OS keychain; never commit `HF_TOKEN` |
+| **Data at rest** | Encrypt `data/` volume (LUKS, BitLocker, cloud disk encryption); optional SQLCipher or PostgreSQL TDE for regulated environments |
+| **Ephemeral audio handling** | Guarantee temp upload deletion on success/failure; optional `SECURE_DELETE_TEMP=true`; document that raw audio is not retained after transcribe unless user saves transcript |
+| **Transcript retention policy** | Configurable TTL or manual purge API (`DELETE /api/transcripts/{id}` + cascade); export-before-delete workflow |
+| **Audit logging** | Structured logs for ingest, export, delete — no transcript body in logs by default |
+| **Privacy messaging** | User-facing copy: audio/transcripts stay on user infrastructure; no vendor cloud; clarify what Ollama/HF touch when not air-gapped |
+| **Threat model doc** | One-pager: local trust boundary, API key scope, multi-user gaps, backup exposure |
+
+**Acceptance:** Operator can deploy on an internet-disconnected host with pre-staged models; no audio bytes or transcript text leave the machine during normal operation.
+
+**Effort:** 3–5 days (docs + temp-file hardening + no-egress flag); encryption/retention APIs +1 week.
+
+See phased detail in [18_post_v0.3_plan.md](18_post_v0.3_plan.md) §16–17.
+
 ### Audio/Video Inputs
 
 **Status:** Whisper transcription + optional speaker diarization (Phase M) shipped.

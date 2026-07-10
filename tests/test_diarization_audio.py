@@ -5,7 +5,11 @@ from unittest.mock import MagicMock, patch
 import torch
 
 from backend.services.audio_service import load_waveform_for_diarization
-from backend.services.diarization_service import DiarizationService, diarization_speaker_kwargs
+from backend.services.diarization_service import (
+    DiarizationService,
+    annotation_from_pipeline_output,
+    diarization_speaker_kwargs,
+)
 
 
 @patch("backend.services.audio_service.subprocess.run")
@@ -41,7 +45,7 @@ def test_diarize_passes_waveform_dict_to_pipeline(
     waveform = {"waveform": torch.zeros(1, 100), "sample_rate": 16000}
     mock_load_waveform.return_value = waveform
 
-    mock_annotation = MagicMock()
+    mock_annotation = MagicMock(spec=["itertracks"])
     mock_segment = MagicMock()
     mock_segment.start = 0.0
     mock_segment.end = 1.0
@@ -67,7 +71,7 @@ def test_diarization_speaker_kwargs_prefers_request_hint(mock_settings: MagicMoc
     mock_settings.diarization_min_speakers = 1
     mock_settings.diarization_max_speakers = 6
 
-    assert diarization_speaker_kwargs(2) == {"min_speakers": 2, "max_speakers": 2}
+    assert diarization_speaker_kwargs(2) == {"num_speakers": 2}
 
 
 @patch("backend.services.diarization_service.settings")
@@ -107,6 +111,67 @@ def test_diarize_passes_speaker_hint_to_pipeline(
 
     mock_pipeline.assert_called_once_with(
         waveform,
-        min_speakers=2,
-        max_speakers=2,
+        num_speakers=2,
     )
+
+
+def test_annotation_from_pipeline_output_prefers_exclusive() -> None:
+    exclusive = MagicMock(name="exclusive")
+    regular = MagicMock(name="regular")
+    output = MagicMock()
+    output.exclusive_speaker_diarization = exclusive
+    output.speaker_diarization = regular
+
+    assert annotation_from_pipeline_output(output) is exclusive
+
+
+def test_annotation_from_pipeline_output_falls_back_to_speaker_diarization() -> None:
+    regular = MagicMock(name="regular")
+    output = MagicMock(spec=["speaker_diarization"])
+    output.speaker_diarization = regular
+
+    assert annotation_from_pipeline_output(output) is regular
+
+
+def test_annotation_from_pipeline_output_accepts_legacy_annotation() -> None:
+    annotation = MagicMock(spec=["itertracks"])
+    assert annotation_from_pipeline_output(annotation) is annotation
+
+
+@patch("backend.services.diarization_service.settings")
+@patch("backend.services.diarization_service.load_waveform_for_diarization")
+def test_diarize_unwraps_diarize_output(
+    mock_load_waveform: MagicMock,
+    mock_settings: MagicMock,
+) -> None:
+    mock_settings.diarization_enabled = True
+    mock_settings.hf_token = "token"
+    mock_settings.diarization_model = "pyannote/speaker-diarization-3.1"
+    mock_settings.diarization_min_speakers = None
+    mock_settings.diarization_max_speakers = None
+
+    waveform = {"waveform": torch.zeros(1, 100), "sample_rate": 16000}
+    mock_load_waveform.return_value = waveform
+
+    mock_segment = MagicMock()
+    mock_segment.start = 0.0
+    mock_segment.end = 1.5
+    annotation = MagicMock()
+    annotation.itertracks.return_value = [(mock_segment, None, "SPEAKER_00")]
+
+    diarize_output = MagicMock()
+    diarize_output.exclusive_speaker_diarization = annotation
+    diarize_output.speaker_diarization = MagicMock()
+
+    mock_pipeline = MagicMock(return_value=diarize_output)
+
+    service = DiarizationService()
+    with (
+        patch.object(service, "is_available", return_value=True),
+        patch.object(service, "_get_pipeline", return_value=mock_pipeline),
+    ):
+        intervals = service.diarize(Path("sample.wav"), num_speakers=2)
+
+    assert len(intervals) == 1
+    assert intervals[0].speaker == "SPEAKER_00"
+    assert intervals[0].end == 1.5
