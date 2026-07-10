@@ -8,7 +8,9 @@ When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected r
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/health` | ffmpeg, Ollama, Whisper, diarization status |
+| `GET` | `/api/health` | ffmpeg, Ollama, Whisper, diarization, CUDA/device status |
+
+`HealthResponse` also includes `cuda_available`, `whisper_device`, `diarization_device`, and `whisper_compute_type`.
 | `GET` | `/api/models/ollama` | List Ollama models |
 
 ## Transcripts

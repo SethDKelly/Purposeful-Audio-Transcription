@@ -5,8 +5,9 @@ from threading import Lock
 
 from faster_whisper import WhisperModel
 
-from config.settings import settings
+from backend.core.device import resolve_whisper_compute_type, resolve_whisper_device
 from backend.core.exceptions import WhisperError
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -30,25 +31,29 @@ class WhisperService:
     def __init__(self) -> None:
         self._model: WhisperModel | None = None
         self._lock = Lock()
+        self._resolved_device: str | None = None
+        self._resolved_compute_type: str | None = None
 
-    def _resolve_device(self) -> str:
-        if settings.whisper_device != "auto":
-            return settings.whisper_device
-        try:
-            import torch
+    def resolved_device(self) -> str:
+        """Device Whisper will use (or is using), without loading the model."""
+        if self._resolved_device is not None:
+            return self._resolved_device
+        return resolve_whisper_device(settings.whisper_device)
 
-            return "cuda" if torch.cuda.is_available() else "cpu"
-        except ImportError:
-            return "cpu"
+    def resolved_compute_type(self) -> str:
+        if self._resolved_compute_type is not None:
+            return self._resolved_compute_type
+        device = self.resolved_device()
+        return resolve_whisper_compute_type(device, settings.whisper_compute_type)
 
     def _get_model(self) -> WhisperModel:
         if self._model is None:
             with self._lock:
                 if self._model is None:
-                    device = self._resolve_device()
-                    compute_type = settings.whisper_compute_type
-                    if device == "cpu" and compute_type == "float16":
-                        compute_type = "int8"
+                    device = resolve_whisper_device(settings.whisper_device)
+                    compute_type = resolve_whisper_compute_type(
+                        device, settings.whisper_compute_type
+                    )
                     logger.info(
                         "Loading Whisper model '%s' (device=%s, compute=%s)",
                         settings.whisper_model,
@@ -60,6 +65,8 @@ class WhisperService:
                         device=device,
                         compute_type=compute_type,
                     )
+                    self._resolved_device = device
+                    self._resolved_compute_type = compute_type
         return self._model
 
     def is_ready(self) -> bool:

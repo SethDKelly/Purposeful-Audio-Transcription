@@ -9,8 +9,47 @@ Configure in `.env` (see `.env.example`):
 | Variable | Default | Notes |
 |----------|---------|-------|
 | `WHISPER_MODEL` | `base` | `tiny`/`base` faster; `small`/`medium` more accurate |
-| `WHISPER_DEVICE` | `auto` | Set `cuda` when an NVIDIA GPU is available |
-| `WHISPER_COMPUTE_TYPE` | `int8` | Use `float16` on GPU |
+| `WHISPER_DEVICE` | `auto` | `auto` picks CUDA if available, else CPU |
+| `WHISPER_COMPUTE_TYPE` | `int8` | On CUDA, `int8` is automatically promoted to `float16` |
+
+## GPU / accelerator setup
+
+Whisper and pyannote diarization share the same device preference order: **CUDA → MPS (Mac) → CPU**.
+
+| Variable | Default | Notes |
+|----------|---------|-------|
+| `WHISPER_DEVICE` | `auto` | `auto` / `cuda` / `cpu` (MPS falls back to CPU for Whisper) |
+| `DIARIZATION_DEVICE` | `auto` | `auto` / `cuda` / `mps` / `cpu` |
+
+The Streamlit sidebar and `GET /api/health` report `cuda_available`, `whisper_device`, and `diarization_device` so you can confirm acceleration is active.
+
+### CPU PyTorch (default from pip)
+
+`pip install -e ".[diarization]"` typically installs a **CPU-only** torch wheel (`+cpu`). On that build, `torch.cuda.is_available()` is always false even if you have an NVIDIA GPU.
+
+### CUDA PyTorch (NVIDIA GPU)
+
+1. Install a CUDA-capable NVIDIA driver.
+2. Reinstall torch/torchaudio with a CUDA build that matches your driver (example for CUDA 12.x — check [pytorch.org](https://pytorch.org/get-started/locally/) for current commands):
+
+```powershell
+pip uninstall -y torch torchaudio
+pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124
+```
+
+3. Verify:
+
+```powershell
+.venv\Scripts\python -c "import torch; print(torch.cuda.is_available(), torch.version.cuda)"
+```
+
+4. Restart the API. Health should show `cuda_available: true` and Whisper/diarization devices as `cuda`.
+
+Keep `WHISPER_DEVICE=auto` and `DIARIZATION_DEVICE=auto` unless you need to force CPU.
+
+### Apple Silicon (MPS)
+
+Diarization can use `mps` when `DIARIZATION_DEVICE=auto` on Mac. Whisper (faster-whisper) stays on CPU unless you set CUDA (not applicable on Apple Silicon).
 
 ## Speaker diarization (optional)
 
@@ -20,6 +59,7 @@ When pyannote is installed, audio uploads are automatically split into **Person 
    ```powershell
    pip install -e ".[diarization]"
    ```
+   For GPU acceleration, follow **CUDA PyTorch** above after installing the diarization extra.
 2. Accept the model terms on Hugging Face (logged in as the same account as `HF_TOKEN`):
    - [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1)
    - [pyannote/segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
@@ -33,6 +73,7 @@ When pyannote is installed, audio uploads are automatically split into **Person 
 |----------|---------|-------|
 | `DIARIZATION_ENABLED` | `true` | Set `false` to skip diarization |
 | `DIARIZATION_MODEL` | `pyannote/speaker-diarization-3.1` | Hugging Face pipeline id |
+| `DIARIZATION_DEVICE` | `auto` | Same preference order as Whisper (CUDA → MPS → CPU) |
 | `DIARIZATION_SPEAKER_PREFIX` | `Person` | Labels become Person A, Person B, … |
 | `DIARIZATION_MIN_SPEAKERS` | _(empty)_ | Default min speakers when no per-upload hint |
 | `DIARIZATION_MAX_SPEAKERS` | _(empty)_ | Default max speakers when no per-upload hint |
@@ -45,6 +86,7 @@ If diarization is unavailable, transcription still works with a single **Speaker
 Restart the API after changing these settings.
 
 ## Ollama (analysis)
+
 
 ### Prerequisites
 

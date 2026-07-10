@@ -175,3 +175,52 @@ def test_diarize_unwraps_diarize_output(
     assert len(intervals) == 1
     assert intervals[0].speaker == "SPEAKER_00"
     assert intervals[0].end == 1.5
+
+
+@patch("backend.services.diarization_service.settings")
+def test_get_pipeline_moves_to_cuda_when_resolved(mock_settings: MagicMock) -> None:
+    mock_settings.hf_token = "token"
+    mock_settings.diarization_model = "pyannote/speaker-diarization-3.1"
+    mock_settings.diarization_device = "auto"
+
+    mock_pipeline = MagicMock()
+
+    with (
+        patch(
+            "backend.services.diarization_service.resolve_torch_device",
+            return_value="cuda",
+        ),
+        patch("pyannote.audio.Pipeline") as mock_pipeline_cls,
+        patch("torch.device", side_effect=lambda name: f"device:{name}"),
+    ):
+        mock_pipeline_cls.from_pretrained.return_value = mock_pipeline
+        service = DiarizationService()
+        loaded = service._get_pipeline()
+
+    assert loaded is mock_pipeline
+    mock_pipeline.to.assert_called_once_with("device:cuda")
+    assert service.resolved_device() == "cuda"
+
+
+@patch("backend.services.diarization_service.settings")
+def test_get_pipeline_skips_to_on_cpu(mock_settings: MagicMock) -> None:
+    mock_settings.hf_token = "token"
+    mock_settings.diarization_model = "pyannote/speaker-diarization-3.1"
+    mock_settings.diarization_device = "cpu"
+
+    mock_pipeline = MagicMock()
+
+    with (
+        patch(
+            "backend.services.diarization_service.resolve_torch_device",
+            return_value="cpu",
+        ),
+        patch("pyannote.audio.Pipeline") as mock_pipeline_cls,
+    ):
+        mock_pipeline_cls.from_pretrained.return_value = mock_pipeline
+        service = DiarizationService()
+        service._get_pipeline()
+
+    mock_pipeline.to.assert_not_called()
+    assert service.resolved_device() == "cpu"
+

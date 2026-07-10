@@ -22,7 +22,7 @@ Private-use deployment for the **Relationship Reasoning Engine**. Runs locally w
 | Ollama | Running locally with at least one chat model |
 | RAM | 8 GB minimum; 16 GB+ for larger models |
 | Disk | ~2 GB for Whisper + models; DB grows with usage |
-| GPU | Optional (`WHISPER_DEVICE=cuda`) |
+| GPU | Optional NVIDIA CUDA for Whisper + diarization (`WHISPER_DEVICE` / `DIARIZATION_DEVICE=auto`) |
 
 ## First-time install
 
@@ -61,6 +61,8 @@ See [model-setup.md](model-setup.md) for Ollama configuration.
 | `OLLAMA_HOST` | `http://localhost:11434` | Ollama API |
 | `WHISPER_MODEL` | `base` | Transcription quality |
 | `DIARIZATION_ENABLED` | `true` | Speaker diarization for audio uploads |
+| `DIARIZATION_DEVICE` | `auto` | `auto` / `cuda` / `mps` / `cpu` for pyannote |
+| `WHISPER_DEVICE` | `auto` | `auto` / `cuda` / `cpu` for faster-whisper |
 | `HF_TOKEN` | _(empty)_ | Hugging Face token for pyannote models |
 | `MAX_UPLOAD_MB` | `100` | Audio upload limit |
 | `EVIDENCE_PROMPT_MAX_QUOTES` | `120` | Long-transcript summarization |
@@ -145,6 +147,7 @@ Review [releases/v0.3.0.md](../releases/v0.3.0.md). SQLite: backup first; Alembi
 - Transcripts may contain sensitive data; encrypt disk and control access.
 - LLM output is not clinical or legal advice.
 - **Local-first** — audio and transcripts are stored on your machine in `data/`; processing uses local Whisper and Ollama unless you configure external endpoints.
+- **GPU** — default `pip install` often ships CPU-only torch. For NVIDIA acceleration, install a CUDA torch build (see [model-setup.md](model-setup.md)). Confirm via sidebar **CUDA** / health `cuda_available`.
 - **Air-gapped / offline** — planned hardening: containerized deploy, pre-staged models, no outbound HTTP. See [planning/18_post_v0.3_plan.md](../planning/18_post_v0.3_plan.md) Phases T–U and [planning/15_future_roadmap.md](../planning/15_future_roadmap.md).
 
 ## Troubleshooting

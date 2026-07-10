@@ -100,10 +100,33 @@ def check_diarization() -> bool:
 
 
 def check_whisper_model() -> bool:
+    from backend.services.whisper_service import whisper_service
+
     print(f"  [INFO] Whisper model configured: {settings.whisper_model}")
-    print(f"  [INFO] Whisper device: {settings.whisper_device}")
-    print(f"  [INFO] Whisper compute type: {settings.whisper_compute_type}")
+    print(f"  [INFO] Whisper device: {whisper_service.resolved_device()} (pref={settings.whisper_device})")
+    print(
+        f"  [INFO] Whisper compute type: {whisper_service.resolved_compute_type()} "
+        f"(configured={settings.whisper_compute_type})"
+    )
     print("         Model downloads automatically on first transcription.")
+    return True
+
+
+def check_accelerators() -> bool:
+    from backend.core.device import cuda_available, mps_available
+    from backend.services.diarization_service import diarization_service
+
+    cuda_ok = cuda_available()
+    print(f"  [{'OK' if cuda_ok else 'INFO'}] CUDA available: {cuda_ok}")
+    if mps_available():
+        print("  [OK] Apple MPS available")
+    if settings.diarization_enabled:
+        print(
+            f"  [INFO] Diarization device: {diarization_service.resolved_device()} "
+            f"(pref={settings.diarization_device})"
+        )
+    if not cuda_ok:
+        print("         For NVIDIA GPUs, install a CUDA torch build — see doc/user/model-setup.md")
     return True
 
 
@@ -122,6 +145,7 @@ def main() -> int:
         check_ollama(),
         check_ollama_models(),
         check_whisper_model(),
+        check_accelerators(),
         check_diarization(),
         check_temp_dir(),
     ]

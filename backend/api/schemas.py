@@ -9,6 +9,10 @@ class HealthResponse(BaseModel):
     ollama_available: bool
     whisper_ready: bool
     diarization_ready: bool = False
+    cuda_available: bool = False
+    whisper_device: str = "cpu"
+    diarization_device: str = "cpu"
+    whisper_compute_type: str | None = None
 
 
 class TranscriptSegmentSchema(BaseModel):

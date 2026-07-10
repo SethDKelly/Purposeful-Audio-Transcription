@@ -96,11 +96,25 @@ def render_sidebar() -> None:
     )
     st.sidebar.markdown(
         f"- **Whisper:** {_status_indicator(health.get('whisper_ready', False))}"
+        f" (`{health.get('whisper_device', 'cpu')}`"
+        + (
+            f", {health.get('whisper_compute_type')}"
+            if health.get("whisper_compute_type")
+            else ""
+        )
+        + ")"
     )
     diarization_ready = health.get("diarization_ready", False)
     st.sidebar.markdown(
         f"- **Diarization:** {_status_indicator(diarization_ready)}"
+        f" (`{health.get('diarization_device', 'cpu')}`)"
     )
+    cuda_ok = health.get("cuda_available", False)
+    st.sidebar.markdown(f"- **CUDA:** {_status_indicator(cuda_ok)}")
+    if not cuda_ok:
+        st.sidebar.caption(
+            "CPU torch build or no NVIDIA GPU — see model-setup for CUDA install."
+        )
 
     workflows = _cached_workflows()
     st.sidebar.divider()

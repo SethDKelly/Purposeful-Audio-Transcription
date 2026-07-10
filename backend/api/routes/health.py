@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from backend.api.schemas import HealthResponse
+from backend.core.device import cuda_available
 from backend.services.audio_service import check_ffmpeg_available
 from backend.services.diarization_service import diarization_service
 from backend.services.ollama_service import ollama_service
@@ -23,4 +24,8 @@ def health() -> HealthResponse:
         ollama_available=ollama_ok,
         whisper_ready=whisper_ok,
         diarization_ready=diarization_ok,
+        cuda_available=cuda_available(),
+        whisper_device=whisper_service.resolved_device(),
+        diarization_device=diarization_service.resolved_device(),
+        whisper_compute_type=whisper_service.resolved_compute_type(),
     )

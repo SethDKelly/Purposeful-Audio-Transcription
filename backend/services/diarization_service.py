@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock
 
+from backend.core.device import resolve_torch_device
 from backend.services.audio_service import (
     check_ffmpeg_available,
     check_ffprobe_available,
@@ -50,6 +51,13 @@ class DiarizationService:
     def __init__(self) -> None:
         self._pipeline = None
         self._lock = Lock()
+        self._resolved_device: str | None = None
+
+    def resolved_device(self) -> str:
+        """Device diarization will use (or is using), without loading the pipeline."""
+        if self._resolved_device is not None:
+            return self._resolved_device
+        return resolve_torch_device(settings.diarization_device)
 
     def model_access_error(self) -> str | None:
         """Return a user-facing message when the HF model is not accessible."""
@@ -92,19 +100,31 @@ class DiarizationService:
         if self._pipeline is None:
             with self._lock:
                 if self._pipeline is None:
+                    import torch
                     from pyannote.audio import Pipeline
 
                     token = settings.hf_token
                     if token:
                         os.environ.setdefault("HF_TOKEN", token)
+                    device = resolve_torch_device(settings.diarization_device)
                     logger.info(
-                        "Loading diarization pipeline '%s'",
+                        "Loading diarization pipeline '%s' (device=%s)",
                         settings.diarization_model,
+                        device,
                     )
-                    self._pipeline = Pipeline.from_pretrained(
+                    pipeline = Pipeline.from_pretrained(
                         settings.diarization_model,
                         token=token or None,
                     )
+                    if pipeline is None:
+                        raise RuntimeError(
+                            f"Could not load diarization pipeline "
+                            f"'{settings.diarization_model}'"
+                        )
+                    if device != "cpu":
+                        pipeline.to(torch.device(device))
+                    self._pipeline = pipeline
+                    self._resolved_device = device
         return self._pipeline
 
     def diarize(
