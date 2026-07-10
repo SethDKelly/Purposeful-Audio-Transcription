@@ -1,7 +1,6 @@
 import logging
 import os
 import warnings
-from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock
 
@@ -11,16 +10,10 @@ from backend.services.audio_service import (
     check_ffprobe_available,
     load_waveform_for_diarization,
 )
+from backend.services.diarization_timeline import SpeakerInterval, smooth_speaker_timeline
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class SpeakerInterval:
-    speaker: str
-    start: float
-    end: float
 
 
 def diarization_speaker_kwargs(num_speakers: int | None = None) -> dict[str, int]:
@@ -166,10 +159,17 @@ class DiarizationService:
                 )
             )
         intervals.sort(key=lambda item: (item.start, item.end))
+        raw_count = len(intervals)
+        intervals = smooth_speaker_timeline(
+            intervals,
+            min_duration_on=settings.diarization_min_duration_on,
+            min_duration_off=settings.diarization_min_duration_off,
+        )
         logger.info(
-            "Diarized %s: %s intervals, %s speakers",
+            "Diarized %s: %s intervals (%s raw) -> %s speakers",
             audio_path.name,
             len(intervals),
+            raw_count,
             len({item.speaker for item in intervals}),
         )
         return intervals

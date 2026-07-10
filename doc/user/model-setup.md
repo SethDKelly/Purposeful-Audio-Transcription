@@ -77,6 +77,8 @@ When pyannote is installed, audio uploads are automatically split into **Person 
 | `DIARIZATION_SPEAKER_PREFIX` | `Person` | Labels become Person A, Person B, … |
 | `DIARIZATION_MIN_SPEAKERS` | _(empty)_ | Default min speakers when no per-upload hint |
 | `DIARIZATION_MAX_SPEAKERS` | _(empty)_ | Default max speakers when no per-upload hint |
+| `DIARIZATION_MIN_DURATION_ON` | `0.3` | Drop or absorb speaker turns shorter than this (seconds); `0` disables |
+| `DIARIZATION_MIN_DURATION_OFF` | `0.2` | Merge same-speaker intervals when the gap is shorter than this (seconds); `0` disables |
 | `HF_TOKEN` | _(empty)_ | Required for gated pyannote models |
 
 On Windows, pyannote may warn that **torchcodec** is unavailable. The app decodes audio with **ffmpeg/ffprobe** (same tools used for transcription) before running diarization. Ensure both are on `PATH`.

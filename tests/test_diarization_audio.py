@@ -41,6 +41,8 @@ def test_diarize_passes_waveform_dict_to_pipeline(
     mock_settings.diarization_model = "pyannote/speaker-diarization-3.1"
     mock_settings.diarization_min_speakers = None
     mock_settings.diarization_max_speakers = None
+    mock_settings.diarization_min_duration_on = 0.0
+    mock_settings.diarization_min_duration_off = 0.0
 
     waveform = {"waveform": torch.zeros(1, 100), "sample_rate": 16000}
     mock_load_waveform.return_value = waveform
@@ -93,6 +95,8 @@ def test_diarize_passes_speaker_hint_to_pipeline(
     mock_settings.diarization_model = "pyannote/speaker-diarization-3.1"
     mock_settings.diarization_min_speakers = None
     mock_settings.diarization_max_speakers = None
+    mock_settings.diarization_min_duration_on = 0.0
+    mock_settings.diarization_min_duration_off = 0.0
 
     waveform = {"waveform": torch.zeros(1, 100), "sample_rate": 16000}
     mock_load_waveform.return_value = waveform
@@ -149,6 +153,8 @@ def test_diarize_unwraps_diarize_output(
     mock_settings.diarization_model = "pyannote/speaker-diarization-3.1"
     mock_settings.diarization_min_speakers = None
     mock_settings.diarization_max_speakers = None
+    mock_settings.diarization_min_duration_on = 0.0
+    mock_settings.diarization_min_duration_off = 0.0
 
     waveform = {"waveform": torch.zeros(1, 100), "sample_rate": 16000}
     mock_load_waveform.return_value = waveform
@@ -223,4 +229,50 @@ def test_get_pipeline_skips_to_on_cpu(mock_settings: MagicMock) -> None:
 
     mock_pipeline.to.assert_not_called()
     assert service.resolved_device() == "cpu"
+
+
+@patch("backend.services.diarization_service.settings")
+@patch("backend.services.diarization_service.load_waveform_for_diarization")
+def test_diarize_applies_timeline_smoothing(
+    mock_load_waveform: MagicMock,
+    mock_settings: MagicMock,
+) -> None:
+    mock_settings.diarization_enabled = True
+    mock_settings.hf_token = "token"
+    mock_settings.diarization_model = "pyannote/speaker-diarization-3.1"
+    mock_settings.diarization_min_speakers = None
+    mock_settings.diarization_max_speakers = None
+    mock_settings.diarization_min_duration_on = 0.3
+    mock_settings.diarization_min_duration_off = 0.2
+
+    mock_load_waveform.return_value = {
+        "waveform": torch.zeros(1, 100),
+        "sample_rate": 16000,
+    }
+
+    def make_segment(start: float, end: float) -> MagicMock:
+        segment = MagicMock()
+        segment.start = start
+        segment.end = end
+        return segment
+
+    mock_annotation = MagicMock(spec=["itertracks"])
+    mock_annotation.itertracks.return_value = [
+        (make_segment(0.0, 2.0), None, "SPEAKER_00"),
+        (make_segment(2.05, 2.15), None, "SPEAKER_01"),
+        (make_segment(2.18, 4.0), None, "SPEAKER_00"),
+    ]
+    mock_pipeline = MagicMock(return_value=mock_annotation)
+
+    service = DiarizationService()
+    with (
+        patch.object(service, "is_available", return_value=True),
+        patch.object(service, "_get_pipeline", return_value=mock_pipeline),
+    ):
+        intervals = service.diarize(Path("sample.wav"))
+
+    assert len(intervals) == 1
+    assert intervals[0].speaker == "SPEAKER_00"
+    assert intervals[0].start == 0.0
+    assert intervals[0].end == 4.0
 

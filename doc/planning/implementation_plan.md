@@ -572,6 +572,16 @@ See **[15_future_roadmap.md](15_future_roadmap.md)** (Platform, deployment & dat
 
 **Acceptance:** Two-speaker audio → ≥2 labeled speakers in transcript bundle when pyannote is configured.
 
+### Phase M1.5 — Timeline smoothing (complete)
+
+- [x] `diarization_timeline.py` — merge same-speaker gaps, absorb short turns
+- [x] `DIARIZATION_MIN_DURATION_ON` / `DIARIZATION_MIN_DURATION_OFF` settings
+- [x] Applied after every `diarize()` call; unit tests
+
+### Phase M2 — pyannote-first sliced transcription (planned)
+
+See [18_post_v0.3_plan.md](18_post_v0.3_plan.md) §14c: diarize → slice audio → batched Whisper per speaker interval; `TRANSCRIPTION_MODE=overlap|sliced`.
+
 ### Out of scope (unchanged)
 
 See [§9 Out of Scope](#9-out-of-scope-mvp). Multi-user SaaS, billing, and ontology-driven prompt generation remain post-roadmap unless requirements change.

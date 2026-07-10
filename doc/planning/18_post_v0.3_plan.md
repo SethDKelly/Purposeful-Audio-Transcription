@@ -403,6 +403,109 @@ Unchanged from original MVP boundaries unless requirements shift:
 
 ---
 
+## 14b. Phase M1.5 — Diarization timeline smoothing ✓
+
+**Goal:** Reduce rapid **Person A / Person B** label flipping from pyannote micro-segments (breaths, coughs, brief overlaps).
+
+**Status:** Shipped.
+
+### M1.5 — Timeline post-processing
+
+- `backend/services/diarization_timeline.py`:
+  - `merge_same_speaker_gaps` — merge same-speaker intervals when gap &lt; `DIARIZATION_MIN_DURATION_OFF`
+  - `absorb_short_intervals` — drop or absorb turns shorter than `DIARIZATION_MIN_DURATION_ON` (including A-short-B-A flips)
+  - `smooth_speaker_timeline` — applied after every `diarize()` call
+- Settings (defaults): `DIARIZATION_MIN_DURATION_ON=0.3`, `DIARIZATION_MIN_DURATION_OFF=0.2`; set `0` to disable either pass
+- Unit tests: `tests/test_diarization_timeline.py`
+
+**Acceptance:** Short spurious speaker flips in pyannote output are merged before Whisper alignment; tunable via `.env`.
+
+---
+
+## 14c. Phase M2 — pyannote-first sliced transcription (planned)
+
+**Goal:** Improve speaker attribution and turn boundaries by **diarizing first**, then transcribing each speaker interval with Whisper — instead of full-file Whisper + overlap alignment.
+
+### Problem with current pipeline (post M1.5)
+
+```text
+Audio → Whisper (full file, own segment boundaries)
+     → pyannote diarization → smoothed timeline
+     → overlap alignment (Whisper segment → speaker)
+```
+
+Whisper segments do not respect speaker boundaries. Overlap assignment is heuristic and fails on fast back-and-forth dialogue.
+
+### Target pipeline
+
+```text
+Audio
+  → pyannote diarization → smooth_speaker_timeline()
+  → slice audio per speaker interval (ffmpeg / numpy)
+  → Whisper per slice (BatchedInferencePipeline when CUDA available)
+  → segments inherit speaker label from parent slice
+  → merge into labeled turns → existing ingest + evidence index
+```
+
+### M2.1 — Orchestration (`audio_transcription_service.py`)
+
+- **Reorder:** diarize **before** transcribe (today: Whisper first)
+- New mode flag: `TRANSCRIPTION_MODE=overlap|sliced` (default `overlap` until M2 validated, then flip to `sliced`)
+- Fallback: if slicing yields no intervals or Whisper fails on a slice, fall back to overlap mode for that upload
+
+### M2.2 — Audio slicing (`audio_service.py`)
+
+- `slice_audio_by_intervals(audio_path, intervals) -> list[{waveform|path, start, end, speaker}]`
+- Reuse `load_waveform_for_diarization` + tensor slicing, or ffmpeg `-ss`/`-to` per interval
+- Skip or merge intervals shorter than `max(DIARIZATION_MIN_DURATION_ON, WHISPER_MIN_SLICE_DURATION)` (proposed `0.5s`) before slicing
+- Cap max slices per file to avoid pathological Whisper call counts
+
+### M2.3 — Whisper batched path (`whisper_service.py`)
+
+- When `whisper_device=cuda`: use `BatchedInferencePipeline.transcribe(..., batch_size=WHISPER_BATCH_SIZE)` (default `8`)
+- Pass `clip_timestamps` derived from diarization intervals (offset-adjusted)
+- Settings: `WHISPER_BATCH_SIZE`, `WHISPER_MIN_SLICE_DURATION`
+- CPU path: sequential per-slice transcribe (no batching benefit)
+
+### M2.4 — Alignment simplification
+
+- In sliced mode, `transcript_alignment_service` becomes merge-only (speaker known per segment)
+- Deprecate overlap `assign_speaker` for sliced path; keep for `overlap` fallback mode
+- Optional M2.5 follow-up: `word_timestamps=True` + per-word speaker assignment for boundary precision
+
+### M2.5 — API & progress
+
+- `POST /api/transcribe` response: add `transcription_mode` field
+- Streamlit: progress steps `Diarizing…` → `Transcribing N speaker segments…`
+- Health: unchanged
+
+### Testing
+
+- Unit: slice boundaries, timestamp offset math, merge labeled turns from pre-tagged segments
+- Integration: mocked diarization intervals → mocked Whisper per slice → labeled text
+- Regression: `overlap` mode unchanged; diarization disabled → single Speaker 1
+
+### Risks & mitigations
+
+| Risk | Mitigation |
+|------|------------|
+| Many short slices → slow / poor ASR | Merge via M1.5 + min slice duration before Whisper |
+| GPU OOM (pyannote + batched Whisper) | Sequential on CPU; configurable batch size; release pyannote before Whisper |
+| Cross-slice context loss | Acceptable for speaker attribution; `condition_on_previous_text=False` per slice |
+| Long files (100+ intervals) | Batch slices; optional max-slice cap with warning |
+
+### Suggested implementation order
+
+1. `slice_audio_by_intervals` + unit tests  
+2. `whisper_service.transcribe_slices()` with overlap fallback  
+3. Flip orchestration behind `TRANSCRIPTION_MODE` flag  
+4. Batched CUDA path + `WHISPER_BATCH_SIZE`  
+5. UI progress + docs; default to `sliced` after validation on fixture audio  
+
+**Acceptance:** Two-speaker test audio produces cleaner turn boundaries than overlap mode; fallback to overlap when diarization skipped.
+
+---
+
 ## 15. Decision log
 
 | Decision | Rationale |

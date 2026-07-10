@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     diarization_speaker_prefix: str = "Person"
     diarization_min_speakers: int | None = None
     diarization_max_speakers: int | None = None
+    # Drop speaker turns shorter than this (seconds); absorbs into neighbors.
+    diarization_min_duration_on: float = 0.3
+    # Merge same-speaker intervals separated by gaps shorter than this (seconds).
+    diarization_min_duration_off: float = 0.2
     hf_token: str = ""
     max_upload_mb: int = 100
     temp_dir: Path = Path("./data/temp")
