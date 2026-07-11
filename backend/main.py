@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from backend.api.middleware import APIKeyMiddleware
+from backend.api.middleware import APIKeyMiddleware, RequestContextMiddleware
 from backend.api.routes import exploration, health, models, module_stream, modules, process, purposes, transcribe, transcripts, workflows
 from backend.core.exceptions import AppError
 from backend.core.logging_config import configure_logging
@@ -29,6 +29,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.add_middleware(APIKeyMiddleware)
+app.add_middleware(RequestContextMiddleware)
 
 app.include_router(health.router)
 app.include_router(models.router)

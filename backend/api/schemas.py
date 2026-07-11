@@ -7,6 +7,8 @@ class HealthResponse(BaseModel):
     status: str
     ffmpeg_available: bool
     ollama_available: bool
+    llm_provider: str = "ollama"
+    llm_available: bool = False
     whisper_ready: bool
     diarization_ready: bool = False
     cuda_available: bool = False

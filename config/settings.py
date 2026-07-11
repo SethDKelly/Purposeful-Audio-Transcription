@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     framework_dir: Path = Path("./config/framework")
     workflows_dir: Path = Path("./config/workflows")
     default_ollama_model: str = ""
+    llm_provider: str = "ollama"
+    bedrock_model_id: str = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+    bedrock_max_tokens: int = 8192
+    aws_region: str = ""
+    uploads_bucket: str = ""
     # Disable Ollama "thinking" mode for structured JSON module output (Gemma 4 etc.).
     ollama_think: bool = False
     ollama_module_json_format: bool = True
@@ -78,6 +83,22 @@ class Settings(BaseSettings):
         if self.rre_api_base_url.strip():
             return self.rre_api_base_url.rstrip("/")
         return f"http://{self.api_host}:{self.api_port}"
+
+    @property
+    def resolved_aws_region(self) -> str:
+        import os
+
+        return (self.aws_region or os.environ.get("AWS_REGION") or "us-east-2").strip()
+
+    @property
+    def resolved_bedrock_model_id(self) -> str:
+        return self.bedrock_model_id.strip()
+
+    @property
+    def default_llm_model(self) -> str:
+        if self.llm_provider == "bedrock":
+            return self.resolved_bedrock_model_id
+        return self.default_ollama_model
 
 
 settings = Settings()

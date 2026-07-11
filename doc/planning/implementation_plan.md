@@ -148,11 +148,11 @@ Work top to bottom within each tier.
 
 | # | Task | Status |
 |---|------|--------|
-| AWS-3a | Structured JSON logs (`LOG_JSON=true`): `request_id`, `workflow_run_id`, `module_run_id`, `module_id`, `error_type` | [ ] |
-| AWS-3b | Middleware: propagate **`X-Request-ID`** / generate UUID per request | [ ] |
-| AWS-3c | Log exception chains in `module_runner`, `workflow_engine`, `output_parser` at ERROR (model id, retry count — not prompt text) | [ ] |
+| AWS-3a | Structured JSON logs (`LOG_JSON=true`): `request_id`, `workflow_run_id`, `module_run_id`, `module_id`, `error_type` | ✓ |
+| AWS-3b | Middleware: propagate **`X-Request-ID`** / generate UUID per request | ✓ |
+| AWS-3c | Log exception chains in `module_runner`, `workflow_engine`, `output_parser` at ERROR (model id, retry count — not prompt text) | ✓ |
 | AWS-3d | CloudWatch log groups `/rre/dev/{service}` | ✓ (Terraform) |
-| AWS-3e | Document **CloudWatch Logs Insights** queries for common failures | [ ] |
+| AWS-3e | Document **CloudWatch Logs Insights** queries for common failures | ✓ |
 | AWS-3f | Deploy smoke: ECS task + ALB target health beyond `/api/health` | [ ] |
 
 **Acceptance:** Operator traces a failed Quick Review from ALB → API log → `module_run_id` → error class without SSH.
@@ -187,7 +187,7 @@ Work top to bottom within each tier.
 | AWS-5f | Secrets Manager: `DATABASE_URL` | ✓ |
 | AWS-5g | Secrets Manager: `HF_TOKEN` (interim pyannote until Transcribe) | [ ] |
 | AWS-5h | VPC endpoints — Bedrock, Transcribe, S3, Secrets Manager, CloudWatch, ECR | [ ] |
-| AWS-5i | IAM task role: scoped `bedrock:InvokeModel`, Transcribe, S3 | [ ] |
+| AWS-5i | IAM task role: scoped `bedrock:InvokeModel`, Transcribe, S3 | ✓ |
 | AWS-5j | CloudWatch log groups + retention | ✓ |
 
 **Acceptance:** `terraform apply` creates dev stack; API reachable via ALB; no-egress path for inference once 5g–5i complete.
@@ -215,12 +215,12 @@ Work top to bottom within each tier.
 
 | # | Task | Status |
 |---|------|--------|
-| AWS-7a | `LLMProvider` protocol — `chat()`, `stream()`, `health_check()` | [ ] |
-| AWS-7b | `OllamaProvider` — wrap existing `OllamaService` (local dev) | [ ] |
-| AWS-7c | `BedrockProvider` — boto3 `bedrock-runtime` Converse API; JSON via tool/schema or prompt | [ ] |
-| AWS-7d | Settings: `LLM_PROVIDER=ollama|bedrock`, `BEDROCK_MODEL_ID`, region | [ ] |
+| AWS-7a | `LLMProvider` protocol — `chat()`, `stream()`, `health_check()` | ✓ |
+| AWS-7b | `OllamaProvider` — wrap existing `OllamaService` (local dev) | ✓ |
+| AWS-7c | `BedrockProvider` — boto3 `bedrock-runtime` Converse API; JSON via tool/schema or prompt | ✓ |
+| AWS-7d | Settings: `LLM_PROVIDER=ollama|bedrock`, `BEDROCK_MODEL_ID`, region | ✓ |
 | AWS-7e | Spike: run `relationship_conversation_analysis` on Bedrock in dev | [ ] |
-| AWS-7f | Map module YAML `ollama_model` → generic `model_id` (backward compatible) | [ ] |
+| AWS-7f | Map module YAML `ollama_model` → generic `model_id` (backward compatible) | ✓ |
 
 **Acceptance:** Quick Review completes in AWS dev using Bedrock; no HTTP calls outside VPC during module run.
 
@@ -359,9 +359,8 @@ Nice-to-have variants (React UI, advanced redaction rules, eval dashboards) stay
 [x] aws-backbone merged — OIDC + rre-dev-* IAM prefix
 [x] Dockerfile + Dockerfile.ui + infra/dev/ Terraform + deploy-dev.yml
 [x] First successful GitHub Actions deploy on phase-m0-docs
-[ ] P0-AWS-3 — LOG_JSON, request_id middleware, error context
-[ ] P0-AWS-5g–5i — HF_TOKEN secret, VPC endpoints, Bedrock/Transcribe IAM
-[ ] P0-AWS-7 — LLMProvider + BedrockProvider spike
+[ ] P0-AWS-7e — Bedrock burn-in on AWS dev (Quick Review module)
+[ ] P0-AWS-5h — VPC endpoints (no-egress target)
 [ ] P1-1 → P1-2 — Transcribe then slim cloud image
 ```
 

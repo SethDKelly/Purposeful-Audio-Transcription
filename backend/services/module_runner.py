@@ -6,7 +6,13 @@ from collections.abc import Iterator
 from typing import Any
 
 from config.settings import settings
-from backend.core.exceptions import ModuleRunError, OllamaError
+from backend.core.exceptions import LLMError, ModuleRunError
+from backend.core.log_context import (
+    log_context_extra,
+    module_id_var,
+    module_run_id_var,
+    workflow_run_id_var,
+)
 from backend.core.module_registry import AnalysisModule, module_registry
 from backend.services.prompt_compiler import PromptCompiler, prompt_compiler
 from backend.db.base import get_session
@@ -15,7 +21,8 @@ from backend.domain.finding import ModuleRun
 from backend.repositories.module_run_repository import ModuleRunRepository, utc_now
 from backend.schemas.module_output_v1 import ModuleRunOutput
 from backend.services.module_output_validator import ModuleOutputValidator, module_output_validator
-from backend.services.ollama_service import OllamaService, ollama_service
+from backend.services.llm_factory import get_llm_provider
+from backend.services.llm_provider import LLMProvider
 from backend.services.output_parser import OutputParseError, OutputParser, output_parser
 from backend.services.prompt_compiler import CompiledPrompt
 from backend.services.safety_validator import SafetyValidator, safety_validator
@@ -40,7 +47,7 @@ class ModuleRunner:
         parser: OutputParser | None = None,
         validator: ModuleOutputValidator | None = None,
         safety: SafetyValidator | None = None,
-        llm: OllamaService | None = None,
+        llm: LLMProvider | None = None,
         repository: ModuleRunRepository | None = None,
     ) -> None:
         self._registry = registry
@@ -49,7 +56,7 @@ class ModuleRunner:
         self._parser = parser or output_parser
         self._validator = validator or module_output_validator
         self._safety = safety or safety_validator
-        self._llm = llm or ollama_service
+        self._llm = llm or get_llm_provider()
         self._repository = repository or ModuleRunRepository()
 
     def run(
@@ -124,8 +131,8 @@ class ModuleRunner:
         compiled = self._compiler.compile_for_transcript(module, bundle)
         try:
             yield from self._llm.chat_stream(resolved_model, compiled.messages)
-        except OllamaError as exc:
-            raise ModuleRunError(f"Ollama chat failed: {exc.message}") from exc
+        except LLMError as exc:
+            raise ModuleRunError(f"LLM chat failed: {exc.message}") from exc
 
     def get(self, run_id: str) -> ModuleRun:
         with get_session() as session:
@@ -146,74 +153,103 @@ class ModuleRunner:
         workflow_run_id: str | None,
         require_evidence: bool,
     ) -> ModuleRun:
-        with get_session() as session:
-            run = self._repository.create(
-                session,
-                module_id=module.config.id,
-                transcript_id=transcript_id,
-                workflow_run_id=workflow_run_id,
-            )
-            run.status = ModuleRunStatus.RUNNING.value
-            run.model_used = resolved_model
-            run.module_version = compiled.module_version
-            run.compiler_version = compiled.compiler_version
-            run.prompt_template_hash = compiled.prompt_template_hash
-            self._repository.save(session, run)
-
-        messages = list(compiled.messages)
-        validation_errors: list[str] = []
-        max_attempts = settings.module_run_max_retries + 1
-
-        for attempt in range(max_attempts):
-            status = ModuleRunStatus.RETRYING if attempt > 0 else ModuleRunStatus.RUNNING
-            self._update_status(run, status)
-
-            try:
-                raw_output = self._llm.chat(resolved_model, messages, json_mode=True)
-            except OllamaError as exc:
-                return self._fail_run(run, f"Ollama chat failed: {exc.message}")
-
-            run.raw_output = raw_output
-            self._persist_run(run)
-
-            try:
-                parsed_output = self._parse_and_validate(
-                    raw_output,
-                    module,
-                    run.id,
-                    valid_quote_ids,
-                    require_evidence=require_evidence,
+        workflow_token = workflow_run_id_var.set(workflow_run_id) if workflow_run_id else None
+        module_token = module_id_var.set(module.config.id)
+        try:
+            with get_session() as session:
+                run = self._repository.create(
+                    session,
+                    module_id=module.config.id,
+                    transcript_id=transcript_id,
+                    workflow_run_id=workflow_run_id,
                 )
-            except OutputParseError as exc:
-                validation_errors = [str(exc)]
-            else:
-                safety_result = self._safety.validate(parsed_output)
-                if safety_result.violations:
-                    validation_errors = safety_result.violations
-                else:
-                    return self._complete_run(
-                        run,
-                        parsed_output,
-                        safety_result.flags,
-                    )
+                run.status = ModuleRunStatus.RUNNING.value
+                run.model_used = resolved_model
+                run.module_version = compiled.module_version
+                run.compiler_version = compiled.compiler_version
+                run.prompt_template_hash = compiled.prompt_template_hash
+                self._repository.save(session, run)
 
-            if attempt < max_attempts - 1:
-                messages = messages + [
-                    {"role": "assistant", "content": raw_output},
-                    {
-                        "role": "user",
-                        "content": _REPAIR_PROMPT.format(
-                            issues="\n".join(f"- {error}" for error in validation_errors)
-                        ),
-                    },
-                ]
-                continue
+            run_id_token = module_run_id_var.set(run.id)
+            try:
+                messages = list(compiled.messages)
+                validation_errors: list[str] = []
+                max_attempts = settings.module_run_max_retries + 1
 
-        return self._fail_run(
-            run,
-            "Module output failed validation after retries",
-            validation_errors=validation_errors,
-        )
+                for attempt in range(max_attempts):
+                    status = ModuleRunStatus.RETRYING if attempt > 0 else ModuleRunStatus.RUNNING
+                    self._update_status(run, status)
+
+                    try:
+                        raw_output = self._llm.chat(resolved_model, messages, json_mode=True)
+                    except LLMError as exc:
+                        return self._fail_run(
+                            run,
+                            f"LLM chat failed: {exc.message}",
+                            error_type="LLMError",
+                        )
+
+                    run.raw_output = raw_output
+                    self._persist_run(run)
+
+                    try:
+                        parsed_output = self._parse_and_validate(
+                            raw_output,
+                            module,
+                            run.id,
+                            valid_quote_ids,
+                            require_evidence=require_evidence,
+                        )
+                    except OutputParseError as exc:
+                        validation_errors = [str(exc)]
+                        logger.warning(
+                            "Module output parse failed on attempt %s",
+                            attempt + 1,
+                            extra=log_context_extra(
+                                event="module.run.parse_error",
+                                error_type="OutputParseError",
+                                module_run_id=run.id,
+                                module_id=module.config.id,
+                                workflow_run_id=workflow_run_id,
+                                model_id=resolved_model,
+                                retry_count=attempt,
+                            ),
+                        )
+                    else:
+                        safety_result = self._safety.validate(parsed_output)
+                        if safety_result.violations:
+                            validation_errors = safety_result.violations
+                        else:
+                            return self._complete_run(
+                                run,
+                                parsed_output,
+                                safety_result.flags,
+                            )
+
+                    if attempt < max_attempts - 1:
+                        messages = messages + [
+                            {"role": "assistant", "content": raw_output},
+                            {
+                                "role": "user",
+                                "content": _REPAIR_PROMPT.format(
+                                    issues="\n".join(f"- {error}" for error in validation_errors)
+                                ),
+                            },
+                        ]
+                        continue
+
+                return self._fail_run(
+                    run,
+                    "Module output failed validation after retries",
+                    validation_errors=validation_errors,
+                    error_type="ValidationError",
+                )
+            finally:
+                module_run_id_var.reset(run_id_token)
+        finally:
+            module_id_var.reset(module_token)
+            if workflow_token is not None:
+                workflow_run_id_var.reset(workflow_token)
 
     def _ensure_transcript_runnable(self, module: AnalysisModule) -> None:
         if module.config.input_type == "transcript":
@@ -226,11 +262,17 @@ class ModuleRunner:
         raise ModuleRunError(f"Module {module.config.id} is not enabled for direct runs")
 
     def _resolve_model(self, module: AnalysisModule, model: str | None) -> str:
-        resolved = model or module.config.ollama_model or settings.default_ollama_model or None
+        resolved = (
+            model
+            or module.config.resolved_model_id
+            or settings.default_llm_model
+            or None
+        )
         if not resolved:
             raise ModuleRunError(
-                "No Ollama model specified. Pass model in the request, set ollama_model "
-                "in the module YAML, or set DEFAULT_OLLAMA_MODEL in .env."
+                "No LLM model specified. Pass model in the request, set model_id or "
+                "ollama_model in the module YAML, or configure DEFAULT_OLLAMA_MODEL / "
+                "BEDROCK_MODEL_ID."
             )
         return resolved
 
@@ -274,12 +316,26 @@ class ModuleRunner:
         run: ModuleRun,
         message: str,
         validation_errors: list[str] | None = None,
+        *,
+        error_type: str = "ModuleRunFailed",
     ) -> ModuleRun:
         run.status = ModuleRunStatus.FAILED.value
         run.validation_errors = validation_errors or [message]
         run.completed_at = utc_now()
         self._persist_run(run)
-        logger.warning("Module run %s failed: %s", run.id, message)
+        logger.error(
+            "Module run %s failed: %s",
+            run.id,
+            message,
+            extra=log_context_extra(
+                event="module.run.failed",
+                error_type=error_type,
+                module_run_id=run.id,
+                module_id=run.module_id,
+                workflow_run_id=run.workflow_run_id,
+                model_id=run.model_used,
+            ),
+        )
         return run
 
     def _update_status(self, run: ModuleRun, status: ModuleRunStatus) -> None:

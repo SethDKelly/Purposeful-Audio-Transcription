@@ -30,6 +30,9 @@ resource "aws_ecs_task_definition" "api" {
     environment = [
       { name = "LOG_JSON", value = "true" },
       { name = "LOG_LEVEL", value = "INFO" },
+      { name = "LLM_PROVIDER", value = var.llm_provider },
+      { name = "BEDROCK_MODEL_ID", value = var.bedrock_model_id },
+      { name = "UPLOADS_BUCKET", value = aws_s3_bucket.uploads.bucket },
       { name = "DIARIZATION_ENABLED", value = "true" },
       { name = "ALEMBIC_AUTO_UPGRADE", value = "true" },
       { name = "TEMP_DIR", value = "/tmp/rre" },

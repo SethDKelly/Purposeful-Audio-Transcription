@@ -59,3 +59,15 @@ variable "log_retention_days" {
   type    = number
   default = 14
 }
+
+variable "llm_provider" {
+  description = "LLM backend for API tasks: ollama (local) or bedrock (AWS)."
+  type        = string
+  default     = "bedrock"
+}
+
+variable "bedrock_model_id" {
+  description = "Default Bedrock foundation model ID for module runs."
+  type        = string
+  default     = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+}

@@ -1,6 +1,7 @@
 """Extract and normalize structured JSON from LLM responses."""
 
 import json
+import logging
 import re
 from typing import Any
 
@@ -22,6 +23,8 @@ _JSON_FENCE_WRAPPER = re.compile(
     re.DOTALL | re.IGNORECASE,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class OutputParseError(ValueError):
     pass
@@ -31,6 +34,10 @@ class OutputParser:
     def extract_json(self, raw_output: str) -> dict[str, Any]:
         raw_output = raw_output.strip()
         if not raw_output:
+            logger.warning(
+                "Empty LLM output",
+                extra={"event": "module.output.empty", "error_type": "OutputParseError"},
+            )
             raise OutputParseError("LLM returned empty output")
 
         fenced = _JSON_FENCE_WRAPPER.search(raw_output)
