@@ -12,8 +12,14 @@ from backend.services.diarization_service import (
 )
 
 
+@patch("backend.services.audio_service.check_ffprobe_available", return_value=True)
+@patch("backend.services.audio_service.check_ffmpeg_available", return_value=True)
 @patch("backend.services.audio_service.subprocess.run")
-def test_load_waveform_for_diarization_decodes_via_ffmpeg(mock_run: MagicMock) -> None:
+def test_load_waveform_for_diarization_decodes_via_ffmpeg(
+    mock_run: MagicMock,
+    _mock_ffmpeg: MagicMock,
+    _mock_ffprobe: MagicMock,
+) -> None:
     mock_run.side_effect = [
         MagicMock(
             stdout=json.dumps({"streams": [{"sample_rate": "16000", "channels": "1"}]}),
