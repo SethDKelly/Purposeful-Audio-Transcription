@@ -67,5 +67,5 @@ terraform output api_log_group
 
 - Uses default VPC and public Fargate tasks for dev simplicity.
 - RDS PostgreSQL is private; credentials in Secrets Manager (`rre-dev/database`).
-- Diarization disabled in AWS image; Bedrock/Transcribe come in later phases.
+- Diarization enabled by default; set `HF_TOKEN` in Secrets Manager for pyannote model access in AWS.
 - VPC endpoints and no-egress networking are planned in [aws-deployment.md](../../doc/planning/aws-deployment.md).

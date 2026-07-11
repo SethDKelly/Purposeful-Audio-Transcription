@@ -29,7 +29,7 @@ The Streamlit sidebar and `GET /api/health` report `cuda_available`, `whisper_de
 
 ### CPU PyTorch (default from pip)
 
-`pip install -e ".[diarization]"` typically installs a **CPU-only** torch wheel (`+cpu`). On that build, `torch.cuda.is_available()` is always false even if you have an NVIDIA GPU.
+`pip install -e ".[dev]"` installs a **CPU-only** torch wheel (`+cpu`) by default. On that build, `torch.cuda.is_available()` is always false even if you have an NVIDIA GPU.
 
 ### CUDA PyTorch (NVIDIA GPU)
 
@@ -55,15 +55,12 @@ Keep `WHISPER_DEVICE=auto` and `DIARIZATION_DEVICE=auto` unless you need to forc
 
 Diarization can use `mps` when `DIARIZATION_DEVICE=auto` on Mac. Whisper (faster-whisper) stays on CPU unless you set CUDA (not applicable on Apple Silicon).
 
-## Speaker diarization (optional)
+## Speaker diarization
 
-When pyannote is installed, audio uploads are automatically split into **Person A / Person B** turns using local speaker diarization.
+Audio uploads are split into **Person A / Person B** turns using local [pyannote.audio](https://github.com/pyannote/pyannote-audio) speaker diarization (installed with the application).
 
-1. Install optional dependencies:
-   ```powershell
-   pip install -e ".[diarization]"
-   ```
-   For GPU acceleration, follow **CUDA PyTorch** above after installing the diarization extra.
+1. Dependencies are included in the standard install (`pip install -e ".[dev]"`).
+   For GPU acceleration, follow **CUDA PyTorch** above after install.
 2. Accept the model terms on Hugging Face (logged in as the same account as `HF_TOKEN`):
    - [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1)
    - [pyannote/segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)

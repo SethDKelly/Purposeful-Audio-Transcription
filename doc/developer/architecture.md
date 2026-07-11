@@ -35,7 +35,7 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 
 | Service | Role |
 |---------|------|
-| `AudioTranscriptionService` | Whisper + optional pyannote diarization → labeled transcript |
+| `AudioTranscriptionService` | Whisper + pyannote diarization → labeled transcript |
 | `WhisperService` | faster-whisper transcription with segment timestamps |
 | `DiarizationService` | pyannote speaker timeline (optional; requires `HF_TOKEN`) |
 | `TranscriptAlignmentService` | Map Whisper segments to speaker labels (Person A / B) |

@@ -163,7 +163,7 @@ Work top to bottom. **Do not start P1 application features until P0-AWS-1 throug
 |---|------|----------|--------|
 | AWS-4a | `Dockerfile` — API (FastAPI + uvicorn), system ffmpeg | Critical | ✓ |
 | AWS-4b | `Dockerfile.ui` — Streamlit | Critical | ✓ |
-| AWS-4c | Build arg: include/exclude `[diarization]` (interim until Transcribe) | Important | deferred |
+| AWS-4c | Diarization deps in core image (pyannote + torch) | Important | ✓ |
 | AWS-4d | `.dockerignore`, healthcheck endpoints | Critical | ✓ |
 | AWS-4e | ECR repositories `rre-dev-api`, `rre-dev-ui` (Terraform) | Critical | ✓ |
 

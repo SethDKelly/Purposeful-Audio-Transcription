@@ -32,7 +32,7 @@ Full instructions: **[doc/user/getting-started.md](doc/user/getting-started.md)*
 
 - 13 analysis modules · 5 workflows · meta-synthesis
 - Evidence quote IDs (`Q001…`) on every finding
-- Speaker diarization for multi-speaker audio (pyannote, optional)
+- Speaker diarization for multi-speaker audio (pyannote, included in install)
 - Streamlit report + **Explore** tab (drill-down, follow-up Q&A)
 - Exports: Markdown, JSON, PDF, coach summary, mediation brief
 - Optional PostgreSQL, background jobs, API key auth

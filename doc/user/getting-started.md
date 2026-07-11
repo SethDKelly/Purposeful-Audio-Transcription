@@ -10,7 +10,7 @@ Quick path from clone to your first workflow report.
 | [ffmpeg](https://ffmpeg.org/download.html) | On `PATH` for audio |
 | [Ollama](https://ollama.com/) | Running locally |
 | Chat model | e.g. `ollama pull llama3.2` |
-| Speaker diarization (optional) | `pip install -e ".[diarization]"` + `HF_TOKEN` — see [model-setup.md](model-setup.md) |
+| Speaker diarization | Included in `pip install`; set `HF_TOKEN` — see [model-setup.md](model-setup.md) |
 
 ## Install
 

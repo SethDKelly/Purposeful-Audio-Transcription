@@ -30,7 +30,7 @@ resource "aws_ecs_task_definition" "api" {
     environment = [
       { name = "LOG_JSON", value = "true" },
       { name = "LOG_LEVEL", value = "INFO" },
-      { name = "DIARIZATION_ENABLED", value = "false" },
+      { name = "DIARIZATION_ENABLED", value = "true" },
       { name = "ALEMBIC_AUTO_UPGRADE", value = "true" },
       { name = "TEMP_DIR", value = "/tmp/rre" },
       { name = "AWS_REGION", value = var.aws_region },

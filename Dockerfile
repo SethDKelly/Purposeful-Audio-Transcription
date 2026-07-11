@@ -1,4 +1,4 @@
-# RRE API — FastAPI + Whisper (CPU). Diarization extra omitted for slimmer AWS dev image.
+# RRE API — FastAPI + Whisper + pyannote diarization (CPU torch).
 FROM python:3.12-slim-bookworm
 
 RUN apt-get update \
@@ -19,12 +19,12 @@ RUN pip install --no-cache-dir --upgrade pip \
 ENV API_HOST=0.0.0.0 \
     API_PORT=8000 \
     LOG_JSON=true \
-    DIARIZATION_ENABLED=false \
+    DIARIZATION_ENABLED=true \
     ALEMBIC_AUTO_UPGRADE=true
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
     CMD curl -f "http://127.0.0.1:8000/api/health" || exit 1
 
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

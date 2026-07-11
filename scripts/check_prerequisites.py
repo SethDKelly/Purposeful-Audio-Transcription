@@ -83,8 +83,8 @@ def check_diarization() -> bool:
             has_pyannote = False
 
         if not has_pyannote:
-            print("  [WARN] pyannote.audio not installed")
-            print("         Optional: pip install -e \".[diarization]\"")
+            print("  [FAIL] pyannote.audio not installed")
+            print("         Reinstall: pip install -e \".[dev]\"")
         elif not settings.hf_token:
             print("  [WARN] HF_TOKEN not set (required for pyannote models)")
             print("         Accept model terms at huggingface.co/pyannote and add HF_TOKEN to .env")
