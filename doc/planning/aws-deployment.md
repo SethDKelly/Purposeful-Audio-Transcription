@@ -48,9 +48,11 @@ RRE additions must be **additive only**.
 
 ---
 
-## 2. Required aws-backbone changes
+## 2. aws-backbone changes ✓
 
-Single PR to aws-backbone `main` (auto-applies via existing CI):
+**Status:** Merged to aws-backbone `main` (PR #1, commit `3d14411`). Terraform apply via backbone CI should have updated live IAM.
+
+Applied changes:
 
 ### 2.1 Add GitHub OIDC trust
 
@@ -310,17 +312,17 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 
 ## 8. Rollout sequence
 
-| Step | Owner | Depends on |
-|------|-------|------------|
-| 1. Merge aws-backbone PR (OIDC + `rre-dev-*`) | aws-backbone | — |
-| 2. Architecture sign-off (this doc) | RRE | — |
-| 3. `LLMProvider` + Bedrock spike | RRE | — |
-| 4. Dockerfile + local smoke | RRE | — |
-| 5. `infra/dev/` minimal (ECR, ECS, RDS, ALB, logs) | RRE | Step 1 |
-| 6. `deploy-dev.yml` on `phase-m0-docs` | RRE | Steps 4–5 |
-| 7. Quick Review on Bedrock in dev | RRE | Step 6 |
-| 8. Transcribe path | RRE | Step 7 |
-| 9. PR `phase-m0-docs` → `main` | RRE | Stable dev |
+| Step | Owner | Depends on | Status |
+|------|-------|------------|--------|
+| 1. Merge aws-backbone PR (OIDC + `rre-dev-*`) | aws-backbone | — | ✓ |
+| 2. Architecture sign-off (this doc) | RRE | — | ✓ |
+| 3. `LLMProvider` + Bedrock spike | RRE | — | [ ] |
+| 4. Dockerfile + local smoke | RRE | — | [ ] |
+| 5. `infra/dev/` minimal (ECR, ECS, RDS, ALB, logs) | RRE | Step 1 | [ ] |
+| 6. `deploy-dev.yml` on `phase-m0-docs` | RRE | Steps 4–5 | [ ] |
+| 7. Quick Review on Bedrock in dev | RRE | Step 6 | [ ] |
+| 8. Transcribe path | RRE | Step 7 | [ ] |
+| 9. PR `phase-m0-docs` → `main` | RRE | Stable dev | [ ] |
 
 ---
 

@@ -115,16 +115,18 @@ Work top to bottom. **Do not start P1 application features until P0-AWS-1 throug
 
 ---
 
-### P0-AWS-2 — aws-backbone integration (this week)
+### P0-AWS-2 — aws-backbone integration ✓
 
 **Goal:** Enable GitHub Actions deploy for RRE **without modifying MinneAnalytics settings**.
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| AWS-2a | **aws-backbone PR:** add `SethDKelly/Purposeful-Audio-Transcription` to `github_repositories` | Critical | [ ] |
-| AWS-2b | **aws-backbone PR:** extend `app_deploy_iam.tf` + permission boundaries with **`rre-dev-*`** prefix (keep `minneanalytics-dev-*` unchanged) | Critical | [ ] |
-| AWS-2c | Document backbone changes in [aws-deployment.md](aws-deployment.md) § Backbone | Critical | [ ] |
-| AWS-2d | Merge backbone PR to `main` (auto-apply) before first RRE deploy workflow run | Critical | [ ] |
+| AWS-2a | **aws-backbone PR:** add `SethDKelly/Purposeful-Audio-Transcription` to `github_repositories` | Critical | ✓ |
+| AWS-2b | **aws-backbone PR:** extend `app_deploy_iam.tf` + permission boundaries with **`rre-dev-*`** prefix (keep `minneanalytics-dev-*` unchanged) | Critical | ✓ |
+| AWS-2c | Document backbone changes in [aws-deployment.md](aws-deployment.md) § Backbone | Critical | ✓ |
+| AWS-2d | Merge backbone PR to `main` (auto-apply) before first RRE deploy workflow run | Critical | ✓ |
+
+**Merged:** aws-backbone `main` @ `3d14411` (PR #1, July 2026). CI apply should have updated `dev-github-deploy` trust and IAM policies.
 
 **Do not:** change MinneAnalytics OIDC subjects, `minneanalytics-dev-*` ARNs, or MinneAnalytics Terraform state.
 
@@ -322,6 +324,7 @@ Ontology & constructs (Phase O), cases (P), custom workflows (Q), Streamlit poli
 | **Ollama retained for local dev** | Fast iteration on prompts/modules without AWS cost |
 | **`phase-m0-docs` until stable** | Safe AWS testing before `main` PR |
 | **`rre-dev-*` IAM prefix** | Isolation from MinneAnalytics `minneanalytics-dev-*` |
+| **Backbone merged (PR #1)** | `dev-github-deploy` trusts RRE repo; IAM scoped to `rre-dev-*` |
 | **App infra in RRE repo** | aws-backbone is IAM/OIDC only (same pattern as MinneAnalytics) |
 | **Pause app features until P0-AWS** | Deploy substrate blocks meaningful cloud validation |
 | **CloudWatch-first observability** | Required for debugging remote failures |
@@ -330,15 +333,16 @@ Ontology & constructs (Phase O), cases (P), custom workflows (Q), Streamlit poli
 
 ## 8. Next steps (this week)
 
-**Planning complete when:** [aws-deployment.md](aws-deployment.md) exists and this section’s checklist is underway.
+**P0-AWS-2 complete.** Proceed with application-side AWS work on `phase-m0-docs`:
 
 ```text
-[ ] aws-deployment.md — architecture, backbone steps, model/logging strategy
-[ ] aws-backbone PR — add RRE repo + rre-dev-* IAM prefix (no MinneAnalytics changes)
-[ ] LLMProvider + BedrockProvider spike design
-[ ] Dockerfile + ECR naming
-[ ] infra/dev/ scaffold + deploy-dev.yml skeleton
-[ ] LOG_JSON + request_id middleware plan
+[x] aws-backbone merged — OIDC + rre-dev-* IAM prefix (aws-backbone main @ 3d14411)
+[ ] P0-AWS-3 — LOG_JSON, request_id middleware, error context in module_runner
+[ ] P0-AWS-4 — Dockerfile(s) + ECR naming
+[ ] P0-AWS-5 — infra/dev/ Terraform scaffold (VPC, ECS, RDS, S3, logs)
+[ ] P0-AWS-6 — .github/workflows/deploy-dev.yml (OIDC → dev-github-deploy)
+[ ] P0-AWS-7 — LLMProvider + BedrockProvider spike
+[ ] Optional verify: aws sts get-caller-identity from a test workflow step
 [ ] Pause: P1 workflow expansion, ontology, cases until first ECS deploy
 ```
 
