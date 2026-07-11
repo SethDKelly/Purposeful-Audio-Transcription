@@ -1,6 +1,6 @@
 # 15 — Future Roadmap
 
-> **Active priorities (July 2026):** See [implementation_plan.md](implementation_plan.md) for ordered P0–P2 work and [backlog.md](backlog.md) for nice-to-haves. This document retains long-term strategic direction.
+> **Active priorities (July 2026):** AWS dev deployment — see [implementation_plan.md](implementation_plan.md) and [aws-deployment.md](aws-deployment.md). Local Windows path demoted to optional dev.
 
 > **Completed items:** Many near-term items below shipped in **v0.3.0** (phases H–L). See [../releases/v0.3.0.md](../releases/v0.3.0.md).
 

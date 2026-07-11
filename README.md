@@ -78,9 +78,10 @@ Summary in [doc/developer/api-reference.md](doc/developer/api-reference.md). Int
 
 ## Roadmap
 
-- **Active plan:** [doc/planning/implementation_plan.md](doc/planning/implementation_plan.md) — P0 deployment/Ollama tuning → containers → full suite
-- **Backlog:** [doc/planning/backlog.md](doc/planning/backlog.md) — React UI, Helm, audio timing, and other nice-to-haves
-- **History:** phases A–L in implementation plan appendix; [18_post_v0.3_plan.md](doc/planning/18_post_v0.3_plan.md) for M–U phase detail
+- **Active plan:** [doc/planning/implementation_plan.md](doc/planning/implementation_plan.md) — AWS dev deploy (P0-AWS) this week, then Bedrock + Transcribe
+- **AWS detail:** [doc/planning/aws-deployment.md](doc/planning/aws-deployment.md) — backbone integration, no-egress model ops, CloudWatch
+- **Backlog:** [doc/planning/backlog.md](doc/planning/backlog.md) — React UI, local Docker, and other nice-to-haves
+- **Infrastructure:** [aws-backbone](https://github.com/SethDKelly/aws-backbone) — IAM/OIDC for account `521018312783`
 
 ## Prompt storage
 

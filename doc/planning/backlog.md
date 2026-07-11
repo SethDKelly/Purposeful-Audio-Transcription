@@ -1,12 +1,21 @@
 # Backlog — Nice-to-have & deferred enhancements
 
-Items here are **not** on the critical or important path in [implementation_plan.md](implementation_plan.md). They remain valuable but should not block platform stabilization (Windows/local deployment, Ollama tuning, containers, workflow completeness).
+Items here are **not** on the critical or important path in [implementation_plan.md](implementation_plan.md). The project has **pivoted to AWS dev deployment** — see [aws-deployment.md](aws-deployment.md). Local Windows/Docker items below are optional for developer machines only.
 
 **Priority within this backlog:** ordered roughly by value vs effort. Pull items into the implementation plan only when P0–P2 work is stable.
 
 ---
 
-## UI & frontend
+## Local development (optional)
+
+| Item | Notes | Effort |
+|------|-------|--------|
+| **Local Docker Compose** | `api`, `streamlit`, optional Ollama profile — dev laptop only, not primary deploy | 1 week |
+| **Windows troubleshooting guide** | DLL, WinError 10055, diarization skip reasons | 1–2 days |
+| **Ollama `num_ctx` / temperature tuning** | Local Ollama only; AWS uses Bedrock | 1 day |
+| **Air-gapped local deployment** | Superseded by AWS VPC no-egress model for cloud | 3–5 days |
+
+---
 
 | Item | Notes | Effort |
 |------|-------|--------|

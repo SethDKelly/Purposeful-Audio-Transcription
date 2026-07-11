@@ -1,15 +1,17 @@
 # Implementation Plan
 
-Active plan for the **Relationship Reasoning Engine (RRE)**. This document supersedes the forward-looking sections of [18_post_v0.3_plan.md](18_post_v0.3_plan.md) (July 2026 revision).
+Active plan for the **Relationship Reasoning Engine (RRE)**. This document supersedes the forward-looking sections of [18_post_v0.3_plan.md](18_post_v0.3_plan.md).
 
 | | |
 |---|---|
-| **Status** | **v0.4.0 in progress** on branch `phase-m0-docs` |
-| **Baseline** | MVP (A–G) + post-MVP (H–L) shipped in **v0.3.0**; audio/diarization (M, M1.5, M2 core) on branch |
-| **Tests** | 144 passing (see [§ Platform reality](#2-platform-reality-windows--local-deployment)) |
+| **Status** | **v0.5.0 AWS pivot in progress** on branch `phase-m0-docs` |
+| **Strategy** | **AWS dev deployment** (account `521018312783`, `us-east-2`) via [aws-backbone](https://github.com/SethDKelly/aws-backbone); local Windows path demoted to dev-only |
+| **Baseline** | MVP (A–G) + post-MVP (H–L) in **v0.3.0**; audio/diarization (M, M1.5, M2 core) + Ollama JSON fixes on branch |
+| **Tests** | 144 passing |
 | **Nice-to-have backlog** | [backlog.md](backlog.md) |
+| **AWS detail** | [aws-deployment.md](aws-deployment.md) |
 | **Design anchors** | [../design/01_product_vision_and_scope.md](../design/01_product_vision_and_scope.md) · [15_future_roadmap.md](15_future_roadmap.md) |
-| **Deploy** | [../user/deployment.md](../user/deployment.md) · [../user/model-setup.md](../user/model-setup.md) |
+| **Deploy (legacy local)** | [../user/deployment.md](../user/deployment.md) · [../user/model-setup.md](../user/model-setup.md) |
 
 ---
 
@@ -18,386 +20,340 @@ Active plan for the **Relationship Reasoning Engine (RRE)**. This document super
 | Document | Purpose |
 |----------|---------|
 | **This document** | Prioritized implementation plan (critical → important) |
+| [aws-deployment.md](aws-deployment.md) | AWS architecture, backbone integration, model/logging strategy |
 | [backlog.md](backlog.md) | Nice-to-have and deferred enhancements |
-| [18_post_v0.3_plan.md](18_post_v0.3_plan.md) | Historical post-v0.3.0 plan (superseded for priorities) |
+| [18_post_v0.3_plan.md](18_post_v0.3_plan.md) | Historical post-v0.3.0 phase detail (M–U) |
 | [12_mvp_build_plan.md](12_mvp_build_plan.md) | Original MVP phase definitions |
 | [15_future_roadmap.md](15_future_roadmap.md) | Long-term strategic direction |
-| [../archived/](../archived/) | Earlier plans |
+| **aws-backbone** (separate repo) | IAM, OIDC, `dev-github-deploy` — not application runtime |
 
 ---
 
 ## 1. Where the project is today
 
-### Delivered (v0.3.0 + branch work)
+### Delivered (application)
 
 | Area | Status |
 |------|--------|
 | Transcript paste / upload + evidence index (`Q001…`) | ✓ |
 | 13 modules + prompt compiler + structured JSON output | ✓ |
-| 5 workflows (Quick Review, Full MVP, Conflict Coaching, Mediation Brief, Clinical Exploration) | ✓ |
-| Synthesis, safety validation, exploration APIs, Streamlit Explore tab | ✓ |
-| Exports (md, json, pdf, coach summary, mediation brief) | ✓ |
+| 5 workflows + synthesis + safety validation | ✓ |
+| Exploration APIs + Streamlit Explore tab + exports | ✓ |
 | PostgreSQL option, Alembic, background jobs, API key auth | ✓ |
-| Speaker diarization (pyannote) + timeline smoothing (M1.5) | ✓ |
-| Sliced transcription mode — diarize first, Whisper per interval (M2 core) | ✓ |
+| Speaker diarization + timeline smoothing + sliced transcription (core) | ✓ |
 | Ollama reliability fixes — `think=false`, JSON mode, nested JSON parser | ✓ |
 
-### Gaps vs product vision
+### Strategic shift (July 2026)
 
-| Vision item | Gap |
-|-------------|-----|
-| **5. Full Multidisciplinary Suite** | No workflow runs all 12 transcript modules + meta-synthesis |
-| **Research-oriented analysis** | No dedicated workflow |
-| **Reliable audio ingest on all target hosts** | Native Windows + CPU torch + pyannote/ffmpeg coupling is fragile |
-| **Reproducible deployment** | Manual venv; no containers or lockfiles |
-| **Long-context LLM use** | Ollama `num_ctx` / sampling not exposed; evidence caps conservative |
-| **Knowledge graph value** | APIs exist; constructs rarely populated in LLM output |
-| **Longitudinal / case view** | Compare runs on one transcript only |
-| **Custom workflows** | Fixed YAML only |
-| **React frontend** | Deferred; Streamlit remains primary UI |
+Local deployment on **native Windows** proved unreliable for the ML stack (Whisper, pyannote, Ollama, GPU/torch). The project now targets **AWS dev deployment** using the personal account managed by **aws-backbone**, with:
 
-### Completed history (reference)
+- **Models and inference inside AWS** — no outbound calls during model operations
+- **GitHub Actions** for deploy (OIDC → `dev-github-deploy`)
+- **CloudWatch** for accessible, debuggable error logs
+- **Gradual move away from Ollama** toward AWS-native inference (Bedrock primary candidate)
+- **Branch `phase-m0-docs`** for initial AWS testing; PR to `main` when stable
+- **MinneAnalytics untouched** — separate IAM prefix, state key, and OIDC entry (see [aws-deployment.md](aws-deployment.md))
 
-Phases **A–G** (MVP), **H–L** (post-MVP expansion), and **M0** (documentation) are complete. See [§ Appendix — completed phases](#appendix--completed-phases) for the record.
+Application feature work (workflows, ontology, cases) is **paused** until P0-AWS items below are underway and the dev environment accepts a first deploy.
 
 ---
 
-## 2. Platform reality: Windows & local deployment
+## 2. Platform reality
 
-Real-world use on **native Windows** exposed limits that change priority order. The reasoning platform (transcript → modules → synthesis → report) is solid; the **ML operations stack** is the bottleneck.
+### Local Windows (demoted — dev-only)
 
-### Observed constraints
+Transcript-first workflows remain viable locally for prompt/module development. Audio ingest, diarization, and long Ollama sessions on native Windows are **unsupported as a primary path**. See [backlog.md](backlog.md) for optional local Docker guidance.
 
-| Layer | Issue | Impact |
-|-------|-------|--------|
-| **Whisper (faster-whisper / ctranslate2)** | DLL load failures under Windows Application Control on some machines | Audio transcription blocked entirely |
-| **PyTorch** | Default pip wheel is **CPU-only**; CUDA requires manual reinstall | GPU acceleration unavailable without extra steps |
-| **pyannote + ffmpeg** | torchcodec unavailable on Windows; ffmpeg path dependency | Diarization warnings, decode failures if ffmpeg misconfigured |
-| **Hugging Face** | Gated models require `HF_TOKEN` and runtime download | Not air-gapped; first-run friction |
-| **Ollama on Windows** | Long sessions + `--reload` → socket exhaustion (`WinError 10055`) | API instability during workflow burn-in |
-| **Local LLM** | Gemma 4 thinking mode, truncated JSON, default low `num_ctx` | Module failures until tuned (`think=false`, JSON mode, `num_predict`) |
-| **Resource cost** | 12-module suite + large model on CPU | 15–45 min estimates unrealistic; RAM/VRAM pressure |
-| **Dependency drift** | torch, pyannote, ffmpeg, Ollama versions vary by host | “Works on my machine” support burden |
+### AWS dev (primary)
 
-### Strategic implication
+| Layer | aws-backbone today | RRE must add (app repo) |
+|-------|-------------------|-------------------------|
+| **Identity / CI** | `dev-github-deploy`, GitHub OIDC, permission boundaries | Add repo to `github_repositories`; `rre-dev-*` IAM prefix |
+| **Runtime** | — | ECS (Fargate or EC2+GPU), ALB, ECR images |
+| **Data** | Terraform state S3 only | RDS PostgreSQL, S3 uploads, Secrets Manager |
+| **LLM** | — | Amazon Bedrock (target); Ollama-on-ECS interim optional |
+| **ASR / diarization** | — | Amazon Transcribe (target); Whisper/pyannote interim in container |
+| **Logging** | — | CloudWatch Logs, structured JSON, correlation IDs |
+| **Network** | — | VPC private subnets + VPC endpoints; block egress during inference |
 
-**Transcript-first workflows** (paste or pre-labeled `.txt`) are the reliable core on any OS. **Audio ingest with diarization** should be treated as **best-effort on native Windows** until containerized or WSL2/Linux deployment is the documented primary path.
-
-```text
-Reliability tiers (recommended)
-
-Tier 1 — Transcript ingest + Ollama workflows     ✓ viable on Windows today (with tuning)
-Tier 2 — Audio → Whisper only (no diarization)    ✓ viable when ctranslate2 loads
-Tier 3 — Audio + pyannote diarization             ⚠ fragile on native Windows; prefer Linux/WSL2/Docker
-Tier 4 — Full 12-module suite on local CPU        ⚠ use background jobs + smaller models
-```
+**Constraint:** During transcript analysis, transcription, and synthesis, the application must **not** call external APIs (Ollama off-host, Hugging Face, public model registries). All model operations use AWS services or in-VPC endpoints with pre-provisioned models.
 
 ---
 
 ## 3. Priority framework
 
-| Level | Meaning | Examples |
-|-------|---------|----------|
-| **Critical (P0)** | Blocks reliable private use or causes frequent failure | Deployment path, Ollama tuning, M2 validation, container MVP |
-| **Important (P1)** | Product completeness, trust, or professional use | Full multidisciplinary workflow, data handling, workflow guardrails |
-| **Deferred (P2)** | Valuable after platform is stable | Cases, custom workflows, ontology population, Streamlit polish |
-| **Nice-to-have** | See [backlog.md](backlog.md) | React UI, Helm, audio timing analysis, collaborative review |
-
-**Principle:** Stabilize the **deployment and inference substrate** before adding features that multiply runtime (full suite, constructs, cases).
+| Level | Meaning | This sprint |
+|-------|---------|-------------|
+| **Critical (P0-AWS)** | AWS deploy foundation — blocks cloud testing | **This week** — complete before app feature work |
+| **Important (P1)** | Product completeness on AWS dev | After first successful deploy |
+| **Deferred (P2)** | Enhancements once AWS path is stable | Cases, ontology, custom workflows |
+| **Nice-to-have** | [backlog.md](backlog.md) | React UI, local Docker Compose, Helm |
 
 ---
 
 ## 4. Implementation plan (priority order)
 
-Work top to bottom. Each phase has acceptance criteria; do not skip P0 items to chase product gaps.
+Work top to bottom. **Do not start P1 application features until P0-AWS-1 through P0-AWS-6 have a documented target and at least one deploy attempt.**
 
 ---
 
-### P0-1 — Deployment & platform guidance
+### P0-AWS-1 — Architecture & model strategy (this week)
 
-**Goal:** Operators can choose a supported path and avoid known Windows failure modes.
-
-| # | Task | Priority | Status |
-|---|------|----------|--------|
-| P0-1a | Document **Windows limitations** and recommended paths: native (transcript-first), WSL2, Docker (when available) | Critical | [ ] |
-| P0-1b | Document **production run mode**: no uvicorn `--reload`; restart API after long Ollama sessions | Critical | [ ] |
-| P0-1c | Extend `scripts/check_prerequisites.py` — report torch CUDA, ctranslate2 load, ffmpeg, HF_TOKEN, Ollama model | Critical | [ ] |
-| P0-1d | Add **troubleshooting** section to [deployment.md](../user/deployment.md) (DLL, WinError 10055, diarization skip reasons) | Critical | [ ] |
-
-**Acceptance:** New user on Windows can follow docs, identify their tier, and run `quick_review` on a pasted transcript without hitting undocumented failures.
-
-**Effort:** 1–2 days
-
----
-
-### P0-2 — Ollama inference tuning (model-agnostic)
-
-**Goal:** Reliable structured JSON from local models without hardcoding model names.
+**Goal:** Written target architecture and inference decisions before code changes.
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| P0-2a | Add `OLLAMA_NUM_CTX`, `OLLAMA_TEMPERATURE`, `OLLAMA_TOP_P` to settings; pass via Ollama `options` | Critical | [ ] |
-| P0-2b | Document context tiers in [model-setup.md](../user/model-setup.md) (e.g. 8K–32K typical; avoid max 256K on CPU) | Critical | [ ] |
-| P0-2c | Optional: scale `EVIDENCE_PROMPT_*` when context budget allows (env-driven, not model-specific) | Important | [ ] |
+| AWS-1a | Publish [aws-deployment.md](aws-deployment.md) — VPC, ECS, RDS, S3, Bedrock, Transcribe | Critical | [ ] |
+| AWS-1b | **LLM evaluation:** Amazon Bedrock (Converse API, structured JSON) vs SageMaker vs in-VPC Ollama | Critical | [ ] |
+| AWS-1c | **ASR evaluation:** Amazon Transcribe (+ speaker labels) vs containerized Whisper/pyannote | Critical | [ ] |
+| AWS-1d | Define **no-egress** network model — VPC endpoints for Bedrock, Transcribe, S3, Secrets Manager, CloudWatch, ECR | Critical | [ ] |
+| AWS-1e | Decision: keep Ollama adapter for local dev only; Bedrock as AWS default | Critical | [ ] |
 
-**Acceptance:** Quick Review completes on Gemma 4 / Llama with documented `.env`; no Gemma-specific branches in application code.
-
-**Effort:** 1 day
-
----
-
-### P0-3 — Phase M2 completion (sliced transcription)
-
-**Goal:** Validate and polish diarize-first pipeline; keep overlap fallback.
-
-| # | Task | Priority | Status |
-|---|------|----------|--------|
-| P0-3a | Streamlit progress: `Diarizing…` → `Transcribing N segments…` | Critical | [ ] |
-| P0-3b | Fixture audio validation: sliced vs overlap quality comparison | Critical | [ ] |
-| P0-3c | Fix or skip Windows-specific ffmpeg waveform test (`test_diarization_audio.py`) with clear CI/local policy | Critical | [ ] |
-| P0-3d | Document `TRANSCRIPTION_MODE=sliced|overlap` tradeoffs in user guide | Important | [ ] |
-
-**Acceptance:** Two-speaker fixture produces labeled turns; UI shows progress; overlap fallback unchanged when diarization disabled.
+**Acceptance:** Team agrees on AWS service map; module runner has a documented adapter boundary.
 
 **Effort:** 2–3 days
 
 ---
 
-### P0-4 — Containerized deployment MVP (Phase T-lite)
+### P0-AWS-2 — aws-backbone integration (this week)
 
-**Goal:** Reproducible Linux path for ffmpeg + torch + pyannote + API; reduces Windows ML fragility.
+**Goal:** Enable GitHub Actions deploy for RRE **without modifying MinneAnalytics settings**.
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| P0-4a | `Dockerfile` — API, system ffmpeg, optional `[diarization]` build arg | Critical | [ ] |
-| P0-4b | `docker-compose.yml` — `api`, `streamlit`, `ollama` (profile), volume mounts for models and `data/` | Critical | [ ] |
-| P0-4c | `.env.docker.example` + smoke script (health + fixture transcribe or transcript workflow) | Critical | [ ] |
-| P0-4d | Document GPU passthrough and model volume strategy | Important | [ ] |
+| AWS-2a | **aws-backbone PR:** add `SethDKelly/Purposeful-Audio-Transcription` to `github_repositories` | Critical | [ ] |
+| AWS-2b | **aws-backbone PR:** extend `app_deploy_iam.tf` + permission boundaries with **`rre-dev-*`** prefix (keep `minneanalytics-dev-*` unchanged) | Critical | [ ] |
+| AWS-2c | Document backbone changes in [aws-deployment.md](aws-deployment.md) § Backbone | Critical | [ ] |
+| AWS-2d | Merge backbone PR to `main` (auto-apply) before first RRE deploy workflow run | Critical | [ ] |
 
-**Acceptance:** Clean Linux host with Docker runs ingest (transcript or audio with diarization image) + `quick_review` without manual ffmpeg/torch alignment.
+**Do not:** change MinneAnalytics OIDC subjects, `minneanalytics-dev-*` ARNs, or MinneAnalytics Terraform state.
+
+**Acceptance:** `dev-github-deploy` trust includes RRE repo; deploy workflow can create `rre-dev-*` ECS task/execution roles.
+
+**Effort:** 1 day (backbone) + review
+
+---
+
+### P0-AWS-3 — Observability & debuggability (this week)
+
+**Goal:** Errors in AWS are logged, searchable, and actionable without transcript leakage.
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| AWS-3a | Enable **structured JSON logs** (`LOG_JSON=true`) with standard fields: `request_id`, `workflow_run_id`, `module_run_id`, `module_id`, `error_type` | Critical | [ ] |
+| AWS-3b | Middleware: propagate **`X-Request-ID`** / generate UUID per request | Critical | [ ] |
+| AWS-3c | Log **exception chains** in `module_runner`, `workflow_engine`, `output_parser` at ERROR with context (model id, retry count — not prompt text) | Critical | [ ] |
+| AWS-3d | CloudWatch log group naming convention: `/rre/dev/{service}` | Critical | [ ] |
+| AWS-3e | Document **CloudWatch Logs Insights** queries for common failures (JSON parse, empty LLM, transcribe timeout) | Critical | [ ] |
+| AWS-3f | Optional: ECS task health + ALB target health in deploy smoke test | Important | [ ] |
+
+**Acceptance:** Operator can trace a failed Quick Review from ALB → API log → module_run_id → error class without SSH.
+
+**Effort:** 2–3 days
+
+---
+
+### P0-AWS-4 — Containerization for ECS (this week)
+
+**Goal:** Production-style images; no host venv on AWS.
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| AWS-4a | `Dockerfile` — API (FastAPI + uvicorn), system ffmpeg | Critical | [ ] |
+| AWS-4b | `Dockerfile.ui` or combined image — Streamlit (or defer UI to second service) | Critical | [ ] |
+| AWS-4c | Build arg: include/exclude `[diarization]` (interim until Transcribe) | Important | [ ] |
+| AWS-4d | `.dockerignore`, non-root user, healthcheck endpoint | Critical | [ ] |
+| AWS-4e | ECR repository `rre-dev-api` (and `rre-dev-ui` if split) | Critical | [ ] |
+
+**Acceptance:** Image builds in CI; runs locally with `docker run` against mock env; health check passes.
+
+**Effort:** 2–4 days
+
+---
+
+### P0-AWS-5 — `infra/dev/` Terraform (this week → next)
+
+**Goal:** RRE-owned infrastructure in app repo; separate state from backbone and MinneAnalytics.
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| AWS-5a | Terraform root `infra/dev/` — backend key `purposeful-audio-transcription/dev/terraform.tfstate` | Critical | [ ] |
+| AWS-5b | VPC (new or default), private subnets, security groups, ALB | Critical | [ ] |
+| AWS-5c | ECS cluster + Fargate service(s), task defs, `rre-dev-*` execution/task roles | Critical | [ ] |
+| AWS-5d | RDS PostgreSQL (dev sizing) — replace SQLite for AWS | Critical | [ ] |
+| AWS-5e | S3 bucket for audio uploads / temp (lifecycle delete) | Critical | [ ] |
+| AWS-5f | Secrets Manager: `API_KEY`, DB URL, Bedrock config | Critical | [ ] |
+| AWS-5g | VPC endpoints for Bedrock, Transcribe, S3, Secrets Manager, CloudWatch Logs, ECR | Critical | [ ] |
+| AWS-5h | CloudWatch log groups + retention | Critical | [ ] |
+| AWS-5i | IAM task role: `bedrock:InvokeModel`, `transcribe:*`, S3 scoped, no `*` egress | Critical | [ ] |
+
+**Acceptance:** `terraform apply` from `infra/dev/` creates dev stack; API reachable via ALB; logs appear in CloudWatch.
 
 **Effort:** 1–2 weeks
 
 ---
 
-### P1-1 — Workflow completeness (Phase N)
+### P0-AWS-6 — GitHub Actions deploy (this week → next)
 
-**Goal:** Close product vision **§5 Full Multidisciplinary Suite** and research-oriented option.
+**Goal:** Push to `phase-m0-docs` deploys to AWS dev for testing.
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| P1-1a | `config/workflows/full_multidisciplinary.yaml` — all 12 transcript modules → meta_synthesis | Important | [ ] |
-| P1-1b | Optional `research_oriented.yaml` | Important | [ ] |
-| P1-1c | Default `background: true` for long workflows in API/UI | Important | [ ] |
-| P1-1d | `WORKFLOW_SYNC_MODULE_LIMIT` env guardrail | Important | [ ] |
-| P1-1e | Integration tests with mocked LLM | Important | [ ] |
+| AWS-6a | `.github/workflows/deploy-dev.yml` — OIDC → `dev-github-deploy` | Critical | [ ] |
+| AWS-6b | Jobs: test → build/push ECR → terraform plan/apply → ECS force new deployment | Critical | [ ] |
+| AWS-6c | Trigger: `push` to `phase-m0-docs` + `workflow_dispatch` | Critical | [ ] |
+| AWS-6d | Smoke step: `GET /api/health` + optional mocked module run | Critical | [ ] |
+| AWS-6e | Switch default branch trigger to `main` after stable (document cutover) | Important | [ ] |
 
-**Acceptance:** Full suite completes in background; synthesis receives all module outputs; UI warns on long synchronous runs.
+**Acceptance:** Push to `phase-m0-docs` updates dev ECS service; health check green.
 
-**Effort:** 2–3 days
-
-**Note:** Defer burning in full suite on native Windows CPU until P0-2 and P0-4 are done.
+**Effort:** 2–3 days (after AWS-4/5 scaffold)
 
 ---
 
-### P1-2 — Data handling & trust (Phase U-lite)
+### P0-AWS-7 — LLM provider abstraction & Bedrock spike (this week)
 
-**Goal:** Privacy-sensitive users can trust local processing and delete data.
-
-| # | Task | Priority | Status |
-|---|------|----------|--------|
-| P1-2a | Audit temp audio deletion on all transcribe paths (`finally` blocks) | Important | [ ] |
-| P1-2b | `DELETE /api/transcripts/{id}` with cascade to runs/reports (if missing) | Important | [ ] |
-| P1-2c | Streamlit ingest privacy copy: processed locally, no vendor cloud | Important | [ ] |
-| P1-2d | Log redaction: no transcript body in production logs by default | Important | [ ] |
-
-**Acceptance:** Security reviewer confirms temp files removed after transcribe; operator can purge transcript via API.
-
-**Effort:** 2–3 days
-
----
-
-### P1-3 — Real-world evaluation loop
-
-**Goal:** Continuous validation on real transcripts and models (ongoing, every release).
+**Goal:** Replace direct Ollama coupling with a provider interface; prove one module on Bedrock.
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| P1-3a | Burn-in: `quick_review`, `conflict_coaching`, `full_mvp` on real transcripts | Important | [ ] |
-| P1-3b | Add 3–5 anonymized scenarios to `tests/fixtures/transcripts/` | Important | [ ] |
-| P1-3c | Track safety validator false positives; tune patterns | Important | [ ] |
-| P1-3d | Per-module `ollama_model` overrides documented for `meta_synthesis` | Important | [ ] |
+| AWS-7a | Introduce `LLMProvider` protocol — `chat()`, `stream()`, `health_check()` | Critical | [ ] |
+| AWS-7b | `OllamaProvider` — wrap existing `OllamaService` (local dev) | Critical | [ ] |
+| AWS-7c | `BedrockProvider` — boto3 `bedrock-runtime` Converse API; JSON via tool/schema or prompt | Critical | [ ] |
+| AWS-7d | Settings: `LLM_PROVIDER=ollama|bedrock`, `BEDROCK_MODEL_ID`, region | Critical | [ ] |
+| AWS-7e | Spike: run `relationship_conversation_analysis` on Bedrock in dev | Critical | [ ] |
+| AWS-7f | Map module YAML `ollama_model` → generic `model_id` (backward compatible) | Important | [ ] |
 
-**Effort:** Ongoing
-
----
-
-### P2-1 — Ontology & construct population (Phase O)
-
-**Goal:** Knowledge graph and drill-down become data-rich.
-
-| # | Task | Priority | Status |
-|---|------|----------|--------|
-| P2-1a | Schema nudges + optional `expects_constructs` per module YAML | Deferred | [ ] |
-| P2-1b | Post-parse construct linking from ontology map | Deferred | [ ] |
-| P2-1c | Exploration presets: `why`, `evidence`, `counterfactual`, `agreement` | Deferred | [ ] |
-
-**Effort:** 4–6 days
-
----
-
-### P2-2 — Cases & longitudinal analysis (Phase P)
-
-**Goal:** Multiple transcripts over time for coach/therapist personas.
-
-| # | Task | Priority | Status |
-|---|------|----------|--------|
-| P2-2a | `Case` domain model + Alembic migration | Deferred | [ ] |
-| P2-2b | `POST /api/exploration/compare-transcripts` | Deferred | [ ] |
-| P2-2c | Streamlit case dashboard | Deferred | [ ] |
-
-**Effort:** 4–5 days
-
----
-
-### P2-3 — Custom workflows (Phase Q)
-
-**Goal:** Power users select modules without editing YAML.
-
-| # | Task | Priority | Status |
-|---|------|----------|--------|
-| P2-3a | `POST /api/workflows/custom/run` | Deferred | [ ] |
-| P2-3b | Streamlit multi-select module picker | Deferred | [ ] |
-
-**Effort:** 3–4 days
-
----
-
-### P2-4 — Streamlit UX & professional polish (Phase R)
-
-**Goal:** Close [11_ui_ux_design.md](../design/11_ui_ux_design.md) gaps without React.
-
-| # | Task | Priority | Status |
-|---|------|----------|--------|
-| P2-4a | Plain-language confidence labels in UI | Deferred | [ ] |
-| P2-4b | `API_KEY` header in Streamlit client when configured | Deferred | [ ] |
-| P2-4c | Background workflow toggle in Analyze step | Deferred | [ ] |
-| P2-4d | Finding feedback endpoint | Deferred | [ ] |
-| P2-4e | Supervision export template | Deferred | [ ] |
+**Acceptance:** Quick Review completes in AWS dev using Bedrock; no HTTP calls outside VPC during module run.
 
 **Effort:** 3–5 days
 
 ---
 
-### P2-5 — Full air-gapped deployment (Phase U)
+### P1-1 — ASR migration (Amazon Transcribe)
 
-**Goal:** Internet-disconnected hosts with pre-staged models.
+**Goal:** Remove runtime dependency on Whisper/pyannote/Hugging Face in AWS.
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| P2-5a | `doc/user/air-gapped-deployment.md` | Deferred | [ ] |
-| P2-5b | `ALLOW_OUTBOUND_HTTP=false` startup check | Deferred | [ ] |
-| P2-5c | Retention policy + optional encryption guidance | Deferred | [ ] |
+| P1-1a | `TranscriptionProvider` abstraction | Important | [ ] |
+| P1-1b | Amazon Transcribe adapter — async job, speaker labels | Important | [ ] |
+| P1-1c | S3 upload → Transcribe → labeled turns → existing ingest | Important | [ ] |
+| P1-1d | Keep Whisper path for local dev only (`TRANSCRIPTION_PROVIDER=whisper`) | Important | [ ] |
 
-**Effort:** 3–5 days (docs + flags); +1 week for retention APIs
+**Effort:** 1 week
 
-**Depends on:** P0-4 container/model volume strategy
+---
+
+### P1-2 — Workflow completeness (Phase N)
+
+**Goal:** Full multidisciplinary + research workflows on AWS dev.
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P1-2a | `full_multidisciplinary.yaml` + `research_oriented.yaml` | Important | [ ] |
+| P1-2b | Background default for long workflows; sync module limit | Important | [ ] |
+| P1-2c | Burn-in on AWS dev with Bedrock | Important | [ ] |
+
+**Effort:** 2–3 days (after P0-AWS-7)
+
+---
+
+### P1-3 — Data handling & trust
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P1-3a | Temp audio deletion (S3 lifecycle + app `finally`) | Important | [ ] |
+| P1-3b | `DELETE /api/transcripts/{id}` cascade | Important | [ ] |
+| P1-3c | Log redaction — no transcript body in CloudWatch | Important | [ ] |
+| P1-3d | Privacy copy updated for AWS (data stays in your account/VPC) | Important | [ ] |
+
+**Effort:** 2–3 days
+
+---
+
+### P1-4 — M2 polish (sliced transcription — local/interim only)
+
+Remaining sliced-transcription UI progress and fixture validation. **Lower priority** once Transcribe path exists.
+
+| # | Task | Status |
+|---|------|--------|
+| P1-4a | Streamlit progress for diarize → transcribe | [ ] |
+| P1-4b | Fixture audio validation | [ ] |
+
+---
+
+### P2 — Deferred application features
+
+Ontology & constructs (Phase O), cases (P), custom workflows (Q), Streamlit polish (R). See prior plan and [backlog.md](backlog.md). Resume after AWS dev is stable and Quick Review + Full MVP pass on Bedrock.
 
 ---
 
 ## 5. Suggested release milestones
 
-| Release | Phases | Theme |
-|---------|--------|-------|
-| **v0.4.0** | M, M1.5, M2 core, Ollama JSON fixes | Diarization + sliced transcription + LLM reliability |
-| **v0.4.1** | P0-1, P0-2, P0-3 | Windows guidance, Ollama tuning, M2 polish |
-| **v0.5.0** | P0-4, P1-2 | Docker Compose + data handling |
-| **v0.5.1** | P1-1 | Full multidisciplinary + research workflows |
-| **v0.6.0** | P2-1, P2-2 | Ontology-rich outputs + cases |
-| **v0.7.0** | P2-3, P2-4 | Custom workflows + Streamlit professional polish |
-| **v0.8.0** | P2-5 | Air-gapped deployment |
-| **v1.0.0** | Backlog: React UI | API-stable SPA (see [backlog.md](backlog.md)) |
+| Release | Theme |
+|---------|--------|
+| **v0.4.x** (branch today) | Diarization, sliced transcription, Ollama JSON fixes |
+| **v0.5.0** | AWS dev deploy — ECS, Bedrock, CloudWatch, GitHub Actions |
+| **v0.5.1** | Amazon Transcribe path; Whisper optional for local dev |
+| **v0.6.0** | Full multidisciplinary workflow on AWS |
+| **v0.7.0** | Ontology + cases |
+| **v1.0.0** | Stable `main` deploy + API contract |
 
 ---
 
 ## 6. Explicitly out of scope
 
-Unless requirements change:
-
+- Modifying **MinneAnalytics** IAM, state, or deploy workflows in aws-backbone
 - Multi-user SaaS, billing, RBAC beyond API key
-- Ontology-driven prompt **generation** (static prompts + metadata remain)
-- Graph database backend
-- Tone/emotion inference from audio timing
-- Distributed queue (Celery/Redis) — thread pool sufficient for private use
-- Hardcoded per-model branches in application code
+- Production AWS account / `prod-github-deploy` (deferred in aws-backbone roadmap)
+- Runtime Hugging Face or public model downloads in AWS deploy
+- Hardcoded per-model branches (use provider + `model_id` config)
 
 ---
 
-## 7. Decision log (July 2026 revision)
+## 7. Decision log
 
 | Decision | Rationale |
 |----------|-----------|
-| Reprioritize containerization to **P0** | Native Windows ML stack failures block audio ingest; Linux/Docker is the durable fix |
-| Transcript-first as **Tier 1** deployment | Core RRE value does not require audio; de-risks Windows |
-| Ollama tuning before full multidisciplinary suite | 12-module runs fail or truncate without ctx/sampling fixes |
-| M2 polish before Phase N burn-in | Sliced transcription unvalidated on fixture audio |
-| Keep SQLite default | PostgreSQL path exists; no forced migration |
-| Nice-to-have items → [backlog.md](backlog.md) | React, Helm, audio timing, collaborative review do not unblock current failures |
-| Supersede 18_post_v0.3_plan priority order | Original plan assumed stable local ML on Windows; experience proved otherwise |
+| **AWS over local Windows** | ML stack fragility; personal AWS account + backbone already exists |
+| **Bedrock over Ollama (AWS)** | Native AWS, VPC endpoints, no self-hosted LLM ops; better fit for no-egress |
+| **Transcribe over Whisper (AWS)** | Removes GPU/container ASR burden and HF token dependency |
+| **Ollama retained for local dev** | Fast iteration on prompts/modules without AWS cost |
+| **`phase-m0-docs` until stable** | Safe AWS testing before `main` PR |
+| **`rre-dev-*` IAM prefix** | Isolation from MinneAnalytics `minneanalytics-dev-*` |
+| **App infra in RRE repo** | aws-backbone is IAM/OIDC only (same pattern as MinneAnalytics) |
+| **Pause app features until P0-AWS** | Deploy substrate blocks meaningful cloud validation |
+| **CloudWatch-first observability** | Required for debugging remote failures |
 
 ---
 
-## 8. Next PR checklist
+## 8. Next steps (this week)
 
-Recommended immediate work (P0-1 + P0-2):
+**Planning complete when:** [aws-deployment.md](aws-deployment.md) exists and this section’s checklist is underway.
 
 ```text
-[ ] doc/user/deployment.md — Windows limitations + troubleshooting
-[ ] doc/user/model-setup.md — OLLAMA_NUM_CTX, temperature tiers
-[ ] config/settings.py + backend/services/ollama_service.py — generic Ollama options
-[ ] .env.example — new Ollama settings
-[ ] tests/test_ollama_service.py — options passthrough
-[ ] pytest tests/ -q
+[ ] aws-deployment.md — architecture, backbone steps, model/logging strategy
+[ ] aws-backbone PR — add RRE repo + rre-dev-* IAM prefix (no MinneAnalytics changes)
+[ ] LLMProvider + BedrockProvider spike design
+[ ] Dockerfile + ECR naming
+[ ] infra/dev/ scaffold + deploy-dev.yml skeleton
+[ ] LOG_JSON + request_id middleware plan
+[ ] Pause: P1 workflow expansion, ontology, cases until first ECS deploy
 ```
-
-M2 polish (P0-3) can follow in the same or next PR.
 
 ---
 
 ## Appendix — completed phases
 
-Historical record. Do not re-implement.
+### MVP (Phases A–G) ✓ · Post-MVP (H–L) ✓ · M0 ✓
 
-### MVP (Phases A–G) ✓
+See prior revisions. Domain, modules, workflows, synthesis, exports, PostgreSQL option, exploration APIs.
 
-Domain foundation, module registry, prompt compiler, structured module runner, workflow engine, synthesis engine, report UI, testing & hardening. **96 tests** at v0.3.0 release.
+### Phase M / M1.5 / M2 core ✓ · Ollama reliability ✓
 
-### Post-MVP (Phases H–L) ✓
+Diarization, timeline smoothing, sliced transcription mode, JSON mode fixes. M2 UI polish deferred to P1-4.
 
-| Phase | Deliverable |
-|-------|-------------|
-| H | Legacy cleanup — modules/workflows only |
-| I | 13 modules, 5 workflows |
-| J | PDF, coach summary, mediation brief exports |
-| K | PostgreSQL, Alembic, background jobs, API key, structured logging |
-| L | Exploration APIs, drill-down, comparative analysis, knowledge graph API |
+### Superseded priorities (local-first P0)
 
-### Phase M0 ✓
-
-Documentation reorganization under `doc/user/`, `doc/developer/`, `doc/design/`, `doc/planning/`.
-
-### Phase M — Speaker diarization ✓
-
-`diarization_service`, `transcript_alignment_service`, `audio_transcription_service`, health checks, optional `[diarization]` extra.
-
-### Phase M1.5 — Timeline smoothing ✓
-
-`diarization_timeline.py`, `DIARIZATION_MIN_DURATION_ON/OFF`, unit tests.
-
-### Phase M2 — Sliced transcription (core ✓, polish open)
-
-`audio_slicing.py`, `whisper_service.transcribe_speaker_intervals()`, `TRANSCRIPTION_MODE=sliced|overlap`, `transcription_mode` in API response. Remaining: UI progress, fixture validation (see P0-3).
-
-### Ollama reliability (branch) ✓
-
-`OLLAMA_THINK=false`, `OLLAMA_MODULE_JSON_FORMAT`, balanced JSON extraction, `OLLAMA_NUM_PREDICT=8192`.
+Windows troubleshooting (P0-1), local Ollama tuning (P0-2), local Docker Compose (P0-4), air-gapped local deploy (P2-5) — moved to [backlog.md](backlog.md) or folded into AWS equivalents.

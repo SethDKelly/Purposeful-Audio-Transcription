@@ -1,6 +1,6 @@
 # Documentation index
 
-**Relationship Reasoning Engine (RRE)** — v0.4.0 in progress
+**Relationship Reasoning Engine (RRE)** — v0.5.0 AWS pivot in progress
 
 | Audience | Start here |
 |----------|------------|
@@ -53,7 +53,8 @@ Product and technical design (`doc/01`–`doc/16`):
 
 | Document | Description |
 |----------|-------------|
-| [planning/implementation_plan.md](planning/implementation_plan.md) | **Active implementation plan** (priority order, P0–P2) |
+| [planning/implementation_plan.md](planning/implementation_plan.md) | **Active implementation plan** (AWS P0–P2 priority order) |
+| [planning/aws-deployment.md](planning/aws-deployment.md) | AWS dev architecture, backbone integration, Bedrock/Transcribe |
 | [planning/backlog.md](planning/backlog.md) | Nice-to-have and deferred enhancements |
 | [planning/18_post_v0.3_plan.md](planning/18_post_v0.3_plan.md) | Post-v0.3.0 phase detail (M–U; superseded for priorities) |
 | [planning/15_future_roadmap.md](planning/15_future_roadmap.md) | Long-term strategic direction |
