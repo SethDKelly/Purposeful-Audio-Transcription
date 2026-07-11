@@ -1,0 +1,156 @@
+resource "aws_ecs_cluster" "main" {
+  name = "${local.name}-cluster"
+
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+}
+
+resource "aws_ecs_task_definition" "api" {
+  family                   = "${local.name}-api"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = var.api_cpu
+  memory                   = var.api_memory
+  execution_role_arn       = aws_iam_role.ecs_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
+
+  container_definitions = jsonencode([{
+    name      = "api"
+    image     = local.api_image
+    essential = true
+
+    portMappings = [{
+      containerPort = 8000
+      hostPort      = 8000
+      protocol      = "tcp"
+    }]
+
+    environment = [
+      { name = "LOG_JSON", value = "true" },
+      { name = "LOG_LEVEL", value = "INFO" },
+      { name = "DIARIZATION_ENABLED", value = "false" },
+      { name = "ALEMBIC_AUTO_UPGRADE", value = "true" },
+      { name = "TEMP_DIR", value = "/tmp/rre" },
+      { name = "AWS_REGION", value = var.aws_region },
+      { name = "AWS_DEFAULT_REGION", value = var.aws_region },
+    ]
+
+    secrets = [{
+      name      = "DATABASE_URL"
+      valueFrom = "${aws_secretsmanager_secret.database.arn}:database_url::"
+    }]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.api.name
+        awslogs-region        = var.aws_region
+        awslogs-stream-prefix = "api"
+      }
+    }
+
+    healthCheck = {
+      command     = ["CMD-SHELL", "curl -f http://127.0.0.1:8000/api/health || exit 1"]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 60
+    }
+  }])
+}
+
+resource "aws_ecs_task_definition" "ui" {
+  family                   = "${local.name}-ui"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = var.ui_cpu
+  memory                   = var.ui_memory
+  execution_role_arn       = aws_iam_role.ecs_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
+
+  container_definitions = jsonencode([{
+    name      = "ui"
+    image     = local.ui_image
+    essential = true
+
+    portMappings = [{
+      containerPort = 8501
+      hostPort      = 8501
+      protocol      = "tcp"
+    }]
+
+    environment = [
+      { name = "RRE_API_BASE_URL", value = "http://${aws_lb.main.dns_name}" },
+      { name = "LOG_JSON", value = "true" },
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.ui.name
+        awslogs-region        = var.aws_region
+        awslogs-stream-prefix = "ui"
+      }
+    }
+
+    healthCheck = {
+      command     = ["CMD-SHELL", "curl -f http://127.0.0.1:8501/_stcore/health || exit 1"]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 30
+    }
+  }])
+}
+
+resource "aws_ecs_service" "api" {
+  name            = "${local.name}-api"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.api.arn
+  desired_count   = var.api_desired_count
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = data.aws_subnets.default.ids
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.api.arn
+    container_name   = "api"
+    container_port   = 8000
+  }
+
+  deployment_minimum_healthy_percent = 50
+  deployment_maximum_percent         = 200
+
+  depends_on = [aws_lb_listener.http]
+}
+
+resource "aws_ecs_service" "ui" {
+  name            = "${local.name}-ui"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.ui.arn
+  desired_count   = var.ui_desired_count
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = data.aws_subnets.default.ids
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.ui.arn
+    container_name   = "ui"
+    container_port   = 8501
+  }
+
+  deployment_minimum_healthy_percent = 50
+  deployment_maximum_percent         = 200
+
+  depends_on = [aws_lb_listener.http]
+}

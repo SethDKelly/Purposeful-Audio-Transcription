@@ -218,3 +218,11 @@ def test_health_reports_resolved_devices(monkeypatch) -> None:
             break
 
     assert final_status == WorkflowRunStatus.COMPLETED.value
+
+
+def test_api_base_url_override(monkeypatch):
+    monkeypatch.setenv("RRE_API_BASE_URL", "http://alb.example.com")
+    from config.settings import Settings
+
+    cfg = Settings()
+    assert cfg.api_base_url == "http://alb.example.com"

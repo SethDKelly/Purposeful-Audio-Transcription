@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     api_host: str = "127.0.0.1"
     api_port: int = 8000
+    # When set (e.g. ALB URL in AWS), Streamlit uses this instead of api_host:api_port.
+    rre_api_base_url: str = ""
     streamlit_port: int = 8501
     prompts_dir: Path = Path("./config/prompts")
     modules_dir: Path = Path("./config/modules")
@@ -70,6 +72,12 @@ class Settings(BaseSettings):
     @property
     def api_auth_enabled(self) -> bool:
         return bool(self.api_key)
+
+    @property
+    def api_base_url(self) -> str:
+        if self.rre_api_base_url.strip():
+            return self.rre_api_base_url.rstrip("/")
+        return f"http://{self.api_host}:{self.api_port}"
 
 
 settings = Settings()

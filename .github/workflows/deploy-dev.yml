@@ -1,0 +1,121 @@
+name: Deploy to AWS dev
+
+on:
+  push:
+    branches: [phase-m0-docs]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-2
+  AWS_ACCOUNT_ID: "521018312783"
+  TF_WORKING_DIR: infra/dev
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Run tests
+        run: pytest tests/ -q
+
+  deploy:
+    name: Deploy (dev)
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::521018312783:role/dev-github-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Terraform init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init -input=false
+
+      - name: Ensure ECR repositories exist
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform apply -input=false -auto-approve \
+            -target=aws_ecr_repository.api \
+            -target=aws_ecr_repository.ui
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push API image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          docker build -t "$ECR_REGISTRY/rre-dev-api:${IMAGE_TAG}" -f Dockerfile .
+          docker push "$ECR_REGISTRY/rre-dev-api:${IMAGE_TAG}"
+          docker tag "$ECR_REGISTRY/rre-dev-api:${IMAGE_TAG}" "$ECR_REGISTRY/rre-dev-api:latest"
+          docker push "$ECR_REGISTRY/rre-dev-api:latest"
+
+      - name: Build and push UI image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          docker build -t "$ECR_REGISTRY/rre-dev-ui:${IMAGE_TAG}" -f Dockerfile.ui .
+          docker push "$ECR_REGISTRY/rre-dev-ui:${IMAGE_TAG}"
+          docker tag "$ECR_REGISTRY/rre-dev-ui:${IMAGE_TAG}" "$ECR_REGISTRY/rre-dev-ui:latest"
+          docker push "$ECR_REGISTRY/rre-dev-ui:latest"
+
+      - name: Terraform apply
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -input=false -auto-approve -var="image_tag=${IMAGE_TAG}"
+
+      - name: Wait for ECS services stable
+        run: |
+          aws ecs wait services-stable \
+            --cluster rre-dev-cluster \
+            --services rre-dev-api rre-dev-ui
+
+      - name: Smoke test
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          ALB_URL=$(terraform output -raw alb_url)
+          echo "ALB URL: $ALB_URL"
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -sf "$ALB_URL/api/health"; then
+              echo ""
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Waiting for service... ($i/10)"
+            sleep 30
+          done
+          echo "Health check failed"
+          exit 1
+
+      - name: Deployment summary
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          echo "## RRE dev deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Image tag: \`${IMAGE_TAG}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL: $(terraform output -raw alb_url)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- API logs: \`$(terraform output -raw api_log_group)\`" >> "$GITHUB_STEP_SUMMARY"

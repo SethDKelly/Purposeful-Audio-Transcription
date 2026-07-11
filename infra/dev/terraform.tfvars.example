@@ -1,0 +1,4 @@
+# Optional overrides for local terraform plan/apply.
+# CI passes -var="image_tag=$GITHUB_SHA" on deploy.
+
+# image_tag = "local-dev"

@@ -155,17 +155,17 @@ Work top to bottom. **Do not start P1 application features until P0-AWS-1 throug
 
 ---
 
-### P0-AWS-4 — Containerization for ECS (this week)
+### P0-AWS-4 — Containerization for ECS ✓
 
 **Goal:** Production-style images; no host venv on AWS.
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| AWS-4a | `Dockerfile` — API (FastAPI + uvicorn), system ffmpeg | Critical | [ ] |
-| AWS-4b | `Dockerfile.ui` or combined image — Streamlit (or defer UI to second service) | Critical | [ ] |
-| AWS-4c | Build arg: include/exclude `[diarization]` (interim until Transcribe) | Important | [ ] |
-| AWS-4d | `.dockerignore`, non-root user, healthcheck endpoint | Critical | [ ] |
-| AWS-4e | ECR repository `rre-dev-api` (and `rre-dev-ui` if split) | Critical | [ ] |
+| AWS-4a | `Dockerfile` — API (FastAPI + uvicorn), system ffmpeg | Critical | ✓ |
+| AWS-4b | `Dockerfile.ui` — Streamlit | Critical | ✓ |
+| AWS-4c | Build arg: include/exclude `[diarization]` (interim until Transcribe) | Important | deferred |
+| AWS-4d | `.dockerignore`, healthcheck endpoints | Critical | ✓ |
+| AWS-4e | ECR repositories `rre-dev-api`, `rre-dev-ui` (Terraform) | Critical | ✓ |
 
 **Acceptance:** Image builds in CI; runs locally with `docker run` against mock env; health check passes.
 
@@ -173,21 +173,21 @@ Work top to bottom. **Do not start P1 application features until P0-AWS-1 throug
 
 ---
 
-### P0-AWS-5 — `infra/dev/` Terraform (this week → next)
+### P0-AWS-5 — `infra/dev/` Terraform ✓
 
 **Goal:** RRE-owned infrastructure in app repo; separate state from backbone and MinneAnalytics.
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| AWS-5a | Terraform root `infra/dev/` — backend key `purposeful-audio-transcription/dev/terraform.tfstate` | Critical | [ ] |
-| AWS-5b | VPC (new or default), private subnets, security groups, ALB | Critical | [ ] |
-| AWS-5c | ECS cluster + Fargate service(s), task defs, `rre-dev-*` execution/task roles | Critical | [ ] |
-| AWS-5d | RDS PostgreSQL (dev sizing) — replace SQLite for AWS | Critical | [ ] |
-| AWS-5e | S3 bucket for audio uploads / temp (lifecycle delete) | Critical | [ ] |
-| AWS-5f | Secrets Manager: `API_KEY`, DB URL, Bedrock config | Critical | [ ] |
-| AWS-5g | VPC endpoints for Bedrock, Transcribe, S3, Secrets Manager, CloudWatch Logs, ECR | Critical | [ ] |
-| AWS-5h | CloudWatch log groups + retention | Critical | [ ] |
-| AWS-5i | IAM task role: `bedrock:InvokeModel`, `transcribe:*`, S3 scoped, no `*` egress | Critical | [ ] |
+| AWS-5a | Terraform root `infra/dev/` — backend key `purposeful-audio-transcription/dev/terraform.tfstate` | Critical | ✓ |
+| AWS-5b | VPC (default), security groups, ALB | Critical | ✓ |
+| AWS-5c | ECS cluster + Fargate services, `rre-dev-*` execution/task roles | Critical | ✓ |
+| AWS-5d | RDS PostgreSQL (dev sizing) | Critical | ✓ |
+| AWS-5e | S3 bucket for uploads / temp (lifecycle delete) | Critical | ✓ |
+| AWS-5f | Secrets Manager: DATABASE_URL | Critical | ✓ |
+| AWS-5g | VPC endpoints (Bedrock, Transcribe, …) | Critical | deferred |
+| AWS-5h | CloudWatch log groups + retention | Critical | ✓ |
+| AWS-5i | IAM task role: Bedrock/Transcribe/S3 (scoped) | Critical | deferred |
 
 **Acceptance:** `terraform apply` from `infra/dev/` creates dev stack; API reachable via ALB; logs appear in CloudWatch.
 
@@ -195,21 +195,21 @@ Work top to bottom. **Do not start P1 application features until P0-AWS-1 throug
 
 ---
 
-### P0-AWS-6 — GitHub Actions deploy (this week → next)
+### P0-AWS-6 — GitHub Actions deploy ✓
 
 **Goal:** Push to `phase-m0-docs` deploys to AWS dev for testing.
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| AWS-6a | `.github/workflows/deploy-dev.yml` — OIDC → `dev-github-deploy` | Critical | [ ] |
-| AWS-6b | Jobs: test → build/push ECR → terraform plan/apply → ECS force new deployment | Critical | [ ] |
-| AWS-6c | Trigger: `push` to `phase-m0-docs` + `workflow_dispatch` | Critical | [ ] |
-| AWS-6d | Smoke step: `GET /api/health` + optional mocked module run | Critical | [ ] |
-| AWS-6e | Switch default branch trigger to `main` after stable (document cutover) | Important | [ ] |
+| AWS-6a | `.github/workflows/deploy-dev.yml` — OIDC → `dev-github-deploy` | Critical | ✓ |
+| AWS-6b | Jobs: test → build/push ECR → terraform apply → ECS stable wait | Critical | ✓ |
+| AWS-6c | Trigger: `push` to `phase-m0-docs` + `workflow_dispatch` | Critical | ✓ |
+| AWS-6d | Smoke step: `GET /api/health` via ALB | Critical | ✓ |
+| AWS-6e | Switch default branch trigger to `main` after stable | Important | [ ] |
 
 **Acceptance:** Push to `phase-m0-docs` updates dev ECS service; health check green.
 
-**Effort:** 2–3 days (after AWS-4/5 scaffold)
+**Pending:** First successful workflow run after push.
 
 ---
 
@@ -333,17 +333,15 @@ Ontology & constructs (Phase O), cases (P), custom workflows (Q), Streamlit poli
 
 ## 8. Next steps (this week)
 
-**P0-AWS-2 complete.** Proceed with application-side AWS work on `phase-m0-docs`:
+**P0-AWS-2 complete. P0-AWS-4/5/6 implemented — awaiting first deploy run.**
 
 ```text
-[x] aws-backbone merged — OIDC + rre-dev-* IAM prefix (aws-backbone main @ 3d14411)
+[x] aws-backbone merged — OIDC + rre-dev-* IAM prefix
+[x] Dockerfile + Dockerfile.ui + infra/dev/ Terraform + deploy-dev.yml
+[ ] First successful GitHub Actions deploy on phase-m0-docs
 [ ] P0-AWS-3 — LOG_JSON, request_id middleware, error context in module_runner
-[ ] P0-AWS-4 — Dockerfile(s) + ECR naming
-[ ] P0-AWS-5 — infra/dev/ Terraform scaffold (VPC, ECS, RDS, S3, logs)
-[ ] P0-AWS-6 — .github/workflows/deploy-dev.yml (OIDC → dev-github-deploy)
 [ ] P0-AWS-7 — LLMProvider + BedrockProvider spike
-[ ] Optional verify: aws sts get-caller-identity from a test workflow step
-[ ] Pause: P1 workflow expansion, ontology, cases until first ECS deploy
+[ ] VPC endpoints + Bedrock IAM (after first deploy green)
 ```
 
 ---
