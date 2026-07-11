@@ -17,8 +17,8 @@ from backend.schemas.module_output_v1 import (
     ModuleRunOutputInput,
 )
 
-_JSON_FENCE_PATTERN = re.compile(
-    r"```(?:json)?\s*(\{.*?\})\s*```",
+_JSON_FENCE_WRAPPER = re.compile(
+    r"```(?:json)?\s*(.*?)\s*```",
     re.DOTALL | re.IGNORECASE,
 )
 
@@ -33,9 +33,16 @@ class OutputParser:
         if not raw_output:
             raise OutputParseError("LLM returned empty output")
 
-        fenced = _JSON_FENCE_PATTERN.search(raw_output)
+        fenced = _JSON_FENCE_WRAPPER.search(raw_output)
         if fenced:
-            return _loads_json(fenced.group(1))
+            candidate = fenced.group(1).strip()
+            if candidate.startswith("{"):
+                brace_match = _extract_balanced_object(candidate)
+                if brace_match:
+                    return _loads_json(brace_match)
+                raise OutputParseError(
+                    "JSON in code fence appears truncated or incomplete"
+                )
 
         brace_match = _extract_balanced_object(raw_output)
         if brace_match:

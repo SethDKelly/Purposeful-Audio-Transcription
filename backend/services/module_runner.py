@@ -169,7 +169,7 @@ class ModuleRunner:
             self._update_status(run, status)
 
             try:
-                raw_output = self._llm.chat(resolved_model, messages)
+                raw_output = self._llm.chat(resolved_model, messages, json_mode=True)
             except OllamaError as exc:
                 return self._fail_run(run, f"Ollama chat failed: {exc.message}")
 

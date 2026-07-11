@@ -18,6 +18,32 @@ def test_extract_json_from_fence() -> None:
     assert data["module_id"] == "nvc_analysis"
 
 
+def test_extract_json_from_nested_fence() -> None:
+    parser = OutputParser()
+    payload = {
+        "module_id": "relationship_conversation_analysis",
+        "module_version": "1.0.0",
+        "executive_summary": "x",
+        "findings": [
+            {
+                "id": "F001",
+                "type": "observation",
+                "summary": "nested",
+            }
+        ],
+    }
+    raw = f"```json\n{json.dumps(payload)}\n```\n\n## Report"
+    data = parser.extract_json(raw)
+    assert data["findings"][0]["id"] == "F001"
+
+
+def test_extract_json_raises_when_fence_json_truncated() -> None:
+    parser = OutputParser()
+    raw = '```json\n{"module_id": "x", "findings": [{"id": "F001"\n```'
+    with pytest.raises(OutputParseError, match="truncated"):
+        parser.extract_json(raw)
+
+
 def test_extract_json_from_bare_object() -> None:
     parser = OutputParser()
     raw = 'Some text before {"module_id": "systems_analysis", "executive_summary": "x", "module_version": "1.0.0"} after'

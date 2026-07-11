@@ -42,6 +42,8 @@ class Settings(BaseSettings):
     default_ollama_model: str = ""
     # Disable Ollama "thinking" mode for structured JSON module output (Gemma 4 etc.).
     ollama_think: bool = False
+    ollama_module_json_format: bool = True
+    ollama_num_predict: int = 8192
     database_url: str = "sqlite:///./data/rre.db"
     database_pool_size: int = 5
     alembic_auto_upgrade: bool = False

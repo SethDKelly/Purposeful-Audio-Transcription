@@ -31,9 +31,19 @@ class OllamaService:
         except Exception as exc:
             raise OllamaError(f"Failed to list Ollama models: {exc}") from exc
 
-    def _chat_options(self, *, think: bool | None = None) -> dict[str, Any]:
-        resolved = settings.ollama_think if think is None else think
-        return {"think": resolved}
+    def _chat_kwargs(
+        self,
+        *,
+        think: bool | None = None,
+        json_mode: bool = False,
+    ) -> dict[str, Any]:
+        resolved_think = settings.ollama_think if think is None else think
+        kwargs: dict[str, Any] = {"think": resolved_think}
+        if json_mode and settings.ollama_module_json_format:
+            kwargs["format"] = "json"
+        if settings.ollama_num_predict > 0:
+            kwargs["options"] = {"num_predict": settings.ollama_num_predict}
+        return kwargs
 
     @staticmethod
     def _message_thinking(message: Any) -> str:
@@ -49,13 +59,20 @@ class OllamaService:
             )
         return OllamaError("Ollama returned an empty response")
 
-    def chat(self, model: str, messages: list[dict[str, str]]) -> str:
+    def chat(
+        self,
+        model: str,
+        messages: list[dict[str, str]],
+        *,
+        json_mode: bool = False,
+    ) -> str:
         try:
             think = settings.ollama_think
+            chat_kwargs = self._chat_kwargs(think=think, json_mode=json_mode)
             response = self._client.chat(
                 model=model,
                 messages=messages,
-                **self._chat_options(think=think),
+                **chat_kwargs,
             )
             content = response.message.content
             if content:
@@ -68,7 +85,7 @@ class OllamaService:
                 response = self._client.chat(
                     model=model,
                     messages=messages,
-                    **self._chat_options(think=False),
+                    **self._chat_kwargs(think=False, json_mode=json_mode),
                 )
                 content = response.message.content
                 if content:
@@ -88,7 +105,7 @@ class OllamaService:
                 model=model,
                 messages=messages,
                 stream=True,
-                **self._chat_options(),
+                **self._chat_kwargs(json_mode=False),
             )
             for chunk in stream:
                 if chunk.message and chunk.message.content:

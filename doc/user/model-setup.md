@@ -113,6 +113,8 @@ Model resolution follows this order (first non-empty value wins):
 | Module | `ollama_model` in `config/modules/*.yaml` | `ollama_model: llama3.2` |
 | Environment | `DEFAULT_OLLAMA_MODEL` in `.env` | `DEFAULT_OLLAMA_MODEL=llama3.2` |
 | Thinking | `OLLAMA_THINK` in `.env` | `OLLAMA_THINK=false` (recommended) |
+| JSON mode | `OLLAMA_MODULE_JSON_FORMAT` | `true` — use Ollama `format=json` for module/workflow runs |
+| Token limit | `OLLAMA_NUM_PREDICT` | `8192` — raise if module JSON is truncated |
 
 Legacy single-purpose analysis has been removed. Use module YAML for configuration.
 

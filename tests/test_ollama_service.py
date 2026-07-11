@@ -15,10 +15,16 @@ def _response(*, content: str = "", thinking: str = "") -> SimpleNamespace:
     )
 
 
+def _mock_settings(mock_settings: MagicMock) -> None:
+    mock_settings.ollama_think = False
+    mock_settings.ollama_module_json_format = True
+    mock_settings.ollama_num_predict = 8192
+
+
 @patch("backend.services.ollama_service.ollama.Client")
 @patch("backend.services.ollama_service.settings")
 def test_chat_passes_think_false_by_default(mock_settings, mock_client_cls) -> None:
-    mock_settings.ollama_think = False
+    _mock_settings(mock_settings)
     client = MagicMock()
     mock_client_cls.return_value = client
     client.chat.return_value = _response(content='{"ok": true}')
@@ -31,6 +37,27 @@ def test_chat_passes_think_false_by_default(mock_settings, mock_client_cls) -> N
         model="gemma4:12b",
         messages=[{"role": "user", "content": "hi"}],
         think=False,
+        options={"num_predict": 8192},
+    )
+
+
+@patch("backend.services.ollama_service.ollama.Client")
+@patch("backend.services.ollama_service.settings")
+def test_chat_json_mode_requests_ollama_json_format(mock_settings, mock_client_cls) -> None:
+    _mock_settings(mock_settings)
+    client = MagicMock()
+    mock_client_cls.return_value = client
+    client.chat.return_value = _response(content='{"ok": true}')
+    service = OllamaService()
+
+    service.chat("gemma4:12b", [{"role": "user", "content": "hi"}], json_mode=True)
+
+    client.chat.assert_called_once_with(
+        model="gemma4:12b",
+        messages=[{"role": "user", "content": "hi"}],
+        think=False,
+        format="json",
+        options={"num_predict": 8192},
     )
 
 
@@ -38,6 +65,8 @@ def test_chat_passes_think_false_by_default(mock_settings, mock_client_cls) -> N
 @patch("backend.services.ollama_service.settings")
 def test_chat_retries_without_thinking_when_content_empty(mock_settings, mock_client_cls) -> None:
     mock_settings.ollama_think = True
+    mock_settings.ollama_module_json_format = True
+    mock_settings.ollama_num_predict = 8192
     client = MagicMock()
     mock_client_cls.return_value = client
     client.chat.side_effect = [
@@ -58,7 +87,7 @@ def test_chat_retries_without_thinking_when_content_empty(mock_settings, mock_cl
 def test_chat_raises_helpful_error_when_thinking_consumes_budget(
     mock_settings, mock_client_cls
 ) -> None:
-    mock_settings.ollama_think = False
+    _mock_settings(mock_settings)
     client = MagicMock()
     mock_client_cls.return_value = client
     client.chat.return_value = _response(content="", thinking="only thinking")
@@ -71,7 +100,7 @@ def test_chat_raises_helpful_error_when_thinking_consumes_budget(
 @patch("backend.services.ollama_service.ollama.Client")
 @patch("backend.services.ollama_service.settings")
 def test_chat_stream_passes_think_false(mock_settings, mock_client_cls) -> None:
-    mock_settings.ollama_think = False
+    _mock_settings(mock_settings)
     client = MagicMock()
     mock_client_cls.return_value = client
     client.chat.return_value = [
@@ -88,4 +117,5 @@ def test_chat_stream_passes_think_false(mock_settings, mock_client_cls) -> None:
         messages=[{"role": "user", "content": "hi"}],
         stream=True,
         think=False,
+        options={"num_predict": 8192},
     )
