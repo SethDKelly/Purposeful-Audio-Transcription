@@ -331,7 +331,7 @@ Ontology & constructs (Phase O), cases (P), custom workflows (Q), Streamlit poli
 |---------|--------|
 | **v0.4.x** (branch today) | Diarization, sliced transcription, Ollama JSON fixes |
 | **v0.5.0** | AWS dev deploy — ECS, Bedrock, CloudWatch, GitHub Actions |
-| **v0.5.1** | Amazon Transcribe path; Whisper optional for local dev |
+| **v0.5.1** | P1-1, P1-3 | Transcribe + slim cloud API image |
 | **v0.6.0** | Full multidisciplinary workflow on AWS |
 | **v0.7.0** | Ontology + cases |
 | **v1.0.0** | Stable `main` deploy + API contract |
