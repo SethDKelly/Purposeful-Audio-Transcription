@@ -77,6 +77,20 @@ jobs:
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform init -input=false
 
+      - name: Ensure RDS is available
+        run: |
+          set -euo pipefail
+          ID="rre-dev-postgres"
+          STATUS=$(aws rds describe-db-instances --db-instance-identifier "$ID" \
+            --query 'DBInstances[0].DBInstanceStatus' --output text)
+          echo "RDS $ID status: $STATUS"
+          if [ "$STATUS" = "stopped" ]; then
+            echo "Starting stopped RDS instance (required after pause workflow)..."
+            aws rds start-db-instance --db-instance-identifier "$ID" --no-cli-pager
+          fi
+          echo "Waiting for RDS to become available..."
+          aws rds wait db-instance-available --db-instance-identifier "$ID"
+
       - name: Ensure ECR repositories exist
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
@@ -112,9 +126,26 @@ jobs:
 
       - name: Wait for ECS services stable
         run: |
-          aws ecs wait services-stable \
-            --cluster rre-dev-cluster \
-            --services rre-dev-api rre-dev-ui
+          set -euo pipefail
+          CLUSTER="rre-dev-cluster"
+          SERVICES="rre-dev-api rre-dev-ui"
+          if ! aws ecs wait services-stable --cluster "$CLUSTER" --services $SERVICES; then
+            echo "::error::ECS services did not stabilize"
+            aws ecs describe-services --cluster "$CLUSTER" --services $SERVICES \
+              --query 'services[].{name:serviceName,running:runningCount,desired:desiredCount,pending:pendingCount,events:events[0:8]}' \
+              --output json
+            for SVC in $SERVICES; do
+              STOPPED=$(aws ecs list-tasks --cluster "$CLUSTER" --service-name "$SVC" \
+                --desired-status STOPPED --max-items 3 --query 'taskArns' --output text || true)
+              if [ -n "$STOPPED" ] && [ "$STOPPED" != "None" ]; then
+                echo "--- Stopped tasks for $SVC ---"
+                aws ecs describe-tasks --cluster "$CLUSTER" --tasks $STOPPED \
+                  --query 'tasks[].{task:taskArn,stoppedReason:stoppedReason,containers:containers[].{name:name,exitCode:exitCode,reason:reason}}' \
+                  --output json
+              fi
+            done
+            exit 1
+          fi
 
       - name: Smoke test
         working-directory: ${{ env.TF_WORKING_DIR }}

@@ -59,7 +59,7 @@ resource "aws_ecs_task_definition" "api" {
       interval    = 30
       timeout     = 5
       retries     = 3
-      startPeriod = 60
+      startPeriod = 180
     }
   }])
 }
@@ -129,6 +129,7 @@ resource "aws_ecs_service" "api" {
 
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
+  health_check_grace_period_seconds  = 300
 
   depends_on = [aws_lb_listener.http]
 }
@@ -154,6 +155,7 @@ resource "aws_ecs_service" "ui" {
 
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
+  health_check_grace_period_seconds  = 120
 
   depends_on = [aws_lb_listener.http]
 }

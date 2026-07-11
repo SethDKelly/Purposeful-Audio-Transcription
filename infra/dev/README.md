@@ -76,7 +76,7 @@ terraform output api_log_group
 
 This sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Terraform state stays in sync.
 
-**Resume** — run **Deploy to AWS dev** (push to `phase-m0-docs` or workflow_dispatch). ECS scales back to 1; RDS starts automatically on first connection (or start manually in console).
+**Resume** — run **Deploy to AWS dev** (push to `phase-m0-docs` or workflow_dispatch). The deploy workflow starts RDS if it was stopped, waits for it to become available, then scales ECS back to 1.
 
 **Costs while paused:** ALB (~$16/mo), ECR image storage, Secrets Manager, RDS storage (no compute while stopped). RDS auto-restarts after ~7 days if not resumed.
 
