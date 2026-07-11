@@ -45,8 +45,8 @@ resource "aws_db_subnet_group" "main" {
 }
 
 data "aws_rds_engine_version" "postgres" {
-  engine             = "postgres"
-  preferred_versions = ["16.8", "16.6", "16.7", "16.5", "16.3", "16.2", "16.1"]
+  engine       = "postgres"
+  default_only = true
 }
 
 resource "aws_db_instance" "main" {
