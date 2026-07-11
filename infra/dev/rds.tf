@@ -44,10 +44,15 @@ resource "aws_db_subnet_group" "main" {
   subnet_ids = data.aws_subnets.default.ids
 }
 
+data "aws_rds_engine_version" "postgres" {
+  engine  = "postgres"
+  version = "16"
+}
+
 resource "aws_db_instance" "main" {
   identifier                 = "${local.name}-postgres"
-  engine                     = "postgres"
-  engine_version             = "16.4"
+  engine                     = data.aws_rds_engine_version.postgres.engine
+  engine_version             = data.aws_rds_engine_version.postgres.version
   instance_class             = var.db_instance_class
   allocated_storage          = 20
   db_name                    = "rre"
