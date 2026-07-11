@@ -36,7 +36,7 @@ Full instructions: **[doc/user/getting-started.md](doc/user/getting-started.md)*
 - Streamlit report + **Explore** tab (drill-down, follow-up Q&A)
 - Exports: Markdown, JSON, PDF, coach summary, mediation brief
 - Optional PostgreSQL, background jobs, API key auth
-- 104 automated tests
+- 144 automated tests
 
 ## Prerequisites
 
@@ -78,8 +78,9 @@ Summary in [doc/developer/api-reference.md](doc/developer/api-reference.md). Int
 
 ## Roadmap
 
-- **History:** [doc/planning/implementation_plan.md](doc/planning/implementation_plan.md) (phases A–L)
-- **Next:** [doc/planning/18_post_v0.3_plan.md](doc/planning/18_post_v0.3_plan.md) (Phase M ✓; **N** = full multidisciplinary workflow)
+- **Active plan:** [doc/planning/implementation_plan.md](doc/planning/implementation_plan.md) — P0 deployment/Ollama tuning → containers → full suite
+- **Backlog:** [doc/planning/backlog.md](doc/planning/backlog.md) — React UI, Helm, audio timing, and other nice-to-haves
+- **History:** phases A–L in implementation plan appendix; [18_post_v0.3_plan.md](doc/planning/18_post_v0.3_plan.md) for M–U phase detail
 
 ## Prompt storage
 

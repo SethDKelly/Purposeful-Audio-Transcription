@@ -1,10 +1,12 @@
 # 18 — Post-v0.3.0 Implementation Plan
 
+> **Superseded (July 2026):** Active priorities and Windows/local deployment constraints are in **[implementation_plan.md](implementation_plan.md)**. Nice-to-have items are in **[backlog.md](backlog.md)**. This file remains as detailed phase reference (M–U).
+
 Forward plan after merging **v0.3.0** (phases H–L) to `main`. Supersedes the “recommended next PR” notes at the end of [implementation_plan.md](implementation_plan.md).
 
 | | |
 |---|---|
-| **Baseline** | `v0.3.0` on `main` — 13 modules, 5 workflows, 96 tests |
+| **Baseline** | `v0.3.0` on `main` — 13 modules, 5 workflows; branch adds M/M1.5/M2 + Ollama fixes |
 | **Design anchors** | [../design/01_product_vision_and_scope.md](../design/01_product_vision_and_scope.md) · [../design/04_knowledge_ontology.md](../design/04_knowledge_ontology.md) · [../design/11_ui_ux_design.md](../design/11_ui_ux_design.md) · [15_future_roadmap.md](15_future_roadmap.md) · [../design/16_additional_thoughts.md](../design/16_additional_thoughts.md) |
 | **Documentation** | [../README.md](../README.md) · [../user/](../user/) · [../developer/](../developer/) |
 | **Principle** | Evidence traceability and progressive disclosure first; prompts remain replaceable |
@@ -49,21 +51,17 @@ Documentation is organized under [doc/README.md](../README.md) with **user**, **
 
 ## 2. Recommended priorities
 
+> **Superseded:** Priority order is in [implementation_plan.md](implementation_plan.md) §4. Summary below is historical.
+
 ```text
 M0  Doc & release alignment     ✓ complete
 M   Speaker diarization        ✓ complete
-N   Full suite workflows       (product completeness — next)
-O   Ontology & constructs      (unlocks knowledge graph value)
-P   Cases & longitudinal view  (professional / repeat use)
-Q   Custom workflows           (power users)
-R   UX hardening               (Streamlit polish)
-S   React frontend             (parallel track, larger)
-T   Containerization           (reproducible deps, Compose)
-U   Air-gapped & data security (privacy, offline deploy)
-—   Evaluation loop            (ongoing, every phase)
+M1.5 Timeline smoothing       ✓ complete
+M2  Sliced transcription       core ✓; polish → P0-3 in implementation plan
+—   Platform / Ollama / Docker  P0 (see implementation_plan.md)
+N   Full suite workflows       P1-1 (after P0)
+O–U See implementation_plan P2 + backlog.md
 ```
-
-**Recommended next implementation PR:** **Phase N** (full multidisciplinary workflow).
 
 ---
 

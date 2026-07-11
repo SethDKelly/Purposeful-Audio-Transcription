@@ -1,6 +1,8 @@
 # 15 — Future Roadmap
 
-> **Completed items:** Many near-term items below shipped in **v0.3.0** (phases H–L). See [../releases/v0.3.0.md](../releases/v0.3.0.md) and the active forward plan [18_post_v0.3_plan.md](18_post_v0.3_plan.md).
+> **Active priorities (July 2026):** See [implementation_plan.md](implementation_plan.md) for ordered P0–P2 work and [backlog.md](backlog.md) for nice-to-haves. This document retains long-term strategic direction.
+
+> **Completed items:** Many near-term items below shipped in **v0.3.0** (phases H–L). See [../releases/v0.3.0.md](../releases/v0.3.0.md).
 
 ## Completed in v0.3.0
 

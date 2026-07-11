@@ -1,6 +1,6 @@
 # Documentation index
 
-**Relationship Reasoning Engine (RRE)** — v0.3.0
+**Relationship Reasoning Engine (RRE)** — v0.4.0 in progress
 
 | Audience | Start here |
 |----------|------------|
@@ -53,9 +53,10 @@ Product and technical design (`doc/01`–`doc/16`):
 
 | Document | Description |
 |----------|-------------|
-| [planning/implementation_plan.md](planning/implementation_plan.md) | Full implementation history (phases A–L) |
-| [planning/18_post_v0.3_plan.md](planning/18_post_v0.3_plan.md) | **Active forward plan** (phases M–S) |
-| [planning/15_future_roadmap.md](planning/15_future_roadmap.md) | Long-term roadmap |
+| [planning/implementation_plan.md](planning/implementation_plan.md) | **Active implementation plan** (priority order, P0–P2) |
+| [planning/backlog.md](planning/backlog.md) | Nice-to-have and deferred enhancements |
+| [planning/18_post_v0.3_plan.md](planning/18_post_v0.3_plan.md) | Post-v0.3.0 phase detail (M–U; superseded for priorities) |
+| [planning/15_future_roadmap.md](planning/15_future_roadmap.md) | Long-term strategic direction |
 | [planning/12_mvp_build_plan.md](planning/12_mvp_build_plan.md) | Original MVP build plan |
 | [releases/v0.3.0.md](releases/v0.3.0.md) | v0.3.0 release notes |
 | [releases/v0.2.0.md](releases/v0.2.0.md) | v0.2.0 MVP release notes |

@@ -1,593 +1,403 @@
 # Implementation Plan
 
-Active plan to evolve the existing Purposeful Audio Transcription codebase into the **Relationship Reasoning Engine (RRE)** MVP defined in the design package (`doc/design/01`–`doc/design/16`).
+Active plan for the **Relationship Reasoning Engine (RRE)**. This document supersedes the forward-looking sections of [18_post_v0.3_plan.md](18_post_v0.3_plan.md) (July 2026 revision).
 
 | | |
 |---|---|
-| **Status** | **v0.4.0 in progress** — Phase M (diarization) complete; Phase N next |
-| **Release** | [`v0.3.0`](../releases/v0.3.0.md) · [`v0.2.0`](../releases/v0.2.0.md) |
-| **Next plan** | [18_post_v0.3_plan.md](18_post_v0.3_plan.md) (Phase N onward) |
-| **Docs** | [../README.md](../README.md) |
+| **Status** | **v0.4.0 in progress** on branch `phase-m0-docs` |
+| **Baseline** | MVP (A–G) + post-MVP (H–L) shipped in **v0.3.0**; audio/diarization (M, M1.5, M2 core) on branch |
+| **Tests** | 144 passing (see [§ Platform reality](#2-platform-reality-windows--local-deployment)) |
+| **Nice-to-have backlog** | [backlog.md](backlog.md) |
+| **Design anchors** | [../design/01_product_vision_and_scope.md](../design/01_product_vision_and_scope.md) · [15_future_roadmap.md](15_future_roadmap.md) |
 | **Deploy** | [../user/deployment.md](../user/deployment.md) · [../user/model-setup.md](../user/model-setup.md) |
 
 ---
 
-## Document Map
+## Document map
 
 | Document | Purpose |
 |----------|---------|
-| [../README.md](../README.md) | Documentation index |
-| [../user/getting-started.md](../user/getting-started.md) | User quick start |
-| [../user/user-guide.md](../user/user-guide.md) | Streamlit user guide |
-| [../design/01_product_vision_and_scope.md](../design/01_product_vision_and_scope.md) | Product goals |
-| [../design/02_system_architecture.md](../design/02_system_architecture.md) | System boundaries |
-| [../design/03_domain_model.md](../design/03_domain_model.md) | Core entities |
+| **This document** | Prioritized implementation plan (critical → important) |
+| [backlog.md](backlog.md) | Nice-to-have and deferred enhancements |
+| [18_post_v0.3_plan.md](18_post_v0.3_plan.md) | Historical post-v0.3.0 plan (superseded for priorities) |
 | [12_mvp_build_plan.md](12_mvp_build_plan.md) | Original MVP phase definitions |
-| [15_future_roadmap.md](15_future_roadmap.md) | Long-term roadmap |
-| [18_post_v0.3_plan.md](18_post_v0.3_plan.md) | **Active forward plan** (phases M–S) |
-| **This document** | Implementation record and history |
-| [../archived/](../archived/) | Earlier plans and backlogs |
+| [15_future_roadmap.md](15_future_roadmap.md) | Long-term strategic direction |
+| [../archived/](../archived/) | Earlier plans |
 
 ---
 
-## 1. Executive Summary
+## 1. Where the project is today
 
-### Current state (v0.3.0)
+### Delivered (v0.3.0 + branch work)
 
-The codebase is a working **Relationship Reasoning Engine** for private local use:
+| Area | Status |
+|------|--------|
+| Transcript paste / upload + evidence index (`Q001…`) | ✓ |
+| 13 modules + prompt compiler + structured JSON output | ✓ |
+| 5 workflows (Quick Review, Full MVP, Conflict Coaching, Mediation Brief, Clinical Exploration) | ✓ |
+| Synthesis, safety validation, exploration APIs, Streamlit Explore tab | ✓ |
+| Exports (md, json, pdf, coach summary, mediation brief) | ✓ |
+| PostgreSQL option, Alembic, background jobs, API key auth | ✓ |
+| Speaker diarization (pyannote) + timeline smoothing (M1.5) | ✓ |
+| Sliced transcription mode — diarize first, Whisper per interval (M2 core) | ✓ |
+| Ollama reliability fixes — `think=false`, JSON mode, nested JSON parser | ✓ |
 
-- FastAPI backend + Streamlit 4-step UI (Ingest → Prepare → Analyze → Report) + **Explore** tab
-- Whisper transcription; paste / `.txt` upload for transcripts
-- Speaker/turn parsing with stable evidence quote IDs (`Q001…`)
-- **13 modules** via `config/modules/*.yaml` + `PromptCompiler`
-- Structured `ModuleRunOutput` JSON with validation, retries, and safety checks
-- **5 workflows** including conflict coaching, mediation brief, clinical exploration
-- `SynthesisEngine` with convergence/divergence; exploration APIs for follow-up Q&A
-- SQLite default; optional PostgreSQL + Alembic; background workflow jobs; optional API key
-- Exports: `.md`, `.json`, `.pdf`, coach summary, mediation brief
-- **96 tests** passing
+### Gaps vs product vision
 
-### Target state (achieved)
+| Vision item | Gap |
+|-------------|-----|
+| **5. Full Multidisciplinary Suite** | No workflow runs all 12 transcript modules + meta-synthesis |
+| **Research-oriented analysis** | No dedicated workflow |
+| **Reliable audio ingest on all target hosts** | Native Windows + CPU torch + pyannote/ffmpeg coupling is fragile |
+| **Reproducible deployment** | Manual venv; no containers or lockfiles |
+| **Long-context LLM use** | Ollama `num_ctx` / sampling not exposed; evidence caps conservative |
+| **Knowledge graph value** | APIs exist; constructs rarely populated in LLM output |
+| **Longitudinal / case view** | Compare runs on one transcript only |
+| **Custom workflows** | Fixed YAML only |
+| **React frontend** | Deferred; Streamlit remains primary UI |
 
-The RRE MVP is a **reasoning platform**, not a prompt runner:
+### Completed history (reference)
 
-```text
-Transcript → Speaker/Turn parsing → Evidence Index (Q001…)
-  → Workflow (suite of modules)
-  → Structured JSON findings per module
-  → Synthesis across modules
-  → Interactive evidence-linked report
-```
-
-### Key decisions
-
-| Design doc suggestion | This plan |
-|-----------------------|-----------|
-| Next.js frontend | **Keep Streamlit for MVP**; API-first for future React |
-| PostgreSQL | **SQLite for MVP**; SQLAlchemy models portable to PostgreSQL |
-| New repository | **Extend** existing `backend/` + `config/` |
-| All 13 modules | **5 MVP modules** + meta-synthesis per doc/12 |
-
-Audio transcription remains supported; Whisper output feeds the transcript parser.
+Phases **A–G** (MVP), **H–L** (post-MVP expansion), and **M0** (documentation) are complete. See [§ Appendix — completed phases](#appendix--completed-phases) for the record.
 
 ---
 
-## 2. Gap Analysis (MVP — resolved)
+## 2. Platform reality: Windows & local deployment
 
-All MVP gaps below were closed in phases A–G.
+Real-world use on **native Windows** exposed limits that change priority order. The reasoning platform (transcript → modules → synthesis → report) is solid; the **ML operations stack** is the bottleneck.
 
-| Capability | Design docs | Was missing | Delivered in |
-|------------|-------------|-------------|--------------|
-| Transcript paste / text upload | Required | Audio only | Phase A |
-| Speaker / turn parsing | Required | None | Phase A |
-| Evidence quote IDs (`Q001…`) | Required | None | Phase A |
-| Module metadata registry | Required | Basic `purposes.yaml` | Phase B |
-| Structured JSON output | Required | Markdown only | Phase C |
-| Prompt compiler | Required | Static template | Phase B |
-| Workflow engine | Required | Single `orchestrator.process()` | Phase D |
-| Synthesis engine | Required | Single LLM call | Phase E |
-| Finding cards + evidence UI | Required | Raw markdown | Phase F |
-| Persistence | Required | Session state | Phase A |
-| Tests | Required | None | Phase G (76 tests) |
-| Confidence calibration | Required | In prompts only | Phase C |
+### Observed constraints
 
----
+| Layer | Issue | Impact |
+|-------|-------|--------|
+| **Whisper (faster-whisper / ctranslate2)** | DLL load failures under Windows Application Control on some machines | Audio transcription blocked entirely |
+| **PyTorch** | Default pip wheel is **CPU-only**; CUDA requires manual reinstall | GPU acceleration unavailable without extra steps |
+| **pyannote + ffmpeg** | torchcodec unavailable on Windows; ffmpeg path dependency | Diarization warnings, decode failures if ffmpeg misconfigured |
+| **Hugging Face** | Gated models require `HF_TOKEN` and runtime download | Not air-gapped; first-run friction |
+| **Ollama on Windows** | Long sessions + `--reload` → socket exhaustion (`WinError 10055`) | API instability during workflow burn-in |
+| **Local LLM** | Gemma 4 thinking mode, truncated JSON, default low `num_ctx` | Module failures until tuned (`think=false`, JSON mode, `num_predict`) |
+| **Resource cost** | 12-module suite + large model on CPU | 15–45 min estimates unrealistic; RAM/VRAM pressure |
+| **Dependency drift** | torch, pyannote, ffmpeg, Ollama versions vary by host | “Works on my machine” support burden |
 
-## 3. MVP Scope
+### Strategic implication
 
-### Modules (5)
-
-| # | Module | Purpose ID | Prompt file |
-|---|--------|------------|-------------|
-| 1 | Relationship Conversation Analysis | `relationship_conversation_analysis` | `01 Relationship Conversation Analysis.md` |
-| 2 | NVC Analysis | `nvc_analysis` | `07 NVC Analysis.md` |
-| 3 | Systems Analysis | `systems_analysis` | `04 Systems Analysis.md` |
-| 4 | Bias & Epistemic Quality | `bias_epistemic_quality` | `12 Bias & Epistemic Quality.md` |
-| 5 | Meta-Synthesis | `meta_synthesis` | `13 Meta-Synthesis.md` |
-
-Remaining prompts stay registered but excluded from MVP workflows.
-
-### Workflows (2)
-
-**Quick Review** (`quick_review`)
+**Transcript-first workflows** (paste or pre-labeled `.txt`) are the reliable core on any OS. **Audio ingest with diarization** should be treated as **best-effort on native Windows** until containerized or WSL2/Linux deployment is the documented primary path.
 
 ```text
-relationship_conversation_analysis → nvc_analysis → bias_epistemic_quality
-```
+Reliability tiers (recommended)
 
-**Full MVP** (`full_mvp`)
-
-```text
-relationship_conversation_analysis → nvc_analysis → systems_analysis
-  → bias_epistemic_quality → meta_synthesis
-```
-
-Meta-synthesis receives **structured module outputs only**, not the raw transcript.
-
-### Milestones (complete)
-
-| ID | Deliverable | Status |
-|----|-------------|--------|
-| M1 | Transcript ingestion + evidence indexing | ✓ |
-| M2 | Single module → structured findings | ✓ |
-| M3 | Multi-module workflow | ✓ |
-| M4 | Interactive report UI | ✓ |
-| M5 | Synthesis + confidence calibration | ✓ |
-
----
-
-## 4. Target Architecture
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  UI (Streamlit MVP → React later)                           │
-│  Ingest · Workflow select · Report dashboard                │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ REST
-┌──────────────────────────▼──────────────────────────────────┐
-│  API — /transcripts · /workflows · /modules · /reports      │
-│  (legacy /transcribe · /analyze kept during migration)       │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-     ┌─────────────────────┼─────────────────────┐
-     ▼                     ▼                     ▼
- TranscriptService   WorkflowEngine        ReportService
- EvidenceIndex       ModuleRunner          SynthesisEngine
-                     PromptCompiler        OutputParser
-                     ModuleRegistry        SafetyValidator
-                           │
-                     Ollama (LLM adapter)
-                           │
-                     SQLite (MVP)
-```
-
-### Directory structure (incremental additions)
-
-```text
-backend/
-  domain/                 # Transcript, Finding, ModuleRun, WorkflowRun, …
-  schemas/                # module_output_v1, synthesis_output_v1
-  repositories/           # SQLite persistence
-  services/
-    transcript_service.py
-    evidence_index.py
-    prompt_compiler.py
-    module_runner.py
-    workflow_engine.py
-    synthesis_engine.py
-    output_parser.py
-    safety_validator.py
-    report_service.py
-  api/routes/
-    transcripts.py
-    workflows.py
-    reports.py
-
-config/
-  modules/                # Per-module YAML metadata
-  workflows/              # quick_review.yaml, full_mvp.yaml
-  framework/              # shared_instructions.md, output_schema_instructions.md
-  prompts/                # Existing — unchanged
+Tier 1 — Transcript ingest + Ollama workflows     ✓ viable on Windows today (with tuning)
+Tier 2 — Audio → Whisper only (no diarization)    ✓ viable when ctranslate2 loads
+Tier 3 — Audio + pyannote diarization             ⚠ fragile on native Windows; prefer Linux/WSL2/Docker
+Tier 4 — Full 12-module suite on local CPU        ⚠ use background jobs + smaller models
 ```
 
 ---
 
-## 5. Implementation Phases (complete)
+## 3. Priority framework
 
-### Phase A — Domain Foundation · M1 ✓
+| Level | Meaning | Examples |
+|-------|---------|----------|
+| **Critical (P0)** | Blocks reliable private use or causes frequent failure | Deployment path, Ollama tuning, M2 validation, container MVP |
+| **Important (P1)** | Product completeness, trust, or professional use | Full multidisciplinary workflow, data handling, workflow guardrails |
+| **Deferred (P2)** | Valuable after platform is stable | Cases, custom workflows, ontology population, Streamlit polish |
+| **Nice-to-have** | See [backlog.md](backlog.md) | React UI, Helm, audio timing analysis, collaborative review |
 
-**Goal:** Core types and transcript ingestion. No LLM changes.
-
-- [x] `backend/domain/` Pydantic models ([03](03_domain_model.md), [05](05_data_model_and_schemas.md))
-- [x] `backend/schemas/module_output_v1.py` and synthesis schemas
-- [x] `TranscriptParser` — `Speaker:` / `Person A:` labeled text → turns
-- [x] `EvidenceIndexService` — `Q001`, `Q002`, … with lookup
-- [x] SQLite + SQLAlchemy (`data/rre.db`)
-- [x] API: `POST/GET/PATCH /api/transcripts`
-- [x] Tests: 2-speaker, multi-speaker, unlabeled fallback
-- [x] UI: paste transcript, `.txt` upload, speaker edit, quote IDs in view
-
-**Acceptance:** Labeled transcript → stored speakers, turns, quote IDs. Audio path still works.
-
-**Effort:** 3–5 days
+**Principle:** Stabilize the **deployment and inference substrate** before adding features that multiply runtime (full suite, constructs, cases).
 
 ---
 
-### Phase B — Module Registry & Prompt Compiler · M2 prep ✓
+## 4. Implementation plan (priority order)
 
-**Goal:** Structured module definitions and compiled prompts.
-
-- [x] `config/modules/*.yaml` for 5 MVP modules ([06](06_analysis_modules.md))
-- [x] `config/framework/shared_instructions.md` ([07](07_prompt_compiler.md), [09](09_evidence_confidence_and_citations.md))
-- [x] `config/framework/output_schema_instructions.md`
-- [x] `ModuleRegistry` — load and validate module YAML
-- [x] `PromptCompiler` — shared rules + module + evidence index + schema → messages
-- [x] API: `GET /api/modules`
-- [x] `PurposeRegistry` facade over `ModuleRegistry`
-
-**Acceptance:** Deterministic compiled prompts. `/api/purposes` still works.
-
-**Effort:** 3–4 days
+Work top to bottom. Each phase has acceptance criteria; do not skip P0 items to chase product gaps.
 
 ---
 
-### Phase C — Structured Module Runner · M2 ✓
+### P0-1 — Deployment & platform guidance
 
-**Goal:** Validated JSON findings, not markdown-only output.
+**Goal:** Operators can choose a supported path and avoid known Windows failure modes.
 
-- [x] `OutputParser` — JSON extraction from LLM response
-- [x] `SafetyValidator` ([14](14_testing_evaluation_and_safety.md))
-- [x] `ModuleRunner` — compile → Ollama → parse → validate → retry
-- [x] Enforce evidence IDs, confidence ceiling, alternative explanations
-- [x] API: `POST /api/modules/{id}/run`, `GET /api/module-runs/{id}`
-- [x] Golden transcript fixtures + schema tests
-- [x] All 4 pre-synthesis modules + meta-synthesis path
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P0-1a | Document **Windows limitations** and recommended paths: native (transcript-first), WSL2, Docker (when available) | Critical | [ ] |
+| P0-1b | Document **production run mode**: no uvicorn `--reload`; restart API after long Ollama sessions | Critical | [ ] |
+| P0-1c | Extend `scripts/check_prerequisites.py` — report torch CUDA, ctranslate2 load, ffmpeg, HF_TOKEN, Ollama model | Critical | [ ] |
+| P0-1d | Add **troubleshooting** section to [deployment.md](../user/deployment.md) (DLL, WinError 10055, diarization skip reasons) | Critical | [ ] |
 
-**Acceptance:** Valid `ModuleRunOutput` with evidence-linked findings.
+**Acceptance:** New user on Windows can follow docs, identify their tier, and run `quick_review` on a pasted transcript without hitting undocumented failures.
 
-**Effort:** 5–7 days
+**Effort:** 1–2 days
 
 ---
 
-### Phase D — Workflow Engine · M3 ✓
+### P0-2 — Ollama inference tuning (model-agnostic)
 
-**Goal:** Quick Review and Full MVP workflows.
+**Goal:** Reliable structured JSON from local models without hardcoding model names.
 
-- [x] `config/workflows/quick_review.yaml`, `full_mvp.yaml` ([08](08_workflow_engine.md))
-- [x] `WorkflowEngine` — sequential module execution, status tracking
-- [x] Meta-synthesis receives module outputs only
-- [x] API: `GET /api/workflows`, `POST /api/workflows/{id}/run`, `GET /api/workflow-runs/{id}`
-- [x] `/api/process` delegates to workflow engine
-- [x] Integration tests: transcript → workflow → outputs
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P0-2a | Add `OLLAMA_NUM_CTX`, `OLLAMA_TEMPERATURE`, `OLLAMA_TOP_P` to settings; pass via Ollama `options` | Critical | [ ] |
+| P0-2b | Document context tiers in [model-setup.md](../user/model-setup.md) (e.g. 8K–32K typical; avoid max 256K on CPU) | Critical | [ ] |
+| P0-2c | Optional: scale `EVIDENCE_PROMPT_*` when context budget allows (env-driven, not model-specific) | Important | [ ] |
 
-**Acceptance:** Both workflows complete end-to-end with persisted results.
+**Acceptance:** Quick Review completes on Gemma 4 / Llama with documented `.env`; no Gemma-specific branches in application code.
+
+**Effort:** 1 day
+
+---
+
+### P0-3 — Phase M2 completion (sliced transcription)
+
+**Goal:** Validate and polish diarize-first pipeline; keep overlap fallback.
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P0-3a | Streamlit progress: `Diarizing…` → `Transcribing N segments…` | Critical | [ ] |
+| P0-3b | Fixture audio validation: sliced vs overlap quality comparison | Critical | [ ] |
+| P0-3c | Fix or skip Windows-specific ffmpeg waveform test (`test_diarization_audio.py`) with clear CI/local policy | Critical | [ ] |
+| P0-3d | Document `TRANSCRIPTION_MODE=sliced|overlap` tradeoffs in user guide | Important | [ ] |
+
+**Acceptance:** Two-speaker fixture produces labeled turns; UI shows progress; overlap fallback unchanged when diarization disabled.
+
+**Effort:** 2–3 days
+
+---
+
+### P0-4 — Containerized deployment MVP (Phase T-lite)
+
+**Goal:** Reproducible Linux path for ffmpeg + torch + pyannote + API; reduces Windows ML fragility.
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P0-4a | `Dockerfile` — API, system ffmpeg, optional `[diarization]` build arg | Critical | [ ] |
+| P0-4b | `docker-compose.yml` — `api`, `streamlit`, `ollama` (profile), volume mounts for models and `data/` | Critical | [ ] |
+| P0-4c | `.env.docker.example` + smoke script (health + fixture transcribe or transcript workflow) | Critical | [ ] |
+| P0-4d | Document GPU passthrough and model volume strategy | Important | [ ] |
+
+**Acceptance:** Clean Linux host with Docker runs ingest (transcript or audio with diarization image) + `quick_review` without manual ffmpeg/torch alignment.
+
+**Effort:** 1–2 weeks
+
+---
+
+### P1-1 — Workflow completeness (Phase N)
+
+**Goal:** Close product vision **§5 Full Multidisciplinary Suite** and research-oriented option.
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P1-1a | `config/workflows/full_multidisciplinary.yaml` — all 12 transcript modules → meta_synthesis | Important | [ ] |
+| P1-1b | Optional `research_oriented.yaml` | Important | [ ] |
+| P1-1c | Default `background: true` for long workflows in API/UI | Important | [ ] |
+| P1-1d | `WORKFLOW_SYNC_MODULE_LIMIT` env guardrail | Important | [ ] |
+| P1-1e | Integration tests with mocked LLM | Important | [ ] |
+
+**Acceptance:** Full suite completes in background; synthesis receives all module outputs; UI warns on long synchronous runs.
+
+**Effort:** 2–3 days
+
+**Note:** Defer burning in full suite on native Windows CPU until P0-2 and P0-4 are done.
+
+---
+
+### P1-2 — Data handling & trust (Phase U-lite)
+
+**Goal:** Privacy-sensitive users can trust local processing and delete data.
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P1-2a | Audit temp audio deletion on all transcribe paths (`finally` blocks) | Important | [ ] |
+| P1-2b | `DELETE /api/transcripts/{id}` with cascade to runs/reports (if missing) | Important | [ ] |
+| P1-2c | Streamlit ingest privacy copy: processed locally, no vendor cloud | Important | [ ] |
+| P1-2d | Log redaction: no transcript body in production logs by default | Important | [ ] |
+
+**Acceptance:** Security reviewer confirms temp files removed after transcribe; operator can purge transcript via API.
+
+**Effort:** 2–3 days
+
+---
+
+### P1-3 — Real-world evaluation loop
+
+**Goal:** Continuous validation on real transcripts and models (ongoing, every release).
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P1-3a | Burn-in: `quick_review`, `conflict_coaching`, `full_mvp` on real transcripts | Important | [ ] |
+| P1-3b | Add 3–5 anonymized scenarios to `tests/fixtures/transcripts/` | Important | [ ] |
+| P1-3c | Track safety validator false positives; tune patterns | Important | [ ] |
+| P1-3d | Per-module `ollama_model` overrides documented for `meta_synthesis` | Important | [ ] |
+
+**Effort:** Ongoing
+
+---
+
+### P2-1 — Ontology & construct population (Phase O)
+
+**Goal:** Knowledge graph and drill-down become data-rich.
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P2-1a | Schema nudges + optional `expects_constructs` per module YAML | Deferred | [ ] |
+| P2-1b | Post-parse construct linking from ontology map | Deferred | [ ] |
+| P2-1c | Exploration presets: `why`, `evidence`, `counterfactual`, `agreement` | Deferred | [ ] |
 
 **Effort:** 4–6 days
 
 ---
 
-### Phase E — Synthesis Engine · M5 ✓
+### P2-2 — Cases & longitudinal analysis (Phase P)
 
-**Goal:** Cross-module integration without re-analyzing transcript.
+**Goal:** Multiple transcripts over time for coach/therapist personas.
 
-- [x] `SynthesisEngine` ([10](10_synthesis_engine.md))
-- [x] Pre-process: group findings by type and overlapping evidence
-- [x] Parse `SynthesisReport` JSON
-- [x] API: `GET /api/workflow-runs/{id}/synthesis`
-- [x] Safety validation on synthesis output
-
-**Acceptance:** Convergence/divergence sections; no unsupported new claims.
-
-**Effort:** 3–4 days
-
----
-
-### Phase F — Report UI · M4 ✓
-
-**Goal:** Evidence-linked interactive report ([11](11_ui_ux_design.md)).
-
-- [x] Streamlit pages: Ingest → Prepare → Analyze → Report
-- [x] `ExecutiveSummaryPanel`, `FindingCard`, `EvidenceQuoteViewer`
-- [x] `ModuleTabs`, `SynthesisPanel`, `ConfidenceBadge`
-- [x] Progressive disclosure + safety disclaimer
-- [x] Export `.md` and `.json` workflow report
-- [x] Workflow progress during multi-module runs
-- [x] Legacy single-purpose mode toggle
-
-**Acceptance:** Full user journey without API knowledge; quote drill-down works.
-
-**Effort:** 5–7 days
-
----
-
-### Phase G — Testing & Hardening · M5 ✓
-
-**Goal:** MVP ready for private use.
-
-- [x] `tests/fixtures/transcripts/` — 7 golden + red-team scenarios
-- [x] Unit + integration test suite (76 tests)
-- [x] Long transcript handling (evidence summarization)
-- [x] Document model setup; per-module model overrides ([MODEL_SETUP.md](MODEL_SETUP.md))
-- [x] Deprecate `/api/analyze` in favor of workflows
-- [x] Deployment guide ([DEPLOYMENT.md](DEPLOYMENT.md))
-
-**Acceptance:** `pytest` passes; safety validator catches forbidden patterns.
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P2-2a | `Case` domain model + Alembic migration | Deferred | [ ] |
+| P2-2b | `POST /api/exploration/compare-transcripts` | Deferred | [ ] |
+| P2-2c | Streamlit case dashboard | Deferred | [ ] |
 
 **Effort:** 4–5 days
 
 ---
 
-## 6. API Plan
+### P2-3 — Custom workflows (Phase Q)
 
-### New endpoints
+**Goal:** Power users select modules without editing YAML.
 
-| Method | Endpoint | Phase |
-|--------|----------|-------|
-| `POST` | `/api/transcripts` | A |
-| `GET` | `/api/transcripts/{id}` | A |
-| `PATCH` | `/api/transcripts/{id}/speakers` | A |
-| `GET` | `/api/modules` | B |
-| `POST` | `/api/modules/{id}/run` | C |
-| `GET` | `/api/module-runs/{id}` | C |
-| `GET` | `/api/workflows` | D |
-| `POST` | `/api/workflows/{id}/run` | D |
-| `GET` | `/api/workflow-runs/{id}` | D |
-| `GET` | `/api/workflow-runs/{id}/synthesis` | E |
-| `GET` | `/api/reports/{workflow_run_id}` | F |
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P2-3a | `POST /api/workflows/custom/run` | Deferred | [ ] |
+| P2-3b | Streamlit multi-select module picker | Deferred | [ ] |
 
-### Legacy (maintained for compatibility)
-
-| Endpoint | Status |
-|----------|--------|
-| `/api/transcribe` | Active — feeds transcript pipeline |
-| `/api/process` | Active — workflow-only audio processing |
-| `/api/purposes` | Deprecated alias over `/api/modules` |
-| `/api/modules/{id}/stream` | Single-module streaming |
+**Effort:** 3–4 days
 
 ---
 
-## 7. Configuration Examples
+### P2-4 — Streamlit UX & professional polish (Phase R)
 
-### Module (`config/modules/nvc_analysis.yaml`)
+**Goal:** Close [11_ui_ux_design.md](../design/11_ui_ux_design.md) gaps without React.
 
-```yaml
-id: nvc_analysis
-name: "NVC Analysis"
-version: "1.0.0"
-enabled: true
-primary_lens: "Nonviolent Communication"
-analytical_level: relational
-unit_of_analysis: interaction
-primary_question: "What observations, feelings, needs, and requests appear?"
-confidence_ceiling: moderate
-inference_depth: medium
-dependencies:
-  - transcript_preprocessing
-output_schema: module_output_v1
-prompt_file: "07 NVC Analysis.md"
-ollama_model: null
-```
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P2-4a | Plain-language confidence labels in UI | Deferred | [ ] |
+| P2-4b | `API_KEY` header in Streamlit client when configured | Deferred | [ ] |
+| P2-4c | Background workflow toggle in Analyze step | Deferred | [ ] |
+| P2-4d | Finding feedback endpoint | Deferred | [ ] |
+| P2-4e | Supervision export template | Deferred | [ ] |
 
-### Workflow (`config/workflows/quick_review.yaml`)
-
-```yaml
-id: quick_review
-name: "Quick Review"
-description: "Fast, practical communication insight."
-estimated_runtime: "1-3 min"
-modules:
-  - relationship_conversation_analysis
-  - nvc_analysis
-  - bias_epistemic_quality
-meta_synthesis: false
-```
+**Effort:** 3–5 days
 
 ---
 
-## 8. Migration Strategy (MVP complete)
+### P2-5 — Full air-gapped deployment (Phase U)
 
-| Legacy | Replacement | Status |
-|--------|-------------|--------|
-| `config/purposes.yaml` | `config/modules/*.yaml` | Archived; `/api/purposes` is deprecated alias |
-| `PurposeRegistry` | `ModuleRegistry` | Removed in Phase H |
-| `AnalysisService` | `ModuleRunner` | Removed in Phase H |
-| `orchestrator.process()` | `WorkflowEngine` | `/api/process` delegates |
-| Streamlit single-purpose flow | Workflow report UI | Both available; workflows preferred |
+**Goal:** Internet-disconnected hosts with pre-staged models.
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P2-5a | `doc/user/air-gapped-deployment.md` | Deferred | [ ] |
+| P2-5b | `ALLOW_OUTBOUND_HTTP=false` startup check | Deferred | [ ] |
+| P2-5c | Retention policy + optional encryption guidance | Deferred | [ ] |
+
+**Effort:** 3–5 days (docs + flags); +1 week for retention APIs
+
+**Depends on:** P0-4 container/model volume strategy
+
+---
+
+## 5. Suggested release milestones
+
+| Release | Phases | Theme |
+|---------|--------|-------|
+| **v0.4.0** | M, M1.5, M2 core, Ollama JSON fixes | Diarization + sliced transcription + LLM reliability |
+| **v0.4.1** | P0-1, P0-2, P0-3 | Windows guidance, Ollama tuning, M2 polish |
+| **v0.5.0** | P0-4, P1-2 | Docker Compose + data handling |
+| **v0.5.1** | P1-1 | Full multidisciplinary + research workflows |
+| **v0.6.0** | P2-1, P2-2 | Ontology-rich outputs + cases |
+| **v0.7.0** | P2-3, P2-4 | Custom workflows + Streamlit professional polish |
+| **v0.8.0** | P2-5 | Air-gapped deployment |
+| **v1.0.0** | Backlog: React UI | API-stable SPA (see [backlog.md](backlog.md)) |
+
+---
+
+## 6. Explicitly out of scope
+
+Unless requirements change:
+
+- Multi-user SaaS, billing, RBAC beyond API key
+- Ontology-driven prompt **generation** (static prompts + metadata remain)
+- Graph database backend
+- Tone/emotion inference from audio timing
+- Distributed queue (Celery/Redis) — thread pool sufficient for private use
+- Hardcoded per-model branches in application code
+
+---
+
+## 7. Decision log (July 2026 revision)
+
+| Decision | Rationale |
+|----------|-----------|
+| Reprioritize containerization to **P0** | Native Windows ML stack failures block audio ingest; Linux/Docker is the durable fix |
+| Transcript-first as **Tier 1** deployment | Core RRE value does not require audio; de-risks Windows |
+| Ollama tuning before full multidisciplinary suite | 12-module runs fail or truncate without ctx/sampling fixes |
+| M2 polish before Phase N burn-in | Sliced transcription unvalidated on fixture audio |
+| Keep SQLite default | PostgreSQL path exists; no forced migration |
+| Nice-to-have items → [backlog.md](backlog.md) | React, Helm, audio timing, collaborative review do not unblock current failures |
+| Supersede 18_post_v0.3_plan priority order | Original plan assumed stable local ML on Windows; experience proved otherwise |
+
+---
+
+## 8. Next PR checklist
+
+Recommended immediate work (P0-1 + P0-2):
 
 ```text
-Audio → Whisper → TranscriptParser → EvidenceIndex → WorkflowEngine
+[ ] doc/user/deployment.md — Windows limitations + troubleshooting
+[ ] doc/user/model-setup.md — OLLAMA_NUM_CTX, temperature tiers
+[ ] config/settings.py + backend/services/ollama_service.py — generic Ollama options
+[ ] .env.example — new Ollama settings
+[ ] tests/test_ollama_service.py — options passthrough
+[ ] pytest tests/ -q
 ```
 
----
-
-## 9. Out of Scope (MVP)
-
-- Full 13-module workflows
-- Graph database / knowledge graph UI
-- User accounts, billing, permissions
-- PDF export, React frontend
-- Distributed job queue
-- PostgreSQL (until deployment requires it)
-- Ontology-driven prompt generation
+M2 polish (P0-3) can follow in the same or next PR.
 
 ---
 
-## 10. Risks
+## Appendix — completed phases
 
-| Risk | Mitigation |
-|------|------------|
-| Invalid JSON from LLM | Retry + repair prompt; store raw output |
-| Weak local model | Document recommended models; per-module override |
-| Long transcripts | Evidence index summarization in compiler |
-| Scope creep | Strict 5-module MVP cap |
-| Dual architecture confusion | Facades + deprecation in Phase G |
+Historical record. Do not re-implement.
 
----
+### MVP (Phases A–G) ✓
 
-## 11. Success Criteria (met)
+Domain foundation, module registry, prompt compiler, structured module runner, workflow engine, synthesis engine, report UI, testing & hardening. **96 tests** at v0.3.0 release.
 
-- [x] Paste or upload transcript (audio optional)
-- [x] Speakers, turns, and quote IDs generated
-- [x] Quick Review and Full MVP workflows run end-to-end
-- [x] Structured findings with evidence quote IDs
-- [x] Confidence labels in plain language in UI
-- [x] Report dashboard with finding cards and evidence viewer
-- [x] Meta-synthesis uses module outputs only
-- [x] Safety disclaimer present
-- [x] Golden transcript tests pass
-- [x] Export `.md` and `.json` reports
+### Post-MVP (Phases H–L) ✓
 
----
+| Phase | Deliverable |
+|-------|-------------|
+| H | Legacy cleanup — modules/workflows only |
+| I | 13 modules, 5 workflows |
+| J | PDF, coach summary, mediation brief exports |
+| K | PostgreSQL, Alembic, background jobs, API key, structured logging |
+| L | Exploration APIs, drill-down, comparative analysis, knowledge graph API |
 
-## 12. Build Order (complete)
+### Phase M0 ✓
 
-| # | Task | Status |
-|---|------|--------|
-| 1 | Domain types + schemas | ✓ |
-| 2 | Transcript parser + tests | ✓ |
-| 3 | Evidence index + tests | ✓ |
-| 4 | SQLite repositories | ✓ |
-| 5 | Module registry | ✓ |
-| 6 | Prompt compiler | ✓ |
-| 7 | Output parser + safety validator | ✓ |
-| 8 | Module runner | ✓ |
-| 9 | Workflow engine | ✓ |
-| 10 | Synthesis engine | ✓ |
-| 11 | Report UI | ✓ |
-| 12 | Golden transcript tests | ✓ |
-| 13 | Legacy migration + docs | ✓ |
+Documentation reorganization under `doc/user/`, `doc/developer/`, `doc/design/`, `doc/planning/`.
 
----
+### Phase M — Speaker diarization ✓
 
-## 13. Timeline (actual)
+`diarization_service`, `transcript_alignment_service`, `audio_transcription_service`, health checks, optional `[diarization]` extra.
 
-| Phase | Deliverable | Status |
-|-------|-------------|--------|
-| 1–4 | Audio transcription + single-purpose analysis | ✓ |
-| A | Domain + ingestion | ✓ |
-| B | Registry + compiler | ✓ |
-| C | Module runner | ✓ |
-| D | Workflow engine | ✓ |
-| E | Synthesis | ✓ |
-| F | Report UI | ✓ |
-| G | Testing + hardening | ✓ |
-| — | Release `v0.2.0` | ✓ |
+### Phase M1.5 — Timeline smoothing ✓
 
----
+`diarization_timeline.py`, `DIARIZATION_MIN_DURATION_ON/OFF`, unit tests.
 
-## 14. Post-MVP Next Steps
+### Phase M2 — Sliced transcription (core ✓, polish open)
 
-MVP is complete and released. Prioritized work below extends the platform per [15_future_roadmap.md](15_future_roadmap.md). Tackle one theme per PR; keep tests with every change.
+`audio_slicing.py`, `whisper_service.transcribe_speaker_intervals()`, `TRANSCRIPTION_MODE=sliced|overlap`, `transcription_mode` in API response. Remaining: UI progress, fixture validation (see P0-3).
 
-### Immediate — stabilize private use
+### Ollama reliability (branch) ✓
 
-| Priority | Task | Notes |
-|----------|------|-------|
-| P0 | Run real transcripts through `quick_review` and `full_mvp` | Validate with your Ollama model; tune `DEFAULT_OLLAMA_MODEL` |
-| P0 | Set per-module `ollama_model` where needed (especially `meta_synthesis`) | See [MODEL_SETUP.md](MODEL_SETUP.md) |
-| P1 | Expand golden fixtures from real usage | Add anonymized scenarios to `tests/fixtures/transcripts/` |
-| P1 | Monitor safety validator flags on live output | Calibrate prompts if false positives appear |
-
-### Phase H — Legacy cleanup ✓
-
-**Goal:** Single module/workflow architecture; less confusion for contributors.
-
-- [x] Remove dual-load of `config/purposes.yaml` (modules YAML only)
-- [x] Retire `PurposeRegistry` / `AnalysisService`
-- [x] Remove deprecated `POST /api/analyze` (replaced by `POST /api/modules/{id}/stream`)
-- [x] Update README and `config/prompts/README.md` to reference modules/workflows only
-- [x] Archive `config/purposes.yaml` to `config/archived/`
-
-**Acceptance:** No production code path depends on `purposes.yaml`; docs reflect workflows as primary.
-
-### Phase I — Module & workflow expansion ✓
-
-**Goal:** Grow from 5 modules / 2 workflows toward the full prompt library.
-
-- [x] Add module YAML for remaining prompts (8 modules; 13 total)
-- [x] Define new workflows: Conflict Coaching, Mediation Brief, Clinical Exploration
-- [x] Workflow-level metadata: estimated runtime, recommended model, output tone
-- [x] UI workflow picker with descriptions and output tone
-
-**Acceptance:** At least 3 new modules and 2 new workflows run end-to-end with existing runner/engine.
-
-### Phase J — Export & reporting ✓
-
-**Goal:** Professional-ready outputs beyond `.md` / `.json`.
-
-- [x] PDF export (workflow report)
-- [x] Therapist/coach summary template (shorter, action-oriented)
-- [x] Mediation brief template
-- [x] Optional redaction pass before export
-
-**Acceptance:** Full MVP report exports to PDF; at least one role-specific summary format.
-
-### Phase K — Platform hardening
-
-**Goal:** Prepare for heavier use without full multi-tenant deployment.
-
-- [x] PostgreSQL option (env-driven; keep SQLite default)
-- [x] Database migrations (Alembic)
-- [x] Async/workflow job queue for long runs (optional background execution)
-- [x] API authentication hook (local API key or reverse-proxy pattern)
-- [x] Structured logging + run telemetry
-
-**Acceptance:** Can switch `DATABASE_URL` to PostgreSQL; long workflows survive API restart.
-
-### Phase L — Interactive exploration (future)
-
-**Goal:** Move from static report to guided reasoning ([15](15_future_roadmap.md)).
-
-- [x] “Why this finding?” drill-down (module + evidence chain)
-- [x] Cross-module agreement/disagreement explorer
-- [x] Comparative analysis across multiple transcripts / sessions
-- [x] Knowledge graph visualization (constructs, cycles, needs)
-- [ ] React frontend (API already supports this path)
-
-**Acceptance:** User can ask follow-up questions scoped to stored findings without re-running full workflow.
-
-### Recommended next PR after v0.3.0
-
-See **[18_post_v0.3_plan.md](18_post_v0.3_plan.md)** — Phase **N** (full multidisciplinary workflow).
-
-### Backlog — platform reliability & data sovereignty
-
-See **[15_future_roadmap.md](15_future_roadmap.md)** (Platform, deployment & data sovereignty) and **[18_post_v0.3_plan.md](18_post_v0.3_plan.md)** Phases **T** (containerization) and **U** (air-gapped / secure storage).
-
-| Phase | Theme | Why |
-|-------|-------|-----|
-| **T** | Docker/Compose, pinned deps, model volumes | ffmpeg/torch/pyannote/Ollama vary by host; improves diarization reliability |
-| **U** | Air-gapped deploy, temp-data guarantees, retention | Users must trust audio/transcripts never leave their environment |
-
-### Phase M — Speaker diarization (complete)
-
-**Goal:** Label multi-speaker audio ingest with diarization + Whisper alignment.
-
-- [x] `diarization_service` (pyannote, lazy load, `HF_TOKEN`)
-- [x] `transcript_alignment_service` (overlap alignment → Person A / Person B)
-- [x] `audio_transcription_service` orchestrates Whisper + diarization with fallback
-- [x] `POST /api/transcribe` returns `speaker_count`, `speaker_labels`, `diarization_applied`
-- [x] Health check `diarization_ready`; Streamlit speaker metadata
-- [x] Optional `[diarization]` extra in `pyproject.toml`; tests and docs
-
-**Acceptance:** Two-speaker audio → ≥2 labeled speakers in transcript bundle when pyannote is configured.
-
-### Phase M1.5 — Timeline smoothing (complete)
-
-- [x] `diarization_timeline.py` — merge same-speaker gaps, absorb short turns
-- [x] `DIARIZATION_MIN_DURATION_ON` / `DIARIZATION_MIN_DURATION_OFF` settings
-- [x] Applied after every `diarize()` call; unit tests
-
-### Phase M2 — pyannote-first sliced transcription (in progress)
-
-- [x] `audio_slicing.py` — filter/cap diarization intervals for Whisper
-- [x] `whisper_service.transcribe_speaker_intervals()` — sequential CPU + batched CUDA
-- [x] `audio_transcription_service` — `TRANSCRIPTION_MODE=sliced|overlap` with fallback
-- [x] `build_labeled_transcript_from_tagged()` for sliced segments
-- [x] `POST /api/transcribe` returns `transcription_mode`
-- [ ] Streamlit progress for diarize → transcribe slices
-- [ ] Fixture audio validation vs overlap mode
-
-### Out of scope (unchanged)
-
-See [§9 Out of Scope](#9-out-of-scope-mvp). Multi-user SaaS, billing, and ontology-driven prompt generation remain post-roadmap unless requirements change.
+`OLLAMA_THINK=false`, `OLLAMA_MODULE_JSON_FORMAT`, balanced JSON extraction, `OLLAMA_NUM_PREDICT=8192`.
