@@ -198,7 +198,120 @@ Module YAML: rename conceptually to `model_id` (keep `ollama_model` as alias dur
 
 ---
 
-## 5. Observability & debugging
+## 5. Audio decode strategy
+
+RRE uses **three different decode paths** today. They should not be collapsed into one library without reason.
+
+| Path | Used by | Mechanism | Where |
+|------|---------|-----------|-------|
+| **ffmpeg CLI** | pyannote diarization (`load_waveform_for_diarization`) | `ffprobe` + `ffmpeg` subprocess → `torch` tensor | Local + current AWS interim image |
+| **PyAV / ffmpeg libs** | Whisper (`faster-whisper` `decode_audio`) | Linked libraries via faster-whisper | Local when `TRANSCRIPTION_PROVIDER=whisper` |
+| **torchcodec** | pyannote default (not used by RRE) | In-process decode; requires FFmpeg **shared libs** + strict torch pin | Not recommended as primary |
+
+### Decision
+
+| Environment | Primary decode | Notes |
+|-------------|----------------|-------|
+| **Local (incl. Windows)** | **ffmpeg CLI** for diarization; faster-whisper for Whisper | Avoid torchcodec — DLL/Application Control fragility on Windows |
+| **AWS interim** (before Transcribe) | ffmpeg in container + same Python path as local | `apt-get install ffmpeg` on Linux ECS is reliable |
+| **AWS target** | **No local decode** for ingest | Amazon Transcribe returns text + speaker labels; API maps to existing turns |
+
+**Do not migrate to torchcodec** to “fix” deployment. torchcodec still depends on FFmpeg shared libraries and adds a **torch ↔ torchcodec version matrix**. It does not improve transcription or diarization quality when the output is the same PCM tensor.
+
+Optional later (Linux only): try torchcodec in-process with **automatic fallback** to ffmpeg CLI if health check fails — not a priority.
+
+### Quality expectation
+
+Decode choice affects **reliability and ops**, not model accuracy. Whisper and pyannote quality depend on model weights, sample rate, and diarization/slicing logic — not subprocess vs in-process decode.
+
+---
+
+## 6. Hybrid cloud/local — compact local, robust cloud
+
+Cloud deployment removes the need to **ship large models in containers**. Bedrock and Transcribe are managed; model size and GPU are AWS’s problem. The goal is **one codebase**, **two runtime profiles**, and **no bloated cloud image** once providers are wired.
+
+### Runtime profiles (same code, different env)
+
+| Setting | **Local profile** | **Cloud profile** |
+|---------|-------------------|-------------------|
+| `LLM_PROVIDER` | `ollama` | `bedrock` |
+| `TRANSCRIPTION_PROVIDER` | `whisper` | `transcribe` |
+| `DIARIZATION_ENABLED` | `true` (pyannote) | `false` (Transcribe speaker labels) |
+| Models in container | Whisper weights + pyannote via torch/HF | **None** (API clients only) |
+| Typical image size | Large (~2–4 GB+) | **Small** (~200–400 MB) |
+| HF_TOKEN | Required for pyannote | Not required |
+
+Provider adapters (`LLMProvider`, `TranscriptionProvider`) keep business logic identical; only the env and image change.
+
+### Multi-container strategy (ECS)
+
+Split by **role**, not by duplicating app logic:
+
+```text
+                    ALB
+                      │
+        ┌─────────────┴─────────────┐
+        ▼                           ▼
+  rre-dev-ui (slim)           rre-dev-api (profile-dependent)
+  Streamlit only              FastAPI + workflow engine
+        │                           │
+        │                           ├── Cloud: Bedrock + Transcribe + RDS + S3
+        └───────────────────────────┴── Local/dev (Dockerfile): Ollama + Whisper + pyannote
+                                    └── (optional interim) same fat image until Transcribe ships
+```
+
+| Container | Always separate? | Cloud contents | Local contents |
+|-----------|------------------|----------------|----------------|
+| **ui** | Yes | Streamlit, httpx → ALB `/api` | Same |
+| **api** | Yes | Slim: no torch/pyannote/whisper | Full: torch, pyannote, faster-whisper, ffmpeg |
+
+**Do not** add a third “ML worker” container in cloud once Transcribe is live — that would reintroduce ops burden without benefit. A worker container only makes sense as a **temporary** bridge if cloud must run Whisper before Transcribe lands.
+
+### Build strategy — avoid bloat
+
+Use **two Docker build targets** from one repo (not two codebases):
+
+| File / target | Purpose |
+|---------------|---------|
+| `Dockerfile` / `target: local` | Current full stack — local dev, Windows/WSL, integration testing |
+| `Dockerfile.cloud` / `target: cloud` | Slim API — no torch, pyannote, faster-whisper; Bedrock + Transcribe SDK only |
+| `Dockerfile.ui` | Unchanged — already slim |
+
+CI/CD for AWS builds and pushes **`rre-dev-api:cloud`** only. Local developers build `Dockerfile` as today.
+
+Example cloud API dependencies (conceptual):
+
+```text
+fastapi, uvicorn, sqlalchemy, psycopg, boto3, pydantic-settings, alembic
+# NOT: torch, torchaudio, pyannote.audio, faster-whisper
+```
+
+### Migration phases
+
+| Phase | API image | Audio ingest | LLM |
+|-------|-----------|--------------|-----|
+| **Now (interim)** | Fat — torch + pyannote + Whisper | Local ML in container | Ollama off-host or degraded health |
+| **P0-AWS-7** | Fat or slim + Bedrock | Still Whisper/pyannote until P1-1 | Bedrock |
+| **P1-1 target** | **Slim cloud image** | Amazon Transcribe | Bedrock |
+| **Local always** | Fat `Dockerfile` | Whisper + pyannote | Ollama |
+
+Interim fat cloud image is acceptable for **proving ECS deploy**; plan to **shrink** as soon as `TRANSCRIPTION_PROVIDER=transcribe` and `LLM_PROVIDER=bedrock` pass burn-in.
+
+### Simplicity rules
+
+1. **One repo, one workflow engine** — no forked cloud/local business logic.
+2. **Providers selected by env** — not by `#ifdef AWS`.
+3. **Two API images max** — `local` and `cloud`; UI stays one image.
+4. **No model files in cloud image** — use Bedrock model IDs and Transcribe API.
+5. **ffmpeg only where needed** — local/interim API; omit from slim cloud image when Transcribe owns ingest.
+
+### Model size in cloud
+
+With Bedrock + Transcribe, cloud can use **larger effective models** (e.g. Claude Sonnet, longer context) without enlarging the container or task memory for weights. Scale Fargate CPU/memory for **Python + JSON**, not for GGUF/Ollama or Whisper checkpoints. Full multidisciplinary workflows become a **cost/latency** question, not a **disk/RAM fit** question.
+
+---
+
+## 7. Observability & debugging
 
 ### Goals
 
@@ -253,7 +366,7 @@ fields @timestamp, module_id, module_run_id
 
 ---
 
-## 6. GitHub Actions deploy workflow
+## 8. GitHub Actions deploy workflow
 
 Pattern matches aws-backbone [github-actions.md](https://github.com/SethDKelly/aws-backbone/blob/main/docs/github-actions.md) and MinneAnalytics example.
 
@@ -296,7 +409,7 @@ jobs:
 
 ---
 
-## 7. Data & secrets
+## 9. Data & secrets
 
 | Secret / config | Store | Notes |
 |-----------------|-------|-------|
@@ -310,7 +423,7 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 
 ---
 
-## 8. Rollout sequence
+## 10. Rollout sequence
 
 | Step | Owner | Depends on | Status |
 |------|-------|------------|--------|
@@ -326,7 +439,7 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 
 ---
 
-## 9. Open questions
+## 11. Open questions
 
 | Question | Options | Decision by |
 |----------|---------|-------------|
@@ -335,10 +448,12 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 | Bedrock model default | Claude 3.5 Sonnet vs Llama 3.1 70B | After JSON spike |
 | Public ALB vs VPN-only | ALB + API key for dev; document IP allowlist | Security preference |
 | NAT gateway | Required if tasks need outbound non-AWS; avoid for no-egress goal | Network design |
+| Slim cloud image cutover | After Bedrock only vs after Transcribe too | After P1-1 spike |
+| `Dockerfile.cloud` naming | Separate file vs multi-stage `target` | Infra PR |
 
 ---
 
-## 10. Related documents
+## 12. Related documents
 
 - [implementation_plan.md](implementation_plan.md) — prioritized P0-AWS tasks
 - [aws-backbone architecture](https://github.com/SethDKelly/aws-backbone/blob/main/docs/architecture.md)

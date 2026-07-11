@@ -78,6 +78,18 @@ Transcript-first workflows remain viable locally for prompt/module development. 
 
 **Constraint:** During transcript analysis, transcription, and synthesis, the application must **not** call external APIs (Ollama off-host, Hugging Face, public model registries). All model operations use AWS services or in-VPC endpoints with pre-provisioned models.
 
+### Hybrid cloud/local (target)
+
+One codebase; **two runtime profiles** via env + optional **two API images** (see [aws-deployment.md §5–6](aws-deployment.md)):
+
+| Profile | API image | LLM | Audio ingest |
+|---------|-----------|-----|--------------|
+| **Local** | `Dockerfile` (full) | Ollama | Whisper + pyannote + ffmpeg |
+| **Cloud (target)** | `Dockerfile.cloud` (slim) | Bedrock | Amazon Transcribe |
+| **Cloud (interim)** | `Dockerfile` (full) | Bedrock when wired | Whisper/pyannote until Transcribe |
+
+Multi-container on ECS: **api** + **ui** (already split). No third ML worker in cloud once Transcribe is live. Managed models in cloud remove container size as a constraint for larger LLMs.
+
 ---
 
 ## 3. Priority framework
@@ -103,7 +115,7 @@ Work top to bottom. **Do not start P1 application features until P0-AWS-1 throug
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| AWS-1a | Publish [aws-deployment.md](aws-deployment.md) — VPC, ECS, RDS, S3, Bedrock, Transcribe | Critical | [ ] |
+| AWS-1a | Publish [aws-deployment.md](aws-deployment.md) — VPC, ECS, RDS, S3, Bedrock, Transcribe, audio decode, hybrid profiles | Critical | ✓ |
 | AWS-1b | **LLM evaluation:** Amazon Bedrock (Converse API, structured JSON) vs SageMaker vs in-VPC Ollama | Critical | [ ] |
 | AWS-1c | **ASR evaluation:** Amazon Transcribe (+ speaker labels) vs containerized Whisper/pyannote | Critical | [ ] |
 | AWS-1d | Define **no-egress** network model — VPC endpoints for Bedrock, Transcribe, S3, Secrets Manager, CloudWatch, ECR | Critical | [ ] |
@@ -245,6 +257,28 @@ Work top to bottom. **Do not start P1 application features until P0-AWS-1 throug
 
 **Effort:** 1 week
 
+**Audio decode:** See [aws-deployment.md §5](aws-deployment.md) — ffmpeg CLI locally/interim; Transcribe in cloud (no torchcodec migration).
+
+---
+
+### P1-3 — Slim cloud API image (hybrid build)
+
+**Goal:** Shrink ECS API container after Bedrock + Transcribe; keep full `Dockerfile` for local only.
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| P1-3a | `Dockerfile.cloud` — API without torch, pyannote, faster-whisper | Important | [ ] |
+| P1-3b | CI: build/push cloud image for AWS; keep full image for local/dev tests | Important | [ ] |
+| P1-3c | Terraform/ECS env: `LLM_PROVIDER=bedrock`, `TRANSCRIPTION_PROVIDER=transcribe` | Important | [ ] |
+| P1-3d | Reduce Fargate task size after slim cutover (CPU/RAM for Python only) | Important | [ ] |
+| P1-3e | Document local vs cloud profile in [model-setup.md](../user/model-setup.md) | Important | [ ] |
+
+**Acceptance:** Cloud deploy uses slim image; local `pip install -e ".[dev]"` unchanged; same pytest suite passes with provider mocks.
+
+**Depends on:** P0-AWS-7 (Bedrock), P1-1 (Transcribe)
+
+**Effort:** 2–3 days
+
 ---
 
 ### P1-2 — Workflow completeness (Phase N)
@@ -325,6 +359,8 @@ Ontology & constructs (Phase O), cases (P), custom workflows (Q), Streamlit poli
 | **`phase-m0-docs` until stable** | Safe AWS testing before `main` PR |
 | **`rre-dev-*` IAM prefix** | Isolation from MinneAnalytics `minneanalytics-dev-*` |
 | **Backbone merged (PR #1)** | `dev-github-deploy` trusts RRE repo; IAM scoped to `rre-dev-*` |
+| **Hybrid profiles** | Slim cloud API + full local Docker; Bedrock/Transcribe vs Ollama/Whisper via env |
+| **Audio decode** | ffmpeg CLI local/interim; no torchcodec migration; Transcribe in cloud |
 | **App infra in RRE repo** | aws-backbone is IAM/OIDC only (same pattern as MinneAnalytics) |
 | **Pause app features until P0-AWS** | Deploy substrate blocks meaningful cloud validation |
 | **CloudWatch-first observability** | Required for debugging remote failures |
