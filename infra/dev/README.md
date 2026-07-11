@@ -69,3 +69,21 @@ terraform output api_log_group
 - RDS PostgreSQL is private; credentials in Secrets Manager (`rre-dev/database`).
 - Diarization enabled by default; set `HF_TOKEN` in Secrets Manager for pyannote model access in AWS.
 - VPC endpoints and no-egress networking are planned in [aws-deployment.md](../../doc/planning/aws-deployment.md).
+
+## Pause / resume (avoid Fargate + RDS compute charges)
+
+**Pause** — GitHub Actions → **Pause AWS dev** → Run workflow (or push changes to `pause-dev.yml`).
+
+This sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Terraform state stays in sync.
+
+**Resume** — run **Deploy to AWS dev** (push to `phase-m0-docs` or workflow_dispatch). ECS scales back to 1; RDS starts automatically on first connection (or start manually in console).
+
+**Costs while paused:** ALB (~$16/mo), ECR image storage, Secrets Manager, RDS storage (no compute while stopped). RDS auto-restarts after ~7 days if not resumed.
+
+Manual pause (with AWS CLI):
+
+```powershell
+aws ecs update-service --cluster rre-dev-cluster --service rre-dev-api --desired-count 0
+aws ecs update-service --cluster rre-dev-cluster --service rre-dev-ui --desired-count 0
+aws rds stop-db-instance --db-instance-identifier rre-dev-postgres
+```

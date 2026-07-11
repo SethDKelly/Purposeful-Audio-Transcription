@@ -204,7 +204,7 @@ Work top to bottom within each tier.
 | AWS-6b | Jobs: test → build/push ECR → terraform apply → ECS stable wait | ✓ |
 | AWS-6c | Trigger: `push` to `phase-m0-docs` + `workflow_dispatch` | ✓ |
 | AWS-6d | Smoke step: `GET /api/health` via ALB | ✓ |
-| AWS-6e | First **green** workflow run on `phase-m0-docs` | [ ] |
+| AWS-6e | First **green** workflow run on `phase-m0-docs` | ✓ |
 | AWS-6f | Switch default branch trigger to `main` after stable | [ ] |
 
 ---
@@ -358,12 +358,14 @@ Nice-to-have variants (React UI, advanced redaction rules, eval dashboards) stay
 ```text
 [x] aws-backbone merged — OIDC + rre-dev-* IAM prefix
 [x] Dockerfile + Dockerfile.ui + infra/dev/ Terraform + deploy-dev.yml
-[ ] First successful GitHub Actions deploy on phase-m0-docs
+[x] First successful GitHub Actions deploy on phase-m0-docs
 [ ] P0-AWS-3 — LOG_JSON, request_id middleware, error context
 [ ] P0-AWS-5g–5i — HF_TOKEN secret, VPC endpoints, Bedrock/Transcribe IAM
 [ ] P0-AWS-7 — LLMProvider + BedrockProvider spike
 [ ] P1-1 → P1-2 — Transcribe then slim cloud image
 ```
+
+**Paused (pick up later):** run **Deploy to AWS dev** to resume ECS + RDS.
 
 ---
 
