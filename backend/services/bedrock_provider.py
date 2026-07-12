@@ -28,7 +28,10 @@ class BedrockProvider:
         if not model_id:
             return False
         try:
-            self._control.get_foundation_model(modelIdentifier=model_id)
+            if _is_inference_profile(model_id):
+                self._control.get_inference_profile(inferenceProfileIdentifier=model_id)
+            else:
+                self._control.get_foundation_model(modelIdentifier=model_id)
             return True
         except (ClientError, BotoCoreError) as exc:
             logger.warning("Bedrock health check failed for %s: %s", model_id, exc)
@@ -87,6 +90,10 @@ class BedrockProvider:
     ) -> Iterator[str]:
         # Streaming spike deferred — module runs use non-streaming chat.
         yield self.chat(model, messages, json_mode=False)
+
+
+def _is_inference_profile(model_id: str) -> bool:
+    return model_id.startswith(("us.", "global.", "eu.", "ap.")) or "inference-profile/" in model_id
 
 
 def _split_messages(

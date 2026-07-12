@@ -28,6 +28,21 @@ def test_bedrock_health_check(mock_settings, mock_bedrock_clients) -> None:
 
 
 @patch("backend.services.bedrock_provider.settings")
+def test_bedrock_health_check_inference_profile(mock_settings, mock_bedrock_clients) -> None:
+    _runtime, control = mock_bedrock_clients
+    mock_settings.resolved_aws_region = "us-east-2"
+    mock_settings.resolved_bedrock_model_id = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    control.get_inference_profile.return_value = {"inferenceProfileId": "us.anthropic.claude-sonnet-4-5-20250929-v1:0"}
+
+    provider = BedrockProvider()
+    assert provider.health_check() is True
+    control.get_inference_profile.assert_called_once_with(
+        inferenceProfileIdentifier="us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    )
+    control.get_foundation_model.assert_not_called()
+
+
+@patch("backend.services.bedrock_provider.settings")
 def test_bedrock_chat_returns_text(mock_settings, mock_bedrock_clients) -> None:
     runtime, control = mock_bedrock_clients
     mock_settings.resolved_aws_region = "us-east-2"

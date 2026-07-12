@@ -60,7 +60,7 @@ data "aws_iam_policy_document" "ecs_task_app" {
       "bedrock:InvokeModelWithResponseStream",
     ]
     resources = [
-      "arn:aws:bedrock:${var.aws_region}::foundation-model/*",
+      "arn:aws:bedrock:*::foundation-model/*",
       "arn:aws:bedrock:${var.aws_region}:${local.account_id}:inference-profile/*",
     ]
   }
@@ -71,6 +71,8 @@ data "aws_iam_policy_document" "ecs_task_app" {
     actions = [
       "bedrock:GetFoundationModel",
       "bedrock:ListFoundationModels",
+      "bedrock:GetInferenceProfile",
+      "bedrock:ListInferenceProfiles",
     ]
     resources = ["*"]
   }

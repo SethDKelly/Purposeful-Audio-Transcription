@@ -67,7 +67,7 @@ variable "llm_provider" {
 }
 
 variable "bedrock_model_id" {
-  description = "Default Bedrock foundation model ID for module runs."
+  description = "Bedrock model or inference profile ID for module runs (Claude 4.x requires an inference profile)."
   type        = string
-  default     = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+  default     = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 }
