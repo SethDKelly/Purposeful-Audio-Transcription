@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     default_ollama_model: str = ""
     llm_provider: str = "ollama"
     bedrock_model_id: str = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
-    bedrock_max_tokens: int = 4096
+    bedrock_max_tokens: int = 8192
     aws_region: str = ""
     uploads_bucket: str = ""
     # Disable Ollama "thinking" mode for structured JSON module output (Gemma 4 etc.).

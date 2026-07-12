@@ -84,8 +84,9 @@ class BedrockProvider:
             request["system"] = (request.get("system") or []) + [
                 {
                     "text": (
-                        "Respond with a single valid JSON object only. "
-                        "Do not wrap the JSON in markdown fences."
+                        "Your entire reply must be one JSON object matching module_output_v1. "
+                        "Do not use markdown fences. Do not write any prose before or after the JSON. "
+                        "Put any human-readable report text only inside the raw_markdown_report string field."
                     )
                 }
             ]

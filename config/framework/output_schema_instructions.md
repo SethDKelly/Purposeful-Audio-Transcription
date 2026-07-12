@@ -65,4 +65,5 @@ Use one of: observation, interaction_cycle, emotion, need, value, belief, narrat
 
 ## Response Format
 
-Return the JSON object first, wrapped in a fenced code block labeled `json`, followed by the markdown report.
+Return **only** a single JSON object (no markdown fences, no prose outside JSON).
+Put the human-readable report inside `raw_markdown_report`.
