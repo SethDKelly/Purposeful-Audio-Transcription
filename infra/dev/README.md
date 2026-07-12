@@ -65,10 +65,11 @@ terraform output api_log_group
 
 ## Notes
 
-- Uses default VPC and public Fargate tasks for dev simplicity.
+- **No-egress networking (default):** ECS tasks have no public IP. AWS APIs use VPC interface endpoints (Bedrock, Transcribe, Secrets Manager, CloudWatch Logs, ECR, STS) plus an S3 gateway endpoint. UI calls the API at `http://api.rre-dev.local:8000` via Cloud Map.
+- Set `enable_no_egress_networking = false` in `terraform.tfvars` to restore public Fargate tasks (legacy).
 - RDS PostgreSQL is private; credentials in Secrets Manager (`rre-dev/database`).
-- Diarization enabled by default; set `HF_TOKEN` in Secrets Manager for pyannote model access in AWS.
-- VPC endpoints and no-egress networking are planned in [aws-deployment.md](../../doc/planning/aws-deployment.md).
+- **Audio diarization in AWS** still needs Hugging Face egress until P1-1 Transcribe (`HF_TOKEN` in Secrets Manager). Paste/upload transcript workflows and Bedrock analysis work without public egress.
+- See [aws-deployment.md](../../doc/planning/aws-deployment.md) for the full network model.
 
 ## Pause / resume (avoid Fargate + RDS compute charges)
 

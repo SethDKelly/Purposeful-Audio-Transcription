@@ -11,11 +11,14 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+  dynamic "egress" {
+    for_each = var.enable_no_egress_networking ? [] : [1]
+    content {
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
   }
 }
 
@@ -24,20 +27,95 @@ resource "aws_security_group" "ecs_tasks" {
   description = "ECS tasks for RRE dev"
   vpc_id      = data.aws_vpc.default.id
 
-  ingress {
-    description     = "From ALB"
-    from_port       = 0
-    to_port         = 65535
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
+  dynamic "ingress" {
+    for_each = var.enable_no_egress_networking ? [1] : []
+    content {
+      description = "UI to API via Cloud Map"
+      from_port   = 8000
+      to_port     = 8000
+      protocol    = "tcp"
+      self        = true
+    }
   }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+  dynamic "egress" {
+    for_each = var.enable_no_egress_networking ? [1] : []
+    content {
+      description = "HTTPS to VPC interface endpoints"
+      from_port   = 443
+      to_port     = 443
+      protocol    = "tcp"
+      cidr_blocks = [data.aws_vpc.default.cidr_block]
+    }
   }
+
+  dynamic "egress" {
+    for_each = var.enable_no_egress_networking ? [1] : []
+    content {
+      description = "PostgreSQL within VPC"
+      from_port   = 5432
+      to_port     = 5432
+      protocol    = "tcp"
+      cidr_blocks = [data.aws_vpc.default.cidr_block]
+    }
+  }
+
+  dynamic "egress" {
+    for_each = var.enable_no_egress_networking ? [1] : []
+    content {
+      description = "UI to API via Cloud Map"
+      from_port   = 8000
+      to_port     = 8000
+      protocol    = "tcp"
+      self        = true
+    }
+  }
+
+  dynamic "egress" {
+    for_each = var.enable_no_egress_networking ? [] : [1]
+    content {
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+}
+
+resource "aws_security_group_rule" "alb_egress_to_ecs" {
+  count = var.enable_no_egress_networking ? 1 : 0
+
+  type                     = "egress"
+  description              = "To ECS tasks"
+  from_port                = 0
+  to_port                  = 65535
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.alb.id
+  source_security_group_id = aws_security_group.ecs_tasks.id
+}
+
+resource "aws_security_group_rule" "ecs_ingress_from_alb" {
+  count = var.enable_no_egress_networking ? 1 : 0
+
+  type                     = "ingress"
+  description              = "From ALB"
+  from_port                = 0
+  to_port                  = 65535
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.ecs_tasks.id
+  source_security_group_id = aws_security_group.alb.id
+}
+
+resource "aws_security_group_rule" "ecs_ingress_from_alb_legacy" {
+  count = var.enable_no_egress_networking ? 0 : 1
+
+  type                     = "ingress"
+  description              = "From ALB"
+  from_port                = 0
+  to_port                  = 65535
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.ecs_tasks.id
+  source_security_group_id = aws_security_group.alb.id
 }
 
 resource "aws_lb" "main" {

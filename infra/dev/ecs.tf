@@ -86,7 +86,7 @@ resource "aws_ecs_task_definition" "ui" {
     }]
 
     environment = [
-      { name = "RRE_API_BASE_URL", value = "http://${aws_lb.main.dns_name}" },
+      { name = "RRE_API_BASE_URL", value = local.ui_api_base_url },
       { name = "LOG_JSON", value = "true" },
     ]
 
@@ -119,7 +119,14 @@ resource "aws_ecs_service" "api" {
   network_configuration {
     subnets          = data.aws_subnets.default.ids
     security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = true
+    assign_public_ip = !var.enable_no_egress_networking
+  }
+
+  dynamic "service_registries" {
+    for_each = var.enable_no_egress_networking ? [1] : []
+    content {
+      registry_arn = aws_service_discovery_service.api[0].arn
+    }
   }
 
   load_balancer {
@@ -145,7 +152,7 @@ resource "aws_ecs_service" "ui" {
   network_configuration {
     subnets          = data.aws_subnets.default.ids
     security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = true
+    assign_public_ip = !var.enable_no_egress_networking
   }
 
   load_balancer {

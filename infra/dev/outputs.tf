@@ -50,3 +50,13 @@ output "rds_endpoint" {
 output "uploads_bucket" {
   value = aws_s3_bucket.uploads.bucket
 }
+
+output "no_egress_networking_enabled" {
+  description = "ECS tasks run without public IPs; AWS APIs via VPC endpoints."
+  value       = var.enable_no_egress_networking
+}
+
+output "ui_api_base_url" {
+  description = "Server-side API URL used by the Streamlit container."
+  value       = local.ui_api_base_url
+}

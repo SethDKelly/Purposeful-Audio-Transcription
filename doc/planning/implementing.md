@@ -53,7 +53,7 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 ## Immediate next steps
 
 ```text
-[ ] P0-AWS-5h — VPC endpoints (no-egress target)
+[~] P0-AWS-5h — VPC endpoints (no-egress target) — Terraform landed; deploy + smoke pending
 [ ] P0-AWS-3f — Deploy smoke: ALB target health beyond /api/health
 [ ] P1-1 → P1-2 — Transcribe, then slim cloud API image
 ```
@@ -72,7 +72,7 @@ Deploy foundation and Bedrock validation. **AWS-7e** (Quick Review on Bedrock) h
 
 | # | Task | Notes |
 |---|------|-------|
-| **AWS-5h** | VPC endpoints — Bedrock, Transcribe, S3, Secrets Manager, CloudWatch, ECR | No-egress target for inference |
+| **AWS-5h** | VPC endpoints — Bedrock, Transcribe, S3, Secrets Manager, CloudWatch, ECR | Terraform in `infra/dev/vpc_endpoints.tf`; deploy + smoke pending |
 | **AWS-5g** | Secrets Manager: `HF_TOKEN` | Interim pyannote only; skip if Transcribe lands first |
 | **AWS-3f** | Deploy smoke: ECS task + ALB target health beyond `/api/health` | Catch unhealthy tasks post-deploy |
 | **AWS-6f** | Switch deploy trigger from `phase-m0-docs` to `main` | After stable v0.5.0 |
