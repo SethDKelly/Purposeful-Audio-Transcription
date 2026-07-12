@@ -19,6 +19,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 ENV API_HOST=0.0.0.0 \
     API_PORT=8000 \
     LOG_JSON=true \
+    PYTHONUNBUFFERED=1 \
     DIARIZATION_ENABLED=true \
     ALEMBIC_AUTO_UPGRADE=true
 

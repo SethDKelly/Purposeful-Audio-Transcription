@@ -1,7 +1,9 @@
 from fastapi import APIRouter
+from sqlalchemy import text
 
 from backend.api.schemas import HealthResponse
 from backend.core.device import cuda_available
+from backend.db.base import engine
 from backend.services.audio_service import check_ffmpeg_available
 from backend.services.diarization_service import diarization_service
 from backend.services.llm_factory import get_llm_provider
@@ -12,6 +14,15 @@ from config.settings import settings
 router = APIRouter(prefix="/api", tags=["health"])
 
 
+def _database_available() -> bool:
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        return True
+    except Exception:
+        return False
+
+
 @router.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     ffmpeg_ok = check_ffmpeg_available()
@@ -20,11 +31,12 @@ def health() -> HealthResponse:
     ollama_ok = ollama_service.health_check() if settings.llm_provider == "ollama" else llm_ok
     whisper_ok = whisper_service.is_ready()
     diarization_ok = diarization_service.is_available()
+    database_ok = _database_available()
 
     if settings.llm_provider == "bedrock":
-        all_ok = llm_ok
+        all_ok = llm_ok and database_ok
     else:
-        all_ok = ffmpeg_ok and ollama_ok and whisper_ok
+        all_ok = ffmpeg_ok and ollama_ok and whisper_ok and database_ok
 
     return HealthResponse(
         status="ok" if all_ok else "degraded",
@@ -32,6 +44,7 @@ def health() -> HealthResponse:
         ollama_available=ollama_ok,
         llm_provider=settings.llm_provider,
         llm_available=llm_ok,
+        database_available=database_ok,
         whisper_ready=whisper_ok,
         diarization_ready=diarization_ok,
         cuda_available=cuda_available(),

@@ -30,6 +30,7 @@ resource "aws_ecs_task_definition" "api" {
     environment = [
       { name = "LOG_JSON", value = "true" },
       { name = "LOG_LEVEL", value = "INFO" },
+      { name = "PYTHONUNBUFFERED", value = "1" },
       { name = "LLM_PROVIDER", value = var.llm_provider },
       { name = "BEDROCK_MODEL_ID", value = var.bedrock_model_id },
       { name = "UPLOADS_BUCKET", value = aws_s3_bucket.uploads.bucket },
