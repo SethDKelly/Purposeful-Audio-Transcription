@@ -77,6 +77,25 @@ data "aws_iam_policy_document" "ecs_task_app" {
     resources = ["*"]
   }
 
+  # First invoke of Marketplace-served 3P models (Anthropic) auto-subscribes
+  # via the calling role. Playground subscribe under an admin principal does
+  # not always clear this for the ECS task role / inference-profile path.
+  statement {
+    sid    = "BedrockMarketplaceSubscribe"
+    effect = "Allow"
+    actions = [
+      "aws-marketplace:ViewSubscriptions",
+      "aws-marketplace:Subscribe",
+      "aws-marketplace:Unsubscribe",
+    ]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "aws:CalledViaLast"
+      values   = ["bedrock.amazonaws.com"]
+    }
+  }
+
   statement {
     sid    = "S3Uploads"
     effect = "Allow"
