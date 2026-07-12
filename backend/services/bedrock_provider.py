@@ -7,6 +7,7 @@ from collections.abc import Iterator
 from typing import Any
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 
 from backend.core.exceptions import LLMError
@@ -14,14 +15,30 @@ from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
+# Module prompts can produce large structured JSON; botocore's default
+# read timeout (~60s) is too short for Sonnet Converse on analysis modules.
+_BEDROCK_CLIENT_CONFIG = Config(
+    connect_timeout=10,
+    read_timeout=300,
+    retries={"max_attempts": 2, "mode": "standard"},
+)
+
 
 class BedrockProvider:
     name = "bedrock"
 
     def __init__(self) -> None:
         region = settings.resolved_aws_region
-        self._runtime = boto3.client("bedrock-runtime", region_name=region)
-        self._control = boto3.client("bedrock", region_name=region)
+        self._runtime = boto3.client(
+            "bedrock-runtime",
+            region_name=region,
+            config=_BEDROCK_CLIENT_CONFIG,
+        )
+        self._control = boto3.client(
+            "bedrock",
+            region_name=region,
+            config=_BEDROCK_CLIENT_CONFIG,
+        )
 
     def health_check(self) -> bool:
         model_id = settings.resolved_bedrock_model_id
