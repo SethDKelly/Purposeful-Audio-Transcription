@@ -100,3 +100,27 @@ def test_parse_input_coerces_bedrock_construct_aliases() -> None:
     assert parsed.relationships[0].source_construct_id == "F001"
     assert parsed.relationships[0].target_construct_id == "F002"
     assert parsed.relationships[0].confidence == "exploratory"
+
+
+def test_normalize_unknown_relationship_type_defaults() -> None:
+    parser = OutputParser()
+    registry = ModuleRegistry()
+    module = registry.get("relationship_conversation_analysis")
+    output = parser.normalize(
+        {
+            "module_id": "relationship_conversation_analysis",
+            "module_version": "1.0.0",
+            "executive_summary": "x",
+            "relationships": [
+                {
+                    "source_construct_id": "C001",
+                    "target_construct_id": "C002",
+                    "relationship_type": "reinforces",
+                    "confidence": "moderate",
+                }
+            ],
+        },
+        module,
+        "run-456",
+    )
+    assert output.relationships[0].relationship_type.value == "supports"

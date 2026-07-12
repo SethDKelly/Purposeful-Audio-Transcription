@@ -244,10 +244,30 @@ def _normalize_relationship(
 def _coerce_enum(enum_cls, value, label: str):
     if isinstance(value, enum_cls):
         return value
+    text = str(value).strip().lower().replace(" ", "_").replace("-", "_")
     try:
-        return enum_cls(str(value).strip().lower())
-    except ValueError as exc:
-        raise OutputParseError(f"Invalid {label}: {value}") from exc
+        return enum_cls(text)
+    except ValueError:
+        if enum_cls is RelationshipType:
+            aliases = {
+                "reinforce": RelationshipType.SUPPORTS,
+                "reinforces": RelationshipType.SUPPORTS,
+                "supports": RelationshipType.SUPPORTS,
+                "leads_to": RelationshipType.CONTRIBUTES_TO,
+                "causes": RelationshipType.CONTRIBUTES_TO,
+                "triggers": RelationshipType.ESCALATES,
+                "related_to": RelationshipType.CO_OCCURS_WITH,
+                "related": RelationshipType.CO_OCCURS_WITH,
+                "links": RelationshipType.CO_OCCURS_WITH,
+            }
+            if text in aliases:
+                return aliases[text]
+            logger.warning(
+                "Unknown relationship type %r; defaulting to co_occurs_with",
+                value,
+            )
+            return RelationshipType.CO_OCCURS_WITH
+        raise OutputParseError(f"Invalid {label}: {value}") from None
 
 
 output_parser = OutputParser()
