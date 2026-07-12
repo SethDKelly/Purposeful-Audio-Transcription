@@ -37,6 +37,7 @@ class TranscriptRepository:
                     display_name=speaker.display_name,
                 )
             )
+        session.flush()
         for turn in bundle.turns:
             session.add(
                 TurnRow(
@@ -49,6 +50,7 @@ class TranscriptRepository:
                     end_time=turn.end_time,
                 )
             )
+        session.flush()
         for quote in bundle.evidence_quotes:
             session.add(
                 EvidenceQuoteRow(
