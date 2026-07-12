@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 # read timeout (~60s) is too short for Sonnet Converse on analysis modules.
 _BEDROCK_CLIENT_CONFIG = Config(
     connect_timeout=10,
-    read_timeout=300,
-    retries={"max_attempts": 2, "mode": "standard"},
+    read_timeout=600,
+    retries={"max_attempts": 1, "mode": "standard"},
 )
 
 
