@@ -59,7 +59,7 @@ class OutputParser:
 
     def parse_input(self, data: dict[str, Any]) -> ModuleRunOutputInput:
         try:
-            return ModuleRunOutputInput.model_validate(data)
+            return ModuleRunOutputInput.model_validate(_coerce_raw_module_payload(data))
         except ValidationError as exc:
             raise OutputParseError(f"Invalid module output shape: {exc}") from exc
 
@@ -103,6 +103,61 @@ def _loads_json(text: str) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise OutputParseError("Module output JSON must be an object")
     return data
+
+
+def _coerce_raw_module_payload(data: dict[str, Any]) -> dict[str, Any]:
+    """Fill common LLM field aliases/defaults before strict schema validation."""
+    coerced = dict(data)
+
+    constructs: list[dict[str, Any]] = []
+    for index, raw in enumerate(coerced.get("constructs") or [], start=1):
+        if not isinstance(raw, dict):
+            continue
+        item = dict(raw)
+        construct_id = str(item.get("id") or f"C{index:03d}")
+        item["id"] = construct_id
+        if not item.get("type"):
+            item["type"] = str(
+                item.get("construct_type") or item.get("category") or construct_id
+            )
+        if not item.get("label"):
+            item["label"] = str(
+                item.get("name")
+                or item.get("title")
+                or construct_id.replace("_", " ")
+            )
+        if not item.get("description") and item.get("summary"):
+            item["description"] = item.get("summary")
+        if not item.get("confidence"):
+            item["confidence"] = "exploratory"
+        constructs.append(item)
+    coerced["constructs"] = constructs
+
+    relationships: list[dict[str, Any]] = []
+    for index, raw in enumerate(coerced.get("relationships") or [], start=1):
+        if not isinstance(raw, dict):
+            continue
+        item = dict(raw)
+        if not item.get("id"):
+            item["id"] = f"R{index:03d}"
+        if not item.get("source_construct_id"):
+            source = item.get("source_id") or item.get("source") or item.get("from")
+            if source is not None:
+                item["source_construct_id"] = str(source)
+        if not item.get("target_construct_id"):
+            target = item.get("target_id") or item.get("target") or item.get("to")
+            if target is not None:
+                item["target_construct_id"] = str(target)
+        if not item.get("relationship_type"):
+            item["relationship_type"] = str(
+                item.get("type") or item.get("relation") or "co_occurs_with"
+            )
+        if not item.get("confidence"):
+            item["confidence"] = "exploratory"
+        if item.get("source_construct_id") and item.get("target_construct_id"):
+            relationships.append(item)
+    coerced["relationships"] = relationships
+    return coerced
 
 
 def _extract_balanced_object(text: str) -> str | None:

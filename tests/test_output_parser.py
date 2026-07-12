@@ -69,3 +69,34 @@ def test_normalize_sample_fixture() -> None:
     assert len(output.findings) == 3
     assert output.findings[0].module_run_id == "run-123"
     assert output.findings[2].confidence == Confidence.MODERATE
+
+
+def test_parse_input_coerces_bedrock_construct_aliases() -> None:
+    parser = OutputParser()
+    parsed = parser.parse_input(
+        {
+            "module_id": "relationship_conversation_analysis",
+            "module_version": "1.0.0",
+            "executive_summary": "Escalation with limited repair.",
+            "constructs": [
+                {
+                    "id": "communication_pattern",
+                    "summary": "Partners respond defensively to each other",
+                }
+            ],
+            "relationships": [
+                {
+                    "source_id": "F001",
+                    "target_id": "F002",
+                    "type": "contributes_to",
+                }
+            ],
+        }
+    )
+
+    assert parsed.constructs[0].type == "communication_pattern"
+    assert parsed.constructs[0].label == "communication pattern"
+    assert parsed.constructs[0].confidence == "exploratory"
+    assert parsed.relationships[0].source_construct_id == "F001"
+    assert parsed.relationships[0].target_construct_id == "F002"
+    assert parsed.relationships[0].confidence == "exploratory"

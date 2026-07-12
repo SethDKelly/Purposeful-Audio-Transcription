@@ -25,8 +25,25 @@ Respond with a single JSON object matching `module_output_v1`, then a human-read
       "construct_ids": []
     }
   ],
-  "constructs": [],
-  "relationships": [],
+  "constructs": [
+    {
+      "id": "C001",
+      "type": "interaction_pattern",
+      "label": "Short construct label",
+      "description": "Optional description",
+      "confidence": "moderate",
+      "evidence_quote_ids": ["Q001"]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R001",
+      "source_construct_id": "C001",
+      "target_construct_id": "C002",
+      "relationship_type": "contributes_to",
+      "confidence": "moderate"
+    }
+  ],
   "recommendations": ["Practical suggestions when appropriate"],
   "limitations": ["Module-level limitations"],
   "raw_markdown_report": ""
