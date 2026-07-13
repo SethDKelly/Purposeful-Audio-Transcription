@@ -1,0 +1,2 @@
+# Shell scripts must stay LF for GitHub Actions (ubuntu).
+*.sh text eol=lf
