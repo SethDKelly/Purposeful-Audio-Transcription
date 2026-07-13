@@ -139,7 +139,11 @@ resource "aws_ecs_service" "api" {
   deployment_maximum_percent         = 200
   health_check_grace_period_seconds  = 300
 
-  depends_on = [aws_lb_listener.http]
+  depends_on = [
+    aws_lb_listener.http,
+    aws_vpc_endpoint.s3,
+    aws_vpc_endpoint.interface,
+  ]
 }
 
 resource "aws_ecs_service" "ui" {
@@ -165,5 +169,9 @@ resource "aws_ecs_service" "ui" {
   deployment_maximum_percent         = 200
   health_check_grace_period_seconds  = 120
 
-  depends_on = [aws_lb_listener.http]
+  depends_on = [
+    aws_lb_listener.http,
+    aws_vpc_endpoint.s3,
+    aws_vpc_endpoint.interface,
+  ]
 }

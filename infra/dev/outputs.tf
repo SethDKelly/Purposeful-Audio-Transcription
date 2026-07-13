@@ -56,6 +56,11 @@ output "no_egress_networking_enabled" {
   value       = var.enable_no_egress_networking
 }
 
+output "vpc_endpoints_enabled" {
+  description = "VPC endpoints are provisioned for AWS APIs."
+  value       = var.enable_vpc_endpoints
+}
+
 output "ui_api_base_url" {
   description = "Server-side API URL used by the Streamlit container."
   value       = local.ui_api_base_url

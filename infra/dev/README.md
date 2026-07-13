@@ -65,10 +65,10 @@ terraform output api_log_group
 
 ## Notes
 
-- **No-egress networking (default):** ECS tasks have no public IP. AWS APIs use VPC interface endpoints (Bedrock, Transcribe, Secrets Manager, CloudWatch Logs, ECR, STS) plus an S3 gateway endpoint. UI calls the API at `http://api.rre-dev.local:8000` via Cloud Map.
-- Set `enable_no_egress_networking = false` in `terraform.tfvars` to restore public Fargate tasks (legacy).
+- **VPC endpoints (default on):** S3 gateway + interface endpoints for Bedrock, Transcribe, Secrets Manager, CloudWatch Logs, ECR, STS. Tasks can still use public IPs.
+- **No-egress mode (default off):** Set `enable_no_egress_networking = true` only after confirming ECR image pulls work via endpoints. Then tasks lose public IPs, SGs tighten, and UI calls API at `http://api.rre-dev.local:8000` via Cloud Map.
 - RDS PostgreSQL is private; credentials in Secrets Manager (`rre-dev/database`).
-- **Audio diarization in AWS** still needs Hugging Face egress until P1-1 Transcribe (`HF_TOKEN` in Secrets Manager). Paste/upload transcript workflows and Bedrock analysis work without public egress.
+- **Audio diarization in AWS** still needs Hugging Face egress until P1-1 Transcribe (`HF_TOKEN` in Secrets Manager). Paste/upload + Bedrock analysis work via endpoints.
 - See [aws-deployment.md](../../doc/planning/aws-deployment.md) for the full network model.
 
 ## Pause / resume (avoid Fargate + RDS compute charges)

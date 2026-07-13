@@ -3,5 +3,6 @@
 
 # image_tag = "local-dev"
 
-# Roll back to public Fargate tasks (legacy dev networking):
-# enable_no_egress_networking = false
+# VPC endpoints stay on by default. Strict no-egress (no public IPs) is opt-in:
+# enable_no_egress_networking = true
+# enable_vpc_endpoints = true

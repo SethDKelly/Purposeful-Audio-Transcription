@@ -72,7 +72,7 @@ Deploy foundation and Bedrock validation. **AWS-7e** (Quick Review on Bedrock) h
 
 | # | Task | Notes |
 |---|------|-------|
-| **AWS-5h** | VPC endpoints — Bedrock, Transcribe, S3, Secrets Manager, CloudWatch, ECR | Terraform in `infra/dev/vpc_endpoints.tf`; deploy + smoke pending |
+| **AWS-5h** | VPC endpoints — Bedrock, Transcribe, S3, Secrets Manager, CloudWatch, ECR | Endpoints on; strict no-public-IP deferred until ECR pull via endpoints is verified |
 | **AWS-5g** | Secrets Manager: `HF_TOKEN` | Interim pyannote only; skip if Transcribe lands first |
 | **AWS-3f** | Deploy smoke: ECS task + ALB target health beyond `/api/health` | Catch unhealthy tasks post-deploy |
 | **AWS-6f** | Switch deploy trigger from `phase-m0-docs` to `main` | After stable v0.5.0 |

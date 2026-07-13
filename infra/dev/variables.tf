@@ -72,8 +72,14 @@ variable "bedrock_model_id" {
   default     = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 }
 
-variable "enable_no_egress_networking" {
-  description = "Run ECS tasks without public IPs; reach AWS APIs via VPC endpoints only. UI calls API via Cloud Map (api.<name>.local)."
+variable "enable_vpc_endpoints" {
+  description = "Create VPC endpoints (S3 gateway + interface endpoints for Bedrock, ECR, etc.). Safe with public IPs."
   type        = bool
   default     = true
+}
+
+variable "enable_no_egress_networking" {
+  description = "Run ECS tasks without public IPs; require VPC endpoints for AWS APIs. UI calls API via Cloud Map. Enable only after ECR pulls succeed via endpoints."
+  type        = bool
+  default     = false
 }

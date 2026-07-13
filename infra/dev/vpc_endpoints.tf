@@ -1,12 +1,18 @@
-# P0-AWS-5h — VPC endpoints for no-egress AWS API access from private Fargate tasks.
-# Uses the default VPC; ECS tasks drop public IPs when enable_no_egress_networking=true.
+# P0-AWS-5h — VPC endpoints for AWS API access without public internet.
+# create endpoints with enable_vpc_endpoints; drop public IPs only when enable_no_egress_networking.
 
-data "aws_route_tables" "vpc" {
-  vpc_id = data.aws_vpc.default.id
+data "aws_route_table" "subnet" {
+  for_each  = var.enable_vpc_endpoints ? toset(data.aws_subnets.default.ids) : toset([])
+  subnet_id = each.value
 }
 
 locals {
-  interface_endpoint_services = var.enable_no_egress_networking ? toset([
+  # ECR image layers are served from S3 — gateway must cover every task subnet RT.
+  s3_route_table_ids = var.enable_vpc_endpoints ? distinct([
+    for rt in data.aws_route_table.subnet : rt.id
+  ]) : []
+
+  interface_endpoint_services = var.enable_vpc_endpoints ? toset([
     "bedrock-runtime",
     "bedrock",
     "transcribe",
@@ -20,7 +26,7 @@ locals {
 }
 
 resource "aws_security_group" "vpc_endpoints" {
-  count = var.enable_no_egress_networking ? 1 : 0
+  count = var.enable_vpc_endpoints ? 1 : 0
 
   name        = "${local.name}-vpc-endpoints"
   description = "Interface VPC endpoints for RRE dev (HTTPS from ECS tasks)"
@@ -43,12 +49,12 @@ resource "aws_security_group" "vpc_endpoints" {
 }
 
 resource "aws_vpc_endpoint" "s3" {
-  count = var.enable_no_egress_networking ? 1 : 0
+  count = var.enable_vpc_endpoints ? 1 : 0
 
   vpc_id            = data.aws_vpc.default.id
   service_name      = "com.amazonaws.${var.aws_region}.s3"
   vpc_endpoint_type = "Gateway"
-  route_table_ids   = data.aws_route_tables.vpc.ids
+  route_table_ids   = local.s3_route_table_ids
 
   tags = {
     Name = "${local.name}-s3"
