@@ -434,6 +434,8 @@ jobs:
 
 **Do not** store AWS access keys in GitHub Secrets — OIDC only.
 
+**Cost control:** When the stack is idle, run **Pause AWS dev** (`pause-dev.yml`) to scale ECS to 0 and stop RDS. Resume with **Deploy to AWS dev**. Standing practice is documented in [implementing.md](implementing.md) and [../developer/aws-operations.md](../developer/aws-operations.md).
+
 ---
 
 ## 9. Data & secrets
