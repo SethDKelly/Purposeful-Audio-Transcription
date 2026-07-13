@@ -4,10 +4,10 @@ Record of shipped capabilities for the **Relationship Reasoning Engine (RRE)** t
 
 | | |
 |---|---|
-| **Current branch** | `phase-m0-docs` (AWS dev testing) |
+| **Current branch** | `phase-m0-docs` (AWS slim cutover pending) |
 | **Baseline release** | **v0.3.0** on `main` — MVP + post-MVP |
-| **In progress toward** | **v0.5.0** — AWS dev deploy + Bedrock validation |
-| **Tests** | 152+ passing (CI) |
+| **In progress toward** | **v0.5.1** — Transcribe + slim image AWS burn-in |
+| **Tests** | 174+ passing (CI) |
 | **AWS account** | `521018312783`, `us-east-2` |
 | **Architecture detail** | [aws-deployment.md](aws-deployment.md) |
 
@@ -120,15 +120,16 @@ Original build goal: analyze a transcript with a representative module subset an
 
 | # | Task | Status |
 |---|------|--------|
-| AWS-4a | `Dockerfile` — API + uvicorn + ffmpeg | ✓ |
-| AWS-4b | `Dockerfile.ui` — Streamlit | ✓ |
-| AWS-4c | Diarization deps in core image (pyannote + torch) | ✓ |
-| AWS-4d | `.dockerignore`, container health checks | ✓ |
+| AWS-4a | `Dockerfile` — API + uvicorn + ffmpeg (+ `.[local]` Whisper stack) | ✓ |
+| AWS-4b | `Dockerfile.ui` — Streamlit (core deps only) | ✓ |
+| AWS-4c | Diarization deps in **local** image (`.[local]`) | ✓ |
+| AWS-4d | `.dockerignore`, container health checks (`/api/live`) | ✓ |
 | AWS-4e | ECR repositories `rre-dev-api`, `rre-dev-ui` | ✓ |
+| — | `Dockerfile.cloud` — slim API (Bedrock + Transcribe, no torch) | ✓ |
 
 ---
 
-## AWS pivot — Terraform `infra/dev/` (P0-AWS-5, partial)
+## AWS pivot — Terraform `infra/dev/` (P0-AWS-5)
 
 | # | Task | Status |
 |---|------|--------|
@@ -138,27 +139,29 @@ Original build goal: analyze a transcript with a representative module subset an
 | AWS-5d | RDS PostgreSQL (dev sizing) | ✓ |
 | AWS-5e | S3 uploads bucket with lifecycle delete | ✓ |
 | AWS-5f | Secrets Manager: `DATABASE_URL` | ✓ |
+| AWS-5g | Secrets Manager: `HF_TOKEN` | **Skipped** (Transcribe on AWS) |
 | AWS-5i | Task role: Bedrock invoke, S3, Transcribe, CloudWatch | ✓ |
 | AWS-5j | CloudWatch log groups + retention | ✓ |
 | AWS-5h | VPC endpoints Stage A + Stage B (no public IP; S3 prefix-list + DNS egress) | ✓ |
 
 ---
 
-## AWS pivot — CI/CD (P0-AWS-6, partial)
+## AWS pivot — CI/CD (P0-AWS-6)
 
 | # | Task | Status |
 |---|------|--------|
 | AWS-6a | `.github/workflows/deploy-dev.yml` — OIDC → `dev-github-deploy` | ✓ |
 | AWS-6b | Jobs: test → build/push ECR → terraform apply → ECS stable wait | ✓ |
-| AWS-6c | Trigger: `push` to `phase-m0-docs` + `workflow_dispatch` | ✓ |
-| AWS-6d | Smoke: `GET /api/health` via ALB | ✓ |
+| AWS-6c | Trigger: **`workflow_dispatch` only** (push paused until slim cutover) | ✓ |
+| AWS-6d | Smoke: health payload + workflows + UI + ECS + TGs | ✓ |
 | AWS-6e | First green deploy on `phase-m0-docs` | ✓ |
+| AWS-6f | Switch default trigger to `main` | Pending post-cutover |
 | — | `.github/workflows/pause-dev.yml` — scale ECS to 0, stop RDS | ✓ |
 | — | Pause/resume documented in [infra/dev/README.md](../../infra/dev/README.md) | ✓ |
 
 ---
 
-## AWS pivot — LLM provider layer (P0-AWS-7, partial)
+## AWS pivot — LLM provider layer (P0-AWS-7)
 
 | # | Task | Status |
 |---|------|--------|
@@ -168,9 +171,19 @@ Original build goal: analyze a transcript with a representative module subset an
 | AWS-7d | Settings: `LLM_PROVIDER`, `BEDROCK_MODEL_ID`, region | ✓ |
 | AWS-7e | Quick Review burn-in on AWS dev — Claude Sonnet 4.5 (`us.…` profile); 3/3 modules completed | ✓ |
 | AWS-7f | Module YAML `model_id` (backward compatible with `ollama_model`) | ✓ |
-| — | Health endpoint reports `llm_provider`, `llm_available` | ✓ |
-| — | `boto3` dependency; unit tests for provider and log context | ✓ |
-| — | Marketplace subscribe on task role; longer Converse timeout; output schema coercion for Bedrock | ✓ |
+| — | Health endpoint reports `llm_provider`, `llm_available`; `/api/live` for ALB | ✓ |
+| — | Marketplace subscribe on task role; Converse timeout; output schema coercion | ✓ |
+
+---
+
+## AWS pivot — ASR + slim image (P1-1, P1-2)
+
+| # | Task | Status |
+|---|------|--------|
+| P1-1a–d | `TranscriptionProvider`, Whisper + Amazon Transcribe adapters, route wiring | ✓ |
+| P1-2a–c,e | `Dockerfile.cloud`, CI cloud build, ECS Transcribe env, model-setup docs | ✓ |
+| P1-2d | Lower Fargate sizing | Pending after slim burn-in |
+| — | Live AWS Transcribe job under Stage B | Pending manual deploy |
 
 ---
 
@@ -178,10 +191,11 @@ Original build goal: analyze a transcript with a representative module subset an
 
 | Vision item | Was | Now |
 |-------------|-----|-----|
-| Segment speakers from audio | Single-speaker Whisper only | pyannote diarization + sliced/overlap pipelines |
+| Segment speakers from audio | Single-speaker Whisper only | Local: pyannote + sliced Whisper; AWS: Transcribe speaker labels |
 | Reproducible deployment | Manual venv + host deps | Docker images + ECS Fargate + GitHub Actions |
 | Structured logging in cloud | Ad hoc logs | JSON logs + CloudWatch + correlation IDs |
 | LLM on AWS | Ollama-only coupling | `LLMProvider` + Bedrock adapter |
+| ASR on AWS (no HF) | Whisper/pyannote in fat image | `TranscriptionProvider` + Transcribe + slim image (code) |
 
 ---
 
@@ -192,7 +206,8 @@ Original build goal: analyze a transcript with a representative module subset an
 | **v0.2.0** | MVP — 4 modules + synthesis, Quick Review workflow |
 | **v0.3.0** | Post-MVP — 13 modules, 5 workflows, exploration, PostgreSQL |
 | **v0.4.x** | Diarization, sliced transcription, timeline smoothing, Ollama JSON fixes |
-| **v0.5.0** (partial) | AWS dev substrate — ECS, Terraform, GitHub Actions, LLM abstraction |
+| **v0.5.0** (ops) | AWS substrate — ECS, Terraform, Bedrock QR, Stage B, deploy smoke |
+| **v0.5.1** (code) | Transcribe provider + `Dockerfile.cloud` — AWS burn-in pending |
 
 ---
 
