@@ -1,16 +1,17 @@
 # P0-AWS-5h — VPC endpoints for AWS API access without public internet.
 # create endpoints with enable_vpc_endpoints; drop public IPs only when enable_no_egress_networking.
+#
+# S3 gateway must attach to route tables. Do NOT look up RTs by subnet_id in the
+# default VPC — subnets often use the main RT with no explicit association, and
+# data.aws_route_table { subnet_id = ... } then returns "no results".
 
-data "aws_route_table" "subnet" {
-  for_each  = var.enable_vpc_endpoints ? toset(data.aws_subnets.default.ids) : toset([])
-  subnet_id = each.value
+data "aws_route_tables" "vpc" {
+  count  = var.enable_vpc_endpoints ? 1 : 0
+  vpc_id = data.aws_vpc.default.id
 }
 
 locals {
-  # ECR image layers are served from S3 — gateway must cover every task subnet RT.
-  s3_route_table_ids = var.enable_vpc_endpoints ? distinct([
-    for rt in data.aws_route_table.subnet : rt.id
-  ]) : []
+  s3_route_table_ids = var.enable_vpc_endpoints ? data.aws_route_tables.vpc[0].ids : []
 
   interface_endpoint_services = var.enable_vpc_endpoints ? toset([
     "bedrock-runtime",
