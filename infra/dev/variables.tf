@@ -79,7 +79,14 @@ variable "enable_vpc_endpoints" {
 }
 
 variable "enable_no_egress_networking" {
-  description = "Run ECS tasks without public IPs; require VPC endpoints for AWS APIs. UI calls API via Cloud Map. Enable only after ECR pulls succeed via endpoints."
+  description = "Run ECS tasks without public IPs; require VPC endpoints for AWS APIs. UI calls API via Cloud Map. Requires enable_vpc_endpoints=true."
   type        = bool
-  default     = false
+  default     = true
+}
+
+check "no_egress_requires_vpc_endpoints" {
+  assert {
+    condition     = !var.enable_no_egress_networking || var.enable_vpc_endpoints
+    error_message = "enable_no_egress_networking requires enable_vpc_endpoints = true (S3 gateway + ECR/Bedrock interface endpoints)."
+  }
 }

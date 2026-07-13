@@ -3,6 +3,7 @@
 
 # image_tag = "local-dev"
 
-# VPC endpoints stay on by default. Strict no-egress (no public IPs) is opt-in:
-# enable_no_egress_networking = true
+# Stage B (default): no public IPs; VPC endpoints required.
+# Rollback to Stage A if ECR pulls fail:
+# enable_no_egress_networking = false
 # enable_vpc_endpoints = true

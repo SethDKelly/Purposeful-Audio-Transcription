@@ -53,14 +53,14 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 ## Immediate next steps
 
 ```text
-[~] P0-AWS-5h — VPC endpoints (no-egress target) — Terraform landed; deploy + smoke pending
-[ ] P0-AWS-3f — Deploy smoke: ALB target health beyond /api/health
+[~] P0-AWS-5h — VPC endpoints Stage B (no public IP; verify ECR pull + Bedrock health after deploy)
+[ ] P0-AWS-3f — Deploy smoke beyond /api/health
 [ ] P1-1 → P1-2 — Transcribe, then slim cloud API image
 ```
 
 **AWS-7e done:** Quick Review on AWS dev with `us.anthropic.claude-sonnet-4-5-20250929-v1:0` — all three modules completed.
 
-After deploy: wait **20 minutes**, check; if not ready, **three 2-minute** rechecks. Confirm `/api/health` shows `llm_provider: bedrock`; trace failures via [aws-operations.md](../developer/aws-operations.md).
+After deploy: wait **20 minutes**, check; if not ready, **three 2-minute** rechecks. Confirm `/api/health` shows `llm_provider: bedrock`; under Stage B expect `diarization_ready: false` until Transcribe. Trace failures via [aws-operations.md](../developer/aws-operations.md). If ECS stays on `CannotPullContainerError`, set `enable_no_egress_networking=false` and redeploy (Stage A rollback).
 
 ---
 
@@ -72,13 +72,13 @@ Deploy foundation and Bedrock validation. **AWS-7e** (Quick Review on Bedrock) h
 
 | # | Task | Notes |
 |---|------|-------|
-| **AWS-5h** | VPC endpoints — Bedrock, Transcribe, S3, Secrets Manager, CloudWatch, ECR | Endpoints on; strict no-public-IP deferred until ECR pull via endpoints is verified |
+| **AWS-5h** | VPC endpoints — Bedrock, Transcribe, S3, Secrets Manager, CloudWatch, ECR | Stage B default on (`enable_no_egress_networking`); confirm green deploy + health |
 | **AWS-5g** | Secrets Manager: `HF_TOKEN` | Interim pyannote only; skip if Transcribe lands first |
 | **AWS-3f** | Deploy smoke: ECS task + ALB target health beyond `/api/health` | Catch unhealthy tasks post-deploy |
 | **AWS-6f** | Switch deploy trigger from `phase-m0-docs` to `main` | After stable v0.5.0 |
-| **AWS-1b** | Formal LLM evaluation note | Bedrock Converse + structured JSON — document chosen approach |
-| **AWS-1c** | Formal ASR evaluation note | Transcribe + speaker labels vs containerized Whisper |
-| **AWS-1d** | Document no-egress network model | Align with 5h endpoint set |
+| **AWS-1b** | Formal LLM evaluation note | [llm-evaluation-bedrock.md](llm-evaluation-bedrock.md) |
+| **AWS-1c** | Formal ASR evaluation note | [asr-evaluation-transcribe.md](asr-evaluation-transcribe.md) |
+| **AWS-1d** | Document no-egress network model | Staged A/B + Stage B SG notes in [aws-deployment.md](aws-deployment.md) |
 
 **Tier 1 acceptance:** Quick Review completes in AWS dev using Bedrock; operator traces a failed run from ALB → CloudWatch → `module_run_id` without SSH; inference path has no required public egress.
 
@@ -131,7 +131,7 @@ Core product capabilities on AWS dev. Start after Tier 1 gate (Bedrock Quick Rev
 |---|------|
 | P1-3a | Temp audio deletion — S3 lifecycle + app `finally` (audit all code paths) |
 | P1-3b | `DELETE /api/transcripts/{id}` cascade to runs/reports |
-| P1-3c | Log redaction — no transcript body in CloudWatch |
+| P1-3c | Log redaction — no transcript body in CloudWatch | Design: [log-redaction.md](log-redaction.md) |
 | P1-3d | Privacy copy updated for AWS (data stays in account/VPC) |
 | P1-3e | Optional `TRANSCRIPT_RETENTION_DAYS` + cleanup job |
 | P1-3f | Audit logging for ingest, export, delete events |

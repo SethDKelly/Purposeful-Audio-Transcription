@@ -8,7 +8,7 @@ Architecture and integration guide for deploying the Relationship Reasoning Engi
 | **Region** | `us-east-2` (Ohio) |
 | **Deploy role** | `arn:aws:iam::521018312783:role/dev-github-deploy` |
 | **Branch (initial testing)** | `phase-m0-docs` → PR to `main` when stable |
-| **Active plan** | [implementation_plan.md](implementation_plan.md) |
+| **Active plan** | [implementing.md](implementing.md) |
 
 ---
 
@@ -117,11 +117,32 @@ No public internet egress required during model operations.
 | Speech-to-text in AWS | Amazon Transcribe via VPC endpoint (async jobs) |
 | Secrets | Secrets Manager VPC endpoint |
 | Logs | CloudWatch Logs VPC endpoint |
-| Images | ECR VPC endpoint |
+| Images | ECR API + ECR DKR interface endpoints **and** S3 gateway (image layers) |
 | Uploads | S3 gateway endpoint |
-| Block general egress | Private subnets, no NAT (or NAT only for bootstrap/management if required) |
+| STS | Interface endpoint (task credentials without public egress) |
+| Block general egress | Private tasks / no public IP + tightened SGs (phased — see below) |
 
-Tasks must not call `ollama_host`, `huggingface.co`, or other external URLs during `/api/transcribe` or workflow/module runs in AWS deploy.
+Tasks must not call `ollama_host`, `huggingface.co`, or other external URLs during `/api/transcribe` or workflow/module runs in AWS deploy (target state).
+
+#### Staged no-egress (AWS-1d / AWS-5h)
+
+Default VPC public subnets + Fargate **without** a public IP cannot reach the internet via the IGW. ECR image **layers** are fetched from S3; if the S3 gateway route is missing or incomplete, pulls fail with `CannotPullContainerError` / `dial tcp …:443: i/o timeout`.
+
+| Stage | Terraform flags | Behavior |
+|-------|-----------------|----------|
+| **A — Endpoints only** | `enable_vpc_endpoints=true`, `enable_no_egress_networking=false` | Interface + S3 gateway endpoints; tasks keep public IPs (rollback if Stage B pull fails) |
+| **B — Strict no-egress (current default)** | both `true` | `assign_public_ip=false`, tightened SGs, UI→API via Cloud Map (`api.rre-dev.local:8000`) |
+
+**Stage B SG requirements (learned from failed first attempt):**
+
+1. S3 gateway on **every** route table used by task subnets (default VPC: query all RTs — subnets often lack explicit associations).
+2. Task SG egress **443 to the S3 prefix list** (`com.amazonaws.<region>.s3`) — gateway traffic targets public S3 IPs, not VPC CIDR.
+3. Task SG egress **53/udp+tcp to VPC CIDR** for AmazonProvidedDNS (private DNS for interface endpoints).
+4. ECR `api` + `dkr` interface endpoints with `private_dns_enabled=true`.
+
+**Interim conflict:** pyannote / Hugging Face still needs egress until P1-1 Transcribe. Paste/upload + Bedrock analysis is the no-egress-compatible path today.
+
+See `infra/dev/vpc_endpoints.tf`, `infra/dev/alb.tf`, `infra/dev/README.md`.
 
 ---
 
@@ -173,7 +194,7 @@ Settings (`.env` / Secrets Manager):
 | Variable | AWS dev | Local dev |
 |----------|---------|-----------|
 | `LLM_PROVIDER` | `bedrock` | `ollama` |
-| `BEDROCK_MODEL_ID` | e.g. `anthropic.claude-3-5-sonnet-20241022-v2:0` | — |
+| `BEDROCK_MODEL_ID` | e.g. `us.anthropic.claude-sonnet-4-5-20250929-v1:0` | — |
 | `DEFAULT_OLLAMA_MODEL` | — | e.g. `llama3.2` |
 | `TRANSCRIPTION_PROVIDER` | `transcribe` | `whisper` |
 | `AWS_REGION` | `us-east-2` | — |
@@ -182,19 +203,24 @@ Module YAML: rename conceptually to `model_id` (keep `ollama_model` as alias dur
 
 ### Bedrock evaluation checklist (spike)
 
-- [ ] Converse API with module system prompt + evidence index (context limits vs Claude/Llama on Bedrock)
-- [ ] Structured JSON for `module_output_v1` — tool spec or constrained decoding
-- [ ] Retry behavior on malformed JSON (same as `OutputParser` today)
-- [ ] `meta_synthesis` on Bedrock — higher token output
-- [ ] IAM: task role `bedrock:InvokeModel` scoped to model ARNs
-- [ ] Latency and cost estimate for Quick Review vs Full MVP
+Formal note: [llm-evaluation-bedrock.md](llm-evaluation-bedrock.md) (AWS-1b).
+
+- [x] Converse API with module system prompt + evidence index
+- [x] Structured JSON for `module_output_v1` — prompt + `OutputParser` (+ coercion)
+- [x] Retry behavior on malformed JSON
+- [ ] `meta_synthesis` on Bedrock — higher token output (Full MVP burn-in)
+- [x] IAM: task role invoke + Marketplace via Bedrock
+- [ ] Latency and cost estimate for Quick Review vs Full MVP (instrument)
 
 ### Transcribe evaluation checklist
 
+Formal note: [asr-evaluation-transcribe.md](asr-evaluation-transcribe.md) (AWS-1c).
+
 - [ ] Speaker diarization / max speaker labels vs pyannote quality
 - [ ] Async job polling from API
-- [ ] Map Transcribe output → existing `TranscriptParser` labeled turns
+- [ ] Map Transcribe output → existing labeled turns
 - [ ] S3 upload path for audio files
+- [ ] VPC endpoint smoke under Stage B no-egress (pending green deploy after SG + RT fixes)
 
 ---
 
@@ -348,7 +374,7 @@ Enable via `LOG_JSON=true` (already in settings).
 | Bind context vars in workflow/module routes | API routes |
 | ERROR logs with exception info | `module_runner`, `workflow_engine`, `output_parser` |
 | Terraform: log groups + retention (14–30 days dev) | `infra/dev/` |
-| Runbook: Logs Insights queries | `doc/developer/aws-operations.md` (to create) |
+| Runbook: Logs Insights queries | [doc/developer/aws-operations.md](../developer/aws-operations.md) |
 
 ### Example Logs Insights queries
 
@@ -455,7 +481,7 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 
 ## 12. Related documents
 
-- [implementation_plan.md](implementation_plan.md) — prioritized P0-AWS tasks
+- [implementing.md](implementing.md) — active priorities (critical → significant → materially important)
 - [aws-backbone architecture](https://github.com/SethDKelly/aws-backbone/blob/main/docs/architecture.md)
 - [aws-backbone GitHub Actions guide](https://github.com/SethDKelly/aws-backbone/blob/main/docs/github-actions.md)
 - [../user/deployment.md](../user/deployment.md) — legacy local deployment

@@ -22,6 +22,13 @@ resource "aws_security_group" "alb" {
   }
 }
 
+# S3 gateway endpoints route to the regional S3 prefix list (public IPs), not
+# VPC CIDR. Stage B must allow 443 to that prefix list or ECR layer pulls fail.
+data "aws_prefix_list" "s3" {
+  count = var.enable_no_egress_networking ? 1 : 0
+  name  = "com.amazonaws.${var.aws_region}.s3"
+}
+
 resource "aws_security_group" "ecs_tasks" {
   name        = "${local.name}-ecs-tasks"
   description = "ECS tasks for RRE dev"
@@ -44,6 +51,39 @@ resource "aws_security_group" "ecs_tasks" {
       description = "HTTPS to VPC interface endpoints"
       from_port   = 443
       to_port     = 443
+      protocol    = "tcp"
+      cidr_blocks = [data.aws_vpc.default.cidr_block]
+    }
+  }
+
+  dynamic "egress" {
+    for_each = var.enable_no_egress_networking ? [1] : []
+    content {
+      description     = "HTTPS to S3 via gateway endpoint (ECR image layers)"
+      from_port       = 443
+      to_port         = 443
+      protocol        = "tcp"
+      prefix_list_ids = [data.aws_prefix_list.s3[0].id]
+    }
+  }
+
+  dynamic "egress" {
+    for_each = var.enable_no_egress_networking ? [1] : []
+    content {
+      description = "DNS to AmazonProvidedDNS (VPC+.2)"
+      from_port   = 53
+      to_port     = 53
+      protocol    = "udp"
+      cidr_blocks = [data.aws_vpc.default.cidr_block]
+    }
+  }
+
+  dynamic "egress" {
+    for_each = var.enable_no_egress_networking ? [1] : []
+    content {
+      description = "DNS TCP fallback"
+      from_port   = 53
+      to_port     = 53
       protocol    = "tcp"
       cidr_blocks = [data.aws_vpc.default.cidr_block]
     }
