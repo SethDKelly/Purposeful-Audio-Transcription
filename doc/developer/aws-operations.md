@@ -104,6 +104,13 @@ Local (from repo root, with AWS + terraform state access):
 ./scripts/aws-deploy-smoke.sh
 ```
 
-## Pause / resume
+## Pause / resume (when idle)
 
-See [infra/dev/README.md](../../infra/dev/README.md).
+**Standing practice:** If the AWS dev stack is not in active use (no deploy, burn-in, or demo in progress), pause it to avoid Fargate and RDS compute charges.
+
+| Action | How |
+|--------|-----|
+| **Pause** | GitHub Actions → **Pause AWS dev** → Run workflow |
+| **Resume** | GitHub Actions → **Deploy to AWS dev** → Run workflow (`workflow_dispatch`) |
+
+Pause sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Full steps, residual costs (ALB, ECR, Secrets Manager, RDS storage), and CLI equivalents: [infra/dev/README.md](../../infra/dev/README.md).

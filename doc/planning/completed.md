@@ -156,8 +156,9 @@ Original build goal: analyze a transcript with a representative module subset an
 | AWS-6d | Smoke: health payload + workflows + UI + ECS + TGs | ✓ |
 | AWS-6e | First green deploy on `phase-m0-docs` | ✓ |
 | AWS-6f | Switch default trigger to `main` | Pending post-cutover |
+| AWS-6g | Pause AWS when idle (standing ops practice) | ✓ `pause-dev.yml` + docs |
 | — | `.github/workflows/pause-dev.yml` — scale ECS to 0, stop RDS | ✓ |
-| — | Pause/resume documented in [infra/dev/README.md](../../infra/dev/README.md) | ✓ |
+| — | Pause/resume documented in [infra/dev/README.md](../../infra/dev/README.md) + [aws-operations.md](../developer/aws-operations.md) | ✓ |
 
 ---
 

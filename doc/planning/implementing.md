@@ -7,6 +7,7 @@ Material work in flight or next to ship for the **Relationship Reasoning Engine 
 | **Status** | **v0.5.1 cutover** — P1-1/P1-2 code ready; next: manual slim deploy + AWS Transcribe burn-in |
 | **Branch** | `phase-m0-docs` → PR to `main` when v0.5.0/v0.5.1 acceptance met |
 | **Strategy** | AWS dev (account `521018312783`, `us-east-2`) via [aws-backbone](https://github.com/SethDKelly/aws-backbone); local for prompt/module + Whisper |
+| **Cost control** | **Pause AWS dev when idle** — Actions → Pause AWS dev (ECS→0, stop RDS). Resume via Deploy. See [aws-operations.md](../developer/aws-operations.md) |
 | **Architecture** | [aws-deployment.md](aws-deployment.md) |
 | **Design anchors** | [../design/01_product_vision_and_scope.md](../design/01_product_vision_and_scope.md) |
 
@@ -55,6 +56,7 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 ```text
 [ ] Manual slim deploy (Actions → Deploy to AWS dev — workflow_dispatch)
 [ ] AWS burn-in: /api/health + Transcribe upload + Quick Review on Bedrock
+[ ] Pause AWS dev when burn-in is done (or whenever the stack sits idle)
 [ ] P1-2d — Lower Fargate CPU/memory after slim proves healthy
 [ ] Close Tier 1 docs: AWS-1c checklist on live Transcribe; confirm AWS-1b/1d
 ```
@@ -63,7 +65,9 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 
 **Prior AWS (fat image):** AWS-7e Quick Review, AWS-5h Stage B, AWS-3f smoke — all green before the Transcribe/slim cutover pause.
 
-After slim deploy: wait **20 minutes**, then up to **three 2-minute** rechecks. Expect `llm_provider: bedrock`, `TRANSCRIPTION_PROVIDER=transcribe`, `diarization_ready: false`. Trace via [aws-operations.md](../developer/aws-operations.md). Optional: **Pause AWS dev** when idle to stop Fargate/RDS burn.
+**Standing ops rule:** When AWS is not actively used for deploy, burn-in, or demos, run **Pause AWS dev** so Fargate and RDS compute stop. Resume with **Deploy to AWS dev**. Details: [aws-operations.md](../developer/aws-operations.md) · [infra/dev/README.md](../../infra/dev/README.md).
+
+After slim deploy: wait **20 minutes**, then up to **three 2-minute** rechecks. Expect `llm_provider: bedrock`, `TRANSCRIPTION_PROVIDER=transcribe`, `diarization_ready: false`. Trace via [aws-operations.md](../developer/aws-operations.md).
 
 ---
 
@@ -79,6 +83,7 @@ Mostly complete. Remaining: **slim-image AWS validation** and closing formal not
 | **AWS-5g** | Secrets Manager: `HF_TOKEN` | **Skipped** — Transcribe replaces pyannote on AWS |
 | **AWS-3f** | Deploy smoke beyond `/api/health` | ✓ |
 | **AWS-6f** | Deploy trigger → `main` | After slim cutover stable |
+| **AWS-6g** | Pause AWS when idle (standing practice) | ✓ Workflow exists; use after every idle period — [aws-operations.md](../developer/aws-operations.md) |
 | **AWS-1b** | Formal LLM evaluation note | ✓ [llm-evaluation-bedrock.md](llm-evaluation-bedrock.md) |
 | **AWS-1c** | Formal ASR evaluation note | [asr-evaluation-transcribe.md](asr-evaluation-transcribe.md) — code ✓; live AWS checklist open |
 | **AWS-1d** | Document no-egress network model | ✓ Staged A/B in [aws-deployment.md](aws-deployment.md) |
@@ -252,6 +257,7 @@ Application depth after AWS dev is stable and Quick Review + Full MVP pass on Be
 | Decision | Rationale |
 |----------|-----------|
 | **Pause auto-deploy until slim cutover** | Fat image + Stage B caused ALB/ECR thrash; develop Transcribe/slim offline |
+| **Pause AWS when idle** | Stop Fargate + RDS compute between sessions; ALB/ECR/storage still bill |
 | **Skip AWS-5g HF_TOKEN** | Transcribe replaces pyannote on AWS |
 | **S3 output for Transcribe JSON** | Stage B has no public egress — avoid fetching TranscriptFileUri over the internet |
 | **`/api/live` for ALB** | Full `/api/health` can hang on Bedrock/deps |

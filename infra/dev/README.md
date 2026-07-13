@@ -77,11 +77,13 @@ terraform output api_log_group
 
 ## Pause / resume (avoid Fargate + RDS compute charges)
 
-**Pause** — GitHub Actions → **Pause AWS dev** → Run workflow (or push changes to `pause-dev.yml`).
+**Standing practice:** Pause whenever the stack sits idle (between coding sessions, after burn-in, overnight). Resume only when you need AWS again.
+
+**Pause** — GitHub Actions → **Pause AWS dev** → Run workflow.
 
 This sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Terraform state stays in sync.
 
-**Resume** — run **Deploy to AWS dev** (push to `phase-m0-docs` or workflow_dispatch). The deploy workflow starts RDS if it was stopped, waits for it to become available, then scales ECS back to 1.
+**Resume** — run **Deploy to AWS dev** (`workflow_dispatch`; push auto-deploy is paused until slim cutover). The deploy workflow starts RDS if it was stopped, waits for it to become available, then scales ECS back to 1.
 
 **Costs while paused:** ALB (~$16/mo), ECR image storage, Secrets Manager, RDS storage (no compute while stopped). RDS auto-restarts after ~7 days if not resumed.
 
