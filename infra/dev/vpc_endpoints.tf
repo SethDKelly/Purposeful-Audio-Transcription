@@ -4,14 +4,21 @@
 # S3 gateway must attach to route tables. Do NOT look up RTs by subnet_id in the
 # default VPC — subnets often use the main RT with no explicit association, and
 # data.aws_route_table { subnet_id = ... } then returns "no results".
+#
+# Keep this data source un-counted so its address stays stable across applies
+# (counted ↔ uncounted moves break CI terraform apply -target=ECR).
 
 data "aws_route_tables" "vpc" {
-  count  = var.enable_vpc_endpoints ? 1 : 0
   vpc_id = data.aws_vpc.default.id
 }
 
+moved {
+  from = data.aws_route_tables.vpc[0]
+  to   = data.aws_route_tables.vpc
+}
+
 locals {
-  s3_route_table_ids = var.enable_vpc_endpoints ? data.aws_route_tables.vpc[0].ids : []
+  s3_route_table_ids = var.enable_vpc_endpoints ? data.aws_route_tables.vpc.ids : []
 
   interface_endpoint_services = var.enable_vpc_endpoints ? toset([
     "bedrock-runtime",

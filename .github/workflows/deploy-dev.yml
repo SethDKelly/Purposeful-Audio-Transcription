@@ -94,9 +94,16 @@ jobs:
       - name: Ensure ECR repositories exist
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
-          terraform apply -input=false -auto-approve \
-            -target=aws_ecr_repository.api \
-            -target=aws_ecr_repository.ui
+          set -euo pipefail
+          # Skip targeted apply when repos already exist — terraform -target fails
+          # when other resources have pending address moves in state.
+          if aws ecr describe-repositories --repository-names rre-dev-api rre-dev-ui >/dev/null 2>&1; then
+            echo "ECR repositories already present; full terraform apply will manage them."
+          else
+            terraform apply -input=false -auto-approve \
+              -target=aws_ecr_repository.api \
+              -target=aws_ecr_repository.ui
+          fi
 
       - name: Login to Amazon ECR
         id: ecr
