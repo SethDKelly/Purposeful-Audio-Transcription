@@ -109,28 +109,70 @@ echo "== ALB target health =="
 check_tg() {
   local arn="$1"
   local label="$2"
-  local health
-  health=$(aws elbv2 describe-target-health --target-group-arn "$arn" --output json)
-  python3 - "$label" "$health" <<'PY'
+  local attempt
+  for attempt in $(seq 1 6); do
+    local health
+    health=$(aws elbv2 describe-target-health --target-group-arn "$arn" --output json)
+    if python3 - "$label" "$health" <<'PY'
 import json, sys
 label, raw = sys.argv[1], sys.argv[2]
 data = json.loads(raw)
 descs = data.get("TargetHealthDescriptions") or []
 if not descs:
     print(f"::error::{label}: no registered targets", file=sys.stderr)
-    sys.exit(1)
+    sys.exit(2)
+
+# Rolling deploys leave old tasks as "draining" while the new task is healthy.
+# Pass when at least one target is healthy; ignore draining/initial.
+healthy = []
+transitional = []
 bad = []
 for d in descs:
-    state = (d.get("TargetHealth") or {}).get("State")
+    state = (d.get("TargetHealth") or {}).get("State") or "unknown"
     reason = (d.get("TargetHealth") or {}).get("Reason", "")
     target = (d.get("Target") or {}).get("Id", "?")
     print(f"{label}: {target} -> {state}" + (f" ({reason})" if reason else ""))
-    if state != "healthy":
+    if state == "healthy":
+        healthy.append(target)
+    elif state in ("draining", "initial"):
+        transitional.append(f"{target}:{state}")
+    else:
         bad.append(f"{target}:{state}")
-if bad:
-    print(f"::error::{label} unhealthy targets: {', '.join(bad)}", file=sys.stderr)
+
+if healthy:
+    if transitional:
+        print(f"{label}: OK ({len(healthy)} healthy; ignoring transitional {', '.join(transitional)})")
+    elif bad:
+        # Unhealthy siblings during replace — still OK if traffic has a healthy target.
+        print(f"{label}: OK ({len(healthy)} healthy; other states: {', '.join(bad)})")
+    else:
+        print(f"{label}: OK ({len(healthy)} healthy)")
+    sys.exit(0)
+
+if transitional and not bad:
+    print(f"{label}: waiting for healthy target (transitional: {', '.join(transitional)})", file=sys.stderr)
     sys.exit(1)
+
+print(
+    f"::error::{label}: no healthy targets"
+    + (f"; bad={', '.join(bad)}" if bad else "")
+    + (f"; transitional={', '.join(transitional)}" if transitional else ""),
+    file=sys.stderr,
+)
+sys.exit(2)
 PY
+    then
+      return 0
+    fi
+    local rc=$?
+    if [ "$rc" -eq 2 ]; then
+      return 1
+    fi
+    echo "Waiting for ${label} healthy target... ($attempt/6)"
+    sleep 15
+  done
+  echo "::error::${label}: no healthy targets after retries"
+  return 1
 }
 
 check_tg "$API_TG" "API TG"

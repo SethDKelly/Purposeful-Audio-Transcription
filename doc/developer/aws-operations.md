@@ -93,7 +93,7 @@ Beyond `GET /api/health`. Automated in CI via `scripts/aws-deploy-smoke.sh` afte
 | ALB → API | `http://<alb>/api/health` and `http://<alb>/api/workflows` (includes `quick_review`) |
 | ALB → UI | `http://<alb>/_stcore/health` |
 | ECS services | Desired == running; fail on recent `CannotPullContainerError` |
-| Target groups | API + UI targets **healthy** (`describe-target-health`) |
+| Target groups | ≥1 **healthy** target per API/UI TG (`describe-target-health`; ignore `draining`/`initial` during roll) |
 | Logs | Recent streams under `/rre/dev/api` and `/rre/dev/ui` (warn if missing) |
 | Bedrock path | Optional manual: Quick Review on a short paste transcript |
 
