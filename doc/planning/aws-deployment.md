@@ -316,8 +316,9 @@ fastapi, uvicorn, sqlalchemy, psycopg, boto3, pydantic-settings, alembic
 
 | Phase | API image | Audio ingest | LLM |
 |-------|-----------|--------------|-----|
-| **Now (interim)** | Fat — torch + pyannote + Whisper | Local ML in container | Ollama off-host or degraded health |
-| **P0-AWS-7** | Fat or slim + Bedrock | Still Whisper/pyannote until P1-1 | Bedrock |
+| **Now (code)** | Slim `Dockerfile.cloud` | Amazon Transcribe | Bedrock |
+| **Local** | Fat `Dockerfile` + `.[local]` | Whisper + pyannote | Ollama |
+| **AWS validation** | Manual `workflow_dispatch` deploy of slim image | Live Transcribe burn-in next | Quick Review already proven |
 | **P1-1 target** | **Slim cloud image** | Amazon Transcribe | Bedrock |
 | **Local always** | Fat `Dockerfile` | Whisper + pyannote | Ollama |
 
