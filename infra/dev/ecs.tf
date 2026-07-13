@@ -56,7 +56,7 @@ resource "aws_ecs_task_definition" "api" {
     }
 
     healthCheck = {
-      command     = ["CMD-SHELL", "curl -f http://127.0.0.1:8000/api/health || exit 1"]
+      command     = ["CMD-SHELL", "curl -f http://127.0.0.1:8000/api/live || exit 1"]
       interval    = 30
       timeout     = 5
       retries     = 3
@@ -138,7 +138,6 @@ resource "aws_ecs_service" "api" {
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
   health_check_grace_period_seconds  = 300
-
   depends_on = [
     aws_lb_listener.http,
     aws_vpc_endpoint.s3,
@@ -167,7 +166,7 @@ resource "aws_ecs_service" "ui" {
 
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
-  health_check_grace_period_seconds  = 120
+  health_check_grace_period_seconds  = 300
 
   depends_on = [
     aws_lb_listener.http,

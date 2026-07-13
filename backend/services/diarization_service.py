@@ -76,7 +76,11 @@ class DiarizationService:
             return str(exc)
 
     def is_available(self) -> bool:
-        """True when diarization is enabled and dependencies plus HF model access are present."""
+        """True when diarization deps look ready locally (no network calls).
+
+        Hugging Face gated-model checks belong in model_access_error() / explicit
+        diagnostics — never on /api/health (Stage B has no public egress; HF hangs).
+        """
         if not settings.diarization_enabled:
             return False
         if not settings.hf_token:
@@ -87,7 +91,7 @@ class DiarizationService:
             import pyannote.audio  # noqa: F401
         except ImportError:
             return False
-        return self.model_access_error() is None
+        return True
 
     def _get_pipeline(self):
         if self._pipeline is None:

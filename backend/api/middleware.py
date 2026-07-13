@@ -14,6 +14,7 @@ _PUBLIC_PATHS = {
     "/redoc",
     "/openapi.json",
     "/api/health",
+    "/api/live",
 }
 
 

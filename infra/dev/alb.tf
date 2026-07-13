@@ -173,14 +173,16 @@ resource "aws_lb_target_group" "api" {
   vpc_id      = data.aws_vpc.default.id
   target_type = "ip"
 
+  deregistration_delay = 30
+
   health_check {
     enabled             = true
-    path                = "/api/health"
+    path                = "/api/live"
     matcher             = "200"
     healthy_threshold   = 2
-    unhealthy_threshold = 3
+    unhealthy_threshold = 5
     interval            = 30
-    timeout             = 5
+    timeout             = 10
   }
 }
 
@@ -191,14 +193,16 @@ resource "aws_lb_target_group" "ui" {
   vpc_id      = data.aws_vpc.default.id
   target_type = "ip"
 
+  deregistration_delay = 30
+
   health_check {
     enabled             = true
     path                = "/_stcore/health"
     matcher             = "200"
     healthy_threshold   = 2
-    unhealthy_threshold = 3
+    unhealthy_threshold = 5
     interval            = 30
-    timeout             = 5
+    timeout             = 10
   }
 }
 

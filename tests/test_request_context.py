@@ -10,6 +10,13 @@ def test_request_id_header_is_returned() -> None:
     assert response.headers.get("X-Request-ID") == "test-request-123"
 
 
+def test_live_endpoint_is_fast_liveness() -> None:
+    client = TestClient(app)
+    response = client.get("/api/live")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
 def test_request_id_is_generated_when_missing() -> None:
     client = TestClient(app)
     response = client.get("/api/health")

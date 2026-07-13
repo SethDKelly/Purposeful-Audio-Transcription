@@ -23,6 +23,12 @@ def _database_available() -> bool:
         return False
 
 
+@router.get("/live")
+def live() -> dict[str, str]:
+    """Liveness for ALB/ECS — must return immediately with no dependency I/O."""
+    return {"status": "ok"}
+
+
 @router.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     ffmpeg_ok = check_ffmpeg_available()

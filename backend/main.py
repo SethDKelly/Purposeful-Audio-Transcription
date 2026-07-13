@@ -77,5 +77,6 @@ def root() -> dict[str, str]:
         "name": "Purposeful Audio Transcription",
         "docs": "/docs",
         "health": "/api/health",
+        "live": "/api/live",
         "database": "postgresql" if not settings.is_sqlite else "sqlite",
     }

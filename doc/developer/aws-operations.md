@@ -89,7 +89,8 @@ Beyond `GET /api/health`. Automated in CI via `scripts/aws-deploy-smoke.sh` afte
 
 | Check | How |
 |-------|-----|
-| Health payload | `status=ok`, `llm_provider=bedrock`, `llm_available=true`, `database_available=true` |
+| Health payload | `GET /api/health` — `status=ok`, `llm_provider=bedrock`, `llm_available=true`, `database_available=true` |
+| ALB liveness | API TG uses `GET /api/live` (no Bedrock/HF); UI uses `/_stcore/health` |
 | ALB → API | `http://<alb>/api/health` and `http://<alb>/api/workflows` (includes `quick_review`) |
 | ALB → UI | `http://<alb>/_stcore/health` |
 | ECS services | Desired == running; fail on recent `CannotPullContainerError` |

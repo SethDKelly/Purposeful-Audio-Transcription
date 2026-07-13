@@ -44,14 +44,25 @@ class BedrockProvider:
         model_id = settings.resolved_bedrock_model_id
         if not model_id:
             return False
+        # ALB/container probes call /api/health; never use the 600s Converse timeout.
+        probe = Config(
+            connect_timeout=2,
+            read_timeout=3,
+            retries={"max_attempts": 1, "mode": "standard"},
+        )
         try:
+            region = settings.resolved_aws_region
+            control = boto3.client("bedrock", region_name=region, config=probe)
             if _is_inference_profile(model_id):
-                self._control.get_inference_profile(inferenceProfileIdentifier=model_id)
+                control.get_inference_profile(inferenceProfileIdentifier=model_id)
             else:
-                self._control.get_foundation_model(modelIdentifier=model_id)
+                control.get_foundation_model(modelIdentifier=model_id)
             return True
         except (ClientError, BotoCoreError) as exc:
             logger.warning("Bedrock health check failed for %s: %s", model_id, exc)
+            return False
+        except Exception as exc:  # noqa: BLE001 — probe must never hang the health route
+            logger.warning("Bedrock health check error for %s: %s", model_id, exc)
             return False
 
     def list_models(self) -> list[str]:
