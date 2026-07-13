@@ -4,7 +4,7 @@ Material work in flight or next to ship for the **Relationship Reasoning Engine 
 
 | | |
 |---|---|
-| **Status** | **v0.5.0 AWS pivot** — Bedrock Quick Review burn-in passed; finish remaining Tier 1 |
+| **Status** | **v0.5.0 AWS pivot** — Bedrock Quick Review + VPC Stage B green; finish remaining Tier 1 |
 | **Branch** | `phase-m0-docs` → PR to `main` when v0.5.0 acceptance met |
 | **Strategy** | AWS dev (account `521018312783`, `us-east-2`) via [aws-backbone](https://github.com/SethDKelly/aws-backbone); local for prompt/module dev only |
 | **Architecture** | [aws-deployment.md](aws-deployment.md) |
@@ -53,28 +53,32 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 ## Immediate next steps
 
 ```text
-[~] P0-AWS-5h — VPC endpoints Stage B (no public IP; verify ECR pull + Bedrock health after deploy)
-[ ] P0-AWS-3f — Deploy smoke beyond /api/health
+[x] P0-AWS-5h — VPC endpoints Stage B (no public IP; health + Bedrock via endpoints)
+[x] P0-AWS-3f — Deploy smoke beyond /api/health (`scripts/aws-deploy-smoke.sh`)
 [ ] P1-1 → P1-2 — Transcribe, then slim cloud API image
 ```
 
 **AWS-7e done:** Quick Review on AWS dev with `us.anthropic.claude-sonnet-4-5-20250929-v1:0` — all three modules completed.
 
-After deploy: wait **20 minutes**, check; if not ready, **three 2-minute** rechecks. Confirm `/api/health` shows `llm_provider: bedrock`; under Stage B expect `diarization_ready: false` until Transcribe. Trace failures via [aws-operations.md](../developer/aws-operations.md). If ECS stays on `CannotPullContainerError`, set `enable_no_egress_networking=false` and redeploy (Stage A rollback).
+**AWS-5h done:** Stage B deploy green — `/api/health` returns `llm_provider: bedrock`, `llm_available: true`, `diarization_ready: false` (expected without HF egress). Rollback to Stage A: `enable_no_egress_networking=false`.
+
+**AWS-3f done:** CI smoke covers health payload, workflows, UI, ECS desired=running, ALB target health, and log-stream presence.
+
+After deploy: wait **20 minutes**, check; if not ready, **three 2-minute** rechecks. Confirm `/api/health` shows `llm_provider: bedrock`. Trace failures via [aws-operations.md](../developer/aws-operations.md).
 
 ---
 
 ## Tier 1 — Critical
 
-Deploy foundation and Bedrock validation. **AWS-7e** (Quick Review on Bedrock) has passed; remaining Tier 1 items below.
+Deploy foundation and Bedrock validation. **AWS-7e**, **AWS-5h**, and **AWS-3f** passed; remaining Tier 1 items below.
 
 ### Finish P0-AWS — Bedrock proof & secure AWS dev
 
 | # | Task | Notes |
 |---|------|-------|
-| **AWS-5h** | VPC endpoints — Bedrock, Transcribe, S3, Secrets Manager, CloudWatch, ECR | Stage B default on (`enable_no_egress_networking`); confirm green deploy + health |
+| **AWS-5h** | VPC endpoints — Bedrock, Transcribe, S3, Secrets Manager, CloudWatch, ECR | ✓ Stage B default; S3 prefix-list + DNS egress for ECR pulls |
 | **AWS-5g** | Secrets Manager: `HF_TOKEN` | Interim pyannote only; skip if Transcribe lands first |
-| **AWS-3f** | Deploy smoke: ECS task + ALB target health beyond `/api/health` | Catch unhealthy tasks post-deploy |
+| **AWS-3f** | Deploy smoke: ECS task + ALB target health beyond `/api/health` | ✓ `scripts/aws-deploy-smoke.sh` in deploy-dev.yml |
 | **AWS-6f** | Switch deploy trigger from `phase-m0-docs` to `main` | After stable v0.5.0 |
 | **AWS-1b** | Formal LLM evaluation note | [llm-evaluation-bedrock.md](llm-evaluation-bedrock.md) |
 | **AWS-1c** | Formal ASR evaluation note | [asr-evaluation-transcribe.md](asr-evaluation-transcribe.md) |

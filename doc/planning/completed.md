@@ -112,6 +112,7 @@ Original build goal: analyze a transcript with a representative module subset an
 | AWS-3c | ERROR/WARNING logging in `module_runner`, `workflow_engine`, `output_parser` | ✓ |
 | AWS-3d | CloudWatch log groups `/rre/dev/{api,ui}` (Terraform) | ✓ |
 | AWS-3e | CloudWatch Logs Insights runbook — [aws-operations.md](../developer/aws-operations.md) | ✓ |
+| AWS-3f | Deploy smoke beyond `/api/health` — `scripts/aws-deploy-smoke.sh` in CI | ✓ |
 
 ---
 
@@ -139,6 +140,7 @@ Original build goal: analyze a transcript with a representative module subset an
 | AWS-5f | Secrets Manager: `DATABASE_URL` | ✓ |
 | AWS-5i | Task role: Bedrock invoke, S3, Transcribe, CloudWatch | ✓ |
 | AWS-5j | CloudWatch log groups + retention | ✓ |
+| AWS-5h | VPC endpoints Stage A + Stage B (no public IP; S3 prefix-list + DNS egress) | ✓ |
 
 ---
 

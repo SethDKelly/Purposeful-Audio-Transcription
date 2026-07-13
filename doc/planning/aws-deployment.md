@@ -220,7 +220,7 @@ Formal note: [asr-evaluation-transcribe.md](asr-evaluation-transcribe.md) (AWS-1
 - [ ] Async job polling from API
 - [ ] Map Transcribe output → existing labeled turns
 - [ ] S3 upload path for audio files
-- [ ] VPC endpoint smoke under Stage B no-egress (pending green deploy after SG + RT fixes)
+- [x] VPC endpoint smoke under Stage B no-egress (`llm_available` via Bedrock; ECR pull succeeded)
 
 ---
 

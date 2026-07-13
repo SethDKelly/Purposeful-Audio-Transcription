@@ -35,6 +35,16 @@ output "ecs_ui_service_name" {
   value = aws_ecs_service.ui.name
 }
 
+output "api_target_group_arn" {
+  description = "ALB target group ARN for API smoke (AWS-3f)."
+  value       = aws_lb_target_group.api.arn
+}
+
+output "ui_target_group_arn" {
+  description = "ALB target group ARN for UI smoke (AWS-3f)."
+  value       = aws_lb_target_group.ui.arn
+}
+
 output "api_log_group" {
   value = aws_cloudwatch_log_group.api.name
 }

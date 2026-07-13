@@ -154,22 +154,12 @@ jobs:
             exit 1
           fi
 
-      - name: Smoke test
-        working-directory: ${{ env.TF_WORKING_DIR }}
+      - name: Smoke test (AWS-3f)
+        env:
+          TF_WORKING_DIR: ${{ env.TF_WORKING_DIR }}
         run: |
-          ALB_URL=$(terraform output -raw alb_url)
-          echo "ALB URL: $ALB_URL"
-          for i in 1 2 3 4 5 6 7 8 9 10; do
-            if curl -sf "$ALB_URL/api/health"; then
-              echo ""
-              echo "Health check passed"
-              exit 0
-            fi
-            echo "Waiting for service... ($i/10)"
-            sleep 30
-          done
-          echo "Health check failed"
-          exit 1
+          chmod +x scripts/aws-deploy-smoke.sh
+          ./scripts/aws-deploy-smoke.sh
 
       - name: Deployment summary
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -178,3 +168,5 @@ jobs:
           echo "- Image tag: \`${IMAGE_TAG}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- URL: $(terraform output -raw alb_url)" >> "$GITHUB_STEP_SUMMARY"
           echo "- API logs: \`$(terraform output -raw api_log_group)\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- No-egress networking: \`$(terraform output -raw no_egress_networking_enabled)\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Smoke: AWS-3f (health payload, workflows, UI, ECS, target groups)" >> "$GITHUB_STEP_SUMMARY"

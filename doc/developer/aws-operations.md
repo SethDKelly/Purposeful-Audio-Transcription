@@ -71,9 +71,37 @@ fields @timestamp, module_id, module_run_id, model_id, message
 | Variable | ECS value (dev) |
 |----------|-----------------|
 | `LLM_PROVIDER` | `bedrock` |
-| `BEDROCK_MODEL_ID` | e.g. `anthropic.claude-3-5-sonnet-20241022-v2:0` |
+| `BEDROCK_MODEL_ID` | `us.anthropic.claude-sonnet-4-5-20250929-v1:0` |
 
-Ensure the ECS task role includes `bedrock:InvokeModel` and `bedrock:GetFoundationModel` (see `infra/dev/iam.tf`).
+Ensure the ECS task role includes Bedrock invoke + Marketplace subscribe-via-Bedrock (see `infra/dev/iam.tf`). Evaluation note: [llm-evaluation-bedrock.md](../planning/llm-evaluation-bedrock.md).
+
+## Deploy wait pattern
+
+After a push that rebuilds images / applies Terraform:
+
+1. Wait **20 minutes**
+2. Check health + ECS stability
+3. If not ready, up to **three** rechecks at **2-minute** intervals
+
+## Post-deploy smoke (AWS-3f checklist)
+
+Beyond `GET /api/health`. Automated in CI via `scripts/aws-deploy-smoke.sh` after ECS is stable.
+
+| Check | How |
+|-------|-----|
+| Health payload | `status=ok`, `llm_provider=bedrock`, `llm_available=true`, `database_available=true` |
+| ALB → API | `http://<alb>/api/health` and `http://<alb>/api/workflows` (includes `quick_review`) |
+| ALB → UI | `http://<alb>/_stcore/health` |
+| ECS services | Desired == running; fail on recent `CannotPullContainerError` |
+| Target groups | API + UI targets **healthy** (`describe-target-health`) |
+| Logs | Recent streams under `/rre/dev/api` and `/rre/dev/ui` (warn if missing) |
+| Bedrock path | Optional manual: Quick Review on a short paste transcript |
+
+Local (from repo root, with AWS + terraform state access):
+
+```bash
+./scripts/aws-deploy-smoke.sh
+```
 
 ## Pause / resume
 
