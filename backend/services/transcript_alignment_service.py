@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from backend.services.diarization_timeline import SpeakerInterval
-from backend.services.whisper_service import TaggedSegment, TranscriptSegment
+from backend.services.transcript_types import TaggedSegment, TranscriptSegment
 
 
 @dataclass(frozen=True)

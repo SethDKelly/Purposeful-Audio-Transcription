@@ -7,7 +7,8 @@ from backend.services.transcript_alignment_service import (
     build_labeled_transcript,
     build_labeled_transcript_from_tagged,
 )
-from backend.services.whisper_service import TranscriptResult, TranscriptSegment, whisper_service
+from backend.services.transcript_types import TranscriptSegment
+from backend.services.whisper_service import whisper_service
 from config.settings import settings
 
 logger = logging.getLogger(__name__)

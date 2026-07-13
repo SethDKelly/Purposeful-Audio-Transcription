@@ -4,7 +4,7 @@ Material work in flight or next to ship for the **Relationship Reasoning Engine 
 
 | | |
 |---|---|
-| **Status** | **v0.5.0 AWS pivot** — Bedrock Quick Review + VPC Stage B green; finish remaining Tier 1 |
+| **Status** | **v0.5.0 AWS pivot** — deploy paused; P1-1/P1-2 Transcribe + slim image in progress |
 | **Branch** | `phase-m0-docs` → PR to `main` when v0.5.0 acceptance met |
 | **Strategy** | AWS dev (account `521018312783`, `us-east-2`) via [aws-backbone](https://github.com/SethDKelly/aws-backbone); local for prompt/module dev only |
 | **Architecture** | [aws-deployment.md](aws-deployment.md) |
@@ -53,18 +53,16 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 ## Immediate next steps
 
 ```text
-[x] P0-AWS-5h — VPC endpoints Stage B (no public IP; health + Bedrock via endpoints)
-[x] P0-AWS-3f — Deploy smoke beyond /api/health (`scripts/aws-deploy-smoke.sh`)
-[ ] P1-1 → P1-2 — Transcribe, then slim cloud API image
+[~] P1-1 — Amazon Transcribe provider (wired; deploy deferred)
+[~] P1-2 — Slim Dockerfile.cloud (ready; deploy deferred)
+[ ] Manual deploy after slim cutover (workflow_dispatch)
 ```
 
-**AWS-7e done:** Quick Review on AWS dev with `us.anthropic.claude-sonnet-4-5-20250929-v1:0` — all three modules completed.
+**Deploy paused:** `deploy-dev.yml` is **workflow_dispatch only** until Transcribe + slim image are validated together. Auto-push deploys to `phase-m0-docs` are off to avoid Stage B + fat-image thrashing.
 
-**AWS-5h done:** Stage B deploy green — `/api/health` returns `llm_provider: bedrock`, `llm_available: true`, `diarization_ready: false` (expected without HF egress). Rollback to Stage A: `enable_no_egress_networking=false`.
+**AWS-7e / 5h / 3f done** on the prior fat image. Next AWS gate: one intentional deploy with `Dockerfile.cloud` + `TRANSCRIPTION_PROVIDER=transcribe`.
 
-**AWS-3f done:** CI smoke covers health payload, workflows, UI, ECS desired=running, ALB target health, and log-stream presence.
-
-After deploy: wait **20 minutes**, check; if not ready, **three 2-minute** rechecks. Confirm `/api/health` shows `llm_provider: bedrock`. Trace failures via [aws-operations.md](../developer/aws-operations.md).
+After that deploy: wait **20 minutes**, check; if not ready, **three 2-minute** rechecks. Confirm `/api/health` shows `llm_provider: bedrock` and ASR via Transcribe. Trace failures via [aws-operations.md](../developer/aws-operations.md).
 
 ---
 
@@ -77,7 +75,7 @@ Deploy foundation and Bedrock validation. **AWS-7e**, **AWS-5h**, and **AWS-3f**
 | # | Task | Notes |
 |---|------|-------|
 | **AWS-5h** | VPC endpoints — Bedrock, Transcribe, S3, Secrets Manager, CloudWatch, ECR | ✓ Stage B default; S3 prefix-list + DNS egress for ECR pulls |
-| **AWS-5g** | Secrets Manager: `HF_TOKEN` | Interim pyannote only; skip if Transcribe lands first |
+| **AWS-5g** | Secrets Manager: `HF_TOKEN` | **Skip** — Transcribe replaces pyannote on AWS |
 | **AWS-3f** | Deploy smoke: ECS task + ALB target health beyond `/api/health` | ✓ `scripts/aws-deploy-smoke.sh` in deploy-dev.yml |
 | **AWS-6f** | Switch deploy trigger from `phase-m0-docs` to `main` | After stable v0.5.0 |
 | **AWS-1b** | Formal LLM evaluation note | [llm-evaluation-bedrock.md](llm-evaluation-bedrock.md) |
@@ -104,12 +102,12 @@ Core product capabilities on AWS dev. Start after Tier 1 gate (Bedrock Quick Rev
 
 **Goal:** Remove Whisper/pyannote/Hugging Face dependency in AWS.
 
-| # | Task |
-|---|------|
-| P1-1a | `TranscriptionProvider` abstraction |
-| P1-1b | Amazon Transcribe adapter — async job, speaker labels |
-| P1-1c | S3 upload → Transcribe → labeled turns → existing ingest |
-| P1-1d | Keep Whisper path for local dev (`TRANSCRIPTION_PROVIDER=whisper`) |
+| # | Task | Status |
+|---|------|--------|
+| P1-1a | `TranscriptionProvider` abstraction | ✓ |
+| P1-1b | Amazon Transcribe adapter — async job, speaker labels | ✓ |
+| P1-1c | S3 upload → Transcribe → labeled turns → existing ingest | ✓ |
+| P1-1d | Keep Whisper path for local dev (`TRANSCRIPTION_PROVIDER=whisper`) | ✓ |
 
 **Audio decode:** ffmpeg CLI locally/interim; Transcribe in cloud ([aws-deployment.md §5](aws-deployment.md)).
 
@@ -117,15 +115,15 @@ Core product capabilities on AWS dev. Start after Tier 1 gate (Bedrock Quick Rev
 
 **Goal:** Shrink ECS API container after Bedrock + Transcribe.
 
-| # | Task |
-|---|------|
-| P1-2a | `Dockerfile.cloud` — API without torch, pyannote, faster-whisper |
-| P1-2b | CI: build/push cloud image for AWS; full image for local tests |
-| P1-2c | ECS env: `TRANSCRIPTION_PROVIDER=transcribe` |
-| P1-2d | Reduce Fargate task CPU/memory after slim cutover |
-| P1-2e | Document local vs cloud profile in [model-setup.md](../user/model-setup.md) |
+| # | Task | Status |
+|---|------|--------|
+| P1-2a | `Dockerfile.cloud` — API without torch, pyannote, faster-whisper | ✓ |
+| P1-2b | CI: build/push cloud image for AWS; full image for local tests | ✓ (dispatch-only until cutover) |
+| P1-2c | ECS env: `TRANSCRIPTION_PROVIDER=transcribe` | ✓ Terraform defaults |
+| P1-2d | Reduce Fargate task CPU/memory after slim cutover | Pending first slim deploy |
+| P1-2e | Document local vs cloud profile in [model-setup.md](../user/model-setup.md) | ✓ |
 
-**Depends on:** P1-1, Tier 1 Bedrock path
+**Depends on:** P1-1, Tier 1 Bedrock path. **Deploy after** local tests pass — use Actions → Deploy to AWS dev.
 
 ### P1-3 — Data handling & trust
 

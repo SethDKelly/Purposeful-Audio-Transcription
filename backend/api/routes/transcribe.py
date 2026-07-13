@@ -3,7 +3,7 @@ from fastapi import APIRouter, File, Form, UploadFile
 from backend.api.schemas import TranscribeResponse, TranscriptSegmentSchema
 from backend.core.exceptions import AudioValidationError
 from backend.services.audio_service import saved_upload
-from backend.services.audio_transcription_service import audio_transcription_service
+from backend.services.transcription_factory import get_transcription_provider
 
 router = APIRouter(prefix="/api", tags=["transcribe"])
 
@@ -26,7 +26,7 @@ async def transcribe(
 
     content = await file.read()
     with saved_upload(content, file.filename) as audio_path:
-        result = audio_transcription_service.transcribe(
+        result = get_transcription_provider().transcribe(
             audio_path,
             num_speakers=num_speakers,
         )

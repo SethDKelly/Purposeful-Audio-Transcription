@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from backend.services.audio_transcription_service import audio_transcription_service
 from backend.services.diarization_service import SpeakerInterval
-from backend.services.whisper_service import TranscriptResult, TranscriptSegment
+from backend.services.transcript_types import TranscriptResult, TranscriptSegment
 
 
 @patch("backend.services.audio_transcription_service.settings")
@@ -135,7 +135,7 @@ def test_transcribe_uses_sliced_mode_when_configured(
     mock_diarization: MagicMock,
     mock_settings: MagicMock,
 ) -> None:
-    from backend.services.whisper_service import TaggedSegment, TranscriptSegment
+    from backend.services.transcript_types import TaggedSegment, TranscriptSegment
 
     mock_settings.diarization_enabled = True
     mock_settings.diarization_speaker_prefix = "Person"
@@ -168,14 +168,15 @@ def test_transcribe_uses_sliced_mode_when_configured(
     mock_whisper.transcribe_speaker_intervals.assert_called_once()
 
 
-@patch("backend.api.routes.transcribe.audio_transcription_service")
-def test_transcribe_endpoint_returns_speaker_metadata(mock_service: MagicMock) -> None:
+@patch("backend.api.routes.transcribe.get_transcription_provider")
+def test_transcribe_endpoint_returns_speaker_metadata(mock_get_provider: MagicMock) -> None:
     from fastapi.testclient import TestClient
 
     from backend.main import app
     from backend.services.audio_transcription_service import AudioTranscriptionResult
 
-    mock_service.transcribe.return_value = AudioTranscriptionResult(
+    provider = MagicMock()
+    provider.transcribe.return_value = AudioTranscriptionResult(
         text="Person A: Hello.\nPerson B: Hi.",
         segments=[TranscriptSegment(start=0.0, end=1.0, text="Hello.")],
         language="en",
@@ -184,6 +185,7 @@ def test_transcribe_endpoint_returns_speaker_metadata(mock_service: MagicMock) -
         speaker_labels=["Person A", "Person B"],
         diarization_applied=True,
     )
+    mock_get_provider.return_value = provider
 
     client = TestClient(app)
     response = client.post(
@@ -198,15 +200,16 @@ def test_transcribe_endpoint_returns_speaker_metadata(mock_service: MagicMock) -
     assert payload["speaker_labels"] == ["Person A", "Person B"]
 
 
-@patch("backend.api.routes.transcribe.audio_transcription_service")
-def test_transcribe_endpoint_accepts_num_speakers_hint(mock_service: MagicMock) -> None:
+@patch("backend.api.routes.transcribe.get_transcription_provider")
+def test_transcribe_endpoint_accepts_num_speakers_hint(mock_get_provider: MagicMock) -> None:
     from fastapi.testclient import TestClient
 
     from backend.main import app
     from backend.services.audio_transcription_service import AudioTranscriptionResult
-    from backend.services.whisper_service import TranscriptSegment
+    from backend.services.transcript_types import TranscriptSegment
 
-    mock_service.transcribe.return_value = AudioTranscriptionResult(
+    provider = MagicMock()
+    provider.transcribe.return_value = AudioTranscriptionResult(
         text="Person A: Hello.\nPerson B: Hi.",
         segments=[TranscriptSegment(start=0.0, end=1.0, text="Hello.")],
         language="en",
@@ -215,6 +218,7 @@ def test_transcribe_endpoint_accepts_num_speakers_hint(mock_service: MagicMock) 
         speaker_labels=["Person A", "Person B"],
         diarization_applied=True,
     )
+    mock_get_provider.return_value = provider
 
     client = TestClient(app)
     response = client.post(
@@ -224,5 +228,5 @@ def test_transcribe_endpoint_accepts_num_speakers_hint(mock_service: MagicMock) 
     )
 
     assert response.status_code == 200
-    mock_service.transcribe.assert_called_once()
-    assert mock_service.transcribe.call_args.kwargs["num_speakers"] == 2
+    provider.transcribe.assert_called_once()
+    assert provider.transcribe.call_args.kwargs["num_speakers"] == 2

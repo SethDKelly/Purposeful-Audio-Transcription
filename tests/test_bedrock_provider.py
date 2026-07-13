@@ -11,7 +11,13 @@ def mock_bedrock_clients():
     with patch("backend.services.bedrock_provider.boto3.client") as mock_client:
         runtime = MagicMock()
         control = MagicMock()
-        mock_client.side_effect = [runtime, control]
+
+        def _client(service_name, *args, **kwargs):
+            if service_name == "bedrock-runtime":
+                return runtime
+            return control
+
+        mock_client.side_effect = _client
         yield runtime, control
 
 

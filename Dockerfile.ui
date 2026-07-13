@@ -12,6 +12,7 @@ COPY backend ./backend
 COPY config ./config
 COPY ui ./ui
 
+# UI does not need Whisper/torch — core deps only.
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -e .
 

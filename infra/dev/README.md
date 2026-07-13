@@ -16,9 +16,13 @@ Terraform for the **dev** environment in account `521018312783` (`us-east-2`).
 - AWS credentials (`dev-developer` locally, or `dev-github-deploy` in CI)
 - Terraform >= 1.5
 
-## Deploy via GitHub Actions (recommended)
+## Deploy via GitHub Actions
 
-Push to **`phase-m0-docs`** — workflow `.github/workflows/deploy-dev.yml` runs tests, builds images, applies Terraform, and rolls ECS.
+Auto-deploy on push is **paused** until the slim cloud image cutover. Run manually:
+
+**Actions → Deploy to AWS dev → Run workflow**
+
+Builds `Dockerfile.cloud` (Transcribe + Bedrock) and `Dockerfile.ui`, applies Terraform, smokes AWS-3f.
 
 ## Manual deploy
 

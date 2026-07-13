@@ -72,6 +72,18 @@ variable "bedrock_model_id" {
   default     = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 }
 
+variable "transcription_provider" {
+  description = "whisper (full image) or transcribe (Amazon Transcribe; use with Dockerfile.cloud)."
+  type        = string
+  default     = "transcribe"
+}
+
+variable "diarization_enabled" {
+  description = "Enable pyannote diarization (requires full image + HF token). Off for cloud Transcribe path."
+  type        = bool
+  default     = false
+}
+
 variable "enable_vpc_endpoints" {
   description = "Create VPC endpoints (S3 gateway + interface endpoints for Bedrock, ECR, etc.). Safe with public IPs."
   type        = bool

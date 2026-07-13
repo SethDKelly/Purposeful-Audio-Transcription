@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     diarization_min_duration_off: float = 0.2
     hf_token: str = ""
     transcription_mode: str = "sliced"
+    # whisper (local) | transcribe (Amazon Transcribe on AWS)
+    transcription_provider: str = "whisper"
+    transcribe_language: str = ""  # e.g. en-US; empty = IdentifyLanguage
+    transcribe_max_speakers: int = 10
+    transcribe_poll_seconds: float = 5.0
+    transcribe_timeout_seconds: float = 600.0
     whisper_min_slice_duration: float = 0.5
     whisper_batch_size: int = 8
     whisper_max_slices: int = 200

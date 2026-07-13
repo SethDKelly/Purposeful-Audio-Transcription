@@ -4,7 +4,7 @@ from backend.services.transcript_alignment_service import (
     build_labeled_transcript,
     build_labeled_transcript_from_tagged,
 )
-from backend.services.whisper_service import TaggedSegment, TranscriptSegment
+from backend.services.transcript_types import TaggedSegment, TranscriptSegment
 
 
 def test_assign_speaker_uses_max_overlap() -> None:

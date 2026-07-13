@@ -154,19 +154,15 @@ def test_health_reports_resolved_devices(monkeypatch) -> None:
     from fastapi.testclient import TestClient
 
     from backend.main import app
+    from backend.services.whisper_service import whisper_service
 
     monkeypatch.setattr(
         "backend.api.routes.health.cuda_available",
         lambda: True,
     )
-    monkeypatch.setattr(
-        "backend.api.routes.health.whisper_service.resolved_device",
-        lambda: "cuda",
-    )
-    monkeypatch.setattr(
-        "backend.api.routes.health.whisper_service.resolved_compute_type",
-        lambda: "float16",
-    )
+    monkeypatch.setattr(whisper_service, "resolved_device", lambda: "cuda")
+    monkeypatch.setattr(whisper_service, "resolved_compute_type", lambda: "float16")
+    monkeypatch.setattr(whisper_service, "is_ready", lambda: True)
     monkeypatch.setattr(
         "backend.api.routes.health.diarization_service.resolved_device",
         lambda: "cuda",
@@ -182,6 +178,9 @@ def test_health_reports_resolved_devices(monkeypatch) -> None:
     assert payload["whisper_device"] == "cuda"
     assert payload["diarization_device"] == "cuda"
     assert payload["whisper_compute_type"] == "float16"
+
+
+def test_background_workflow_run_completes(monkeypatch) -> None:
     mock_llm = MagicMock()
     mock_llm.chat.side_effect = [
         _module_llm_response("relationship_conversation_analysis"),

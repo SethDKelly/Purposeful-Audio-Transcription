@@ -1,6 +1,23 @@
 # Model setup
 
-The Relationship Reasoning Engine (RRE) uses **Whisper** (via [faster-whisper](https://github.com/SYSTRAN/faster-whisper)) for local audio transcription and [Ollama](https://ollama.com/) for local LLM inference.
+Local models for the Relationship Reasoning Engine: **Whisper** (transcription) and **Ollama** (LLM).
+
+| Environment | LLM | ASR |
+|-------------|-----|-----|
+| **Local** | Ollama — this page | Whisper + optional pyannote (`TRANSCRIPTION_PROVIDER=whisper`, install `.[local]`) |
+| **AWS** | Bedrock | Amazon Transcribe (`TRANSCRIPTION_PROVIDER=transcribe`, `Dockerfile.cloud`) |
+
+Install:
+
+```bash
+# Local full stack (Whisper + diarization)
+pip install -e ".[dev,local]"
+
+# Cloud / slim API deps only (no torch)
+pip install -e ".[dev]"
+```
+
+---
 
 ## Whisper (transcription)
 

@@ -1,10 +1,7 @@
 import logging
-from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Lock
-
-from faster_whisper import BatchedInferencePipeline, WhisperModel
-from faster_whisper.audio import decode_audio
+from typing import Any
 
 from backend.core.device import resolve_whisper_compute_type, resolve_whisper_device
 from backend.core.exceptions import WhisperError
@@ -14,36 +11,19 @@ from backend.services.audio_slicing import (
     speaker_for_timestamp,
 )
 from backend.services.diarization_timeline import SpeakerInterval
+from backend.services.transcript_types import (
+    TaggedSegment,
+    TranscriptResult,
+    TranscriptSegment,
+)
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class TranscriptSegment:
-    start: float
-    end: float
-    text: str
-
-
-@dataclass(frozen=True)
-class TaggedSegment:
-    segment: TranscriptSegment
-    speaker: str
-
-
-@dataclass
-class TranscriptResult:
-    text: str
-    segments: list[TranscriptSegment] = field(default_factory=list)
-    language: str | None = None
-    duration_seconds: float | None = None
-    tagged_segments: list[TaggedSegment] = field(default_factory=list)
-
-
 class WhisperService:
     def __init__(self) -> None:
-        self._model: WhisperModel | None = None
+        self._model: Any | None = None
         self._lock = Lock()
         self._resolved_device: str | None = None
         self._resolved_compute_type: str | None = None
@@ -60,10 +40,12 @@ class WhisperService:
         device = self.resolved_device()
         return resolve_whisper_compute_type(device, settings.whisper_compute_type)
 
-    def _get_model(self) -> WhisperModel:
+    def _get_model(self) -> Any:
         if self._model is None:
             with self._lock:
                 if self._model is None:
+                    from faster_whisper import WhisperModel
+
                     device = resolve_whisper_device(settings.whisper_device)
                     compute_type = resolve_whisper_compute_type(
                         device, settings.whisper_compute_type
@@ -157,10 +139,12 @@ class WhisperService:
 
     def _transcribe_slices_sequential(
         self,
-        model: WhisperModel,
+        model: Any,
         audio_path: Path,
         slices: list[SpeakerAudioSlice],
     ) -> TranscriptResult:
+        from faster_whisper.audio import decode_audio
+
         audio = decode_audio(str(audio_path))
         sample_rate = 16_000
         segments: list[TranscriptSegment] = []
@@ -209,10 +193,12 @@ class WhisperService:
 
     def _transcribe_slices_batched(
         self,
-        model: WhisperModel,
+        model: Any,
         audio_path: Path,
         slices: list[SpeakerAudioSlice],
     ) -> TranscriptResult:
+        from faster_whisper import BatchedInferencePipeline
+
         pipeline = BatchedInferencePipeline(model)
         clip_timestamps = [{"start": slice_.start, "end": slice_.end} for slice_ in slices]
         segments_iter, info = pipeline.transcribe(
