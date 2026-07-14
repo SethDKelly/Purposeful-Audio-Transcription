@@ -7,8 +7,10 @@ Active planning uses three documents. Architecture, evaluation notes, and histor
 | Document | Purpose |
 |----------|---------|
 | **[completed.md](completed.md)** | Shipped capabilities through the current milestone |
-| **[implementing.md](implementing.md)** | Active work — Tier 1 (critical) → Tier 2 → Tier 3 |
+| **[implementing.md](implementing.md)** | Active work — Tier 1 → 2 → 3; **quality gaps + post-burn-in sequence** |
 | **[backlog.md](backlog.md)** | Future, nice-to-have, and deferred items |
+
+Use **implementing.md** as the plan to follow after P1-4f burn-in. Do not revive archived MVP plans as the task tracker.
 
 ## Architecture and evaluations
 

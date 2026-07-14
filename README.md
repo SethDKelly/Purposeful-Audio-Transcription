@@ -23,10 +23,11 @@ Full walkthrough: [doc/user/getting-started.md](doc/user/getting-started.md) · 
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
+pre-commit install
 pytest tests/ -q
 ```
 
-Tests use SQLite. There is **no** supported local Whisper/Ollama server — integrate and validate on AWS after green pytest. See [doc/developer/development.md](doc/developer/development.md).
+Tests use SQLite. There is **no** supported local Whisper/Ollama server — integrate and validate on AWS after green pytest. Pre-commit runs YAML/config checks, ruff, actionlint, and a targeted pytest slice. See [doc/developer/development.md](doc/developer/development.md).
 
 ## Documentation
 

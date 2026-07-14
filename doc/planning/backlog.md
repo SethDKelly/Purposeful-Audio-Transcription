@@ -78,7 +78,7 @@ AWS images and Terraform exist. Remaining items:
 |------|-------|--------|
 | **Helm chart** | K8s ingress if org move off ECS | Deferred |
 | **Production AWS account** | `prod-github-deploy` in aws-backbone | Deferred |
-| **Distributed job queue** | Celery/Redis for multi-worker | Large |
+| **Distributed job queue** | Celery/Redis multi-host — prefer single ECS worker service first (above) | Large |
 | **Multi-user SaaS** | Accounts, billing, RBAC | Out of product scope unless requirements change |
 
 ---
@@ -108,9 +108,10 @@ Structured logging and CloudWatch are done ([completed.md](completed.md)).
 | Item | Notes | Effort |
 |------|-------|--------|
 | **Module scaffolding CLI** | `scripts/new_module.py` — YAML + prompt stub | 1 day |
-| **Pre-commit hooks** | ruff, mypy optional | 1 day |
+| **mypy / typed CI** | Optional strictness beyond ruff F401/E9 | 2–3 days |
+| **Dedicated ECS worker service** | Run Bedrock module jobs off the ALB-facing API task if health flaps return under load | 1–2 weeks |
 
-*Golden LLM fixtures and pinned lockfiles are in [implementing.md](implementing.md) P1-5.*
+*Pre-commit Tier 1–2 + `validate_config` are done on the Tier 2 branch ([implementing.md](implementing.md) P1-5d). Golden LLM fixtures and pinned lockfiles remain P1-5a/b.*
 
 ---
 

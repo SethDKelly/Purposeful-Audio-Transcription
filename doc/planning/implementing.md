@@ -4,7 +4,7 @@ Material work in flight or next to ship for the **Relationship Reasoning Engine 
 
 | | |
 |---|---|
-| **Status** | **Tier 2** — AWS-only prune (P1-7) done on branch; next P1-4f burn-in / P1-5 |
+| **Status** | **Tier 2 closeout** — P1-3/P1-4a–e/P1-7 done; P1-4f burn-in in progress on AWS; then merge path + P1-5 |
 | **Branch** | `tier-2-p1-trust-workflows` (from `main` @ v0.5.1) |
 | **Strategy** | **AWS only** — Bedrock + Transcribe + ECS + RDS (account `521018312783`, `us-east-2`) via [aws-backbone](https://github.com/SethDKelly/aws-backbone). No local Whisper/Ollama product runtime. |
 | **Cost control** | **Pause AWS when idle** (standing). Deploy wakes only on runtime/infra path pushes to `main`. See [aws-operations.md](../developer/aws-operations.md) |
@@ -30,9 +30,9 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 
 | Tier | Meaning | When |
 |------|---------|------|
-| **1 — Critical** | Blocks cloud validation, Bedrock proof, or secure AWS operation | **Now** |
-| **2 — Significant** | Core product on AWS dev — inference migration, trust, workflow completeness | After Tier 1 gate |
-| **3 — Materially important** | Application depth — ontology, cases, customization | After Quick Review + Full MVP on Bedrock |
+| **1 — Critical** | Blocks cloud validation, Bedrock proof, or secure AWS operation | Done (gate held) |
+| **2 — Significant** | Core product on AWS — trust, workflows, prune, burn-in, CI | **Now** |
+| **3 — Materially important** | Application depth — ontology, cases, customization | After v0.6.0 Tier 2 closeout |
 
 ---
 
@@ -40,208 +40,186 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 
 | Vision item | Gap | Tier |
 |-------------|-----|------|
-| Full Multidisciplinary Suite | No workflow runs all transcript modules + meta-synthesis | 2 (P1-4) |
-| Research-oriented analysis | No dedicated workflow | 2 (P1-4) |
+| Full Multidisciplinary Suite | Workflow + mocked tests ✓; **live Bedrock burn-in** (P1-4f) | 2 |
+| Research-oriented analysis | Workflow + mocked tests ✓; **live Bedrock burn-in** (P1-4f) | 2 |
 | Interactive exploration | No counterfactual presets | 3 (P2-O) / backlog |
 | Knowledge graph | APIs exist; constructs/relationships rarely populated | 3 (P2-O) |
 | Longitudinal / progress tracking | Same-transcript compare only; no case view | 3 (P2-P) |
 | Module customization | Fixed YAML workflows only | 3 (P2-Q) |
 | Professional mode | No case files, session series, finding feedback | 3 (P2-P, P2-R) |
-| Data residency | VPC Stage B + in-account Bedrock/Transcribe | ✓ (local air-gap guide dropped) |
+| Data residency | VPC Stage B + in-account Bedrock/Transcribe | ✓ |
 
 ---
 
-## Immediate next steps
+## Immediate next steps (post this branch)
 
 ```text
-[x] v0.5.1 canonical release on `main` (paths-filtered deploy + Pause practice)
-[x] Open Tier 2 branch `tier-2-p1-trust-workflows`
-[x] P1-3a — temp audio deletion audit (app `finally` + S3 lifecycle 1d)
-[x] P1-3b — DELETE transcript cascade
-[x] P1-3c — log redaction
-[x] P1-3d…f — privacy copy, retention, audit events
-[x] P1-4a–e — full multidisciplinary + research workflows (mocked tests)
-[x] P1-7 — prune local dual-path (Ollama / Whisper / fat image)
-[ ] P1-4f — burn-in on AWS dev with Bedrock (when stack resumed)
-[ ] P1-5 — CI & deploy reliability
+[x] v0.5.1 on `main` · Tier 2 branch · P1-3 trust · P1-4a–e workflows · P1-7 AWS-only prune
+[ ] P1-4f — finish live burn-in (`research_oriented` + `full_multidisciplinary`); record run IDs
+[ ] Push remaining branch commits if any · Deploy once · confirm synthesis findings in UI
+[ ] Merge `tier-2-p1-trust-workflows` → `main` (toward v0.6.0) · Pause AWS when idle
+[ ] P1-5 remaining — lockfile + golden fixtures (pre-commit / health hardening already on branch)
+[ ] P1-6 — broader workflow burn-in on anonymized fixtures (no Ollama)
+[ ] Then Tier 3 (P2-O ontology population first)
 ```
 
-**Standing ops rule:** When AWS is idle, run **Pause AWS dev**. Resume with **Deploy to AWS dev** (`workflow_dispatch` or push under runtime paths). Docs-only pushes do **not** deploy. Details: [aws-operations.md](../developer/aws-operations.md) · [infra/dev/README.md](../../infra/dev/README.md).
+**Standing ops rule:** When AWS is idle, run **Pause AWS_dev**. Resume with **Deploy to AWS_dev**. Docs-only pushes do **not** deploy. [aws-operations.md](../developer/aws-operations.md) · [infra/dev/README.md](../../infra/dev/README.md).
 
-**Slim deploy validated:** `/api/health` → `llm_provider=bedrock`, `llm_available=true`, `database_available=true`, `diarization_ready=false` (expected). CI AWS-3f smoke passed.
+**Burn-in helper:** `python scripts/p1_4f_burnin.py <alb-url>` — requires `background=true` long suites; fails if synthesis returns zero findings.
 
-**Burn-in (2026-07-14):** `POST /api/transcribe` → `transcription_mode=transcribe`; ingest → Quick Review `001f5d84-…` completed — 3/3 modules on Bedrock.
+**Burn-in (2026-07-14+ on branch):** Quick Review / Transcribe previously green. Research-oriented completed live with meta-synthesis findings on Bedrock (buckets populated; API `findings` rollup added for clients). Full multidisciplinary burn-in in progress / affirm before checkmark.
+
+---
+
+## Quality review — gaps to track (Jul 2026)
+
+Findings from AWS-only prune + long-suite burn-in. Items **not** previously first-class in the plan are called out.
+
+| Gap | Severity | Disposition |
+|-----|----------|-------------|
+| Bedrock prose / markdown-outside-JSON failing modules | High | ✓ Mitigated — JSON-only prompts, structured `outputConfig`, alternative_explanations fill |
+| `/api/live` failing under Converse load → ELB drain / deploy thrash | High | ✓ Mitigated — 2 uvicorn workers, ALB `unhealthy_threshold=10`, `min_healthy%=0` |
+| Burn-in counted `findings=0` while buckets had data | High (false negative) | ✓ API `findings` rollup + burn-in asserts non-empty |
+| Meta parse preferred empty confidence buckets over `findings[]` | High (latent) | ✓ Safer `_is_synthesis_output_shape` |
+| No pre-commit / config cross-check | Medium | ✓ Tier 1–2 hooks + CI `validate_*` |
+| Compact meta handoff (drop `raw_markdown_report`) | Medium | ✓ Done — Bedrock token efficiency |
+| Separate compute worker vs API servers | Medium | **Backlog** — promote if single-task still flaps under load |
+| Workflow cancel mid-run | Medium | P2-R6 (promote earlier if burn-in UX needs it) |
+| Streamlit non-ASCII / encoding footguns | Low | Contributing: prefer ASCII UI separators |
+| Pin deps / golden LLM fixtures | Medium | **P1-5** remaining |
+| Construct / relationship population | Product depth | **P2-O** |
+| Multi-worker: only leader resumes incomplete jobs | Acceptable | Documented via PG advisory lock at startup |
 
 ---
 
 ## Tier 1 — Critical
 
-Mostly complete. Remaining: **slim-image AWS validation** and closing formal notes.
+**Complete** for the AWS pivot gate (Quick Review on Bedrock, Stage B, Transcribe, smoke).
 
-### Finish P0-AWS — Bedrock proof & secure AWS dev
+### Finish P0-AWS — Bedrock proof & secure AWS_dev
 
 | # | Task | Notes |
 |---|------|-------|
 | **AWS-5h** | VPC endpoints Stage B | ✓ |
-| **AWS-5g** | Secrets Manager: `HF_TOKEN` | **Skipped** — Transcribe replaces pyannote on AWS |
+| **AWS-5g** | Secrets Manager: `HF_TOKEN` | **Skipped** — Transcribe replaces pyannote |
 | **AWS-3f** | Deploy smoke beyond `/api/health` | ✓ |
-| **AWS-6f** | Deploy trigger → `main` | ✓ Push to `main` + `workflow_dispatch` |
-| **AWS-6g** | Pause AWS when idle (standing practice) | ✓ Done after v0.5.1; continue whenever idle — [aws-operations.md](../developer/aws-operations.md) |
+| **AWS-6f** | Deploy trigger → `main` | ✓ |
+| **AWS-6g** | Pause AWS when idle | ✓ Standing practice |
 | **AWS-1b** | Formal LLM evaluation note | ✓ [llm-evaluation-bedrock.md](llm-evaluation-bedrock.md) |
-| **AWS-1c** | Formal ASR evaluation note | ✓ [asr-evaluation-transcribe.md](asr-evaluation-transcribe.md) — live Stage B burn-in 2026-07-14 |
-| **AWS-1d** | Document no-egress network model | ✓ Staged A/B in [aws-deployment.md](aws-deployment.md) |
-
-**Tier 1 acceptance:** Quick Review on Bedrock ✓ · Stage B no-egress ✓ · Transcribe path proven on AWS ✓ · operator can trace ALB → CloudWatch → `module_run_id`.
+| **AWS-1c** | Formal ASR evaluation note | ✓ [asr-evaluation-transcribe.md](asr-evaluation-transcribe.md) |
+| **AWS-1d** | Document no-egress network model | ✓ [aws-deployment.md](aws-deployment.md) |
 
 ### Runtime profile (AWS only)
 
 | Profile | API image | LLM | Audio ingest |
 |---------|-----------|-----|--------------|
-| **AWS** | `Dockerfile.cloud` | Bedrock | Amazon Transcribe |
+| **AWS** | `Dockerfile.cloud` (2 uvicorn workers) | Bedrock | Amazon Transcribe |
 | **UI** | `Dockerfile.ui` | — | — |
 
-Local dual-path (`Dockerfile` + `.[local]` / Ollama / Whisper) is removed in **P1-7**.
+Local dual-path removed in **P1-7**.
 
 ---
 
 ## Tier 2 — Significant
 
-Core product on AWS after slim cutover burn-in.
-
 ### P1-1 — ASR migration (Amazon Transcribe) ✓
-
-**Goal:** Remove Whisper/pyannote/Hugging Face dependency in AWS.
 
 | # | Task | Status |
 |---|------|--------|
-| P1-1a | `TranscriptionProvider` abstraction | ✓ |
-| P1-1b | Amazon Transcribe adapter — async job, speaker labels | ✓ |
-| P1-1c | S3 upload → output JSON in bucket → labeled turns | ✓ |
-| P1-1d | Whisper path for local (`TRANSCRIPTION_PROVIDER=whisper`) | ✓ |
-| — | Routes/orchestrator use `get_transcription_provider()` | ✓ |
+| P1-1a–c | Provider + Transcribe adapter + S3 JSON path | ✓ |
+| P1-1d | Whisper local path | ✓ then **removed** in P1-7 (superseded) |
 | — | Live AWS Transcribe + Quick Review burn-in | ✓ 2026-07-14 |
 
 ### P1-2 — Slim cloud API image ✓
 
 | # | Task | Status |
 |---|------|--------|
-| P1-2a | `Dockerfile.cloud` — no torch / pyannote / faster-whisper | ✓ |
-| P1-2b | CI builds cloud image; tests use `.[dev,local]` | ✓ (`workflow_dispatch`) |
-| P1-2c | ECS `TRANSCRIPTION_PROVIDER=transcribe`, diarization off | ✓ |
-| P1-2d | Reduce Fargate CPU/memory | ✓ `api` 1024/2048 (was 1024/4096); `512/2048` failed ALB health Jul 2026 |
-| P1-2e | Local vs cloud in [model-setup.md](../user/model-setup.md) | ✓ |
+| P1-2a–e | Cloud Dockerfile, CI, ECS env, sizing, docs | ✓ |
+| — | Follow-on: 2 uvicorn workers + softer ALB thresholds | ✓ on branch (health under Bedrock load) |
 
-**Cutover:** Deploy on push to `main` when **runtime/infra paths** change (not docs-only) + `workflow_dispatch`.
-
-### P1-3 — Data handling & trust
-
-**Goal:** Sensitive data lifecycle and logging boundaries on AWS dev.
+### P1-3 — Data handling & trust ✓
 
 | # | Task | Status |
 |---|------|--------|
-| P1-3a | Temp audio deletion — S3 lifecycle + app `finally` (audit all code paths) | ✓ `saved_upload` + Transcribe S3 `finally`; lifecycle **1d** on `temp/` |
-| P1-3b | `DELETE /api/transcripts/{id}` cascade to runs/reports | ✓ App-level cascade + UI delete |
-| P1-3c | Log redaction — no transcript body in CloudWatch ([log-redaction.md](log-redaction.md)) | ✓ `log_sanitize` + `RedactionFilter`; auto-on Bedrock/Postgres |
-| P1-3d | Privacy copy updated for AWS (data stays in account/VPC) | ✓ UI caption + deployment/ops notes |
-| P1-3e | Optional `TRANSCRIPT_RETENTION_DAYS` + cleanup job | ✓ Startup purge via `transcript_service.purge_expired` |
-| P1-3f | Audit logging for ingest, export, delete events | ✓ `rre.audit` + `POST /api/audit/events` for exports |
+| P1-3a–f | Temp cleanup, cascade DELETE, redaction, privacy, retention, audit | ✓ |
 
 ### P1-4 — Workflow completeness (Phase N)
 
-**Goal:** Full multidisciplinary + research workflows validated on AWS dev.
+| # | Task | Status |
+|---|------|--------|
+| P1-4a | `full_multidisciplinary.yaml` | ✓ |
+| P1-4b | `research_oriented.yaml` | ✓ |
+| P1-4c | Default background for long workflows | ✓ |
+| P1-4d | `WORKFLOW_SYNC_MODULE_LIMIT` + UI warning | ✓ |
+| P1-4e | Mocked integration tests | ✓ |
+| P1-4f | Live AWS burn-in (research + full multidisciplinary) | **In progress** — research green on Bedrock; finish full suite + record IDs |
+
+### P1-7 — Prune local dual-path ✓
 
 | # | Task | Status |
 |---|------|--------|
-| P1-4a | `config/workflows/full_multidisciplinary.yaml` — all 12 transcript-input modules → `meta_synthesis` | ✓ |
-| P1-4b | `config/workflows/research_oriented.yaml` — relationship → cognitive → narrative → bias → systems → meta | ✓ |
-| P1-4c | Default `background: true` for long workflows in API/UI | ✓ `default_background` on YAML + UI checkbox |
-| P1-4d | `WORKFLOW_SYNC_MODULE_LIMIT` env + UI warning for long suites | ✓ default **6**; UI warning + poll |
-| P1-4e | Integration tests with mocked LLM (pattern from existing workflow tests) | ✓ `tests/test_p1_4_workflows.py` |
-| P1-4f | Burn-in on AWS dev with Bedrock | **Pending** — resume Deploy when ready; stack paused to control cost |
-
-### P1-7 — Prune local dual-path (AWS-only codebase)
-
-**Goal:** Remove Ollama / Whisper / pyannote / fat `Dockerfile` so the repo matches the AWS-only product. Dev loop = edit → pytest (SQLite) → Deploy.
-
-| # | Task | Status |
-|---|------|--------|
-| P1-7a | Defaults: `LLM_PROVIDER=bedrock`, `TRANSCRIPTION_PROVIDER=transcribe`; drop Ollama/Whisper/diarization/HF settings surface | ✓ |
-| P1-7b | Remove Ollama adapter + `ollama` core dep; Bedrock-only LLM factory | ✓ |
-| P1-7c | Remove Whisper/pyannote/sliced ASR stack; Transcribe-only | ✓ |
-| P1-7d | Delete fat `Dockerfile` + `.[local]`; CI `pip install -e ".[dev]"` only | ✓ |
-| P1-7e | Health/models/UI: Bedrock-centric; `/api/models`; drop Whisper sidebar | ✓ |
-| P1-7f | Delete local-only scripts/tests; keep Transcribe/Bedrock mocks + SQLite pytest | ✓ |
-| P1-7g | Docs AWS-primary; note prune in [completed.md](completed.md) | ✓ |
+| P1-7a–g | AWS-only defaults, remove Ollama/Whisper/fat image, docs | ✓ |
 
 ### P1-5 — CI & deploy reliability
 
-**Goal:** Reproducible builds without live Ollama/Bedrock in every CI run.
+**Goal:** Reproducible builds; local/CI gates that catch config and health regressions before AWS cost.
 
-| # | Task |
-|---|------|
-| P1-5a | Pinned lockfile (`uv.lock` or equivalent) in CI and Docker builds |
-| P1-5b | Golden LLM output fixtures — record/replay for integration tests |
-| P1-5c | Container smoke test in CI — health + one mocked module run |
+| # | Task | Status |
+|---|------|--------|
+| P1-5a | Pinned lockfile (`uv.lock` or equivalent) in CI and Docker | **Pending** |
+| P1-5b | Golden LLM output fixtures — record/replay for integration tests | **Pending** |
+| P1-5c | Container smoke in CI — health + one mocked module run (beyond AWS-3f) | **Pending** (AWS-3f already post-deploy) |
+| P1-5d | Pre-commit Tier 1–2 + `validate_yaml` / `validate_config` in Deploy CI | ✓ on branch |
+| P1-5e | Multi-worker uvicorn + ALB unhealthy_threshold + min_healthy 0 | ✓ on branch |
+| P1-5f | Synthesis API `findings` rollup + burn-in fails on empty synthesis | ✓ on branch |
 
 ### P1-6 — Evaluation & real-world hardening
 
-Run alongside Tier 2 delivery ([14_testing_evaluation_and_safety.md](../design/14_testing_evaluation_and_safety.md)):
-
-| # | Task |
-|---|------|
-| P1-6a | Burn-in: `quick_review`, `conflict_coaching`, `full_mvp` on real transcripts (Bedrock on AWS; Ollama locally) |
-| P1-6b | Add 3–5 anonymized real scenarios to `tests/fixtures/transcripts/` |
-| P1-6c | Track safety validator false positives; adjust patterns |
+| # | Task | Status |
+|---|------|--------|
+| P1-6a | Burn-in: `quick_review`, `conflict_coaching`, `full_mvp` on real/anonymized transcripts (**Bedrock only**) | Pending after P1-4f |
+| P1-6b | Add 3–5 anonymized scenarios to `tests/fixtures/transcripts/` | Pending |
+| P1-6c | Track safety validator false positives; adjust patterns | Pending |
 
 ---
 
 ## Tier 3 — Materially important
 
-Application depth after AWS dev is stable and Quick Review + Full MVP pass on Bedrock.
+Start after **v0.6.0** Tier 2 closeout (P1-4f done, branch merged, Pause practiced).
 
 ### P2-O — Ontology & construct population
 
-**Problem:** Knowledge graph endpoints work, but LLM outputs usually return empty `constructs` / `relationships`.
-
 | # | Task |
 |---|------|
-| P2-O1 | Extend `output_schema_instructions.md` with construct minimums for relational modules |
-| P2-O2 | `PromptCompiler` optional ontology cheat-sheet section |
-| P2-O3 | Validator soft warnings + retry when `constructs` empty (`expects_constructs: true` in module YAML) |
-| P2-O4 | Post-parse pass: auto-suggest `construct_ids` from keywords via `config/framework/construct_ontology.yaml` |
-| P2-O5 | Exploration presets: `why`, `evidence`, `counterfactual`, `agreement` — API enum + Explore tab buttons |
-
-**Acceptance:** Golden fixture produces ≥2 constructs for relationship + NVC modules; counterfactual preset cites quote IDs.
+| P2-O1 | Extend `output_schema_instructions.md` with construct minimums |
+| P2-O2 | `PromptCompiler` optional ontology cheat-sheet |
+| P2-O3 | Soft warnings + retry when `constructs` empty (`expects_constructs: true`) |
+| P2-O4 | Post-parse `construct_ids` suggestions via ontology YAML |
+| P2-O5 | Exploration presets: `why`, `evidence`, `counterfactual`, `agreement` |
 
 ### P2-P — Cases & longitudinal analysis
 
 | # | Task |
 |---|------|
-| P2-P1 | Domain model: `Case` entity; optional `Transcript.case_id`; Alembic migration |
-| P2-P2 | API: `POST/GET /api/cases`, assign transcript to case |
-| P2-P3 | `POST /api/exploration/compare-transcripts` — themes across transcripts in a case |
-| P2-P4 | Streamlit: assign to case on ingest; case dashboard with runs and trend summary |
+| P2-P1–4 | Case entity, APIs, compare-across-transcripts, Streamlit case dashboard |
 
 ### P2-Q — Custom workflows
 
 | # | Task |
 |---|------|
-| P2-Q1 | `POST /api/workflows/custom/run` — `{ transcript_id, module_ids[], model?, background? }` |
-| P2-Q2 | Validate module existence, input types, `meta_synthesis` last if included |
-| P2-Q3 | Streamlit multi-select module picker |
-| P2-Q4 | Optional `output_tone` / `inference_depth` in compiler context |
+| P2-Q1–4 | Custom run API, validation (also covered partly by `validate_config`), UI picker, tone/depth |
 
 ### P2-R — Streamlit professional polish
 
-| # | Task |
-|---|------|
-| P2-R1 | Human-readable confidence labels (“Directly observed”, etc.) |
-| P2-R2 | Streamlit sends `X-API-Key` when `API_KEY` set in UI env |
-| P2-R3 | Background workflow toggle in Analyze step |
-| P2-R4 | Finding feedback: `POST .../findings/{key}/feedback` helpful/unhelpful + note |
-| P2-R5 | Supervision export template — anonymized, limitations prominent |
-| P2-R6 | Basic workflow cancellation for background runs |
-| P2-R7 | Coaching action plan export — short actionable markdown distinct from coach summary |
+| # | Task | Notes |
+|---|------|-------|
+| P2-R1 | Human-readable confidence labels | Pending |
+| P2-R2 | UI sends `X-API-Key` when set | Pending |
+| P2-R3 | Background workflow toggle | ✓ (Analyze step) |
+| P2-R4 | Finding feedback API + UI | Pending |
+| P2-R5 | Supervision export template | Pending |
+| P2-R6 | Basic workflow cancellation | **Consider promoting** after burn-in UX pain |
+| P2-R7 | Coaching action plan export | Pending |
 
 ---
 
@@ -249,9 +227,8 @@ Application depth after AWS dev is stable and Quick Review + Full MVP pass on Be
 
 | Release | Theme | Status |
 |---------|--------|--------|
-| **v0.5.0** | AWS substrate (ECS, Stage B, Bedrock QR, smoke) | Folded into **v0.5.1** canonical |
-| **v0.5.1** | Transcribe + slim cloud + main deploy/pause | **Released** — [releases/v0.5.1.md](../releases/v0.5.1.md) |
-| **v0.6.0** | Full multidisciplinary on AWS; data handling & trust (P1-3/P1-4) | Pending |
+| **v0.5.1** | Transcribe + slim cloud + main deploy/pause | **Released** |
+| **v0.6.0** | Trust + full/research workflows + AWS-only prune + burn-in | **In progress** on `tier-2-p1-trust-workflows` |
 | **v0.7.0** | Ontology + cases | Pending |
 | **v1.0.0** | Stable `main` deploy + API contract | Pending |
 
@@ -259,15 +236,16 @@ Application depth after AWS dev is stable and Quick Review + Full MVP pass on Be
 
 ## Explicitly out of scope
 
-- Modifying **MinneAnalytics** IAM, state, or deploy workflows in aws-backbone
+- Modifying **MinneAnalytics** IAM/state in aws-backbone
 - Multi-user SaaS, billing, RBAC beyond API key
 - Production AWS account / `prod-github-deploy`
-- Runtime Hugging Face or public model downloads in AWS deploy
-- Hardcoded per-model branches (use provider + `model_id` config)
+- Runtime Hugging Face or public model downloads in AWS
+- Hardcoded per-model branches
 - Graph database backend
 - Tone/emotion inference from audio timing
-- Distributed queue (Celery/Redis) — thread pool sufficient for private use
 - torchcodec migration ([aws-deployment.md §5](aws-deployment.md))
+
+**Deferred (backlog, not forbidden):** dedicated ECS worker fleet / queue for Bedrock jobs if API serving still fights long Converse under load.
 
 ---
 
@@ -275,14 +253,16 @@ Application depth after AWS dev is stable and Quick Review + Full MVP pass on Be
 
 | Decision | Rationale |
 |----------|-----------|
-| **Pause auto-deploy until slim cutover** | Fat image + Stage B caused ALB/ECR thrash; develop Transcribe/slim offline |
-| **Pause AWS when idle** | Stop Fargate + RDS compute between sessions; ALB/ECR/storage still bill |
+| **Pause AWS when idle** | Stop Fargate + RDS compute between sessions |
 | **Skip AWS-5g HF_TOKEN** | Transcribe replaces pyannote on AWS |
-| **S3 output for Transcribe JSON** | Stage B has no public egress — avoid fetching TranscriptFileUri over the internet |
+| **S3 output for Transcribe JSON** | Stage B has no public egress |
 | **`/api/live` for ALB** | Full `/api/health` can hang on Bedrock/deps |
+| **2 uvicorn workers** | Keep liveness responsive during Converse |
+| **Structured Bedrock JSON** | Reduce prose-only parse failures on Sonnet 4.5 |
+| **Compact meta handoff** | Drop `raw_markdown_report` from prior outputs for token cost |
 | **Constructs before React** | Graph UI useless without populated data |
 | **Cases before custom workflows** | Longitudinal value for coach/therapist personas |
-| **SQLite remains default locally** | PostgreSQL optional; no forced migration |
+| **SQLite for pytest only** | Product DB is RDS Postgres on AWS |
 
 ---
 
@@ -291,5 +271,6 @@ Application depth after AWS dev is stable and Quick Review + Full MVP pass on Be
 | Document | Purpose |
 |----------|---------|
 | [aws-deployment.md](aws-deployment.md) | AWS architecture, backbone integration, model strategy |
-| [../developer/aws-operations.md](../developer/aws-operations.md) | CloudWatch Logs Insights runbook |
+| [../developer/aws-operations.md](../developer/aws-operations.md) | CloudWatch, smoke, pause/resume, burn-in notes |
+| [../developer/contributing.md](../developer/contributing.md) | Pre-commit + module/workflow contribution |
 | **aws-backbone** (separate repo) | IAM, OIDC, `dev-github-deploy` |

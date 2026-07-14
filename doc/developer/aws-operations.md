@@ -114,19 +114,23 @@ Beyond `GET /api/health`. Automated in CI via `scripts/aws-deploy-smoke.sh` afte
 | Check | How |
 |-------|-----|
 | Health payload | `GET /api/health` — `status=ok`, `llm_provider=bedrock`, `llm_available=true`, `database_available=true` |
-| ALB liveness | API TG uses `GET /api/live` (no Bedrock/HF); UI uses `/_stcore/health` |
-| ALB → API | `http://<alb>/api/health` and `http://<alb>/api/workflows` (includes `quick_review`) |
+| ALB liveness | API TG uses `GET /api/live` (no Bedrock); UI uses `/_stcore/health` |
+| ALB → API | `http://<alb>/api/health` and `http://<alb>/api/workflows` |
 | ALB → UI | `http://<alb>/_stcore/health` |
 | ECS services | Desired == running; fail on recent `CannotPullContainerError` |
-| Target groups | ≥1 **healthy** target per API/UI TG (`describe-target-health`; ignore `draining`/`initial` during roll) |
-| Logs | Recent streams under `/rre/dev/api` and `/rre/dev/ui` (warn if missing) |
-| Bedrock path | Optional manual: Quick Review on a short paste transcript |
+| Target groups | ≥1 **healthy** target per API/UI TG |
+| Logs | Recent streams under `/rre/dev/api` and `/rre/dev/ui` |
+| Bedrock path | Optional: Quick Review or `scripts/p1_4f_burnin.py` |
 
-Local (from repo root, with AWS + terraform state access):
+## Long-suite burn-in (P1-4f)
 
-```bash
-./scripts/aws-deploy-smoke.sh
+Prefer **background** workflows. Do **not** Deploy mid-burn-in.
+
+```powershell
+.\.venv\Scripts\python.exe -u scripts\p1_4f_burnin.py http://<alb-dns>
 ```
+
+Expect: `research_oriented` (6 modules) then `full_multidisciplinary` (13). Script **fails** if synthesis has zero findings. ALB unhealthy_threshold is intentionally soft (10); API image runs **2 uvicorn workers** so `/api/live` stays up during Converse.
 
 ## Pause / resume (when idle)
 

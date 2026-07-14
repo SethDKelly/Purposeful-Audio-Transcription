@@ -108,4 +108,5 @@ Track CloudWatch `module.run.*` durations before publishing SLOs.
 
 - [ ] Haiku A/B for cheaper modules after quality bar is set
 - [ ] Formal token/cost sampling from CloudWatch + Billing
-- [ ] Meta-synthesis length under Sonnet max tokens on long suites
+- [x] Meta-synthesis / long suites: compact prior outputs + 16k max tokens + structured JSON
+- [x] JSON-only prompts (no markdown-after-JSON) after parse failures in burn-in
