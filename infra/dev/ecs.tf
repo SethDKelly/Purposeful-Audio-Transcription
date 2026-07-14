@@ -60,7 +60,7 @@ resource "aws_ecs_task_definition" "api" {
       command     = ["CMD-SHELL", "curl -f http://127.0.0.1:8000/api/live || exit 1"]
       interval    = 30
       timeout     = 5
-      retries     = 3
+      retries     = 5
       startPeriod = 180
     }
   }])

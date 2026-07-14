@@ -176,11 +176,13 @@ resource "aws_lb_target_group" "api" {
   deregistration_delay = 30
 
   health_check {
-    enabled             = true
-    path                = "/api/live"
-    matcher             = "200"
-    healthy_threshold   = 2
-    unhealthy_threshold = 5
+    enabled           = true
+    path              = "/api/live"
+    matcher           = "200"
+    healthy_threshold = 2
+    # Burn-in / Bedrock load can delay answers briefly; require sustained failure
+    # before marking the sole API target unhealthy.
+    unhealthy_threshold = 10
     interval            = 30
     timeout             = 10
   }
@@ -200,7 +202,7 @@ resource "aws_lb_target_group" "ui" {
     path                = "/_stcore/health"
     matcher             = "200"
     healthy_threshold   = 2
-    unhealthy_threshold = 5
+    unhealthy_threshold = 10
     interval            = 30
     timeout             = 15
   }

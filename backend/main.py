@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 import logging
+import time
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from backend.api.middleware import APIKeyMiddleware, RequestContextMiddleware
 from backend.api.routes import (
@@ -20,27 +22,82 @@ from backend.api.routes import (
 )
 from backend.core.exceptions import AppError
 from backend.core.logging_config import configure_logging
-from backend.db.base import init_db
+from backend.db.base import engine, init_db
 from backend.services.transcript_service import transcript_service
 from backend.services.workflow_job_service import workflow_job_service
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
+# Postgres advisory lock key so only one uvicorn worker runs migrations / resume.
+_STARTUP_LOCK_KEY = 87422014
+
+
+def _acquire_startup_leader() -> bool:
+    """Return True if this process should run one-time startup side effects."""
+    if settings.is_sqlite:
+        return True
+    try:
+        with engine.connect() as conn:
+            locked = conn.execute(
+                text("SELECT pg_try_advisory_lock(:key)"),
+                {"key": _STARTUP_LOCK_KEY},
+            ).scalar()
+            conn.commit()
+            return bool(locked)
+    except Exception as exc:  # noqa: BLE001 — startup must continue even if lock fails
+        logger.warning("Startup leader lock failed (%s); running startup in this worker", exc)
+        return True
+
+
+def _release_startup_leader() -> None:
+    if settings.is_sqlite:
+        return
+    try:
+        with engine.connect() as conn:
+            conn.execute(
+                text("SELECT pg_advisory_unlock(:key)"),
+                {"key": _STARTUP_LOCK_KEY},
+            )
+            conn.commit()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Startup leader unlock failed: %s", exc)
+
+
+def _wait_for_database(timeout_seconds: float = 90.0) -> None:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            return
+        except Exception:  # noqa: BLE001
+            time.sleep(1.0)
+    raise RuntimeError("Database not ready for non-leader uvicorn worker")
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    init_db()
-    purged = transcript_service.purge_expired()
-    if purged:
-        logger.info(
-            "Purged %s transcript(s) past retention",
-            purged,
-            extra={"event": "transcript.purge", "purged_count": purged},
-        )
-    workflow_job_service.resume_incomplete()
-    yield
-    workflow_job_service.shutdown()
+    leader = _acquire_startup_leader()
+    if leader:
+        init_db()
+        purged = transcript_service.purge_expired()
+        if purged:
+            logger.info(
+                "Purged %s transcript(s) past retention",
+                purged,
+                extra={"event": "transcript.purge", "purged_count": purged},
+            )
+        workflow_job_service.resume_incomplete()
+    else:
+        logger.info("Non-leader uvicorn worker; waiting for DB then serving")
+        _wait_for_database()
+    try:
+        yield
+    finally:
+        workflow_job_service.shutdown()
+        if leader:
+            _release_startup_leader()
 
 
 configure_logging()

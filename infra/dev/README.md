@@ -85,7 +85,9 @@ This sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Terraform
 
 **Resume** — **Deploy to AWS dev** (`workflow_dispatch`) or push under runtime/infra paths (docs-only does not deploy). The deploy workflow starts RDS if stopped, then scales ECS.
 
-**Task size (P1-2d):** Slim API defaults — `api_cpu=1024`, `api_memory=2048` (was 1024/4096). Tried 512/2048; ALB `/api/live` timed out during cutover. UI remains `256` / `512`. Apply on next Terraform deploy.
+**Task size (P1-2d):** Slim API defaults — `api_cpu=1024`, `api_memory=2048` (was 1024/4096). Tried 512/2048; ALB `/api/live` timed out during cutover. UI remains `256` / `512`.
+
+**API serving (burn-in resilience):** Cloud image runs **2 uvicorn workers** so `/api/live` stays responsive during Bedrock Converse. ALB unhealthy_threshold is **10** (was 5). Deploy uses `deployment_minimum_healthy_percent = 0` for single-task replace.
 
 **Costs while paused:** ALB (~$16/mo), ECR image storage, Secrets Manager, RDS storage (no compute while stopped). RDS auto-restarts after ~7 days if not resumed.
 
