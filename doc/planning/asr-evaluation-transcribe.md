@@ -67,7 +67,7 @@ Settings: `TRANSCRIPTION_PROVIDER`, `UPLOADS_BUCKET`, `TRANSCRIBE_LANGUAGE` (def
 ### Ops / security
 
 - [x] Task role includes Transcribe + S3 (iam.tf)
-- [x] Temp audio + transcript JSON deleted in `finally` (app); S3 lifecycle also set
+- [x] Temp audio + transcript JSON deleted in `finally` (app); S3 lifecycle **1 day** on `temp/` (P1-3a)
 - [ ] No transcript body in CloudWatch (P1-3c)
 - [x] VPC endpoint smoke: Transcribe job with Stage B tasks (slim deploy burn-in)
 

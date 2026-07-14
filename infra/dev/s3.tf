@@ -33,7 +33,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "uploads" {
     }
 
     expiration {
-      days = 7
+      days = 1
     }
   }
 }
