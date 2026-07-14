@@ -60,8 +60,8 @@ resource "aws_ecs_task_definition" "api" {
       command     = ["CMD-SHELL", "curl -f http://127.0.0.1:8000/api/live || exit 1"]
       interval    = 30
       timeout     = 5
-      retries     = 5
-      startPeriod = 180
+      retries     = 8
+      startPeriod = 300
     }
   }])
 }
@@ -104,8 +104,8 @@ resource "aws_ecs_task_definition" "ui" {
       command     = ["CMD-SHELL", "curl -f http://127.0.0.1:8501/_stcore/health || exit 1"]
       interval    = 30
       timeout     = 5
-      retries     = 5
-      startPeriod = 180
+      retries     = 8
+      startPeriod = 300
     }
   }])
 }
@@ -140,7 +140,8 @@ resource "aws_ecs_service" "api" {
   # (common while Bedrock Converse holds a worker during burn-in).
   deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 200
-  health_check_grace_period_seconds  = 300
+  # Allow Alembic + multi-worker bind before ALB marks the sole target unhealthy.
+  health_check_grace_period_seconds = 420
 
   deployment_circuit_breaker {
     enable   = true
@@ -175,7 +176,7 @@ resource "aws_ecs_service" "ui" {
 
   deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 200
-  health_check_grace_period_seconds  = 300
+  health_check_grace_period_seconds  = 420
 
   deployment_circuit_breaker {
     enable   = true

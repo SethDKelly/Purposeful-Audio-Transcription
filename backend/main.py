@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import asyncio
 import logging
 import time
 
@@ -29,7 +30,7 @@ from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
-# Postgres advisory lock key so only one uvicorn worker runs migrations / resume.
+# Postgres advisory lock key so only one uvicorn worker runs migrations / purge.
 _STARTUP_LOCK_KEY = 87422014
 
 
@@ -45,9 +46,13 @@ def _acquire_startup_leader() -> bool:
             ).scalar()
             conn.commit()
             return bool(locked)
-    except Exception as exc:  # noqa: BLE001 — startup must continue even if lock fails
-        logger.warning("Startup leader lock failed (%s); running startup in this worker", exc)
-        return True
+    except Exception as exc:  # noqa: BLE001
+        # Fail closed: prefer a follower over two leaders racing Alembic.
+        logger.warning(
+            "Startup leader lock failed (%s); treating this worker as non-leader",
+            exc,
+        )
+        return False
 
 
 def _release_startup_leader() -> None:
@@ -64,40 +69,63 @@ def _release_startup_leader() -> None:
         logger.warning("Startup leader unlock failed: %s", exc)
 
 
-def _wait_for_database(timeout_seconds: float = 90.0) -> None:
+def _wait_for_database(timeout_seconds: float = 90.0) -> bool:
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
         try:
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
-            return
+            return True
         except Exception:  # noqa: BLE001
             time.sleep(1.0)
-    raise RuntimeError("Database not ready for non-leader uvicorn worker")
+    return False
+
+
+def _run_leader_startup() -> None:
+    init_db()
+    purged = transcript_service.purge_expired()
+    if purged:
+        logger.info(
+            "Purged %s transcript(s) past retention",
+            purged,
+            extra={"event": "transcript.purge", "purged_count": purged},
+        )
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     leader = _acquire_startup_leader()
     if leader:
-        init_db()
-        purged = transcript_service.purge_expired()
-        if purged:
-            logger.info(
-                "Purged %s transcript(s) past retention",
-                purged,
-                extra={"event": "transcript.purge", "purged_count": purged},
-            )
-        workflow_job_service.resume_incomplete()
+        try:
+            _run_leader_startup()
+        finally:
+            # Release before yield so a recycled connection does not pin the lock
+            # for the whole process lifetime (and so a failed leader does not block).
+            _release_startup_leader()
     else:
-        logger.info("Non-leader uvicorn worker; waiting for DB then serving")
-        _wait_for_database()
+        logger.info("Non-leader uvicorn worker; waiting briefly for DB then serving")
+        if not _wait_for_database():
+            logger.warning(
+                "Database not ready for non-leader worker; still serving /api/live"
+            )
+
+    # Resume after bind so ALB /api/live is not gated on unfinished job recovery.
+    resume_task = None
+    if leader:
+        resume_task = asyncio.create_task(
+            asyncio.to_thread(workflow_job_service.resume_incomplete)
+        )
+
     try:
         yield
     finally:
+        if resume_task is not None and not resume_task.done():
+            resume_task.cancel()
+            try:
+                await resume_task
+            except asyncio.CancelledError:
+                pass
         workflow_job_service.shutdown()
-        if leader:
-            _release_startup_leader()
 
 
 configure_logging()
