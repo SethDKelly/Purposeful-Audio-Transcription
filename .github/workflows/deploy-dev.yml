@@ -1,22 +1,17 @@
 name: Deploy to AWS dev
 
-# Push to main deploys only when runtime/infra paths change — docs-only commits stay quiet.
+# Docs-only / markdown-only pushes do not wake AWS. Runtime changes still auto-deploy.
 # Manual: Actions → Deploy to AWS dev → Run workflow.
 on:
   push:
     branches: [main]
-    paths:
-      - "backend/**"
-      - "ui/**"
-      - "config/**"
-      - "alembic/**"
-      - "infra/dev/**"
-      - "scripts/aws-deploy-smoke.sh"
-      - "scripts/wait-ecs-stable.py"
-      - "scripts/decode-oidc-claims.py"
-      - "Dockerfile"
-      - "Dockerfile.cloud"
-      - "Dockerfile.ui"
+    paths-ignore:
+      - "**/*.md"
+      - "doc/**"
+      - ".github/workflows/**"
+      - ".gitignore"
+      - ".gitattributes"
+      - "LICENSE*"
   workflow_dispatch:
 
 permissions:

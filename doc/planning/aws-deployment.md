@@ -405,18 +405,9 @@ name: Deploy to AWS dev
 on:
   push:
     branches: [main]
-    paths:
-      - "backend/**"
-      - "ui/**"
-      - "config/**"
-      - "alembic/**"
-      - "infra/dev/**"
-      - "scripts/aws-deploy-smoke.sh"
-      - "scripts/wait-ecs-stable.py"
-      - "scripts/decode-oidc-claims.py"
-      - "Dockerfile"
-      - "Dockerfile.cloud"
-      - "Dockerfile.ui"
+    paths-ignore:
+      - "**/*.md"
+      - "doc/**"
   workflow_dispatch:
 
 permissions:
