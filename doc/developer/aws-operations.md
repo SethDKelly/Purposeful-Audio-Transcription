@@ -107,6 +107,8 @@ After a push that rebuilds images / applies Terraform:
 2. Check health + ECS stability
 3. If not ready, up to **three** rechecks at **2-minute** intervals
 
+**Replace strategy (desired=1):** Deploy **clears** API/UI tasks first (`scripts/ecs-clear-before-deploy.py` → desired 0 + stop running tasks), then Terraform apply brings up one fresh revision. This avoids ALB drain races where the old target is still unregistering while the new task boots.
+
 ## Post-deploy smoke (AWS-3f checklist)
 
 Beyond `GET /api/health`. Automated in CI via `scripts/aws-deploy-smoke.sh` after ECS is stable.
