@@ -4,7 +4,7 @@ Material work in flight or next to ship for the **Relationship Reasoning Engine 
 
 | | |
 |---|---|
-| **Status** | **v0.5.1 cutover** — burn-in + P1-2d done; next: stabilize → PR to `main`, then Pause AWS |
+| **Status** | **v0.5.1 cutover** — P1-2d live (1024/2048) + smoke green; next: PR to `main`, then Pause AWS |
 | **Branch** | `phase-m0-docs` → PR to `main` when v0.5.0/v0.5.1 acceptance met |
 | **Strategy** | AWS dev (account `521018312783`, `us-east-2`) via [aws-backbone](https://github.com/SethDKelly/aws-backbone); local for prompt/module + Whisper |
 | **Cost control** | **Pause AWS after v0.5.1 is on `main`** (first post-version ops step), then whenever idle. See [aws-operations.md](../developer/aws-operations.md) |
@@ -57,7 +57,7 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 [x] Manual slim deploy (Dockerfile.cloud + Transcribe env — CI green)
 [x] AWS burn-in: Transcribe audio upload + Quick Review on Bedrock (3/3 modules)
 [x] Close Tier 1 docs: AWS-1c live Transcribe checklist
-[x] P1-2d — Lower Fargate memory (1024/2048; 512/2048 failed health during cutover)
+[x] P1-2d — Lower Fargate memory (1024/2048 live; 512/2048 failed health during cutover)
 [ ] Stabilize v0.5.1 → PR / merge to `main`
 ```
 
