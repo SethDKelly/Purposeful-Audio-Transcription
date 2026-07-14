@@ -106,12 +106,12 @@ Local (from repo root, with AWS + terraform state access):
 
 ## Pause / resume (when idle)
 
-**Standing practice:** After **v0.5.1 is on `main`**, pause AWS before leaving the stack idle (and thereafter between sessions). Pause was deferred during cutover so sizing/deploy could finish without an early scale-down.
+**Standing practice:** Pause AWS when the stack is idle. Deploy does **not** run on docs-only pushes to `main` (path filters). Resume via **Deploy to AWS dev** (`workflow_dispatch`) or a runtime/infra push.
 
 | Action | How |
 |--------|-----|
 | **Pause** | GitHub Actions → **Pause AWS dev** → Run workflow (`workflow_dispatch` works once `pause-dev.yml` is on `main`) |
-| **Resume** | Push to `main` (auto-deploy) or Actions → **Deploy to AWS dev** → Run workflow |
+| **Resume** | Actions → **Deploy to AWS dev** (`workflow_dispatch`), or push changes under runtime/infra paths (not docs-only) |
 
 Pause sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Full steps, residual costs (ALB, ECR, Secrets Manager, RDS storage), and CLI equivalents: [infra/dev/README.md](../../infra/dev/README.md).
 

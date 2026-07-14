@@ -4,9 +4,9 @@ Record of shipped capabilities for the **Relationship Reasoning Engine (RRE)** t
 
 | | |
 |---|---|
-| **Current branch** | `phase-m0-docs` → PR to `main` (v0.5.1) |
-| **Baseline release** | **v0.3.0** on `main` — MVP + post-MVP |
-| **In progress toward** | **v0.5.1** — P1-2d Fargate sizing → PR to `main`; then Pause AWS |
+| **Current branch** | `main` @ **v0.5.1** |
+| **Baseline release** | **v0.5.1** — AWS cloud cutover ([releases/v0.5.1.md](../releases/v0.5.1.md)) |
+| **In progress toward** | **v0.6.0** — Tier 2 trust (P1-3) + full workflows (P1-4) |
 | **Tests** | 174+ passing (CI) |
 | **AWS account** | `521018312783`, `us-east-2` |
 | **Architecture detail** | [aws-deployment.md](aws-deployment.md) |
@@ -207,8 +207,8 @@ Original build goal: analyze a transcript with a representative module subset an
 | **v0.2.0** | MVP — 4 modules + synthesis, Quick Review workflow |
 | **v0.3.0** | Post-MVP — 13 modules, 5 workflows, exploration, PostgreSQL |
 | **v0.4.x** | Diarization, sliced transcription, timeline smoothing, Ollama JSON fixes |
-| **v0.5.0** (ops) | AWS substrate — ECS, Terraform, Bedrock QR, Stage B, deploy smoke |
-| **v0.5.1** (burn-in) | Transcribe + slim image + Stage B QR — AWS validated 2026-07-14 |
+| **v0.5.0** (ops) | AWS substrate — folded into v0.5.1 |
+| **v0.5.1** | **Canonical** — Transcribe + slim image + Stage B + main deploy/pause |
 
 ---
 
@@ -221,9 +221,9 @@ Original build goal: analyze a transcript with a representative module subset an
 | Transcribe over Whisper (AWS target) | Removes GPU/HF burden in cloud |
 | Ollama retained locally | Fast prompt/module iteration without AWS cost |
 | `rre-dev-*` IAM prefix | Isolation from MinneAnalytics |
-| Hybrid profiles | Full local Docker + slim cloud target via env |
+| Hybrid profiles | Full local Docker + slim cloud via env |
 | App infra in RRE repo | aws-backbone is IAM/OIDC only |
-| `phase-m0-docs` until stable | Safe AWS testing before `main` PR |
+| Docs-only pushes skip deploy | Path filters on `deploy-dev.yml` keep Pause quiet |
 | Diarization before full-suite workflow | Multi-speaker turns required for module quality |
 | pyannote over Whisper-only diarization | Whisper does not identify speakers |
 | Graceful diarization fallback | Users without `HF_TOKEN` still get transcription |

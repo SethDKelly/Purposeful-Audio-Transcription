@@ -7,8 +7,8 @@ Architecture and integration guide for deploying the Relationship Reasoning Engi
 | **Account** | `521018312783` |
 | **Region** | `us-east-2` (Ohio) |
 | **Deploy role** | `arn:aws:iam::521018312783:role/dev-github-deploy` |
-| **Branch** | `main` (after v0.5.1 merge); Tier 2 on a new branch |
-| **Deploy** | Push to `main` + `workflow_dispatch` |
+| **Branch** | `main` @ **v0.5.1** (canonical) |
+| **Deploy** | Path-filtered push to `main` + `workflow_dispatch` |
 | **Active plan** | [implementing.md](implementing.md) |
 
 ---
@@ -405,6 +405,18 @@ name: Deploy to AWS dev
 on:
   push:
     branches: [main]
+    paths:
+      - "backend/**"
+      - "ui/**"
+      - "config/**"
+      - "alembic/**"
+      - "infra/dev/**"
+      - "scripts/aws-deploy-smoke.sh"
+      - "scripts/wait-ecs-stable.py"
+      - "scripts/decode-oidc-claims.py"
+      - "Dockerfile"
+      - "Dockerfile.cloud"
+      - "Dockerfile.ui"
   workflow_dispatch:
 
 permissions:
@@ -465,7 +477,7 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 | 6. `deploy-dev.yml` | RRE | Steps 4–5 | ✓ (push `main` + `workflow_dispatch`) |
 | 7. Quick Review on Bedrock in dev | RRE | Step 6 | ✓ |
 | 8. Transcribe path | RRE | Step 7 | ✓ (slim + Stage B burn-in 2026-07-14) |
-| 9. PR `phase-m0-docs` → `main` | RRE | Stable dev | In progress |
+| 9. PR `phase-m0-docs` → `main` / **v0.5.1 release** | RRE | Stable dev | ✓ |
 
 ---
 

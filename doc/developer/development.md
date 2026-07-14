@@ -9,7 +9,7 @@ Same as [../user/getting-started.md](../user/getting-started.md): Python 3.11+, 
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
+pip install -e ".[dev,local]"
 copy .env.example .env
 ```
 

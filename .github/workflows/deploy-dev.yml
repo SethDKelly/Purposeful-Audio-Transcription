@@ -1,9 +1,22 @@
 name: Deploy to AWS dev
 
-# Push to main deploys AWS dev; manual Run workflow always available.
+# Push to main deploys only when runtime/infra paths change — docs-only commits stay quiet.
+# Manual: Actions → Deploy to AWS dev → Run workflow.
 on:
   push:
     branches: [main]
+    paths:
+      - "backend/**"
+      - "ui/**"
+      - "config/**"
+      - "alembic/**"
+      - "infra/dev/**"
+      - "scripts/aws-deploy-smoke.sh"
+      - "scripts/wait-ecs-stable.py"
+      - "scripts/decode-oidc-claims.py"
+      - "Dockerfile"
+      - "Dockerfile.cloud"
+      - "Dockerfile.ui"
   workflow_dispatch:
 
 permissions:

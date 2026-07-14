@@ -10,18 +10,18 @@ Quick path from clone to your first workflow report.
 | [ffmpeg](https://ffmpeg.org/download.html) | On `PATH` for audio |
 | [Ollama](https://ollama.com/) | Running locally |
 | Chat model | e.g. `ollama pull llama3.2` |
-| Speaker diarization | Included in `pip install`; set `HF_TOKEN` — see [model-setup.md](model-setup.md) |
+| Speaker diarization | Optional: `pip install -e ".[local]"` + `HF_TOKEN` — see [model-setup.md](model-setup.md) |
 
 ## Install
 
 ```powershell
 git clone https://github.com/SethDKelly/Purposeful-Audio-Transcription.git
 cd Purposeful-Audio-Transcription
-git checkout v0.3.0   # or use main
+git checkout v0.5.1   # or use main
 
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
+pip install -e ".[dev,local]"
 
 copy .env.example .env
 ```

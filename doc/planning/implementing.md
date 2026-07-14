@@ -4,10 +4,10 @@ Material work in flight or next to ship for the **Relationship Reasoning Engine 
 
 | | |
 |---|---|
-| **Status** | **v0.5.1 on `main`** — deploy + Pause AWS green; next: Tier 2 branch (P1-3 / P1-4) |
-| **Branch** | `main` → open new Tier 2 branch |
+| **Status** | **v0.5.1 released** — next: Tier 2 on branch (`P1-3` trust, then `P1-4` workflows) |
+| **Branch** | Open Tier 2 branch from `main` |
 | **Strategy** | AWS dev (account `521018312783`, `us-east-2`) via [aws-backbone](https://github.com/SethDKelly/aws-backbone); local for prompt/module + Whisper |
-| **Cost control** | **Pause AWS after merge to `main`** (first post-version ops step), then whenever idle. Tier 2 work on a new `dev` branch. See [aws-operations.md](../developer/aws-operations.md) |
+| **Cost control** | **Pause AWS when idle** (standing). Deploy wakes only on runtime/infra path pushes to `main`. See [aws-operations.md](../developer/aws-operations.md) |
 | **Architecture** | [aws-deployment.md](aws-deployment.md) |
 | **Design anchors** | [../design/01_product_vision_and_scope.md](../design/01_product_vision_and_scope.md) |
 
@@ -54,29 +54,17 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 ## Immediate next steps
 
 ```text
-[x] Manual slim deploy (Dockerfile.cloud + Transcribe env — CI green)
-[x] AWS burn-in: Transcribe audio upload + Quick Review on Bedrock (3/3 modules)
-[x] Close Tier 1 docs: AWS-1c live Transcribe checklist
-[x] P1-2d — Lower Fargate memory (1024/2048 live; 512/2048 failed health during cutover)
-[x] AWS-6f — Deploy on push to `main` (+ keep `workflow_dispatch`)
-[x] Merge PR `phase-m0-docs` → `main`
-[x] Fix main deploy ECS health flap (drop Streamlit from cloud API; UI grace/circuit breaker)
+[x] v0.5.1 canonical release on `main` (paths-filtered deploy + Pause practice)
+[ ] Tier 2: P1-3a — audit temp audio deletion (S3 lifecycle + app `finally`)
+[ ] P1-3b…f — remaining trust/data handling
+[ ] P1-4 — full multidisciplinary + research workflows
 ```
 
-### First after deploy is green on `main`
-
-```text
-[x] Pause AWS dev (ECS→0, stop RDS) — first post-merge ops step
-[ ] Open new Tier 2 branch (P1-3 trust / P1-4 full suite)
-```
-
-Landing `pause-dev.yml` on `main` enables Actions → **Pause AWS dev** → Run workflow (`workflow_dispatch`).
+**Standing ops rule:** When AWS is idle, run **Pause AWS dev**. Resume with **Deploy to AWS dev** (`workflow_dispatch` or push under runtime paths). Docs-only pushes do **not** deploy. Details: [aws-operations.md](../developer/aws-operations.md) · [infra/dev/README.md](../../infra/dev/README.md).
 
 **Slim deploy validated:** `/api/health` → `llm_provider=bedrock`, `llm_available=true`, `database_available=true`, `diarization_ready=false` (expected). CI AWS-3f smoke passed.
 
-**Burn-in (2026-07-14):** `POST /api/transcribe` → `transcription_mode=transcribe`; ingest → Quick Review `001f5d84-…` completed — `relationship_conversation_analysis`, `nvc_analysis`, `bias_epistemic_quality` all on Bedrock (~7 min). Artifacts under `data/temp/burnin-*`.
-
-**Standing ops rule (after merge):** When AWS is not actively used for deploy, burn-in, or demos, run **Pause AWS dev**. Resume with **Deploy to AWS dev**. Details: [aws-operations.md](../developer/aws-operations.md) · [infra/dev/README.md](../../infra/dev/README.md).
+**Burn-in (2026-07-14):** `POST /api/transcribe` → `transcription_mode=transcribe`; ingest → Quick Review `001f5d84-…` completed — 3/3 modules on Bedrock.
 
 ---
 
@@ -92,7 +80,7 @@ Mostly complete. Remaining: **slim-image AWS validation** and closing formal not
 | **AWS-5g** | Secrets Manager: `HF_TOKEN` | **Skipped** — Transcribe replaces pyannote on AWS |
 | **AWS-3f** | Deploy smoke beyond `/api/health` | ✓ |
 | **AWS-6f** | Deploy trigger → `main` | ✓ Push to `main` + `workflow_dispatch` |
-| **AWS-6g** | Pause AWS when idle (standing practice) | Workflow ✓; **run first after v0.5.1 lands on `main`** — [aws-operations.md](../developer/aws-operations.md) |
+| **AWS-6g** | Pause AWS when idle (standing practice) | ✓ Done after v0.5.1; continue whenever idle — [aws-operations.md](../developer/aws-operations.md) |
 | **AWS-1b** | Formal LLM evaluation note | ✓ [llm-evaluation-bedrock.md](llm-evaluation-bedrock.md) |
 | **AWS-1c** | Formal ASR evaluation note | ✓ [asr-evaluation-transcribe.md](asr-evaluation-transcribe.md) — live Stage B burn-in 2026-07-14 |
 | **AWS-1d** | Document no-egress network model | ✓ Staged A/B in [aws-deployment.md](aws-deployment.md) |
@@ -135,7 +123,7 @@ Core product on AWS after slim cutover burn-in.
 | P1-2d | Reduce Fargate CPU/memory | ✓ `api` 1024/2048 (was 1024/4096); `512/2048` failed ALB health Jul 2026 |
 | P1-2e | Local vs cloud in [model-setup.md](../user/model-setup.md) | ✓ |
 
-**Cutover:** Deploy runs on **push to `main`** and via Actions → **Deploy to AWS dev** → Run workflow.
+**Cutover:** Deploy on push to `main` when **runtime/infra paths** change (not docs-only) + `workflow_dispatch`.
 
 ### P1-3 — Data handling & trust
 
@@ -239,8 +227,8 @@ Application depth after AWS dev is stable and Quick Review + Full MVP pass on Be
 
 | Release | Theme | Status |
 |---------|--------|--------|
-| **v0.5.0** | AWS dev — ECS, Bedrock, CloudWatch, Stage B, deploy smoke | **Code/ops mostly done** (fat-image era); close on `main` after slim cutover |
-| **v0.5.1** | Transcribe + `Dockerfile.cloud` | **Burn-in + P1-2d code done**; stabilize → PR to `main`, then Pause AWS |
+| **v0.5.0** | AWS substrate (ECS, Stage B, Bedrock QR, smoke) | Folded into **v0.5.1** canonical |
+| **v0.5.1** | Transcribe + slim cloud + main deploy/pause | **Released** — [releases/v0.5.1.md](../releases/v0.5.1.md) |
 | **v0.6.0** | Full multidisciplinary on AWS; data handling & trust (P1-3/P1-4) | Pending |
 | **v0.7.0** | Ontology + cases | Pending |
 | **v1.0.0** | Stable `main` deploy + API contract | Pending |

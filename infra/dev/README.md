@@ -18,7 +18,9 @@ Terraform for the **dev** environment in account `521018312783` (`us-east-2`).
 
 ## Deploy via GitHub Actions
 
-**Push to `main`** runs Deploy to AWS dev. Manual: Actions → **Deploy to AWS dev** → Run workflow.
+**Push to `main`** deploys only when runtime/infra paths change (`backend/`, `ui/`, `infra/dev/`, Dockerfiles, selected scripts). Docs-only commits do not wake ECS/RDS.
+
+Manual: Actions → **Deploy to AWS dev** → Run workflow.
 
 Builds `Dockerfile.cloud` (Transcribe + Bedrock) and `Dockerfile.ui`, applies Terraform, smokes AWS-3f.
 
@@ -81,7 +83,7 @@ terraform output api_log_group
 
 This sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Terraform state stays in sync.
 
-**Resume** — push to `main` (auto-deploy) or run **Deploy to AWS dev** (`workflow_dispatch`). The deploy workflow starts RDS if it was stopped, waits for it to become available, then scales ECS back to 1.
+**Resume** — **Deploy to AWS dev** (`workflow_dispatch`) or push under runtime/infra paths (docs-only does not deploy). The deploy workflow starts RDS if stopped, then scales ECS.
 
 **Task size (P1-2d):** Slim API defaults — `api_cpu=1024`, `api_memory=2048` (was 1024/4096). Tried 512/2048; ALB `/api/live` timed out during cutover. UI remains `256` / `512`. Apply on next Terraform deploy.
 

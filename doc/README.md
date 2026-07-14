@@ -1,6 +1,6 @@
 # Documentation index
 
-**Relationship Reasoning Engine (RRE)** — local analysis + AWS dev pivot (v0.5.0 in progress).
+**Relationship Reasoning Engine (RRE)** — local analysis + **v0.5.1** AWS cloud cutover on `main`.
 
 | Audience | Start here |
 |----------|------------|
@@ -71,6 +71,7 @@ Canonical task tracking is three documents. Everything else is architecture, eva
 
 | Document | Description |
 |----------|-------------|
+| [releases/v0.5.1.md](releases/v0.5.1.md) | **Canonical** — AWS cloud cutover |
 | [releases/v0.3.0.md](releases/v0.3.0.md) | Post-MVP release |
 | [releases/v0.2.0.md](releases/v0.2.0.md) | MVP release |
 
