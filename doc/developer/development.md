@@ -14,10 +14,19 @@ RRE is an **AWS-only** product. Develop on a laptop; run the application on ECS.
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
+pre-commit install
 copy .env.example .env   # tooling / pytest only — not a local server
 ```
 
 There is no supported local API/UI against Bedrock, Transcribe, Whisper, or Ollama. Validate product behavior after **Deploy to AWS dev**.
+
+Quick config gates (also in pre-commit / Deploy CI):
+
+```powershell
+python scripts/validate_yaml.py
+python scripts/validate_config.py
+pre-commit run --all-files
+```
 
 ## Project layout
 

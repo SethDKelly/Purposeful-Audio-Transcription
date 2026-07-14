@@ -3,6 +3,7 @@
 import logging
 import time
 
+from backend.core.exceptions import WorkflowRunError
 from backend.core.log_context import log_context_extra, workflow_run_id_var
 from backend.core.module_registry import module_registry
 from backend.core.workflow_registry import WorkflowDefinition, workflow_registry
@@ -11,7 +12,11 @@ from backend.domain.enums import ModuleRunStatus, WorkflowRunStatus
 from backend.domain.finding import ModuleRun
 from backend.domain.workflow import WorkflowRun
 from backend.repositories.workflow_run_repository import WorkflowRunRepository, utc_now
-from backend.services.module_runner import ModuleRunner, module_runner
+from backend.services.module_runner import (
+    ModuleRunner,
+    compact_module_output_for_handoff,
+    module_runner,
+)
 from backend.services.transcript_service import TranscriptService, transcript_service
 
 logger = logging.getLogger(__name__)
@@ -112,7 +117,7 @@ class WorkflowEngine:
             if module_run.status == ModuleRunStatus.COMPLETED.value
         }
         prior_outputs = [
-            module_run.parsed_output
+            compact_module_output_for_handoff(module_run.parsed_output)
             for module_run in existing_module_runs
             if module_run.parsed_output
             and module_run.status == ModuleRunStatus.COMPLETED.value
@@ -179,7 +184,9 @@ class WorkflowEngine:
                     )
 
                 if module_run.parsed_output:
-                    prior_outputs.append(module_run.parsed_output)
+                    prior_outputs.append(
+                        compact_module_output_for_handoff(module_run.parsed_output)
+                    )
 
             return self._complete_workflow(workflow_run, module_runs, started)
         except WorkflowRunError:

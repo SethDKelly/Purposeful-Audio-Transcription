@@ -1,6 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.domain.finding import Finding
 from backend.schemas.module_output_v1 import FindingInput
 
 

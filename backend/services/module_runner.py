@@ -39,6 +39,18 @@ _REPAIR_PROMPT = (
 )
 
 
+def compact_module_output_for_handoff(output: dict[str, Any]) -> dict[str, Any]:
+    """Reduce token weight for meta-synthesis / prior-output handoffs.
+
+    Keep structured fields Bedrock needs for convergence; drop duplicate prose
+    already available to the UI via each module run's stored parsed_output.
+    """
+    compact = dict(output)
+    compact["raw_markdown_report"] = ""
+    return compact
+
+
+
 class ModuleRunner:
     def __init__(
         self,

@@ -1,6 +1,5 @@
 """Streamlit UI for Purposeful Audio Transcription / RRE."""
 
-import json
 import time
 
 import httpx
@@ -123,8 +122,8 @@ def _render_workflow_progress(
         status = module_run.get("status", "unknown")
         module_id = module_run.get("module_id", "module")
         label = module_display_name(module_id, module_names)
-        icon = "?" if status == "completed" else "?" if status == "failed" else "?"
-        st.markdown(f"{icon} **{label}** � {status}")
+        icon = {"completed": "[ok]", "failed": "[fail]"}.get(status, "[...]")
+        st.markdown(f"{icon} **{label}** - {status}")
 
 
 def _render_report_dashboard(
@@ -444,19 +443,19 @@ def main() -> None:
                     skip_reason = result.get("diarization_skip_reason")
                     if skip_reason:
                         status.write(
-                            "Speaker labels unavailable � transcript uses a single speaker label."
+                            "Speaker labels unavailable - transcript uses a single speaker label."
                         )
                         status.write(skip_reason)
                     else:
                         status.write(
-                            "Speaker labels unavailable � transcript uses a single speaker label."
+                            "Speaker labels unavailable - transcript uses a single speaker label."
                         )
                 status.update(label="Transcription complete", state="complete")
             except httpx.TimeoutException:
                 status.update(label="Timed out", state="error")
                 st.error(
                     "Transcription timed out. Amazon Transcribe can take several minutes "
-                    "for longer audio � try a shorter clip or try again."
+                    "for longer audio - try a shorter clip or try again."
                 )
             except (RuntimeError, httpx.HTTPError) as exc:
                 status.update(label="Failed", state="error")
@@ -564,7 +563,7 @@ def main() -> None:
                 module_display_name(module_id, module_names)
                 for module_id in workflow.get("modules", [])
             )
-            + f" � Est. {workflow.get('estimated_runtime', 'n/a')}"
+            + f" - Est. {workflow.get('estimated_runtime', 'n/a')}"
         )
 
         module_count = len(workflow.get("modules", []))
@@ -632,7 +631,7 @@ def main() -> None:
                             )
                             total = max(module_count, 1)
                             status.write(
-                                f"Status: {result.get('status')} � modules done {done}/{total}"
+                                f"Status: {result.get('status')} - modules done {done}/{total}"
                             )
                             if result.get("status") in terminal:
                                 break
@@ -643,8 +642,11 @@ def main() -> None:
                             st.session_state.synthesis_report = get_workflow_synthesis(
                                 result["id"]
                             )
-                        except RuntimeError:
-                            pass
+                        except RuntimeError as exc:
+                            st.warning(
+                                "Workflow finished, but the synthesis report could not be "
+                                f"built: {exc}"
+                            )
                         status.update(label="Workflow complete", state="complete")
                     else:
                         status.update(label="Workflow failed", state="error")

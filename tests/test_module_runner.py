@@ -52,6 +52,22 @@ def test_module_runner_completes_with_valid_output() -> None:
     mock_llm.chat.assert_called_once()
 
 
+def test_compact_module_output_for_handoff_strips_markdown() -> None:
+    from backend.services.module_runner import compact_module_output_for_handoff
+
+    compact = compact_module_output_for_handoff(
+        {
+            "module_id": "nvc_analysis",
+            "executive_summary": "summary",
+            "findings": [{"id": "F001"}],
+            "raw_markdown_report": "## Long prose report " * 50,
+        }
+    )
+    assert compact["executive_summary"] == "summary"
+    assert compact["findings"] == [{"id": "F001"}]
+    assert compact["raw_markdown_report"] == ""
+
+
 def test_module_runner_retries_then_succeeds() -> None:
     mock_llm = MagicMock()
     bad_payload = json.loads((FIXTURES / "sample_module_output.json").read_text(encoding="utf-8"))

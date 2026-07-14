@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse
 
-from backend.api.schemas import PurposesResponse, PurposeSchema, StreamModuleRequest
+from backend.api.schemas import PurposesResponse, PurposeSchema
 from backend.core.module_registry import module_registry
 
 router = APIRouter(prefix="/api", tags=["purposes"])

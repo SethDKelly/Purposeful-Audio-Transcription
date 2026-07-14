@@ -4,8 +4,22 @@
 
 1. Fork / branch from `main`
 2. Make focused changes with tests
-3. Run `pytest tests/ -q`
-4. Open a PR with summary and test plan
+3. Install hooks once: `pip install -e ".[dev]" && pre-commit install`
+4. Run `pre-commit run --all-files` (or rely on the git hook) and `pytest tests/ -q`
+5. Open a PR with summary and test plan
+
+### Pre-commit gates (Tier 1 + 2)
+
+| Hook | What it catches |
+|------|-----------------|
+| YAML syntax (`scripts/validate_yaml.py`) | Broken YAML under `config/`, workflows, fixtures |
+| Config registries (`scripts/validate_config.py`) | Missing prompts, unknown module IDs, meta-synthesis not last |
+| Ruff lint/format | Python style and unused imports |
+| actionlint | GitHub Actions workflow mistakes |
+| terraform fmt (when `terraform` is installed) | Infra formatting drift |
+| Targeted pytest | Registries, parser, Bedrock provider, P1-4 workflows |
+
+Deploy CI also runs `validate_yaml` + `validate_config` before full pytest.
 
 ## Branch naming
 

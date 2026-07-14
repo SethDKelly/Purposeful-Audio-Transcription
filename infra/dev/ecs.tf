@@ -136,7 +136,9 @@ resource "aws_ecs_service" "api" {
     container_port   = 8000
   }
 
-  deployment_minimum_healthy_percent = 100
+  # desired_count=1: min 100% blocks deploys when the sole task is ALB-unhealthy
+  # (common while Bedrock Converse holds a worker during burn-in).
+  deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 200
   health_check_grace_period_seconds  = 300
 
@@ -171,7 +173,7 @@ resource "aws_ecs_service" "ui" {
     container_port   = 8501
   }
 
-  deployment_minimum_healthy_percent = 100
+  deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 200
   health_check_grace_period_seconds  = 300
 
