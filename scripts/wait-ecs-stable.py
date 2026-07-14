@@ -10,6 +10,10 @@ import sys
 import time
 
 
+def log(msg: str) -> None:
+    print(msg, flush=True)
+
+
 def describe_services(cluster: str, services: list[str]) -> dict:
     result = subprocess.run(
         [
@@ -42,7 +46,7 @@ def is_stable(data: dict) -> tuple[bool, bool]:
         deployments = svc.get("deployments") or []
         primary = next((d for d in deployments if d.get("status") == "PRIMARY"), None)
         rollout = (primary or {}).get("rolloutState", "n/a")
-        print(
+        log(
             f"{name}: desired={desired} running={running} pending={pending} "
             f"deployments={len(deployments)} rollout={rollout}"
         )
@@ -50,13 +54,24 @@ def is_stable(data: dict) -> tuple[bool, bool]:
             failed = True
         if desired != running or pending != 0 or len(deployments) != 1:
             ok = False
+        elif rollout not in ("COMPLETED", "n/a"):
+            # Single deployment still rolling out.
+            ok = False
     return ok, failed
 
 
+def task_arns_from_list_output(raw: str) -> list[str]:
+    """Parse list-tasks text output; drop pagination tokens and junk."""
+    arns: list[str] = []
+    for token in (raw or "").split():
+        if token.startswith("arn:aws:ecs:") and ":task/" in token:
+            arns.append(token)
+    return arns
+
+
 def dump_failure(cluster: str, services: list[str]) -> None:
-    print("::error::ECS services did not stabilize", file=sys.stderr)
+    print("::error::ECS services did not stabilize", file=sys.stderr, flush=True)
     data = describe_services(cluster, services)
-    # Trim events for readability
     summary = []
     for svc in data.get("services", []):
         summary.append(
@@ -68,7 +83,7 @@ def dump_failure(cluster: str, services: list[str]) -> None:
                 "events": (svc.get("events") or [])[:8],
             }
         )
-    print(json.dumps(summary, indent=2, default=str))
+    log(json.dumps(summary, indent=2, default=str))
     for svc in services:
         stopped = subprocess.run(
             [
@@ -92,10 +107,10 @@ def dump_failure(cluster: str, services: list[str]) -> None:
             text=True,
             check=False,
         )
-        arns = (stopped.stdout or "").strip()
-        if not arns or arns == "None":
+        arns = task_arns_from_list_output(stopped.stdout or "")
+        if not arns:
             continue
-        print(f"--- Stopped tasks for {svc} ---")
+        log(f"--- Stopped tasks for {svc} ---")
         detail = subprocess.run(
             [
                 "aws",
@@ -104,7 +119,7 @@ def dump_failure(cluster: str, services: list[str]) -> None:
                 "--cluster",
                 cluster,
                 "--tasks",
-                *arns.split(),
+                *arns,
                 "--query",
                 "tasks[].{task:taskArn,stoppedReason:stoppedReason,"
                 "containers:containers[].{name:name,exitCode:exitCode,reason:reason}}",
@@ -115,7 +130,7 @@ def dump_failure(cluster: str, services: list[str]) -> None:
             text=True,
             check=False,
         )
-        print(detail.stdout or detail.stderr)
+        log(detail.stdout or detail.stderr or "")
 
 
 def main() -> int:
@@ -128,13 +143,13 @@ def main() -> int:
         data = describe_services(cluster, services)
         stable, failed = is_stable(data)
         if failed:
-            print("::error::ECS deployment rollout FAILED", file=sys.stderr)
+            print("::error::ECS deployment rollout FAILED", file=sys.stderr, flush=True)
             dump_failure(cluster, services)
             return 1
         if stable:
-            print("ECS services stable")
+            log("ECS services stable")
             return 0
-        print(f"Waiting for ECS steady state... ({attempt}/{max_attempts})")
+        log(f"Waiting for ECS steady state... ({attempt}/{max_attempts})")
         time.sleep(sleep_secs)
 
     dump_failure(cluster, services)

@@ -35,9 +35,9 @@ variable "ui_cpu" {
 }
 
 variable "ui_memory" {
-  description = "Fargate memory (MiB) for UI task."
+  description = "Fargate memory (MiB) for UI task (Streamlit cold start)."
   type        = number
-  default     = 512
+  default     = 1024
 }
 
 variable "api_desired_count" {

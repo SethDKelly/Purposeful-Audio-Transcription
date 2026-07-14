@@ -104,8 +104,8 @@ resource "aws_ecs_task_definition" "ui" {
       command     = ["CMD-SHELL", "curl -f http://127.0.0.1:8501/_stcore/health || exit 1"]
       interval    = 30
       timeout     = 5
-      retries     = 3
-      startPeriod = 30
+      retries     = 5
+      startPeriod = 180
     }
   }])
 }
@@ -136,9 +136,15 @@ resource "aws_ecs_service" "api" {
     container_port   = 8000
   }
 
-  deployment_minimum_healthy_percent = 50
+  deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
   health_check_grace_period_seconds  = 300
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
   depends_on = [
     aws_lb_listener.http,
     aws_vpc_endpoint.s3,
@@ -165,9 +171,14 @@ resource "aws_ecs_service" "ui" {
     container_port   = 8501
   }
 
-  deployment_minimum_healthy_percent = 50
+  deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
   health_check_grace_period_seconds  = 300
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
 
   depends_on = [
     aws_lb_listener.http,

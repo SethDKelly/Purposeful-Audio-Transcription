@@ -4,8 +4,8 @@ Material work in flight or next to ship for the **Relationship Reasoning Engine 
 
 | | |
 |---|---|
-| **Status** | **v0.5.1** — PR to `main` (deploy on push to `main` + workflow_dispatch); then Pause AWS; Tier 2 on new branch |
-| **Branch** | `phase-m0-docs` → PR to `main` |
+| **Status** | **v0.5.1 on `main`** — fixing ECS deploy health flap; then Pause AWS |
+| **Branch** | `main` |
 | **Strategy** | AWS dev (account `521018312783`, `us-east-2`) via [aws-backbone](https://github.com/SethDKelly/aws-backbone); local for prompt/module + Whisper |
 | **Cost control** | **Pause AWS after merge to `main`** (first post-version ops step), then whenever idle. Tier 2 work on a new `dev` branch. See [aws-operations.md](../developer/aws-operations.md) |
 | **Architecture** | [aws-deployment.md](aws-deployment.md) |
@@ -59,10 +59,11 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 [x] Close Tier 1 docs: AWS-1c live Transcribe checklist
 [x] P1-2d — Lower Fargate memory (1024/2048 live; 512/2048 failed health during cutover)
 [x] AWS-6f — Deploy on push to `main` (+ keep `workflow_dispatch`)
-[ ] Merge PR `phase-m0-docs` → `main`
+[x] Merge PR `phase-m0-docs` → `main`
+[ ] Fix main deploy ECS health flap (drop Streamlit from cloud API; UI grace/circuit breaker)
 ```
 
-### First after v0.5.1 is on `main`
+### First after deploy is green on `main`
 
 ```text
 [ ] Pause AWS dev (ECS→0, stop RDS) — then whenever the stack sits idle

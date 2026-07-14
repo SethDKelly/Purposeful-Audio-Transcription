@@ -202,7 +202,7 @@ resource "aws_lb_target_group" "ui" {
     healthy_threshold   = 2
     unhealthy_threshold = 5
     interval            = 30
-    timeout             = 10
+    timeout             = 15
   }
 }
 
