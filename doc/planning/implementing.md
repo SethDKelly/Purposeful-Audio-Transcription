@@ -57,7 +57,7 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 [x] Manual slim deploy (Dockerfile.cloud + Transcribe env — CI green)
 [x] AWS burn-in: Transcribe audio upload + Quick Review on Bedrock (3/3 modules)
 [x] Close Tier 1 docs: AWS-1c live Transcribe checklist
-[x] P1-2d — Lower Fargate CPU/memory (defaults 512/2048; apply on next deploy)
+[x] P1-2d — Lower Fargate memory (1024/2048; 512/2048 failed health during cutover)
 [ ] Stabilize v0.5.1 → PR / merge to `main`
 ```
 
@@ -129,7 +129,7 @@ Core product on AWS after slim cutover burn-in.
 | P1-2a | `Dockerfile.cloud` — no torch / pyannote / faster-whisper | ✓ |
 | P1-2b | CI builds cloud image; tests use `.[dev,local]` | ✓ (`workflow_dispatch`) |
 | P1-2c | ECS `TRANSCRIPTION_PROVIDER=transcribe`, diarization off | ✓ |
-| P1-2d | Reduce Fargate CPU/memory | ✓ `api` 512/2048 (was 1024/4096); UI 256/512 |
+| P1-2d | Reduce Fargate CPU/memory | ✓ `api` 1024/2048 (was 1024/4096); `512/2048` failed ALB health Jul 2026 |
 | P1-2e | Local vs cloud in [model-setup.md](../user/model-setup.md) | ✓ |
 
 **Cutover:** Actions → **Deploy to AWS dev** → Run workflow. Re-enable push-to-branch deploy only after green slim burn-in.

@@ -3,9 +3,9 @@
 
 # image_tag = "local-dev"
 
-# Slim API defaults (variables.tf): api_cpu=512, api_memory=2048
-# Fat / Whisper image (not used on AWS): raise to 1024 / 4096 if needed.
-# api_cpu    = 512
+# Slim API defaults (variables.tf): api_cpu=1024, api_memory=2048
+# Whisper-era was 1024/4096; 512/2048 failed ALB health during Jul 2026 cutover.
+# api_cpu    = 1024
 # api_memory = 2048
 # ui_cpu     = 256
 # ui_memory  = 512

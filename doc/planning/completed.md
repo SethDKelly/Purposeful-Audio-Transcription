@@ -183,7 +183,7 @@ Original build goal: analyze a transcript with a representative module subset an
 |---|------|--------|
 | P1-1a–d | `TranscriptionProvider`, Whisper + Amazon Transcribe adapters, route wiring | ✓ |
 | P1-2a–c,e | `Dockerfile.cloud`, CI cloud build, ECS Transcribe env, model-setup docs | ✓ |
-| P1-2d | Lower Fargate sizing | ✓ Defaults 512 CPU / 2048 MiB (apply on next deploy) |
+| P1-2d | Lower Fargate sizing | ✓ API 1024/2048 (memory cut; 512/2048 rolled back after health timeouts) |
 | — | Live AWS Transcribe + Quick Review under Stage B | ✓ 2026-07-14 |
 
 ---

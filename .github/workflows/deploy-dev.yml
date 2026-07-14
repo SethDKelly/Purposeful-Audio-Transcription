@@ -123,6 +123,9 @@ jobs:
         run: terraform apply -input=false -auto-approve -var="image_tag=${IMAGE_TAG}"
 
       - name: Wait for ECS services stable
+        env:
+          ECS_WAIT_MAX_ATTEMPTS: "60"
+          ECS_WAIT_SLEEP_SECS: "30"
         run: |
           set -euo pipefail
           python3 scripts/wait-ecs-stable.py rre-dev-cluster rre-dev-api rre-dev-ui

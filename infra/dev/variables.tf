@@ -17,13 +17,13 @@ variable "image_tag" {
 }
 
 variable "api_cpu" {
-  description = "Fargate CPU units for API task (512 = 0.5 vCPU; slim image needs far less than Whisper-era 1024)."
+  description = "Fargate CPU units for API task (1024 = 1 vCPU). 512 caused ALB /api/live timeouts during cutover; slim image still needs headroom for boot + Alembic."
   type        = number
-  default     = 512
+  default     = 1024
 }
 
 variable "api_memory" {
-  description = "Fargate memory (MiB) for API task (Python + JSON; Bedrock/Transcribe are off-box)."
+  description = "Fargate memory (MiB) for API task. Cut from Whisper-era 4096; Bedrock/Transcribe are off-box."
   type        = number
   default     = 2048
 }

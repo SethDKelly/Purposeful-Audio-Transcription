@@ -85,7 +85,7 @@ This sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Terraform
 
 **Resume** — run **Deploy to AWS dev** (`workflow_dispatch`; push auto-deploy is paused until slim cutover). The deploy workflow starts RDS if it was stopped, waits for it to become available, then scales ECS back to 1.
 
-**Task size (P1-2d):** Slim API defaults — `api_cpu=512`, `api_memory=2048` (was 1024 / 4096 for Whisper-era). UI remains `256` / `512`. Apply on next Terraform deploy.
+**Task size (P1-2d):** Slim API defaults — `api_cpu=1024`, `api_memory=2048` (was 1024/4096). Tried 512/2048; ALB `/api/live` timed out during cutover. UI remains `256` / `512`. Apply on next Terraform deploy.
 
 **Costs while paused:** ALB (~$16/mo), ECR image storage, Secrets Manager, RDS storage (no compute while stopped). RDS auto-restarts after ~7 days if not resumed.
 
