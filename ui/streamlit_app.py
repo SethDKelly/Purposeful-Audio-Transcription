@@ -124,7 +124,7 @@ def _render_workflow_progress(
         module_id = module_run.get("module_id", "module")
         label = module_display_name(module_id, module_names)
         icon = "?" if status == "completed" else "?" if status == "failed" else "?"
-        st.markdown(f"{icon} **{label}** — {status}")
+        st.markdown(f"{icon} **{label}** ï¿½ {status}")
 
 
 def _render_report_dashboard(
@@ -340,7 +340,7 @@ def main() -> None:
             st.session_state[key] = default
 
     # --- Step 1: Ingest ---
-    st.subheader("Step 1 · Ingest")
+    st.subheader("Step 1 - Ingest")
     input_tab_audio, input_tab_text = st.tabs(["Audio", "Paste or upload text"])
 
     uploaded = None
@@ -444,26 +444,26 @@ def main() -> None:
                     skip_reason = result.get("diarization_skip_reason")
                     if skip_reason:
                         status.write(
-                            "Speaker labels unavailable — transcript uses a single speaker label."
+                            "Speaker labels unavailable ï¿½ transcript uses a single speaker label."
                         )
                         status.write(skip_reason)
                     else:
                         status.write(
-                            "Speaker labels unavailable — transcript uses a single speaker label."
+                            "Speaker labels unavailable ï¿½ transcript uses a single speaker label."
                         )
                 status.update(label="Transcription complete", state="complete")
             except httpx.TimeoutException:
                 status.update(label="Timed out", state="error")
                 st.error(
                     "Transcription timed out. Amazon Transcribe can take several minutes "
-                    "for longer audio — try a shorter clip or try again."
+                    "for longer audio ï¿½ try a shorter clip or try again."
                 )
             except (RuntimeError, httpx.HTTPError) as exc:
                 status.update(label="Failed", state="error")
                 st.error(str(exc))
 
     # --- Step 2: Prepare ---
-    st.subheader("Step 2 · Prepare")
+    st.subheader("Step 2 - Prepare")
     if not st.session_state.transcript and not st.session_state.transcript_meta:
         st.info("Ingest a transcript to continue.")
     else:
@@ -537,7 +537,7 @@ def main() -> None:
                 st.error(str(exc))
 
     # --- Step 3: Analyze ---
-    st.subheader("Step 3 · Analyze")
+    st.subheader("Step 3 - Analyze")
 
     if not st.session_state.transcript:
         st.info("Prepare a transcript first.")
@@ -564,7 +564,7 @@ def main() -> None:
                 module_display_name(module_id, module_names)
                 for module_id in workflow.get("modules", [])
             )
-            + f" — Est. {workflow.get('estimated_runtime', 'n/a')}"
+            + f" ï¿½ Est. {workflow.get('estimated_runtime', 'n/a')}"
         )
 
         module_count = len(workflow.get("modules", []))
@@ -632,7 +632,7 @@ def main() -> None:
                             )
                             total = max(module_count, 1)
                             status.write(
-                                f"Status: {result.get('status')} — modules done {done}/{total}"
+                                f"Status: {result.get('status')} ï¿½ modules done {done}/{total}"
                             )
                             if result.get("status") in terminal:
                                 break
@@ -654,7 +654,7 @@ def main() -> None:
                     st.error(str(exc))
 
     # --- Step 4: Report ---
-    st.subheader("Step 4 · Report")
+    st.subheader("Step 4 - Report")
     workflow_run = st.session_state.workflow_run
     if workflow_run:
         quotes = st.session_state.transcript_meta.get("evidence_quotes", [])
