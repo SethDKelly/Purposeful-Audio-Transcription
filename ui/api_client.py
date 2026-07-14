@@ -127,6 +127,32 @@ def update_transcript_speakers(transcript_id: str, speakers: list[dict]) -> dict
     return response.json()
 
 
+def delete_transcript(transcript_id: str) -> None:
+    response = httpx.delete(f"{API_BASE}/api/transcripts/{transcript_id}", timeout=30.0)
+    _raise_for_status(response)
+
+
+def record_audit_event(
+    event: str,
+    *,
+    transcript_id: str | None = None,
+    workflow_run_id: str | None = None,
+    export_format: str | None = None,
+) -> None:
+    payload = {
+        "event": event,
+        "transcript_id": transcript_id,
+        "workflow_run_id": workflow_run_id,
+        "export_format": export_format,
+    }
+    try:
+        response = httpx.post(f"{API_BASE}/api/audit/events", json=payload, timeout=5.0)
+        if response.status_code >= 400:
+            return
+    except httpx.HTTPError:
+        return
+
+
 def process_audio(
     file_bytes: bytes,
     filename: str,

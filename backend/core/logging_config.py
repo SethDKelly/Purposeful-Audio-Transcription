@@ -8,6 +8,7 @@ from backend.core.log_context import (
     request_id_var,
     workflow_run_id_var,
 )
+from backend.core.log_sanitize import _DENY_KEYS, redact_text
 from config.settings import settings
 
 _STANDARD_EXTRA_KEYS = (
@@ -23,7 +24,35 @@ _STANDARD_EXTRA_KEYS = (
     "status",
     "model_id",
     "retry_count",
+    "transcript_id",
+    "source_type",
+    "export_format",
+    "purged_count",
+    "retention_days",
+    "turn_count",
+    "quote_count",
 )
+
+
+class RedactionFilter(logging.Filter):
+    """Strip denied ``extra`` keys and rewrite huge free-text messages when enabled."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if not settings.log_redaction_enabled:
+            return True
+        for key in list(record.__dict__.keys()):
+            if key.lower() in _DENY_KEYS:
+                value = getattr(record, key, None)
+                setattr(record, key, redact_text(value))
+        msg = record.getMessage()
+        # Belt-and-suspenders: overly long messages often contain pasted dialogue/prompts.
+        if isinstance(record.msg, str) and len(record.msg) > 500:
+            record.msg = redact_text(record.msg)
+            record.args = ()
+        elif len(msg) > 2000:
+            record.msg = redact_text(msg)
+            record.args = ()
+        return True
 
 
 class JsonLogFormatter(logging.Formatter):
@@ -57,6 +86,7 @@ def configure_logging() -> None:
     root = logging.getLogger()
     root.handlers.clear()
     handler = logging.StreamHandler()
+    handler.addFilter(RedactionFilter())
     if settings.log_json:
         handler.setFormatter(JsonLogFormatter())
     else:

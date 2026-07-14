@@ -1,5 +1,7 @@
 import uuid
+from datetime import UTC, datetime, timedelta
 
+from backend.core.audit import audit_event
 from backend.core.exceptions import TranscriptNotFoundError
 from backend.db.base import get_session
 from backend.domain.enums import SourceType
@@ -11,6 +13,7 @@ from backend.repositories.transcript_repository import (
 )
 from backend.services.evidence_index import EvidenceIndexService
 from backend.services.transcript_parser import TranscriptParser
+from config.settings import settings
 
 
 class TranscriptService:
@@ -78,11 +81,52 @@ class TranscriptService:
         with get_session() as session:
             self._repository.save_bundle(session, bundle)
 
+        audit_event(
+            "transcript.ingest",
+            transcript_id=transcript_id,
+            source_type=source_type.value,
+            turn_count=len(turns),
+            quote_count=len(bundle.evidence_quotes),
+        )
         return bundle
 
     def get(self, transcript_id: str) -> TranscriptBundle:
         with get_session() as session:
             return self._repository.get_bundle(session, transcript_id)
+
+    def delete(self, transcript_id: str) -> None:
+        with get_session() as session:
+            self._repository.delete_cascade(session, transcript_id)
+        audit_event("transcript.delete", transcript_id=transcript_id)
+
+    def purge_expired(self) -> int:
+        """Delete transcripts older than ``transcript_retention_days``. Returns count."""
+        days = settings.transcript_retention_days
+        if days is None or days < 1:
+            return 0
+        cutoff = datetime.now(UTC) - timedelta(days=days)
+        cutoff_naive = cutoff.replace(tzinfo=None)
+        purged = 0
+        with get_session() as session:
+            ids = list(
+                dict.fromkeys(
+                    self._repository.list_ids_created_before(session, cutoff_naive)
+                    + self._repository.list_ids_created_before(session, cutoff)
+                )
+            )
+            for transcript_id in ids:
+                try:
+                    self._repository.delete_cascade(session, transcript_id)
+                    purged += 1
+                except TranscriptNotFoundError:
+                    continue
+        if purged:
+            audit_event(
+                "transcript.purge",
+                purged_count=purged,
+                retention_days=days,
+            )
+        return purged
 
     def update_speakers(
         self, transcript_id: str, speaker_updates: list[Speaker]

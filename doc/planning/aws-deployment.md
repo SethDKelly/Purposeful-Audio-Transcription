@@ -11,6 +11,10 @@ Architecture and integration guide for deploying the Relationship Reasoning Engi
 | **Deploy** | Path-filtered push to `main` + `workflow_dispatch` |
 | **Active plan** | [implementing.md](implementing.md) |
 
+### Data residency (privacy)
+
+On AWS, audio objects, transcripts, and analysis results stay in **this account** (S3, RDS, ECS in VPC). Inference uses **Amazon Bedrock** and **Amazon Transcribe** — no off-account LLM/ASR APIs. Operators should pause the stack when idle ([aws-operations.md](../developer/aws-operations.md)). Local private use keeps data on-machine (Whisper / Ollama); see [deployment.md](../user/deployment.md).
+
 ---
 
 ## 1. Relationship to aws-backbone

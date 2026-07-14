@@ -62,11 +62,15 @@ class Settings(BaseSettings):
     alembic_auto_upgrade: bool = False
     api_key: str = ""
     log_json: bool = False
+    # None = auto (on for Bedrock / non-SQLite). Override with LOG_REDACT=true|false.
+    log_redact: bool | None = None
     workflow_background_default: bool = False
     module_run_max_retries: int = 2
     evidence_prompt_max_quotes: int = 120
     evidence_prompt_head_quotes: int = 80
     evidence_prompt_tail_quotes: int = 40
+    # When set, startup purge deletes transcripts older than N days (and cascaded runs).
+    transcript_retention_days: int | None = None
 
     allowed_extensions: frozenset[str] = frozenset(
         {".mp3", ".wav", ".m4a", ".flac", ".ogg", ".webm", ".mp4"}
@@ -99,6 +103,12 @@ class Settings(BaseSettings):
     @property
     def resolved_bedrock_model_id(self) -> str:
         return self.bedrock_model_id.strip()
+
+    @property
+    def log_redaction_enabled(self) -> bool:
+        if self.log_redact is not None:
+            return self.log_redact
+        return (self.llm_provider or "").lower() == "bedrock" or not self.is_sqlite
 
     @property
     def default_llm_model(self) -> str:

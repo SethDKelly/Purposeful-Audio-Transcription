@@ -9,6 +9,7 @@ from config.settings import settings
 from ui.api_client import (
     API_BASE,
     create_transcript,
+    delete_transcript,
     fetch_health,
     fetch_modules,
     fetch_ollama_models,
@@ -16,6 +17,7 @@ from ui.api_client import (
     get_workflow_synthesis,
     module_display_name,
     module_name_map,
+    record_audit_event,
     run_workflow,
     transcribe_audio,
     update_transcript_speakers,
@@ -35,7 +37,7 @@ from ui.components.report_exports import (
     build_workflow_report_markdown,
     build_workflow_report_pdf,
 )
-from ui.components.safety_disclaimer import render_safety_disclaimer
+from ui.components.safety_disclaimer import render_privacy_note, render_safety_disclaimer
 from ui.components.synthesis_panel import render_synthesis_panel
 
 ALLOWED_EXTENSIONS = sorted(settings.allowed_extensions)
@@ -255,39 +257,71 @@ def _render_report_dashboard(
     )
 
     col_md, col_json, col_pdf = st.columns(3)
-    col_md.download_button(
+    transcript_id = st.session_state.transcript_meta.get("transcript_id")
+    run_id = workflow_run.get("id")
+    if col_md.download_button(
         "Download workflow report (.md)",
         data=export_md,
         file_name=f"{base_name}_workflow_report.md",
         mime="text/markdown",
-    )
-    col_json.download_button(
+    ):
+        record_audit_event(
+            "transcript.export",
+            transcript_id=transcript_id,
+            workflow_run_id=run_id,
+            export_format="md",
+        )
+    if col_json.download_button(
         "Download workflow report (.json)",
         data=export_json,
         file_name=f"{base_name}_workflow_report.json",
         mime="application/json",
-    )
-    col_pdf.download_button(
+    ):
+        record_audit_event(
+            "transcript.export",
+            transcript_id=transcript_id,
+            workflow_run_id=run_id,
+            export_format="json",
+        )
+    if col_pdf.download_button(
         "Download workflow report (.pdf)",
         data=export_pdf,
         file_name=f"{base_name}_workflow_report.pdf",
         mime="application/pdf",
-    )
+    ):
+        record_audit_event(
+            "transcript.export",
+            transcript_id=transcript_id,
+            workflow_run_id=run_id,
+            export_format="pdf",
+        )
 
     col_coach, col_mediation = st.columns(2)
-    col_coach.download_button(
+    if col_coach.download_button(
         "Download coach summary (.md)",
         data=coach_summary,
         file_name=f"{base_name}_coach_summary.md",
         mime="text/markdown",
-    )
+    ):
+        record_audit_event(
+            "transcript.export",
+            transcript_id=transcript_id,
+            workflow_run_id=run_id,
+            export_format="coach_md",
+        )
     if show_mediation_brief and mediation_brief:
-        col_mediation.download_button(
+        if col_mediation.download_button(
             "Download mediation brief (.md)",
             data=mediation_brief,
             file_name=f"{base_name}_mediation_brief.md",
             mime="text/markdown",
-        )
+        ):
+            record_audit_event(
+                "transcript.export",
+                transcript_id=transcript_id,
+                workflow_run_id=run_id,
+                export_format="mediation_md",
+            )
 
 
 def main() -> None:
@@ -302,6 +336,7 @@ def main() -> None:
 
     render_sidebar()
     render_safety_disclaimer()
+    render_privacy_note()
 
     workflows = _cached_workflows()
     ollama_models = _cached_ollama_models()
@@ -502,6 +537,23 @@ def main() -> None:
             height=220,
             label_visibility="collapsed",
         )
+        transcript_id = meta.get("transcript_id")
+        if transcript_id and st.button(
+            "Delete transcript and related runs",
+            type="secondary",
+            help="Cascades to workflow runs, module runs, and synthesis reports.",
+        ):
+            try:
+                delete_transcript(transcript_id)
+                st.session_state.transcript = ""
+                st.session_state.transcript_meta = {}
+                st.session_state.transcript_bundle = None
+                st.session_state.workflow_run = None
+                st.session_state.synthesis_report = None
+                st.success("Transcript deleted.")
+                st.rerun()
+            except (RuntimeError, httpx.HTTPError) as exc:
+                st.error(str(exc))
 
     # --- Step 3: Analyze ---
     st.subheader("Step 3 · Analyze")

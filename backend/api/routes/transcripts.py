@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, Response, UploadFile
 
 from backend.api.schemas import (
     CreateTranscriptRequest,
@@ -48,6 +48,12 @@ async def upload_transcript_file(
 def get_transcript(transcript_id: str) -> TranscriptBundleResponse:
     bundle = transcript_service.get(transcript_id)
     return bundle_to_response(bundle)
+
+
+@router.delete("/transcripts/{transcript_id}", status_code=204)
+def delete_transcript(transcript_id: str) -> Response:
+    transcript_service.delete(transcript_id)
+    return Response(status_code=204)
 
 
 @router.patch("/transcripts/{transcript_id}/speakers", response_model=TranscriptBundleResponse)

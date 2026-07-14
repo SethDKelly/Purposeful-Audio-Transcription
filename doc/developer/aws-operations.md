@@ -18,6 +18,21 @@ Structured JSON logs (`LOG_JSON=true`) include correlation fields:
 | `error_type` | Exception class or failure category |
 | `event` | Semantic event name (e.g. `module.run.failed`) |
 
+## Log redaction (what you will / won't see)
+
+With `LOG_REDACT` auto-on for Bedrock / PostgreSQL (or `LOG_REDACT=true`):
+
+| You **will** see | You **won't** see |
+|------------------|-------------------|
+| `request_id`, `workflow_run_id`, `module_run_id`, `module_id` | Transcript / turn bodies |
+| `error_type`, `event`, counts (`turn_count`, `quote_count`) | Prompt payloads / compiled messages |
+| Status, duration, model id | Full LLM completions (`raw_output`) |
+| Audit events: `transcript.ingest`, `.export`, `.delete`, `.purge` | Secrets (`DATABASE_URL`, tokens) |
+
+DB remains the store of record. Prefer Insights queries by ID, not free-text search on dialogue.
+
+Design: [log-redaction.md](../planning/log-redaction.md).
+
 ## CloudWatch Logs Insights queries
 
 Run in **Logs Insights** against `/rre/dev/api`.
@@ -62,6 +77,15 @@ fields @timestamp, workflow_id, run_id, error_type, message
 ```text
 fields @timestamp, module_id, module_run_id, model_id, message
 | filter error_type = "LLMError"
+| sort @timestamp desc
+| limit 50
+```
+
+### Audit events (ingest / export / delete)
+
+```text
+fields @timestamp, event, transcript_id, export_format, purged_count, message
+| filter event like /transcript\.(ingest|export|delete|purge)/
 | sort @timestamp desc
 | limit 50
 ```

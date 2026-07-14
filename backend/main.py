@@ -5,10 +5,23 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from backend.api.middleware import APIKeyMiddleware, RequestContextMiddleware
-from backend.api.routes import exploration, health, models, module_stream, modules, process, purposes, transcribe, transcripts, workflows
+from backend.api.routes import (
+    audit,
+    exploration,
+    health,
+    models,
+    module_stream,
+    modules,
+    process,
+    purposes,
+    transcribe,
+    transcripts,
+    workflows,
+)
 from backend.core.exceptions import AppError
 from backend.core.logging_config import configure_logging
 from backend.db.base import init_db
+from backend.services.transcript_service import transcript_service
 from backend.services.workflow_job_service import workflow_job_service
 from config.settings import settings
 
@@ -18,6 +31,13 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
+    purged = transcript_service.purge_expired()
+    if purged:
+        logger.info(
+            "Purged %s transcript(s) past retention",
+            purged,
+            extra={"event": "transcript.purge", "purged_count": purged},
+        )
     workflow_job_service.resume_incomplete()
     yield
     workflow_job_service.shutdown()
@@ -44,6 +64,7 @@ app.include_router(workflows.router)
 app.include_router(exploration.router)
 app.include_router(process.router)
 app.include_router(transcripts.router)
+app.include_router(audit.router)
 
 
 @app.exception_handler(AppError)

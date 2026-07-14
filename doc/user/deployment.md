@@ -59,6 +59,8 @@ See [model-setup.md](model-setup.md) for Ollama configuration. Day-one walkthrou
 | `ALEMBIC_AUTO_UPGRADE` | `false` | `true` for migrations on startup |
 | `API_KEY` | _(empty)_ | Require `X-API-Key` when set |
 | `LOG_JSON` | `false` | Structured JSON logs |
+| `LOG_REDACT` | _(auto)_ | Redact transcript/prompt bodies from logs; auto-on for Bedrock / non-SQLite |
+| `TRANSCRIPT_RETENTION_DAYS` | _(unset)_ | When set, purge transcripts older than N days on API startup |
 | `WORKFLOW_BACKGROUND_DEFAULT` | `false` | Background workflow queue |
 | `API_HOST` / `API_PORT` | `127.0.0.1` / `8000` | Keep on localhost for private use |
 | `STREAMLIT_PORT` | `8501` | UI port |

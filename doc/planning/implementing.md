@@ -4,7 +4,7 @@ Material work in flight or next to ship for the **Relationship Reasoning Engine 
 
 | | |
 |---|---|
-| **Status** | **Tier 2** — P1-3 trust / data handling on `tier-2-p1-trust-workflows` |
+| **Status** | **Tier 2** — P1-3 trust done on `tier-2-p1-trust-workflows`; next **P1-4** workflows |
 | **Branch** | `tier-2-p1-trust-workflows` (from `main` @ v0.5.1) |
 | **Strategy** | AWS dev (account `521018312783`, `us-east-2`) via [aws-backbone](https://github.com/SethDKelly/aws-backbone); local for prompt/module + Whisper |
 | **Cost control** | **Pause AWS when idle** (standing). Deploy wakes only on runtime/infra path pushes to `main`. See [aws-operations.md](../developer/aws-operations.md) |
@@ -57,9 +57,9 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 [x] v0.5.1 canonical release on `main` (paths-filtered deploy + Pause practice)
 [x] Open Tier 2 branch `tier-2-p1-trust-workflows`
 [x] P1-3a — temp audio deletion audit (app `finally` + S3 lifecycle 1d)
-[ ] P1-3b — DELETE transcript cascade
-[ ] P1-3c — log redaction
-[ ] P1-3d…f — privacy copy, retention, audit events
+[x] P1-3b — DELETE transcript cascade
+[x] P1-3c — log redaction
+[x] P1-3d…f — privacy copy, retention, audit events
 [ ] P1-4 — full multidisciplinary + research workflows
 ```
 
@@ -135,11 +135,11 @@ Core product on AWS after slim cutover burn-in.
 | # | Task | Status |
 |---|------|--------|
 | P1-3a | Temp audio deletion — S3 lifecycle + app `finally` (audit all code paths) | ✓ `saved_upload` + Transcribe S3 `finally`; lifecycle **1d** on `temp/` |
-| P1-3b | `DELETE /api/transcripts/{id}` cascade to runs/reports | **Next** |
-| P1-3c | Log redaction — no transcript body in CloudWatch ([log-redaction.md](log-redaction.md)) | |
-| P1-3d | Privacy copy updated for AWS (data stays in account/VPC) | |
-| P1-3e | Optional `TRANSCRIPT_RETENTION_DAYS` + cleanup job | |
-| P1-3f | Audit logging for ingest, export, delete events | |
+| P1-3b | `DELETE /api/transcripts/{id}` cascade to runs/reports | ✓ App-level cascade + UI delete |
+| P1-3c | Log redaction — no transcript body in CloudWatch ([log-redaction.md](log-redaction.md)) | ✓ `log_sanitize` + `RedactionFilter`; auto-on Bedrock/Postgres |
+| P1-3d | Privacy copy updated for AWS (data stays in account/VPC) | ✓ UI caption + deployment/ops notes |
+| P1-3e | Optional `TRANSCRIPT_RETENTION_DAYS` + cleanup job | ✓ Startup purge via `transcript_service.purge_expired` |
+| P1-3f | Audit logging for ingest, export, delete events | ✓ `rre.audit` + `POST /api/audit/events` for exports |
 
 ### P1-4 — Workflow completeness (Phase N)
 

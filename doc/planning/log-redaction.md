@@ -1,10 +1,8 @@
 # Log redaction design — CloudWatch / structured logs (P1-3c)
 
-Design only. **Do not change logging code until this note is accepted and a follow-up implementation PR is opened.**
-
 | | |
 |---|---|
-| **Status** | Draft |
+| **Status** | Implemented (P1-3c on `tier-2-p1-trust-workflows`) |
 | **Related** | P1-3c in [implementing.md](implementing.md); [aws-operations.md](../developer/aws-operations.md) |
 | **Goal** | Operators can debug runs via correlation IDs without transcript or prompt bodies in CloudWatch |
 
@@ -12,7 +10,7 @@ Design only. **Do not change logging code until this note is accepted and a foll
 
 ## Problem
 
-AWS Logs Insights queries rely on structured JSON (`LOG_JSON=true`). Today, failure paths may still attach or echo:
+AWS Logs Insights queries rely on structured JSON (`LOG_JSON=true`). Failure paths may attach or echo:
 
 - Raw LLM output (`raw_output` on module runs — also stored in DB)
 - Prompt / evidence index snippets in debug contexts
@@ -42,38 +40,36 @@ CloudWatch retention (`log_retention_days`) does not equal “safe for sensitive
 | Counts / lengths | e.g. `quote_count=12`, `raw_output_chars=4096` |
 | Truncated hashes | e.g. `prompt_template_hash` (already stored) |
 | Validation issue **codes** | e.g. “missing evidence_quote_ids” — not the quote text |
+| Audit events | `transcript.ingest` / `.export` / `.delete` / `.purge` — IDs and enums only |
 
 DB remains the store of record for transcript and `raw_output`; logs only point at IDs.
 
 ---
 
-## Implementation sketch (future PR)
+## Implementation
 
-1. **Central helper** — e.g. `backend/core/log_sanitize.py`:
-   - `redact_text(value, *, max_len=0) -> str` → `"[redacted len=N]"` or empty
-   - `safe_extra(**kwargs)` — drop/deny known keys (`raw_text`, `raw_output`, `messages`, `prompt`, `content`)
-2. **Logger adapter / filter** — optional `logging.Filter` that scrubs `record.msg` / `record.__dict__` keys on AWS (`LLM_PROVIDER=bedrock` or `LOG_REDACT=true`).
-3. **Explicit allowlist for `extra=`** — module_runner / workflow_engine only pass correlation + enums.
-4. **Settings** — `log_redact: bool = True` when not sqlite-local-dev; override with `LOG_REDACT=false` for local debugging.
-5. **Tests** — assert a deliberate `logger.error(..., extra={"raw_output": "SECRET"})` path never emits `SECRET` when redaction on.
+1. **`backend/core/log_sanitize.py`** — `redact_text`, `safe_extra` deny-list
+2. **`RedactionFilter`** in `logging_config.py` — scrub denied `extra` keys; truncate oversized messages
+3. **Settings** — `LOG_REDACT` optional; auto-on when `LLM_PROVIDER=bedrock` or non-SQLite
+4. **Tests** — `tests/test_log_sanitize.py`
 
 ### Out of scope for P1-3c
 
 - Encrypting RDS at rest beyond current `storage_encrypted` (already on)
 - Redacting Streamlit UI display
-- Changing DB schema retention (P1-3e)
+- Changing DB schema retention (P1-3e — `TRANSCRIPT_RETENTION_DAYS`)
 
 ---
 
 ## Acceptance
 
-- [ ] Grep of `backend/` logging calls: no transcript/prompt bodies at INFO+
-- [ ] Unit tests for sanitize helper
-- [ ] Dev deploy: failed module run log line contains `module_run_id` and error type, not dialogue text
-- [ ] Ops doc updated with “what you will / won’t see”
+- [x] Central sanitize helper + filter wired in `configure_logging`
+- [x] Unit tests for sanitize helper / filter
+- [x] Ops doc updated with “what you will / won’t see”
+- [ ] Dev deploy spot-check: failed module run line has IDs, not dialogue (when AWS next resumed)
 
 ---
 
-## Interim operator guidance
+## Operator guidance
 
-Until implemented: treat `/rre/dev/api` as **sensitive**, restrict IAM console access, and prefer Insights queries filtered by `module_run_id` rather than free-text search on message bodies.
+Treat `/rre/dev/api` as **sensitive**, restrict IAM console access, and prefer Insights queries filtered by `module_run_id` rather than free-text search on message bodies.

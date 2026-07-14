@@ -13,3 +13,9 @@ SAFETY_DISCLAIMER = (
     "tone, body language, history, and safety factors may be missing. Consider professional "
     "help for serious safety concerns."
 )
+
+PRIVACY_NOTE = (
+    "Privacy: On AWS, audio, transcripts, and analysis stay in your account "
+    "(VPC, RDS, S3). Inference uses Amazon Bedrock and Transcribe — no off-account "
+    "model APIs. Locally, data stays on this machine (Whisper / Ollama)."
+)
