@@ -1,8 +1,9 @@
 name: Deploy to AWS dev
 
-# Auto-deploy paused until P1-1 Transcribe + P1-2 slim image are ready.
-# Run manually: Actions → Deploy to AWS dev → Run workflow.
+# Push to main deploys AWS dev; manual Run workflow always available.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

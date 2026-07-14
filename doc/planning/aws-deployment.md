@@ -7,7 +7,8 @@ Architecture and integration guide for deploying the Relationship Reasoning Engi
 | **Account** | `521018312783` |
 | **Region** | `us-east-2` (Ohio) |
 | **Deploy role** | `arn:aws:iam::521018312783:role/dev-github-deploy` |
-| **Branch (initial testing)** | `phase-m0-docs` → PR to `main` when stable |
+| **Branch** | `main` (after v0.5.1 merge); Tier 2 on a new branch |
+| **Deploy** | Push to `main` + `workflow_dispatch` |
 | **Active plan** | [implementing.md](implementing.md) |
 
 ---
@@ -79,7 +80,7 @@ Today `modules/dev-iam/main.tf` and `app_deploy_iam.tf` scope IAM mutations to `
 ## 3. Target architecture (dev)
 
 ```text
-                    GitHub Actions (phase-m0-docs)
+                    GitHub Actions (push main / workflow_dispatch)
                               │
                               ▼ OIDC
                     dev-github-deploy
@@ -403,7 +404,7 @@ name: Deploy to AWS dev
 
 on:
   push:
-    branches: [phase-m0-docs]   # switch to main when stable
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -461,10 +462,10 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 | 3. `LLMProvider` + Bedrock spike | RRE | — | ✓ |
 | 4. Dockerfile + local smoke | RRE | — | ✓ |
 | 5. `infra/dev/` minimal (ECR, ECS, RDS, ALB, logs) | RRE | Step 1 | ✓ |
-| 6. `deploy-dev.yml` on `phase-m0-docs` | RRE | Steps 4–5 | ✓ (`workflow_dispatch`) |
+| 6. `deploy-dev.yml` | RRE | Steps 4–5 | ✓ (push `main` + `workflow_dispatch`) |
 | 7. Quick Review on Bedrock in dev | RRE | Step 6 | ✓ |
 | 8. Transcribe path | RRE | Step 7 | ✓ (slim + Stage B burn-in 2026-07-14) |
-| 9. PR `phase-m0-docs` → `main` | RRE | Stable dev | [ ] |
+| 9. PR `phase-m0-docs` → `main` | RRE | Stable dev | In progress |
 
 ---
 

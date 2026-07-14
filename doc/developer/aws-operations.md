@@ -111,7 +111,7 @@ Local (from repo root, with AWS + terraform state access):
 | Action | How |
 |--------|-----|
 | **Pause** | GitHub Actions → **Pause AWS dev** → Run workflow (`workflow_dispatch` works once `pause-dev.yml` is on `main`) |
-| **Resume** | GitHub Actions → **Deploy to AWS dev** → Run workflow (`workflow_dispatch`) |
+| **Resume** | Push to `main` (auto-deploy) or Actions → **Deploy to AWS dev** → Run workflow |
 
 Pause sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Full steps, residual costs (ALB, ECR, Secrets Manager, RDS storage), and CLI equivalents: [infra/dev/README.md](../../infra/dev/README.md).
 

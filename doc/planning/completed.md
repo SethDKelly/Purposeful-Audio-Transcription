@@ -4,7 +4,7 @@ Record of shipped capabilities for the **Relationship Reasoning Engine (RRE)** t
 
 | | |
 |---|---|
-| **Current branch** | `phase-m0-docs` (v0.5.1 burn-in green; sizing / `main` PR next) |
+| **Current branch** | `phase-m0-docs` → PR to `main` (v0.5.1) |
 | **Baseline release** | **v0.3.0** on `main` — MVP + post-MVP |
 | **In progress toward** | **v0.5.1** — P1-2d Fargate sizing → PR to `main`; then Pause AWS |
 | **Tests** | 174+ passing (CI) |
@@ -152,10 +152,10 @@ Original build goal: analyze a transcript with a representative module subset an
 |---|------|--------|
 | AWS-6a | `.github/workflows/deploy-dev.yml` — OIDC → `dev-github-deploy` | ✓ |
 | AWS-6b | Jobs: test → build/push ECR → terraform apply → ECS stable wait | ✓ |
-| AWS-6c | Trigger: **`workflow_dispatch` only** (push paused until slim cutover) | ✓ |
+| AWS-6c | Trigger: was `workflow_dispatch` only during slim cutover | ✓ |
 | AWS-6d | Smoke: health payload + workflows + UI + ECS + TGs | ✓ |
 | AWS-6e | First green deploy on `phase-m0-docs` | ✓ |
-| AWS-6f | Switch default trigger to `main` | Pending post-cutover |
+| AWS-6f | Switch default trigger to `main` (push + `workflow_dispatch`) | ✓ |
 | AWS-6g | Pause AWS when idle (standing ops practice) | ✓ `pause-dev.yml` + docs |
 | — | `.github/workflows/pause-dev.yml` — scale ECS to 0, stop RDS | ✓ |
 | — | Pause/resume documented in [infra/dev/README.md](../../infra/dev/README.md) + [aws-operations.md](../developer/aws-operations.md) | ✓ |
