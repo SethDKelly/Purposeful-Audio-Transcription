@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import time
@@ -120,8 +121,8 @@ def dump_failure(cluster: str, services: list[str]) -> None:
 def main() -> int:
     cluster = sys.argv[1] if len(sys.argv) > 1 else "rre-dev-cluster"
     services = sys.argv[2:] or ["rre-dev-api", "rre-dev-ui"]
-    max_attempts = int(sys.environ.get("ECS_WAIT_MAX_ATTEMPTS", "40"))
-    sleep_secs = int(sys.environ.get("ECS_WAIT_SLEEP_SECS", "30"))
+    max_attempts = int(os.environ.get("ECS_WAIT_MAX_ATTEMPTS", "40"))
+    sleep_secs = int(os.environ.get("ECS_WAIT_SLEEP_SECS", "30"))
 
     for attempt in range(1, max_attempts + 1):
         data = describe_services(cluster, services)
