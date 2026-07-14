@@ -181,6 +181,8 @@ class SynthesisReportResponse(BaseModel):
         default_factory=list
     )
     exploratory_hypotheses: list[SynthesisFindingResponse] = Field(default_factory=list)
+    # Flat rollup for clients that expect a single findings list.
+    findings: list[SynthesisFindingResponse] = Field(default_factory=list)
     convergence: list[str] = Field(default_factory=list)
     divergence: list[str] = Field(default_factory=list)
     integrated_model: list[str] = Field(default_factory=list)
@@ -209,13 +211,17 @@ def synthesis_report_to_response(report) -> SynthesisReportResponse:
             for finding in findings
         ]
 
+    high = finding_rows(report.high_confidence_findings)
+    moderate = finding_rows(report.moderate_confidence_findings)
+    exploratory = finding_rows(report.exploratory_hypotheses)
     return SynthesisReportResponse(
         id=report.id,
         workflow_run_id=report.workflow_run_id,
         executive_summary=report.executive_summary,
-        high_confidence_findings=finding_rows(report.high_confidence_findings),
-        moderate_confidence_findings=finding_rows(report.moderate_confidence_findings),
-        exploratory_hypotheses=finding_rows(report.exploratory_hypotheses),
+        high_confidence_findings=high,
+        moderate_confidence_findings=moderate,
+        exploratory_hypotheses=exploratory,
+        findings=[*high, *moderate, *exploratory],
         convergence=report.convergence,
         divergence=report.divergence,
         integrated_model=report.integrated_model,

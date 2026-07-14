@@ -164,10 +164,30 @@ def main() -> int:
             return 1
         try:
             _, synth = http_json("GET", f"/api/workflow-runs/{run_id}/synthesis")
-            print(f"  synthesis ok id={synth.get('id')} findings={len(synth.get('findings') or [])}")
+            findings = synth.get("findings") or []
+            if not findings:
+                # Backward-compatible count if an older image lacks the rollup field.
+                findings = (
+                    (synth.get("high_confidence_findings") or [])
+                    + (synth.get("moderate_confidence_findings") or [])
+                    + (synth.get("exploratory_hypotheses") or [])
+                )
+            print(
+                f"  synthesis ok id={synth.get('id')} "
+                f"findings={len(findings)} "
+                f"high={len(synth.get('high_confidence_findings') or [])} "
+                f"moderate={len(synth.get('moderate_confidence_findings') or [])} "
+                f"exploratory={len(synth.get('exploratory_hypotheses') or [])}"
+            )
+            if not findings:
+                print(f"FAIL: {workflow_id} synthesis returned zero findings")
+                return 1
+            if not (synth.get("executive_summary") or "").strip():
+                print(f"FAIL: {workflow_id} synthesis missing executive_summary")
+                return 1
         except Exception as exc:  # noqa: BLE001
-            print(f"  synthesis check: {exc}")
-
+            print(f"FAIL: synthesis check: {exc}")
+            return 1
     print("\nP1-4f burn-in OK:", results)
     print(f"transcript_id={transcript_id}")
     return 0

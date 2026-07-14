@@ -158,6 +158,25 @@ def _render_report_dashboard(
     with overview_tab:
         if synthesis:
             st.markdown(synthesis.get("executive_summary", ""))
+            finding_count = len(synthesis.get("findings") or [])
+            if finding_count == 0:
+                finding_count = (
+                    len(synthesis.get("high_confidence_findings") or [])
+                    + len(synthesis.get("moderate_confidence_findings") or [])
+                    + len(synthesis.get("exploratory_hypotheses") or [])
+                )
+            step_count = len(synthesis.get("interventions") or [])
+            finding_label = "finding" if finding_count == 1 else "findings"
+            step_label = "next step" if step_count == 1 else "next steps"
+            st.caption(
+                f"{finding_count} integrated {finding_label} | "
+                f"{step_count} suggested {step_label}"
+            )
+            if finding_count == 0:
+                st.error(
+                    "Synthesis completed without findings. Open the Synthesis tab "
+                    "and module reports to investigate."
+                )
             if synthesis.get("interventions"):
                 st.markdown("#### Suggested next steps")
                 for item in synthesis["interventions"][:3]:
