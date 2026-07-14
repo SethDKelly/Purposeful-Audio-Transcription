@@ -1,5 +1,6 @@
 import os
 import tempfile
+import warnings
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,14 @@ if _TEST_DB.exists():
 os.environ["DATABASE_URL"] = f"sqlite:///{_TEST_DB.as_posix()}"
 os.environ["ALEMBIC_AUTO_UPGRADE"] = "false"
 os.environ["API_KEY"] = ""
+
+# pyannote warns when torchcodec cannot load FFmpeg libs; RRE decodes via ffmpeg CLI.
+warnings.filterwarnings(
+    "ignore",
+    message=".*torchcodec is not installed correctly.*",
+    category=UserWarning,
+    module=r"pyannote\.audio\.core\.io",
+)
 
 
 @pytest.fixture(autouse=True)

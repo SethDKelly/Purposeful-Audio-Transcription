@@ -3,7 +3,7 @@
 import logging
 import time
 
-from backend.core.exceptions import WorkflowRunError
+from backend.core.log_context import log_context_extra, workflow_run_id_var
 from backend.core.module_registry import module_registry
 from backend.core.workflow_registry import WorkflowDefinition, workflow_registry
 from backend.db.base import get_session
@@ -105,6 +105,7 @@ class WorkflowEngine:
     ) -> WorkflowRun:
         started = time.monotonic()
         transcript_id = workflow_run.transcript_id
+        workflow_token = workflow_run_id_var.set(workflow_run.id)
         completed_module_ids = {
             module_run.module_id
             for module_run in existing_module_runs
@@ -122,12 +123,12 @@ class WorkflowEngine:
             "Workflow run %s starting modules for %s",
             workflow_run.id,
             workflow.config.id,
-            extra={
-                "event": "workflow.run.started",
-                "run_id": workflow_run.id,
-                "workflow_id": workflow.config.id,
-                "status": workflow_run.status,
-            },
+            extra=log_context_extra(
+                event="workflow.run.started",
+                run_id=workflow_run.id,
+                workflow_id=workflow.config.id,
+                status=workflow_run.status,
+            ),
         )
 
         workflow_run.status = WorkflowRunStatus.RUNNING_MODULES.value
@@ -184,12 +185,23 @@ class WorkflowEngine:
         except WorkflowRunError:
             raise
         except Exception as exc:
-            logger.exception("Workflow run %s failed unexpectedly", workflow_run.id)
+            logger.exception(
+                "Workflow run %s failed unexpectedly",
+                workflow_run.id,
+                extra=log_context_extra(
+                    event="workflow.run.failed",
+                    error_type=type(exc).__name__,
+                    run_id=workflow_run.id,
+                    workflow_id=workflow_run.workflow_id,
+                ),
+            )
             workflow_run.status = WorkflowRunStatus.FAILED.value
             workflow_run.error_log = str(exc)
             workflow_run.completed_at = utc_now()
             self._persist(workflow_run)
             raise WorkflowRunError(f"Workflow failed: {exc}") from exc
+        finally:
+            workflow_run_id_var.reset(workflow_token)
 
     def _complete_workflow(
         self,

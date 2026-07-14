@@ -1,0 +1,149 @@
+name: Deploy to AWS dev
+
+# Push to main deploys AWS dev; manual Run workflow always available.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-2
+  AWS_ACCOUNT_ID: "521018312783"
+  TF_WORKING_DIR: infra/dev
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install dependencies
+        run: pip install -e ".[dev,local]"
+
+      - name: Run tests
+        run: pytest tests/ -q
+
+  deploy:
+    name: Deploy (dev)
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Debug GitHub OIDC claims (pre-assume)
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          TOKEN=$(curl -sSf -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" | jq -r .value)
+          PAYLOAD_B64=$(echo "$TOKEN" | cut -d. -f2)
+          python3 scripts/decode-oidc-claims.py "$PAYLOAD_B64"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::521018312783:role/dev-github-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Terraform init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init -input=false
+
+      - name: Ensure RDS is available
+        run: |
+          set -euo pipefail
+          ID="rre-dev-postgres"
+          STATUS=$(aws rds describe-db-instances --db-instance-identifier "$ID" \
+            --query 'DBInstances[0].DBInstanceStatus' --output text)
+          echo "RDS $ID status: $STATUS"
+          if [ "$STATUS" = "stopped" ]; then
+            echo "Starting stopped RDS instance (required after pause workflow)..."
+            aws rds start-db-instance --db-instance-identifier "$ID" --no-cli-pager
+          fi
+          echo "Waiting for RDS to become available..."
+          aws rds wait db-instance-available --db-instance-identifier "$ID"
+
+      - name: Ensure ECR repositories exist
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          set -euo pipefail
+          # Skip targeted apply when repos already exist — terraform -target fails
+          # when other resources have pending address moves in state.
+          if aws ecr describe-repositories --repository-names rre-dev-api rre-dev-ui >/dev/null 2>&1; then
+            echo "ECR repositories already present; full terraform apply will manage them."
+          else
+            terraform apply -input=false -auto-approve \
+              -target=aws_ecr_repository.api \
+              -target=aws_ecr_repository.ui
+          fi
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push API image (cloud slim)
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          docker build -t "$ECR_REGISTRY/rre-dev-api:${IMAGE_TAG}" -f Dockerfile.cloud .
+          docker push "$ECR_REGISTRY/rre-dev-api:${IMAGE_TAG}"
+          docker tag "$ECR_REGISTRY/rre-dev-api:${IMAGE_TAG}" "$ECR_REGISTRY/rre-dev-api:latest"
+          docker push "$ECR_REGISTRY/rre-dev-api:latest"
+
+      - name: Build and push UI image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          docker build -t "$ECR_REGISTRY/rre-dev-ui:${IMAGE_TAG}" -f Dockerfile.ui .
+          docker push "$ECR_REGISTRY/rre-dev-ui:${IMAGE_TAG}"
+          docker tag "$ECR_REGISTRY/rre-dev-ui:${IMAGE_TAG}" "$ECR_REGISTRY/rre-dev-ui:latest"
+          docker push "$ECR_REGISTRY/rre-dev-ui:latest"
+
+      - name: Terraform apply
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -input=false -auto-approve -var="image_tag=${IMAGE_TAG}"
+
+      - name: Wait for ECS services stable
+        env:
+          ECS_WAIT_MAX_ATTEMPTS: "60"
+          ECS_WAIT_SLEEP_SECS: "30"
+        run: |
+          set -euo pipefail
+          python3 scripts/wait-ecs-stable.py rre-dev-cluster rre-dev-api rre-dev-ui
+
+      - name: Smoke test (AWS-3f)
+        env:
+          TF_WORKING_DIR: ${{ env.TF_WORKING_DIR }}
+        run: |
+          chmod +x scripts/aws-deploy-smoke.sh
+          ./scripts/aws-deploy-smoke.sh
+
+      - name: Deployment summary
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          echo "## RRE dev deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Image tag: ${IMAGE_TAG}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- URL: $(terraform output -raw alb_url)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- API logs: $(terraform output -raw api_log_group)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- No-egress networking: $(terraform output -raw no_egress_networking_enabled)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Smoke: AWS-3f (health payload, workflows, UI, ECS, target groups)" >> "$GITHUB_STEP_SUMMARY"

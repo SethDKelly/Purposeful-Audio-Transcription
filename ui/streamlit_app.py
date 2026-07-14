@@ -10,9 +10,12 @@ from ui.api_client import (
     API_BASE,
     create_transcript,
     fetch_health,
+    fetch_modules,
     fetch_ollama_models,
     fetch_workflows,
     get_workflow_synthesis,
+    module_display_name,
+    module_name_map,
     run_workflow,
     transcribe_audio,
     update_transcript_speakers,
@@ -57,6 +60,11 @@ def _cached_workflows() -> list[dict]:
     return fetch_workflows()
 
 
+@st.cache_data(ttl=30, show_spinner=False)
+def _cached_modules() -> list[dict]:
+    return fetch_modules()
+
+
 def _apply_transcript_bundle(bundle: dict, *, source_name: str = "transcript") -> None:
     st.session_state.transcript = bundle["transcript"]["raw_text"]
     st.session_state.transcript_bundle = bundle
@@ -88,7 +96,25 @@ def render_sidebar() -> None:
     )
     st.sidebar.markdown(
         f"- **Whisper:** {_status_indicator(health.get('whisper_ready', False))}"
+        f" (`{health.get('whisper_device', 'cpu')}`"
+        + (
+            f", {health.get('whisper_compute_type')}"
+            if health.get("whisper_compute_type")
+            else ""
+        )
+        + ")"
     )
+    diarization_ready = health.get("diarization_ready", False)
+    st.sidebar.markdown(
+        f"- **Diarization:** {_status_indicator(diarization_ready)}"
+        f" (`{health.get('diarization_device', 'cpu')}`)"
+    )
+    cuda_ok = health.get("cuda_available", False)
+    st.sidebar.markdown(f"- **CUDA:** {_status_indicator(cuda_ok)}")
+    if not cuda_ok:
+        st.sidebar.caption(
+            "CPU torch build or no NVIDIA GPU — see model-setup for CUDA install."
+        )
 
     workflows = _cached_workflows()
     st.sidebar.divider()
@@ -100,13 +126,17 @@ def render_sidebar() -> None:
         st.sidebar.caption("No workflows configured")
 
 
-def _render_workflow_progress(workflow_run: dict) -> None:
+def _render_workflow_progress(
+    workflow_run: dict,
+    module_names: dict[str, str],
+) -> None:
     st.markdown("### Workflow progress")
     for module_run in workflow_run.get("module_runs", []):
         status = module_run.get("status", "unknown")
         module_id = module_run.get("module_id", "module")
+        label = module_display_name(module_id, module_names)
         icon = "✅" if status == "completed" else "❌" if status == "failed" else "⏳"
-        st.markdown(f"{icon} **{module_id}** — {status}")
+        st.markdown(f"{icon} **{label}** — {status}")
 
 
 def _render_report_dashboard(
@@ -116,21 +146,23 @@ def _render_report_dashboard(
     speakers: list[dict],
     workflow_name: str,
     *,
+    module_names: dict[str, str] | None = None,
     transcript_id: str | None = None,
     ollama_models: list[str] | None = None,
     default_model: str | None = None,
 ) -> None:
     render_safety_disclaimer()
+    names = module_names or {}
 
     if workflow_run.get("status") != "completed":
         st.warning(
             f"Workflow status: {workflow_run.get('status')}. "
             f"{workflow_run.get('error_log') or ''}"
         )
-        _render_workflow_progress(workflow_run)
+        _render_workflow_progress(workflow_run, names)
         return
 
-    _render_workflow_progress(workflow_run)
+    _render_workflow_progress(workflow_run, names)
 
     overview_tab, modules_tab, evidence_tab, synthesis_tab, explore_tab = st.tabs(
         ["Overview", "Module reports", "Evidence map", "Synthesis", "Explore"]
@@ -273,6 +305,7 @@ def main() -> None:
 
     workflows = _cached_workflows()
     ollama_models = _cached_ollama_models()
+    module_names = module_name_map(_cached_modules())
     workflow_options = {workflow["name"]: workflow for workflow in workflows}
 
     for key, default in (
@@ -299,6 +332,22 @@ def main() -> None:
         if uploaded is not None:
             st.audio(uploaded)
             st.caption(f"{uploaded.name} ({uploaded.size / (1024 * 1024):.2f} MB)")
+            speaker_choice = st.selectbox(
+                "Expected speakers",
+                options=["Auto-detect", "2", "3", "4", "Custom..."],
+                index=0,
+                key="speaker_hint_choice",
+                help="Optional hint for diarization when you know how many people spoke.",
+            )
+            if speaker_choice == "Custom...":
+                st.number_input(
+                    "Speaker count",
+                    min_value=1,
+                    max_value=10,
+                    value=2,
+                    step=1,
+                    key="custom_speaker_count",
+                )
 
     pasted_text = ""
     text_upload = None
@@ -327,9 +376,29 @@ def main() -> None:
                 st.error(str(exc))
 
     if uploaded is not None and st.button("Transcribe audio", type="primary"):
+        speaker_choice = st.session_state.get("speaker_hint_choice", "Auto-detect")
+        num_speakers: int | None = None
+        if speaker_choice == "Custom...":
+            num_speakers = int(st.session_state.get("custom_speaker_count", 2))
+        elif speaker_choice != "Auto-detect":
+            num_speakers = int(speaker_choice)
+
         with st.status("Transcribing...", expanded=True) as status:
             try:
-                result = transcribe_audio(uploaded.getvalue(), uploaded.name)
+                if num_speakers is not None:
+                    status.write(
+                        f"Running Whisper + diarization (hint: {num_speakers} speakers). "
+                        "First run can take several minutes on CPU."
+                    )
+                else:
+                    status.write(
+                        "Running Whisper + diarization. First run can take several minutes on CPU."
+                    )
+                result = transcribe_audio(
+                    uploaded.getvalue(),
+                    uploaded.name,
+                    num_speakers=num_speakers,
+                )
                 bundle = create_transcript(
                     result.get("transcript", ""),
                     source_type="audio",
@@ -341,9 +410,38 @@ def main() -> None:
                     {
                         "duration_seconds": result.get("duration_seconds"),
                         "segments": result.get("segments", []),
+                        "speaker_count": result.get("speaker_count"),
+                        "speaker_labels": result.get("speaker_labels", []),
+                        "diarization_applied": result.get("diarization_applied", False),
+                        "diarization_skip_reason": result.get("diarization_skip_reason"),
                     }
                 )
+                if result.get("diarization_applied"):
+                    labels = result.get("speaker_labels") or []
+                    status.write(
+                        f"Detected {result.get('speaker_count', len(labels))} speaker(s): "
+                        + ", ".join(labels)
+                    )
+                else:
+                    skip_reason = result.get("diarization_skip_reason")
+                    if skip_reason:
+                        status.write(
+                            "Speaker diarization skipped — transcript uses a single speaker label."
+                        )
+                        status.write(skip_reason)
+                    else:
+                        status.write(
+                            "Speaker diarization skipped — transcript uses a single speaker label. "
+                            "Install pyannote extras and set HF_TOKEN in `.env` to enable."
+                        )
                 status.update(label="Transcription complete", state="complete")
+            except httpx.TimeoutException:
+                status.update(label="Timed out", state="error")
+                st.error(
+                    "Transcription timed out. Speaker diarization on CPU can take a long time "
+                    "for longer audio — try a shorter clip, wait for a retry (models stay loaded), "
+                    "or set Expected speakers to speed clustering."
+                )
             except (RuntimeError, httpx.HTTPError) as exc:
                 status.update(label="Failed", state="error")
                 st.error(str(exc))
@@ -361,6 +459,19 @@ def main() -> None:
             cols[1].metric("Transcript ID", meta["transcript_id"][:8] + "…")
         if meta.get("filename"):
             cols[2].metric("Source", meta["filename"])
+        if meta.get("speaker_count"):
+            skip_reason = meta.get("diarization_skip_reason")
+            st.caption(
+                "Speakers: "
+                + ", ".join(meta.get("speaker_labels") or [])
+                + (
+                    " (diarized)"
+                    if meta.get("diarization_applied")
+                    else " (single-speaker fallback)"
+                )
+            )
+            if skip_reason and not meta.get("diarization_applied"):
+                st.caption(f"Diarization note: {skip_reason}")
 
         bundle = st.session_state.transcript_bundle
         if bundle and bundle.get("speakers"):
@@ -415,8 +526,12 @@ def main() -> None:
         if recommended:
             st.caption(f"Recommended model: {recommended}")
         st.caption(
-            f"Modules: {', '.join(workflow.get('modules', []))} · "
-            f"Est. {workflow.get('estimated_runtime', 'n/a')}"
+            "Modules: "
+            + ", ".join(
+                module_display_name(module_id, module_names)
+                for module_id in workflow.get("modules", [])
+            )
+            + f" · Est. {workflow.get('estimated_runtime', 'n/a')}"
         )
 
         default_model = settings.default_ollama_model or ollama_models[0]
@@ -441,7 +556,8 @@ def main() -> None:
             with st.status(f"Running {selected_workflow_name}...", expanded=True) as status:
                 try:
                     for module_id in workflow.get("modules", []):
-                        st.write(f"Running {module_id}...")
+                        label = module_display_name(module_id, module_names)
+                        st.write(f"Running {label}...")
                     result = run_workflow(
                         transcript_id=transcript_id,
                         workflow_id=workflow["id"],
@@ -485,6 +601,7 @@ def main() -> None:
             quotes_by_id,
             speakers,
             workflow_name,
+            module_names=module_names,
             transcript_id=st.session_state.transcript_meta.get("transcript_id"),
             ollama_models=ollama_models,
             default_model=settings.default_ollama_model or (ollama_models[0] if ollama_models else None),

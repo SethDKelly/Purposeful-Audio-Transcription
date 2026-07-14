@@ -6,12 +6,13 @@ import json
 import re
 from dataclasses import dataclass
 
-from backend.core.exceptions import ExplorationError, FindingNotFoundError
+from backend.core.exceptions import ExplorationError, FindingNotFoundError, LLMError
 from backend.db.base import get_session
 from backend.domain.enums import WorkflowRunStatus
 from backend.domain.finding import ModuleRun
 from backend.repositories.workflow_run_repository import WorkflowRunRepository
-from backend.services.ollama_service import OllamaService, ollama_service
+from backend.services.llm_factory import get_llm_provider
+from backend.services.llm_provider import LLMProvider
 from backend.services.synthesis_engine import SynthesisEngine, synthesis_engine
 from backend.services.transcript_service import TranscriptService, transcript_service
 from backend.services.workflow_engine import WorkflowEngine, workflow_engine
@@ -57,13 +58,13 @@ class ExplorationService:
         workflows: WorkflowEngine | None = None,
         transcripts: TranscriptService | None = None,
         synthesis: SynthesisEngine | None = None,
-        llm: OllamaService | None = None,
+        llm: LLMProvider | None = None,
         workflow_runs: WorkflowRunRepository | None = None,
     ) -> None:
         self._workflows = workflows or workflow_engine
         self._transcripts = transcripts or transcript_service
         self._synthesis = synthesis or synthesis_engine
-        self._llm = llm or ollama_service
+        self._llm = llm or get_llm_provider()
         self._workflow_runs = workflow_runs or WorkflowRunRepository()
 
     def list_findings(self, workflow_run_id: str) -> list[dict]:
@@ -220,10 +221,11 @@ class ExplorationService:
             transcript_id=workflow_run.transcript_id,
             finding_key=finding_key,
         )
-        resolved_model = model or workflow_run.model_used or settings.default_ollama_model
+        resolved_model = model or workflow_run.model_used or settings.default_llm_model
         if not resolved_model:
             raise ExplorationError(
-                "No Ollama model specified. Pass model in the request or set DEFAULT_OLLAMA_MODEL."
+                "No LLM model specified. Pass model in the request or configure "
+                "DEFAULT_OLLAMA_MODEL / BEDROCK_MODEL_ID."
             )
 
         messages = [
@@ -244,7 +246,10 @@ class ExplorationService:
                 ),
             },
         ]
-        answer = self._llm.chat(resolved_model, messages)
+        try:
+            answer = self._llm.chat(resolved_model, messages)
+        except LLMError as exc:
+            raise ExplorationError(f"LLM chat failed: {exc.message}") from exc
         return {
             "workflow_run_id": workflow_run_id,
             "finding_key": finding_key,

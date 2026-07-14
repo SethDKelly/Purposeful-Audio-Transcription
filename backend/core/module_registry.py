@@ -30,7 +30,12 @@ class ModuleConfig(BaseModel):
     confidence_ceiling: Confidence = Confidence.MODERATE
     prompt_file: str
     ollama_model: str | None = None
+    model_id: str | None = None
     input_type: str = "transcript"
+
+    @property
+    def resolved_model_id(self) -> str | None:
+        return self.model_id or self.ollama_model
 
 
 @dataclass(frozen=True)

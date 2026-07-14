@@ -1,3 +1,9 @@
+# Pre-RRE implementation plan (archived)
+
+> **Archived.** Original Whisper + Ollama phased build before the RRE redesign. Canonical: [../planning/completed.md](../planning/completed.md) · [../planning/implementing.md](../planning/implementing.md). Prompt layout: [../../config/prompts/README.md](../../config/prompts/README.md).
+
+---
+
 # Implementation Plan: Purposeful Audio Transcription
 
 A local-first application that uploads audio from the user's machine, transcribes it with **Whisper**, and analyzes the transcript with **Ollama**. Ollama does not process raw audio natively, so Python bridges a local Whisper library with Ollama's text inference engine.

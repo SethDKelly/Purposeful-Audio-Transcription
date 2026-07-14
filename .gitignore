@@ -221,5 +221,10 @@ __marimo__/
 data/
 .env
 
+# Terraform (dev infra)
+infra/dev/.terraform/
+infra/dev/*.tfvars
+!infra/dev/terraform.tfvars.example
+
 # Local tooling (portable gh CLI, etc.)
 .tools/

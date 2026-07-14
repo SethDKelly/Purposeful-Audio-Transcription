@@ -2,6 +2,7 @@
 
 import shutil
 import sys
+import warnings
 
 import httpx
 
@@ -60,11 +61,72 @@ def check_ollama_models() -> bool:
         return False
 
 
+def check_diarization() -> bool:
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning, module=r"pyannote\.audio\.core\.io")
+        from backend.services.diarization_service import diarization_service
+
+        if not settings.diarization_enabled:
+            print("  [INFO] Diarization disabled (DIARIZATION_ENABLED=false)")
+            return True
+
+        if diarization_service.is_available():
+            print(f"  [OK] Diarization ready (model: {settings.diarization_model})")
+            print("         Audio decoding uses ffmpeg/ffprobe (torchcodec not required)")
+            return True
+
+        try:
+            import pyannote.audio  # noqa: F401
+
+            has_pyannote = True
+        except ImportError:
+            has_pyannote = False
+
+        if not has_pyannote:
+            print("  [FAIL] pyannote.audio not installed")
+            print("         Reinstall: pip install -e \".[dev]\"")
+        elif not settings.hf_token:
+            print("  [WARN] HF_TOKEN not set (required for pyannote models)")
+            print("         Accept model terms at huggingface.co/pyannote and add HF_TOKEN to .env")
+        else:
+            access_error = diarization_service.model_access_error()
+            if access_error:
+                print(f"  [WARN] Hugging Face model access blocked: {access_error}")
+            elif not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+                print("  [WARN] ffmpeg/ffprobe required for diarization audio decoding")
+            else:
+                print("  [WARN] Diarization dependencies present but not fully ready")
+    return True
+
+
 def check_whisper_model() -> bool:
+    from backend.services.whisper_service import whisper_service
+
     print(f"  [INFO] Whisper model configured: {settings.whisper_model}")
-    print(f"  [INFO] Whisper device: {settings.whisper_device}")
-    print(f"  [INFO] Whisper compute type: {settings.whisper_compute_type}")
+    print(f"  [INFO] Whisper device: {whisper_service.resolved_device()} (pref={settings.whisper_device})")
+    print(
+        f"  [INFO] Whisper compute type: {whisper_service.resolved_compute_type()} "
+        f"(configured={settings.whisper_compute_type})"
+    )
     print("         Model downloads automatically on first transcription.")
+    return True
+
+
+def check_accelerators() -> bool:
+    from backend.core.device import cuda_available, mps_available
+    from backend.services.diarization_service import diarization_service
+
+    cuda_ok = cuda_available()
+    print(f"  [{'OK' if cuda_ok else 'INFO'}] CUDA available: {cuda_ok}")
+    if mps_available():
+        print("  [OK] Apple MPS available")
+    if settings.diarization_enabled:
+        print(
+            f"  [INFO] Diarization device: {diarization_service.resolved_device()} "
+            f"(pref={settings.diarization_device})"
+        )
+    if not cuda_ok:
+        print("         For NVIDIA GPUs, install a CUDA torch build — see doc/user/model-setup.md")
     return True
 
 
@@ -83,6 +145,8 @@ def main() -> int:
         check_ollama(),
         check_ollama_models(),
         check_whisper_model(),
+        check_accelerators(),
+        check_diarization(),
         check_temp_dir(),
     ]
 

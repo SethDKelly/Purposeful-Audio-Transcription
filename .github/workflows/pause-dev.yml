@@ -1,0 +1,66 @@
+name: Pause AWS dev
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [phase-m0-docs]
+    paths:
+      - .github/workflows/pause-dev.yml
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-2
+  TF_WORKING_DIR: infra/dev
+
+jobs:
+  pause:
+    name: Pause (scale down)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::521018312783:role/dev-github-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Terraform init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init -input=false
+
+      - name: Scale ECS services to zero
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform apply -input=false -auto-approve \
+            -var="api_desired_count=0" \
+            -var="ui_desired_count=0" \
+            -var="image_tag=latest" \
+            -target=aws_ecs_service.api \
+            -target=aws_ecs_service.ui
+
+      - name: Stop RDS instance
+        run: |
+          aws rds stop-db-instance \
+            --db-instance-identifier rre-dev-postgres \
+            --no-cli-pager || true
+          echo "RDS stop requested (may already be stopped)."
+
+      - name: Summary
+        run: |
+          {
+            echo "## RRE dev paused"
+            echo "- ECS \`rre-dev-api\` and \`rre-dev-ui\`: desired count 0"
+            echo "- RDS \`rre-dev-postgres\`: stop requested"
+            echo ""
+            echo "**Still incurring charges:** ALB (~\$16/mo), ECR storage, Secrets Manager, minimal RDS storage while stopped."
+            echo ""
+            echo "**Resume:** run **Deploy to AWS dev** workflow (push to \`phase-m0-docs\` or workflow_dispatch)."
+          } >> "$GITHUB_STEP_SUMMARY"

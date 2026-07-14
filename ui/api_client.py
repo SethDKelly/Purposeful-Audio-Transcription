@@ -4,8 +4,9 @@ import httpx
 
 from config.settings import settings
 
-API_BASE = f"http://{settings.api_host}:{settings.api_port}"
-TRANSCRIBE_TIMEOUT = 600.0
+API_BASE = settings.api_base_url
+# Whisper + CPU diarization on long audio can exceed 10 minutes on first model load.
+TRANSCRIBE_TIMEOUT = 1800.0
 PROCESS_TIMEOUT = 1200.0
 WORKFLOW_TIMEOUT = 1800.0
 
@@ -50,10 +51,38 @@ def fetch_workflows() -> list[dict]:
     return []
 
 
-def transcribe_audio(file_bytes: bytes, filename: str) -> dict:
+def fetch_modules() -> list[dict]:
+    try:
+        response = httpx.get(f"{API_BASE}/api/modules", timeout=5.0)
+        if response.status_code == 200:
+            return response.json().get("modules", [])
+    except httpx.HTTPError:
+        pass
+    return []
+
+
+def module_name_map(modules: list[dict]) -> dict[str, str]:
+    return {module["id"]: module["name"] for module in modules if module.get("id")}
+
+
+def module_display_name(module_id: str, names: dict[str, str]) -> str:
+    return names.get(module_id, module_id.replace("_", " ").title())
+
+
+def transcribe_audio(
+    file_bytes: bytes,
+    filename: str,
+    *,
+    num_speakers: int | None = None,
+) -> dict:
+    data: dict[str, str] = {}
+    if num_speakers is not None:
+        data["num_speakers"] = str(num_speakers)
+
     response = httpx.post(
         f"{API_BASE}/api/transcribe",
         files={"file": (filename, file_bytes)},
+        data=data,
         timeout=TRANSCRIBE_TIMEOUT,
     )
     _raise_for_status(response)

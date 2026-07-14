@@ -2,7 +2,28 @@ import json
 import logging
 from datetime import UTC, datetime
 
+from backend.core.log_context import (
+    module_id_var,
+    module_run_id_var,
+    request_id_var,
+    workflow_run_id_var,
+)
 from config.settings import settings
+
+_STANDARD_EXTRA_KEYS = (
+    "event",
+    "request_id",
+    "workflow_run_id",
+    "module_run_id",
+    "module_id",
+    "error_type",
+    "run_id",
+    "workflow_id",
+    "duration_ms",
+    "status",
+    "model_id",
+    "retry_count",
+)
 
 
 class JsonLogFormatter(logging.Formatter):
@@ -13,13 +34,20 @@ class JsonLogFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
-        event = getattr(record, "event", None)
-        if event:
-            payload["event"] = event
-        for key in ("run_id", "workflow_id", "module_id", "duration_ms", "status"):
+
+        for key in _STANDARD_EXTRA_KEYS:
             value = getattr(record, key, None)
+            if value is None and key == "request_id":
+                value = request_id_var.get()
+            elif value is None and key == "workflow_run_id":
+                value = workflow_run_id_var.get()
+            elif value is None and key == "module_run_id":
+                value = module_run_id_var.get()
+            elif value is None and key == "module_id":
+                value = module_id_var.get()
             if value is not None:
                 payload[key] = value
+
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)
         return json.dumps(payload, ensure_ascii=True)

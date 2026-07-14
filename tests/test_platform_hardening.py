@@ -143,9 +143,44 @@ def test_api_key_middleware_blocks_protected_routes(monkeypatch) -> None:
 
     health = client.get("/api/health")
     assert health.status_code == 200
+    payload = health.json()
+    assert "cuda_available" in payload
+    assert "whisper_device" in payload
+    assert "diarization_device" in payload
+    assert "whisper_compute_type" in payload
 
 
-def test_workflows_api_background_flag(monkeypatch) -> None:
+def test_health_reports_resolved_devices(monkeypatch) -> None:
+    from fastapi.testclient import TestClient
+
+    from backend.main import app
+    from backend.services.whisper_service import whisper_service
+
+    monkeypatch.setattr(
+        "backend.api.routes.health.cuda_available",
+        lambda: True,
+    )
+    monkeypatch.setattr(whisper_service, "resolved_device", lambda: "cuda")
+    monkeypatch.setattr(whisper_service, "resolved_compute_type", lambda: "float16")
+    monkeypatch.setattr(whisper_service, "is_ready", lambda: True)
+    monkeypatch.setattr(
+        "backend.api.routes.health.diarization_service.resolved_device",
+        lambda: "cuda",
+    )
+    monkeypatch.setattr(
+        "backend.api.routes.health.diarization_service.is_available",
+        lambda: True,
+    )
+
+    client = TestClient(app)
+    payload = client.get("/api/health").json()
+    assert payload["cuda_available"] is True
+    assert payload["whisper_device"] == "cuda"
+    assert payload["diarization_device"] == "cuda"
+    assert payload["whisper_compute_type"] == "float16"
+
+
+def test_background_workflow_run_completes(monkeypatch) -> None:
     mock_llm = MagicMock()
     mock_llm.chat.side_effect = [
         _module_llm_response("relationship_conversation_analysis"),
@@ -182,3 +217,11 @@ def test_workflows_api_background_flag(monkeypatch) -> None:
             break
 
     assert final_status == WorkflowRunStatus.COMPLETED.value
+
+
+def test_api_base_url_override(monkeypatch):
+    monkeypatch.setenv("RRE_API_BASE_URL", "http://alb.example.com")
+    from config.settings import Settings
+
+    cfg = Settings()
+    assert cfg.api_base_url == "http://alb.example.com"

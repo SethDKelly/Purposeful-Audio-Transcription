@@ -1,0 +1,4 @@
+# Shell scripts and Actions workflows must stay LF for GitHub Actions (ubuntu).
+*.sh text eol=lf
+*.py text eol=lf
+.github/workflows/*.yml text eol=lf
