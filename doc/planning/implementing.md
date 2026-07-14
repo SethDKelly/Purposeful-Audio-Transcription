@@ -132,14 +132,14 @@ Core product on AWS after slim cutover burn-in.
 
 **Goal:** Sensitive data lifecycle and logging boundaries on AWS dev.
 
-| # | Task |
-|---|------|
-| P1-3a | Temp audio deletion — S3 lifecycle + app `finally` (audit all code paths) |
-| P1-3b | `DELETE /api/transcripts/{id}` cascade to runs/reports |
-| P1-3c | Log redaction — no transcript body in CloudWatch | Design: [log-redaction.md](log-redaction.md) |
-| P1-3d | Privacy copy updated for AWS (data stays in account/VPC) |
-| P1-3e | Optional `TRANSCRIPT_RETENTION_DAYS` + cleanup job |
-| P1-3f | Audit logging for ingest, export, delete events |
+| # | Task | Status |
+|---|------|--------|
+| P1-3a | Temp audio deletion — S3 lifecycle + app `finally` (audit all code paths) | ✓ `saved_upload` + Transcribe S3 `finally`; lifecycle **1d** on `temp/` |
+| P1-3b | `DELETE /api/transcripts/{id}` cascade to runs/reports | **Next** |
+| P1-3c | Log redaction — no transcript body in CloudWatch ([log-redaction.md](log-redaction.md)) | |
+| P1-3d | Privacy copy updated for AWS (data stays in account/VPC) | |
+| P1-3e | Optional `TRANSCRIPT_RETENTION_DAYS` + cleanup job | |
+| P1-3f | Audit logging for ingest, export, delete events | |
 
 ### P1-4 — Workflow completeness (Phase N)
 
