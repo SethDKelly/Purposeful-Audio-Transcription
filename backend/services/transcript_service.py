@@ -135,7 +135,7 @@ class TranscriptService:
             self._repository.update_speakers(session, transcript_id, speaker_updates)
             return self._repository.get_bundle(session, transcript_id)
 
-    def ingest_from_whisper(
+    def ingest_from_audio(
         self,
         raw_text: str,
         language: str | None = None,

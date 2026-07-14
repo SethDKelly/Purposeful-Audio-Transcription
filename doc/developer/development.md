@@ -1,34 +1,23 @@
 # Development guide
 
+RRE is an **AWS-only** product. Develop on a laptop; run the application on ECS.
+
 ## Prerequisites
 
-Same as [../user/getting-started.md](../user/getting-started.md): Python 3.11+, ffmpeg, Ollama.
+- Python 3.11+
+- GitHub access to deploy workflows
+- AWS operator access for integration checks (optional for most PRs)
 
-## Setup
+## Setup (tests / tooling)
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -e ".[dev,local]"
-copy .env.example .env
+pip install -e ".[dev]"
+copy .env.example .env   # tooling / pytest only — not a local server
 ```
 
-Set `DEFAULT_OLLAMA_MODEL` in `.env` for integration tests that call Ollama (most tests mock the LLM).
-
-Speaker diarization (pyannote + torch) is included in the standard install. Set `HF_TOKEN` in `.env` after accepting pyannote model terms. See [../user/model-setup.md](../user/model-setup.md).
-
-## Run locally
-
-```powershell
-.\scripts\run_dev.ps1
-```
-
-Or separately:
-
-```powershell
-uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
-streamlit run ui/streamlit_app.py
-```
+There is no supported local API/UI against Bedrock, Transcribe, Whisper, or Ollama. Validate product behavior after **Deploy to AWS dev**.
 
 ## Project layout
 
@@ -39,71 +28,64 @@ backend/
   domain/           # Pydantic domain models
   db/               # SQLAlchemy, Alembic helpers
   repositories/     # Persistence
-  services/         # Business logic
-  schemas/          # JSON output schemas (module_output_v1, …)
+  services/         # Business logic (Bedrock, Transcribe, workflows)
+  schemas/          # JSON output schemas
 config/
   modules/          # Module YAML
   workflows/        # Workflow YAML
   prompts/          # Markdown prompts
   framework/        # Shared compiler fragments
-ui/
-  streamlit_app.py
-  api_client.py
-  components/
+ui/                 # Streamlit (ECS UI image)
+infra/dev/          # Terraform for AWS that
 tests/
-  fixtures/         # Golden transcripts, sample JSON
-alembic/            # DB migrations
-scripts/            # Dev and release scripts
-doc/
-  user/             # User guides
-  developer/        # This section
-  design/           # Design package 01–16
-  planning/         # Implementation plans
+  fixtures/
+Dockerfile.cloud    # API image
+Dockerfile.ui       # UI image
 ```
 
 ## Tests
 
 ```powershell
 pytest tests/ -q
-pytest tests/test_workflow_engine.py -v
 ```
 
-`tests/conftest.py` uses an isolated SQLite DB per test with `ALEMBIC_AUTO_UPGRADE=false`.
+`tests/conftest.py` forces an isolated **SQLite** DB per session (`ALEMBIC_AUTO_UPGRADE=false`). Most LLM/ASR calls are mocked.
 
 ### Test patterns
 
 - **Unit** — parsers, validators, exploration logic
-- **Integration** — API via `TestClient` with mocked `ollama`
+- **Integration** — API via `TestClient` with mocked Bedrock / Transcribe
 - **Fixtures** — `tests/fixtures/golden_transcript.txt`, `sample_module_output.json`
 
 ## Database
 
-**SQLite (default):** `create_all` on test startup.
-
-**Migrations:**
+| Context | Engine |
+|---------|--------|
+| pytest | SQLite (forced in conftest) |
+| AWS | RDS PostgreSQL via Secrets Manager |
 
 ```powershell
 alembic upgrade head
 ```
 
-Set `ALEMBIC_AUTO_UPGRADE=true` in `.env` for PostgreSQL auto-migrate on API start.
+ECS uses `ALEMBIC_AUTO_UPGRADE=true` as configured in Terraform.
 
-## Debugging
+## Debugging on AWS
 
 | Issue | Check |
 |-------|-------|
-| Module validation fails | `module_run.validation_errors` in API response |
-| Workflow stuck | `GET /api/workflow-runs/{id}` status; logs with `LOG_JSON=true` |
+| Module validation fails | `module_run.validation_errors`; CloudWatch `/rre/dev/api` |
+| Workflow stuck | `GET /api/workflow-runs/{id}`; Insights by `module_run_id` |
 | Prompt too long | `EVIDENCE_PROMPT_*` settings |
 
-API interactive docs: http://127.0.0.1:8000/docs
+Ops: [aws-operations.md](aws-operations.md).
 
 ## Code conventions
 
 - Python 3.11+ type hints
 - Pydantic v2 for API and domain models
-- Services as classes with module-level singletons (`workflow_engine = WorkflowEngine()`)
-- Exceptions in `backend/core/exceptions.py` map to HTTP status via `AppError`
+- Services as classes with module-level singletons
+- Exceptions in `backend/core/exceptions.py` map to HTTP via `AppError`
 - Keep changes focused; match surrounding style
 
 ## Related
@@ -111,3 +93,4 @@ API interactive docs: http://127.0.0.1:8000/docs
 - [architecture.md](architecture.md)
 - [contributing.md](contributing.md)
 - [api-reference.md](api-reference.md)
+- [../planning/aws-deployment.md](../planning/aws-deployment.md)

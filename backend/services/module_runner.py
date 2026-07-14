@@ -270,9 +270,8 @@ class ModuleRunner:
         )
         if not resolved:
             raise ModuleRunError(
-                "No LLM model specified. Pass model in the request, set model_id or "
-                "ollama_model in the module YAML, or configure DEFAULT_OLLAMA_MODEL / "
-                "BEDROCK_MODEL_ID."
+                "No LLM model specified. Pass model in the request, set model_id in the "
+                "module YAML, or configure BEDROCK_MODEL_ID."
             )
         return resolved
 

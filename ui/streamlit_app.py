@@ -13,7 +13,7 @@ from ui.api_client import (
     delete_transcript,
     fetch_health,
     fetch_modules,
-    fetch_ollama_models,
+    fetch_llm_models,
     fetch_workflows,
     get_workflow_run,
     get_workflow_synthesis,
@@ -55,8 +55,8 @@ def _cached_health() -> dict | None:
 
 
 @st.cache_data(ttl=30, show_spinner=False)
-def _cached_ollama_models() -> list[str]:
-    return fetch_ollama_models()
+def _cached_llm_models() -> list[str]:
+    return fetch_llm_models()
 
 
 @st.cache_data(ttl=30, show_spinner=False)
@@ -93,32 +93,16 @@ def render_sidebar() -> None:
 
     st.sidebar.metric("API", health.get("status", "unknown").title())
     st.sidebar.markdown(
-        f"- **ffmpeg:** {_status_indicator(health.get('ffmpeg_available', False))}"
+        f"- **LLM ({health.get('llm_provider', 'bedrock')}):** "
+        f"{_status_indicator(health.get('llm_available', False))}"
     )
     st.sidebar.markdown(
-        f"- **Ollama:** {_status_indicator(health.get('ollama_available', False))}"
+        f"- **ASR ({health.get('transcription_provider', 'transcribe')}):** "
+        f"{_status_indicator(health.get('transcription_available', False))}"
     )
     st.sidebar.markdown(
-        f"- **Whisper:** {_status_indicator(health.get('whisper_ready', False))}"
-        f" (`{health.get('whisper_device', 'cpu')}`"
-        + (
-            f", {health.get('whisper_compute_type')}"
-            if health.get("whisper_compute_type")
-            else ""
-        )
-        + ")"
+        f"- **Database:** {_status_indicator(health.get('database_available', False))}"
     )
-    diarization_ready = health.get("diarization_ready", False)
-    st.sidebar.markdown(
-        f"- **Diarization:** {_status_indicator(diarization_ready)}"
-        f" (`{health.get('diarization_device', 'cpu')}`)"
-    )
-    cuda_ok = health.get("cuda_available", False)
-    st.sidebar.markdown(f"- **CUDA:** {_status_indicator(cuda_ok)}")
-    if not cuda_ok:
-        st.sidebar.caption(
-            "CPU torch build or no NVIDIA GPU â€” see model-setup for CUDA install."
-        )
 
     workflows = _cached_workflows()
     st.sidebar.divider()
@@ -139,8 +123,8 @@ def _render_workflow_progress(
         status = module_run.get("status", "unknown")
         module_id = module_run.get("module_id", "module")
         label = module_display_name(module_id, module_names)
-        icon = "âœ…" if status == "completed" else "âŒ" if status == "failed" else "â³"
-        st.markdown(f"{icon} **{label}** â€” {status}")
+        icon = "?" if status == "completed" else "?" if status == "failed" else "?"
+        st.markdown(f"{icon} **{label}** — {status}")
 
 
 def _render_report_dashboard(
@@ -152,7 +136,7 @@ def _render_report_dashboard(
     *,
     module_names: dict[str, str] | None = None,
     transcript_id: str | None = None,
-    ollama_models: list[str] | None = None,
+    llm_models: list[str] | None = None,
     default_model: str | None = None,
 ) -> None:
     render_safety_disclaimer()
@@ -203,7 +187,7 @@ def _render_report_dashboard(
             workflow_run,
             transcript_id=transcript_id,
             quotes_by_id=quotes_by_id,
-            ollama_models=ollama_models or [],
+            llm_models=llm_models or [],
             default_model=default_model,
         )
 
@@ -329,7 +313,7 @@ def _render_report_dashboard(
 def main() -> None:
     st.set_page_config(
         page_title="Relationship Reasoning Engine",
-        page_icon="ðŸŽ™ï¸",
+        page_icon="???",
         layout="wide",
     )
 
@@ -341,7 +325,7 @@ def main() -> None:
     render_privacy_note()
 
     workflows = _cached_workflows()
-    ollama_models = _cached_ollama_models()
+    llm_models = _cached_llm_models()
     module_names = module_name_map(_cached_modules())
     workflow_options = {workflow["name"]: workflow for workflow in workflows}
 
@@ -356,7 +340,7 @@ def main() -> None:
             st.session_state[key] = default
 
     # --- Step 1: Ingest ---
-    st.subheader("Step 1 Â· Ingest")
+    st.subheader("Step 1 · Ingest")
     input_tab_audio, input_tab_text = st.tabs(["Audio", "Paste or upload text"])
 
     uploaded = None
@@ -424,13 +408,10 @@ def main() -> None:
             try:
                 if num_speakers is not None:
                     status.write(
-                        f"Running Whisper + diarization (hint: {num_speakers} speakers). "
-                        "First run can take several minutes on CPU."
+                        f"Running Amazon Transcribe (hint: {num_speakers} speakers)."
                     )
                 else:
-                    status.write(
-                        "Running Whisper + diarization. First run can take several minutes on CPU."
-                    )
+                    status.write("Running Amazon Transcribe.")
                 result = transcribe_audio(
                     uploaded.getvalue(),
                     uploaded.name,
@@ -463,28 +444,26 @@ def main() -> None:
                     skip_reason = result.get("diarization_skip_reason")
                     if skip_reason:
                         status.write(
-                            "Speaker diarization skipped â€” transcript uses a single speaker label."
+                            "Speaker labels unavailable — transcript uses a single speaker label."
                         )
                         status.write(skip_reason)
                     else:
                         status.write(
-                            "Speaker diarization skipped â€” transcript uses a single speaker label. "
-                            "Install pyannote extras and set HF_TOKEN in `.env` to enable."
+                            "Speaker labels unavailable — transcript uses a single speaker label."
                         )
                 status.update(label="Transcription complete", state="complete")
             except httpx.TimeoutException:
                 status.update(label="Timed out", state="error")
                 st.error(
-                    "Transcription timed out. Speaker diarization on CPU can take a long time "
-                    "for longer audio â€” try a shorter clip, wait for a retry (models stay loaded), "
-                    "or set Expected speakers to speed clustering."
+                    "Transcription timed out. Amazon Transcribe can take several minutes "
+                    "for longer audio — try a shorter clip or try again."
                 )
             except (RuntimeError, httpx.HTTPError) as exc:
                 status.update(label="Failed", state="error")
                 st.error(str(exc))
 
     # --- Step 2: Prepare ---
-    st.subheader("Step 2 Â· Prepare")
+    st.subheader("Step 2 · Prepare")
     if not st.session_state.transcript and not st.session_state.transcript_meta:
         st.info("Ingest a transcript to continue.")
     else:
@@ -493,7 +472,7 @@ def main() -> None:
         if meta.get("language"):
             cols[0].metric("Language", meta["language"])
         if meta.get("transcript_id"):
-            cols[1].metric("Transcript ID", meta["transcript_id"][:8] + "â€¦")
+            cols[1].metric("Transcript ID", meta["transcript_id"][:8] + "?")
         if meta.get("filename"):
             cols[2].metric("Source", meta["filename"])
         if meta.get("speaker_count"):
@@ -558,12 +537,12 @@ def main() -> None:
                 st.error(str(exc))
 
     # --- Step 3: Analyze ---
-    st.subheader("Step 3 Â· Analyze")
+    st.subheader("Step 3 · Analyze")
 
     if not st.session_state.transcript:
         st.info("Prepare a transcript first.")
-    elif not ollama_models:
-        st.warning("No Ollama models available.")
+    elif not llm_models:
+        st.warning("No LLM models available.")
     elif not workflows:
         st.warning("No workflows configured.")
     else:
@@ -585,7 +564,7 @@ def main() -> None:
                 module_display_name(module_id, module_names)
                 for module_id in workflow.get("modules", [])
             )
-            + f" Â· Est. {workflow.get('estimated_runtime', 'n/a')}"
+            + f" — Est. {workflow.get('estimated_runtime', 'n/a')}"
         )
 
         module_count = len(workflow.get("modules", []))
@@ -609,13 +588,13 @@ def main() -> None:
             key=f"workflow_bg_{workflow['id']}",
         )
 
-        default_model = settings.default_ollama_model or ollama_models[0]
+        default_model = settings.default_llm_model or llm_models[0]
         model_index = (
-            ollama_models.index(default_model)
-            if default_model in ollama_models
+            llm_models.index(default_model)
+            if default_model in llm_models
             else 0
         )
-        selected_model = st.selectbox("Ollama model", options=ollama_models, index=model_index)
+        selected_model = st.selectbox("LLM model", options=llm_models, index=model_index)
 
         transcript_id = st.session_state.transcript_meta.get("transcript_id")
         bundle_text = (st.session_state.transcript_bundle or {}).get("transcript", {}).get(
@@ -653,7 +632,7 @@ def main() -> None:
                             )
                             total = max(module_count, 1)
                             status.write(
-                                f"Status: {result.get('status')} Â· modules done {done}/{total}"
+                                f"Status: {result.get('status')} — modules done {done}/{total}"
                             )
                             if result.get("status") in terminal:
                                 break
@@ -675,7 +654,7 @@ def main() -> None:
                     st.error(str(exc))
 
     # --- Step 4: Report ---
-    st.subheader("Step 4 Â· Report")
+    st.subheader("Step 4 · Report")
     workflow_run = st.session_state.workflow_run
     if workflow_run:
         quotes = st.session_state.transcript_meta.get("evidence_quotes", [])
@@ -697,8 +676,8 @@ def main() -> None:
             workflow_name,
             module_names=module_names,
             transcript_id=st.session_state.transcript_meta.get("transcript_id"),
-            ollama_models=ollama_models,
-            default_model=settings.default_ollama_model or (ollama_models[0] if ollama_models else None),
+            llm_models=llm_models,
+            default_model=settings.default_llm_model or (llm_models[0] if llm_models else None),
         )
     else:
         st.info("Run a workflow to explore the evidence-linked report dashboard.")

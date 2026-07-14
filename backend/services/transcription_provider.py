@@ -1,11 +1,11 @@
-"""Transcription provider protocol — Whisper (local) and Transcribe (AWS, P1-1)."""
+"""Transcription provider protocol (Amazon Transcribe)."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Protocol
 
-from backend.services.audio_transcription_service import AudioTranscriptionResult
+from backend.services.transcript_types import AudioTranscriptionResult
 
 
 class TranscriptionProvider(Protocol):

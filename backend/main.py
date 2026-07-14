@@ -46,9 +46,9 @@ async def lifespan(_app: FastAPI):
 configure_logging()
 
 app = FastAPI(
-    title="Purposeful Audio Transcription",
-    description="Local audio transcription with Whisper and Ollama-powered analysis",
-    version="0.3.0",
+    title="Relationship Reasoning Engine",
+    description="AWS transcript analysis with Bedrock and Amazon Transcribe",
+    version="0.5.1",
     lifespan=lifespan,
 )
 app.add_middleware(APIKeyMiddleware)

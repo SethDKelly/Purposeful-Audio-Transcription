@@ -5,17 +5,11 @@ from backend.domain.enums import SourceType
 
 class HealthResponse(BaseModel):
     status: str
-    ffmpeg_available: bool
-    ollama_available: bool
-    llm_provider: str = "ollama"
+    llm_provider: str = "bedrock"
     llm_available: bool = False
+    transcription_provider: str = "transcribe"
+    transcription_available: bool = False
     database_available: bool = False
-    whisper_ready: bool
-    diarization_ready: bool = False
-    cuda_available: bool = False
-    whisper_device: str = "cpu"
-    diarization_device: str = "cpu"
-    whisper_compute_type: str | None = None
 
 
 class TranscriptSegmentSchema(BaseModel):
@@ -33,11 +27,15 @@ class TranscribeResponse(BaseModel):
     speaker_labels: list[str] = Field(default_factory=list)
     diarization_applied: bool = False
     diarization_skip_reason: str | None = None
-    transcription_mode: str = "overlap"
+    transcription_mode: str = "transcribe"
 
 
-class OllamaModelsResponse(BaseModel):
+class ModelsResponse(BaseModel):
     models: list[str] = Field(default_factory=list)
+
+
+# Backward-compatible alias for older clients
+OllamaModelsResponse = ModelsResponse
 
 
 class ErrorResponse(BaseModel):

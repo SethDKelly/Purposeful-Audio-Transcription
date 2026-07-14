@@ -16,7 +16,7 @@ def render_exploration_panel(
     *,
     transcript_id: str | None,
     quotes_by_id: dict[str, dict],
-    ollama_models: list[str],
+    llm_models: list[str],
     default_model: str | None = None,
 ) -> None:
     run_id = workflow_run.get("id")
@@ -57,7 +57,7 @@ def render_exploration_panel(
         _render_knowledge_graph(run_id)
 
     with ask_tab:
-        _render_ask_question(run_id, ollama_models, default_model)
+        _render_ask_question(run_id, llm_models, default_model)
 
 
 def _render_finding_drilldown(run_id: str, quotes_by_id: dict[str, dict]) -> None:
@@ -253,11 +253,11 @@ def _render_knowledge_graph(run_id: str) -> None:
 
 def _render_ask_question(
     run_id: str,
-    ollama_models: list[str],
+    llm_models: list[str],
     default_model: str | None,
 ) -> None:
-    if not ollama_models:
-        st.warning("No Ollama models available.")
+    if not llm_models:
+        st.warning("No LLM models available.")
         return
 
     try:
@@ -279,11 +279,11 @@ def _render_ask_question(
         key="ask_scope_selector",
     )
     model_index = (
-        ollama_models.index(default_model) if default_model in ollama_models else 0
+        llm_models.index(default_model) if default_model in llm_models else 0
     )
     selected_model = st.selectbox(
-        "Ollama model",
-        options=ollama_models,
+        "LLM model",
+        options=llm_models,
         index=model_index,
         key="ask_model_selector",
     )

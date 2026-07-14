@@ -10,7 +10,7 @@ Ingest → Prepare → Analyze → Report
 
 ### 1. Ingest
 
-**Audio tab** — upload `.mp3`, `.wav`, `.m4a`, etc. If you know how many people spoke, choose **Expected speakers** (2, 3, 4, or a custom count) before transcribing; otherwise leave **Auto-detect**. Click **Transcribe audio** to run Whisper. When diarization is enabled (see [model-setup.md](model-setup.md)), the app labels turns as **Person A**, **Person B**, etc. Otherwise you get a single-speaker transcript you can edit manually in Step 2.
+**Audio tab** — upload `.mp3`, `.wav`, `.m4a`, etc. If you know how many people spoke, choose **Expected speakers** before uploading; Amazon Transcribe labels turns as **Person A**, **Person B**, etc. Otherwise paste text in the text tab.
 
 **Paste / upload tab** — paste labeled dialogue or upload a `.txt` file. Preferred format:
 
@@ -28,7 +28,7 @@ Each turn receives a stable **evidence quote ID** (`Q001`, `Q002`, …) used in 
 
 ### 3. Analyze
 
-Select a **workflow** and **Ollama model**, then **Run workflow**.
+Select a **workflow** and **LLM model** (Bedrock), then **Run workflow**.
 
 Workflows run modules sequentially. Long workflows default to background in the UI when the workflow sets `default_background`, or when module count exceeds `WORKFLOW_SYNC_MODULE_LIMIT`. You can also pass `"background": true` on the API.
 
@@ -78,7 +78,7 @@ Without re-running a workflow you can:
 - **Cross-module** — agreement and tension between modules
 - **Compare sessions** — compare multiple runs on the same transcript
 - **Knowledge graph** — constructs and relationships (when modules return them)
-- **Ask a question** — scoped follow-up to Ollama using stored findings
+- **Ask a question** — scoped follow-up via Bedrock using stored findings
 
 Scope a question to one finding or the entire run.
 

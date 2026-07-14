@@ -2,21 +2,15 @@
 
 Optional enhancements **not** on the active path in [implementing.md](implementing.md). Completed work: [completed.md](completed.md).
 
-**Scope rule:** Backlog items improve UX, local dev comfort, research velocity, or alternate deployment targets. They do **not** block AWS dev, Bedrock/Transcribe migration, or core workflow value.
+**Scope rule:** Backlog items improve UX, research velocity, or future AWS ops. They do **not** block core workflow value. Local Whisper/Ollama/Compose packaging is **out of scope** (product is AWS-only).
 
 **When to promote:** Move an item to [implementing.md](implementing.md) only when Tier 1–2 work for the current milestone is complete and the item addresses a **validated user need**.
 
 ---
 
-## Local development (optional)
+## ~~Local development~~ (superseded)
 
-| Item | Notes | Effort |
-|------|-------|--------|
-| **Local Docker Compose** | `api`, `streamlit`, optional Ollama/postgres profiles — laptop dev only; Dockerfiles exist for AWS | 1 week |
-| **Windows troubleshooting guide** | DLL, WinError 10055, diarization skip reasons | 1–2 days |
-| **Ollama `num_ctx` / temperature tuning** | Local Ollama only; AWS uses Bedrock | 1 day |
-| **Model volume mounts** | `HF_HOME`, `WHISPER_CACHE`, Ollama `~/.ollama` for Compose | 2–3 days |
-| **Offline model bundle script** | Export/import models on connected machine for air-gapped host | 3–5 days |
+Removed. Laptop work is edit + `pytest` (SQLite) + Deploy to AWS. See [../developer/development.md](../developer/development.md).
 
 ---
 
@@ -31,7 +25,7 @@ Exploration-first SPA consuming existing APIs only — no duplicated business lo
 | **Stack** | Vite + React + TypeScript |
 | **MVP pages** | Transcript list, workflow run status, report, explore (drill-down + ask) |
 | **Auth** | `X-API-Key` header from env |
-| **Non-goals (R1)** | Full Streamlit parity (audio ingest, diarization progress, full workflow picker); mobile-native layout |
+| **Non-goals (R1)** | Full Streamlit parity (audio ingest, full workflow picker); mobile-native layout |
 
 **Effort:** 2–3 weeks
 
@@ -39,26 +33,15 @@ Exploration-first SPA consuming existing APIs only — no duplicated business lo
 |------|-------|--------|
 | **Knowledge graph UI richness** | Beyond basic Streamlit Mermaid; interactive layout, filtering | 1–2 weeks |
 | **Mobile-native layout** | Responsive Streamlit or React | Medium |
-| **Full Streamlit feature parity in React** | Audio ingest, diarization progress, full workflow picker | Large |
+| **Full Streamlit feature parity in React** | Audio ingest, full workflow picker | Large |
 
 *Counterfactual exploration presets may land in Tier 3 (P2-O5) before React.*
 
 ---
 
-## Audio & transcription (local / research)
+## ~~Audio & transcription (local / research)~~ (superseded)
 
-Superseded in **cloud** by Amazon Transcribe ([implementing.md](implementing.md) P1-1). Useful for local quality experiments.
-
-| Item | Notes | Effort |
-|------|-------|--------|
-| **M2 UI polish** | Streamlit progress: `Diarizing…` → `Transcribing N speaker segments…` | 2–3 days |
-| **M2.5 — Word-level alignment** | `word_timestamps=True` + per-word speaker assignment | 3–5 days |
-| **Timing analysis** | Pauses, interruptions, overlap duration metrics | 1 week |
-| **Interruption detection** | Heuristic or model-based | 1 week |
-| **Pause detection** | From audio timing; caution on tone/emotion inference | 3–5 days |
-| **Channel-based speaker split** | Stereo with one speaker per channel (no diarization) | 2–3 days |
-| **VAD preprocessing** | Voice activity detection before diarization on noisy audio | 3–5 days |
-| **torchcodec experiment** | In-process decode with ffmpeg CLI fallback — Linux only | 2–3 days |
+Whisper / pyannote local experiments are discontinued. ASR is Amazon Transcribe only. Timing/VAD ideas that need raw audio timing may be revisited against Transcribe output later if needed.
 
 ---
 
@@ -87,40 +70,24 @@ Core ontology work is **P2-O** in [implementing.md](implementing.md).
 
 ---
 
-## Platform & deployment (non-AWS)
+## Platform & deployment
 
-Docker images for AWS exist ([completed.md](completed.md)). Remaining local/K8s packaging:
+AWS images and Terraform exist. Remaining items:
 
 | Item | Notes | Effort |
 |------|-------|--------|
-| **Compose stack** | `docker-compose.yml`: api, ui, ollama (profile), postgres (profile); startup order docs | 3–5 days |
-| **Docker smoke script** | `scripts/docker-smoke.sh` / PowerShell — health + fixture transcribe | 1 day |
-| **Build args** | `TORCH_VARIANT=cpu\|cuda`, `INCLUDE_DIARIZATION=true\|false` | 1–2 days |
-| **Helm chart** | K8s ingress, secrets, PVC for clinic/org deploys | 1 week |
-| **Offline model bake in CI** | Image with pre-accepted HF models; less relevant once Transcribe/Bedrock | 1 week |
-| **SQLCipher / TDE options** | Encrypted SQLite or PostgreSQL TDE for regulated environments | 1 week |
-| **Distributed job queue** | Celery/Redis for multi-worker deployments | Large |
-| **Multi-user SaaS** | Accounts, billing, RBAC | Out of product scope unless requirements change |
+| **Helm chart** | K8s ingress if org move off ECS | Deferred |
 | **Production AWS account** | `prod-github-deploy` in aws-backbone | Deferred |
+| **Distributed job queue** | Celery/Redis for multi-worker | Large |
+| **Multi-user SaaS** | Accounts, billing, RBAC | Out of product scope unless requirements change |
 
 ---
 
-## Secure & air-gapped operation (local / clinic)
+## ~~Secure & air-gapped operation (local / clinic)~~ (superseded)
 
-AWS VPC no-egress is the **cloud** equivalent ([implementing.md](implementing.md) Tier 1). For offline/on-prem hosts:
+On-prem Ollama/Whisper air-gap guides are out of scope. AWS VPC Stage B + in-account Bedrock/Transcribe is the data residency model.
 
-| Item | Notes | Effort |
-|------|-------|--------|
-| **Air-gapped install guide** | Staged Ollama blobs, Whisper weights, pyannote pipeline via removable media or internal registry | 3–5 days |
-| **No-egress mode** | `ALLOW_OUTBOUND_HTTP=false` — fail/warn if HF/telemetry attempted; require pre-staged models | 2–3 days |
-| **Bind-local defaults** | API/UI on `127.0.0.1` unless configured; warn on public exposure | 1 day |
-| **Secrets management** | Docker/K8s secrets instead of plain `.env` in production | 2–3 days |
-| **Data at rest encryption** | LUKS, BitLocker, cloud disk encryption; optional SQLCipher | 1 week |
-| **Secure temp delete** | `DELETE_TEMP_ON_COMPLETE=true` with optional secure overwrite | 1–2 days |
-| **Privacy messaging** | Ingest-step copy: processed locally; clarify Ollama/HF touch when not air-gapped | 1 day |
-| **Threat model one-pager** | Local trust boundary, API key scope, multi-user gaps, backup exposure | 1–2 days |
-
-**Acceptance:** Operator deploys on internet-disconnected host with pre-staged models; no audio/transcript leaves machine during normal operation.
+---
 
 ---
 

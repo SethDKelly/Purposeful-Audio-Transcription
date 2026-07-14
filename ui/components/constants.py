@@ -15,7 +15,7 @@ SAFETY_DISCLAIMER = (
 )
 
 PRIVACY_NOTE = (
-    "Privacy: On AWS, audio, transcripts, and analysis stay in your account "
-    "(VPC, RDS, S3). Inference uses Amazon Bedrock and Transcribe — no off-account "
-    "model APIs. Locally, data stays on this machine (Whisper / Ollama)."
+    "Privacy: Audio, transcripts, and analysis stay in your AWS account "
+    "(VPC, RDS, S3). Inference uses Amazon Bedrock and Transcribe — no "
+    "off-account model APIs."
 )

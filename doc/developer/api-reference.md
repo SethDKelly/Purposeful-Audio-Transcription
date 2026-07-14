@@ -8,10 +8,10 @@ When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected r
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/health` | ffmpeg, Ollama, Whisper, diarization, CUDA/device status |
-
-`HealthResponse` also includes `cuda_available`, `whisper_device`, `diarization_device`, and `whisper_compute_type`.
-| `GET` | `/api/models/ollama` | List Ollama models |
+| `GET` | `/api/health` | Bedrock, Transcribe, database status |
+| `GET` | `/api/live` | Liveness (ECS/ALB) |
+| `GET` | `/api/models` | List configured Bedrock model IDs |
+| `GET` | `/api/models/ollama` | Deprecated alias of `/api/models` |
 
 ## Transcripts
 
@@ -79,7 +79,7 @@ When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected r
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/transcribe` | Audio → labeled transcript (Whisper + optional diarization) |
+| `POST` | `/api/transcribe` | Audio → labeled transcript (Amazon Transcribe) |
 | `POST` | `/api/process` | Audio + workflow → full pipeline |
 
 Optional form field `num_speakers` (1–10) hints diarization when the speaker count is known. Omit for auto-detect.

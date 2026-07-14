@@ -13,7 +13,7 @@ Architecture and integration guide for deploying the Relationship Reasoning Engi
 
 ### Data residency (privacy)
 
-On AWS, audio objects, transcripts, and analysis results stay in **this account** (S3, RDS, ECS in VPC). Inference uses **Amazon Bedrock** and **Amazon Transcribe** — no off-account LLM/ASR APIs. Operators should pause the stack when idle ([aws-operations.md](../developer/aws-operations.md)). Local private use keeps data on-machine (Whisper / Ollama); see [deployment.md](../user/deployment.md).
+On AWS, audio objects, transcripts, and analysis results stay in **this account** (S3, RDS, ECS in VPC). Inference uses **Amazon Bedrock** and **Amazon Transcribe** — no off-account LLM/ASR APIs. Operators should pause the stack when idle ([aws-operations.md](../developer/aws-operations.md)). This product is **AWS-only** (no local Whisper/Ollama runtime).
 
 ---
 
@@ -151,195 +151,55 @@ See `infra/dev/vpc_endpoints.tf`, `infra/dev/alb.tf`, `infra/dev/README.md`.
 
 ---
 
-## 4. Model strategy — moving away from Ollama
+## 4. Model strategy (AWS only)
 
-### Current state
-
-- `OllamaService` — direct `ollama` Python client + HTTP health check
-- Module YAML `ollama_model` field
-- Whisper + pyannote for audio (local ML, HF token, GPU optional)
-
-### Target state (AWS dev)
-
-| Capability | AWS service | Local dev fallback |
-|------------|-------------|-------------------|
-| **LLM (modules, synthesis, exploration)** | **Amazon Bedrock** — Converse API, model IDs e.g. Claude 3.5 Sonnet, Llama 3.x on Bedrock | Ollama (`LLM_PROVIDER=ollama`) |
-| **Audio transcription** | **Amazon Transcribe** — batch, speaker diarization labels | Whisper (`TRANSCRIPTION_PROVIDER=whisper`) |
-| **Structured JSON** | Bedrock tool use / response schema; prompt + parser unchanged | Ollama `format=json` |
-
-### Why Bedrock over self-hosted Ollama on ECS
-
-| Factor | Bedrock | Ollama on ECS/EC2 |
-|--------|---------|-------------------|
-| Ops burden | Low — managed | High — GPU instances, model files, upgrades |
-| No-egress | VPC endpoint | Must host Ollama in VPC + model volumes |
-| Structured output | Native tool/schema support | JSON mode (model-dependent) |
-| Cost model | Per-token | Always-on GPU/CPU |
-| Alignment with AWS pivot | Primary | Interim bridge only |
-
-### Provider abstraction (application)
-
-Introduce a thin adapter layer — **no business logic in providers**:
+| Capability | Service |
+|------------|---------|
+| **LLM** | Amazon Bedrock (Converse API) |
+| **ASR** | Amazon Transcribe (speaker labels → turns) |
+| **Structured JSON** | Prompt + `OutputParser` (+ coercion) |
 
 ```text
 ModuleRunner / WorkflowEngine
         │
-        ▼
-   LLMProvider (protocol)
-        ├── BedrockProvider   ← AWS default
-        └── OllamaProvider    ← local dev
-
-TranscriptionProvider (protocol)
-        ├── TranscribeProvider  ← AWS default
-        └── WhisperProvider     ← local dev
+   BedrockProvider
+AmazonTranscribeProvider  ← S3 uploads bucket
 ```
 
-Settings (`.env` / Secrets Manager):
+| Variable | ECS value |
+|----------|-----------|
+| `LLM_PROVIDER` | `bedrock` |
+| `BEDROCK_MODEL_ID` | e.g. `us.anthropic.claude-sonnet-4-5-20250929-v1:0` |
+| `TRANSCRIPTION_PROVIDER` | `transcribe` |
+| `UPLOADS_BUCKET` | `rre-dev-uploads-…` |
+| `AWS_REGION` | `us-east-2` |
 
-| Variable | AWS dev | Local dev |
-|----------|---------|-----------|
-| `LLM_PROVIDER` | `bedrock` | `ollama` |
-| `BEDROCK_MODEL_ID` | e.g. `us.anthropic.claude-sonnet-4-5-20250929-v1:0` | — |
-| `DEFAULT_OLLAMA_MODEL` | — | e.g. `llama3.2` |
-| `TRANSCRIPTION_PROVIDER` | `transcribe` | `whisper` |
-| `AWS_REGION` | `us-east-2` | — |
+Formal notes: [llm-evaluation-bedrock.md](llm-evaluation-bedrock.md) · [asr-evaluation-transcribe.md](asr-evaluation-transcribe.md).
 
-Module YAML: rename conceptually to `model_id` (keep `ollama_model` as alias during migration).
-
-### Bedrock evaluation checklist (spike)
-
-Formal note: [llm-evaluation-bedrock.md](llm-evaluation-bedrock.md) (AWS-1b).
-
-- [x] Converse API with module system prompt + evidence index
-- [x] Structured JSON for `module_output_v1` — prompt + `OutputParser` (+ coercion)
-- [x] Retry behavior on malformed JSON
-- [ ] `meta_synthesis` on Bedrock — higher token output (Full MVP burn-in)
-- [x] IAM: task role invoke + Marketplace via Bedrock
-- [ ] Latency and cost estimate for Quick Review vs Full MVP (instrument)
-
-### Transcribe evaluation checklist
-
-Formal note: [asr-evaluation-transcribe.md](asr-evaluation-transcribe.md) (AWS-1c).
-
-- [ ] Speaker diarization / max speaker labels vs pyannote quality (golden fixtures)
-- [x] Async job polling from API (live burn-in 2026-07-14)
-- [x] Map Transcribe output → existing labeled turns
-- [x] S3 upload path for audio files
-- [x] VPC endpoint smoke under Stage B no-egress (Transcribe job + Bedrock Quick Review)
+Local Ollama / Whisper / pyannote stacks are **removed** from the product (P1-7).
 
 ---
 
-## 5. Audio decode strategy
+## 5. Audio ingest
 
-RRE uses **three different decode paths** today. They should not be collapsed into one library without reason.
-
-| Path | Used by | Mechanism | Where |
-|------|---------|-----------|-------|
-| **ffmpeg CLI** | pyannote diarization (`load_waveform_for_diarization`) | `ffprobe` + `ffmpeg` subprocess → `torch` tensor | Local + current AWS interim image |
-| **PyAV / ffmpeg libs** | Whisper (`faster-whisper` `decode_audio`) | Linked libraries via faster-whisper | Local when `TRANSCRIPTION_PROVIDER=whisper` |
-| **torchcodec** | pyannote default (not used by RRE) | In-process decode; requires FFmpeg **shared libs** + strict torch pin | Not recommended as primary |
-
-### Decision
-
-| Environment | Primary decode | Notes |
-|-------------|----------------|-------|
-| **Local (incl. Windows)** | **ffmpeg CLI** for diarization; faster-whisper for Whisper | Avoid torchcodec — DLL/Application Control fragility on Windows |
-| **AWS interim** (before Transcribe) | ffmpeg in container + same Python path as local | `apt-get install ffmpeg` on Linux ECS is reliable |
-| **AWS target** | **No local decode** for ingest | Amazon Transcribe returns text + speaker labels; API maps to existing turns |
-
-**Do not migrate to torchcodec** to “fix” deployment. torchcodec still depends on FFmpeg shared libraries and adds a **torch ↔ torchcodec version matrix**. It does not improve transcription or diarization quality when the output is the same PCM tensor.
-
-Optional later (Linux only): try torchcodec in-process with **automatic fallback** to ffmpeg CLI if health check fails — not a priority.
-
-### Quality expectation
-
-Decode choice affects **reliability and ops**, not model accuracy. Whisper and pyannote quality depend on model weights, sample rate, and diarization/slicing logic — not subprocess vs in-process decode.
+Amazon Transcribe owns decode and speaker labeling. The API uploads to S3, polls the job, and maps speaker segments to existing turn / evidence-quote shapes. **No ffmpeg / torch** in the cloud API image.
 
 ---
 
-## 6. Hybrid cloud/local — compact local, robust cloud
+## 6. Runtime images
 
-Cloud deployment removes the need to **ship large models in containers**. Bedrock and Transcribe are managed; model size and GPU are AWS’s problem. The goal is **one codebase**, **two runtime profiles**, and **no bloated cloud image** once providers are wired.
-
-### Runtime profiles (same code, different env)
-
-| Setting | **Local profile** | **Cloud profile** |
-|---------|-------------------|-------------------|
-| `LLM_PROVIDER` | `ollama` | `bedrock` |
-| `TRANSCRIPTION_PROVIDER` | `whisper` | `transcribe` |
-| `DIARIZATION_ENABLED` | `true` (pyannote) | `false` (Transcribe speaker labels) |
-| Models in container | Whisper weights + pyannote via torch/HF | **None** (API clients only) |
-| Typical image size | Large (~2–4 GB+) | **Small** (~200–400 MB) |
-| HF_TOKEN | Required for pyannote | Not required |
-
-Provider adapters (`LLMProvider`, `TranscriptionProvider`) keep business logic identical; only the env and image change.
-
-### Multi-container strategy (ECS)
-
-Split by **role**, not by duplicating app logic:
+| Image | Contents |
+|-------|----------|
+| `Dockerfile.cloud` | Slim API — FastAPI, boto3, SQLAlchemy; Bedrock + Transcribe |
+| `Dockerfile.ui` | Streamlit only → ALB `/api` |
 
 ```text
-                    ALB
-                      │
-        ┌─────────────┴─────────────┐
-        ▼                           ▼
-  rre-dev-ui (slim)           rre-dev-api (profile-dependent)
-  Streamlit only              FastAPI + workflow engine
-        │                           │
-        │                           ├── Cloud: Bedrock + Transcribe + RDS + S3
-        └───────────────────────────┴── Local/dev (Dockerfile): Ollama + Whisper + pyannote
-                                    └── (optional interim) same fat image until Transcribe ships
+ALB → rre-dev-ui (Streamlit) + rre-dev-api (Bedrock + Transcribe + RDS + S3)
 ```
 
-| Container | Always separate? | Cloud contents | Local contents |
-|-----------|------------------|----------------|----------------|
-| **ui** | Yes | Streamlit, httpx → ALB `/api` | Same |
-| **api** | Yes | Slim: no torch/pyannote/whisper | Full: torch, pyannote, faster-whisper, ffmpeg |
+CI builds and pushes **cloud + UI** only. Developer loop: `pip install -e ".[dev]"` + pytest (SQLite) + Deploy.
 
-**Do not** add a third “ML worker” container in cloud once Transcribe is live — that would reintroduce ops burden without benefit. A worker container only makes sense as a **temporary** bridge if cloud must run Whisper before Transcribe lands.
-
-### Build strategy — avoid bloat
-
-Use **two Docker build targets** from one repo (not two codebases):
-
-| File / target | Purpose |
-|---------------|---------|
-| `Dockerfile` / `target: local` | Current full stack — local dev, Windows/WSL, integration testing |
-| `Dockerfile.cloud` / `target: cloud` | Slim API — no torch, pyannote, faster-whisper; Bedrock + Transcribe SDK only |
-| `Dockerfile.ui` | Unchanged — already slim |
-
-CI/CD for AWS builds and pushes **`rre-dev-api:cloud`** only. Local developers build `Dockerfile` as today.
-
-Example cloud API dependencies (conceptual):
-
-```text
-fastapi, uvicorn, sqlalchemy, psycopg, boto3, pydantic-settings, alembic
-# NOT: torch, torchaudio, pyannote.audio, faster-whisper
-```
-
-### Migration phases
-
-| Phase | API image | Audio ingest | LLM |
-|-------|-----------|--------------|-----|
-| **Now (code)** | Slim `Dockerfile.cloud` | Amazon Transcribe | Bedrock |
-| **Local** | Fat `Dockerfile` + `.[local]` | Whisper + pyannote | Ollama |
-| **AWS validation** | Slim deploy green (2026-07) | Transcribe + Quick Review burn-in ✓ | Bedrock 3/3 modules |
-| **P1-1 target** | **Slim cloud image** | Amazon Transcribe | Bedrock |
-| **Local always** | Fat `Dockerfile` | Whisper + pyannote | Ollama |
-
-Interim fat cloud image is acceptable for **proving ECS deploy**; plan to **shrink** as soon as `TRANSCRIPTION_PROVIDER=transcribe` and `LLM_PROVIDER=bedrock` pass burn-in.
-
-### Simplicity rules
-
-1. **One repo, one workflow engine** — no forked cloud/local business logic.
-2. **Providers selected by env** — not by `#ifdef AWS`.
-3. **Two API images max** — `local` and `cloud`; UI stays one image.
-4. **No model files in cloud image** — use Bedrock model IDs and Transcribe API.
-5. **ffmpeg only where needed** — local/interim API; omit from slim cloud image when Transcribe owns ingest.
-
-### Model size in cloud
-
-With Bedrock + Transcribe, cloud can use **larger effective models** (e.g. Claude Sonnet, longer context) without enlarging the container or task memory for weights. Scale Fargate CPU/memory for **Python + JSON**, not for GGUF/Ollama or Whisper checkpoints. Full multidisciplinary workflows become a **cost/latency** question, not a **disk/RAM fit** question.
+Scale Fargate for Python/JSON, not model weights.
 
 ---
 

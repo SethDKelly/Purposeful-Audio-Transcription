@@ -1,18 +1,18 @@
 # Architecture overview
 
-High-level map of the RRE codebase. Deep design specs live in [../design/](../design/).
+High-level map of the RRE codebase. Deep design specs live in [../design/](../design/). Runtime is **AWS only**.
 
 ## System diagram
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│  Streamlit UI (ui/)                                          │
+│  Streamlit UI (ECS)                                          │
 │  Ingest · Prepare · Analyze · Report · Explore               │
 └──────────────────────────┬──────────────────────────────────┘
-                           │ HTTP (ui/api_client.py)
+                           │ HTTP (ui/api_client.py → ALB)
 ┌──────────────────────────▼──────────────────────────────────┐
-│  FastAPI (backend/main.py)                                   │
-│  /transcripts · /workflows · /modules · /exploration         │
+│  FastAPI (ECS)                                               │
+│  /transcripts · /workflows · /modules · /transcribe          │
 └──────────────────────────┬──────────────────────────────────┘
                            │
      ┌─────────────────────┼─────────────────────┐
@@ -20,34 +20,27 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
  TranscriptService   WorkflowEngine      ExplorationService
  EvidenceIndex       ModuleRunner        SynthesisEngine
                      PromptCompiler      WorkflowJobService
-                     OutputParser
-                     SafetyValidator
      ┌─────────────────┴─────────────────┐
      ▼                                     ▼
- AudioTranscriptionService            OllamaService (LLM)
-   WhisperService · DiarizationService
-   TranscriptAlignmentService
+ AmazonTranscribeProvider              BedrockProvider
+   (S3 uploads bucket)                   (Claude)
                            │
-                     SQLite / PostgreSQL (SQLAlchemy + Alembic)
+                     RDS PostgreSQL (SQLAlchemy + Alembic)
 ```
 
 ## Core services
 
 | Service | Role |
 |---------|------|
-| `AudioTranscriptionService` | Whisper + pyannote diarization → labeled transcript |
-| `WhisperService` | faster-whisper transcription with segment timestamps |
-| `DiarizationService` | pyannote speaker timeline (optional; requires `HF_TOKEN`) |
-| `TranscriptAlignmentService` | Map Whisper segments to speaker labels (Person A / B) |
-| `TranscriptService` | Parse, ingest, store transcripts with speakers, turns, quotes |
+| `AmazonTranscribeProvider` | Audio → S3 → Transcribe job → labeled turns |
+| `TranscriptService` | Parse, ingest, store speakers, turns, quotes |
 | `EvidenceIndexService` | Assign `Q001…` quote IDs with context |
-| `ModuleRegistry` | Load `config/modules/*.yaml` |
-| `WorkflowRegistry` | Load `config/workflows/*.yaml` |
-| `PromptCompiler` | Build LLM messages from framework + module + evidence |
-| `ModuleRunner` | Run module → parse JSON → validate → retry |
-| `WorkflowEngine` | Sequential modules; resume incomplete runs |
-| `WorkflowJobService` | Background thread-pool execution |
-| `SynthesisEngine` | Cross-module report from module outputs |
+| `BedrockProvider` | LLM chat for modules / synthesis / explore |
+| `ModuleRegistry` / `WorkflowRegistry` | YAML definitions |
+| `PromptCompiler` | Build messages from framework + module + evidence |
+| `ModuleRunner` | Run → parse JSON → validate → retry |
+| `WorkflowEngine` / `WorkflowJobService` | Sequential + background runs |
+| `SynthesisEngine` | Cross-module report |
 | `ExplorationService` | Drill-down, compare, follow-up Q&A |
 
 ## Domain layer
@@ -56,50 +49,40 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 
 ## Persistence
 
-- **SQLite** default (`data/rre.db`)
-- **PostgreSQL** via `DATABASE_URL`
+- **RDS PostgreSQL** on AWS
+- **SQLite** in pytest only
 - **Alembic** migrations in `alembic/versions/`
-- Repositories in `backend/repositories/`
 
 ## Configuration
 
 | Path | Purpose |
 |------|---------|
 | `config/modules/*.yaml` | Module metadata, prompt file, model override |
-| `config/workflows/*.yaml` | Module sequences, tone, runtime hints |
+| `config/workflows/*.yaml` | Module sequences, tone, `default_background` |
 | `config/prompts/*.md` | LLM prompt templates |
 | `config/framework/` | Shared instructions and output schema |
-| `.env` | Runtime settings (`config/settings.py`) |
+| `infra/dev/` | Terraform / ECS env |
 
 ## Extension points
 
 ### Add a module
 
-1. Add prompt in `config/prompts/`
-2. Add YAML in `config/modules/`
-3. Register is automatic via `ModuleRegistry`
-4. Add to a workflow YAML or test via `POST /api/modules/{id}/run`
+1. Prompt in `config/prompts/`
+2. YAML in `config/modules/`
+3. Add to a workflow YAML or `POST /api/modules/{id}/run`
 
 ### Add a workflow
 
-1. Create `config/workflows/my_workflow.yaml`
-2. List modules in order; set `meta_synthesis: true` if last step is synthesis
-
-### Add an API route
-
-1. Route in `backend/api/routes/`
-2. Schema in `backend/api/schemas.py`
-3. Register router in `backend/main.py`
-4. Integration test in `tests/`
+1. `config/workflows/my_workflow.yaml`
+2. List modules; set `meta_synthesis: true` when ending with synthesis
 
 ## Auth and logging
 
-- `APIKeyMiddleware` — optional `X-API-Key` when `API_KEY` set
-- `logging_config.py` — JSON structured logs when `LOG_JSON=true`
+- `APIKeyMiddleware` — optional `X-API-Key`
+- JSON logs + redaction on AWS (`LOG_JSON`, `LOG_REDACT`)
 
-## Related design docs
+## Related
 
+- [../planning/aws-deployment.md](../planning/aws-deployment.md)
 - [../design/02_system_architecture.md](../design/02_system_architecture.md)
-- [../design/03_domain_model.md](../design/03_domain_model.md)
 - [../design/08_workflow_engine.md](../design/08_workflow_engine.md)
-- [../design/10_synthesis_engine.md](../design/10_synthesis_engine.md)

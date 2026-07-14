@@ -1,12 +1,12 @@
 # Documentation index
 
-**Relationship Reasoning Engine (RRE)** — local analysis + **v0.5.1** AWS cloud cutover on `main`.
+**Relationship Reasoning Engine (RRE)** — AWS-only (Bedrock + Transcribe + ECS + RDS). Canonical release **v0.5.1** on `main`.
 
 | Audience | Start here |
 |----------|------------|
-| **Users (local)** | [user/getting-started.md](user/getting-started.md) → [user/user-guide.md](user/user-guide.md) |
+| **Operators / users** | [user/getting-started.md](user/getting-started.md) → [user/user-guide.md](user/user-guide.md) |
 | **Developers** | [developer/development.md](developer/development.md) → [developer/architecture.md](developer/architecture.md) |
-| **AWS operators** | [developer/aws-operations.md](developer/aws-operations.md) · [planning/aws-deployment.md](planning/aws-deployment.md) · [../infra/dev/README.md](../infra/dev/README.md) |
+| **AWS ops** | [developer/aws-operations.md](developer/aws-operations.md) · [planning/aws-deployment.md](planning/aws-deployment.md) · [../infra/dev/README.md](../infra/dev/README.md) |
 | **Active plan** | [planning/implementing.md](planning/implementing.md) |
 
 ---
@@ -15,16 +15,16 @@
 
 | Document | Description |
 |----------|-------------|
-| [user/getting-started.md](user/getting-started.md) | Install, configure, first local run |
+| [user/getting-started.md](user/getting-started.md) | Deploy, first AWS workflow |
 | [user/user-guide.md](user/user-guide.md) | Streamlit workflow, exploration, exports |
-| [user/deployment.md](user/deployment.md) | Local private-use deploy, backup, upgrade |
-| [user/model-setup.md](user/model-setup.md) | Ollama models and per-module overrides |
+| [user/deployment.md](user/deployment.md) | AWS-only deployment pointers |
+| [user/model-setup.md](user/model-setup.md) | Bedrock + Transcribe |
 
 ## Developer documentation
 
 | Document | Description |
 |----------|-------------|
-| [developer/development.md](developer/development.md) | Local setup, tests, project layout |
+| [developer/development.md](developer/development.md) | pytest / tooling setup, project layout |
 | [developer/architecture.md](developer/architecture.md) | Services, data flow, extension points |
 | [developer/api-reference.md](developer/api-reference.md) | REST API summary |
 | [developer/contributing.md](developer/contributing.md) | Conventions, PRs, adding modules |

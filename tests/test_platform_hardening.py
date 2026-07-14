@@ -144,40 +144,35 @@ def test_api_key_middleware_blocks_protected_routes(monkeypatch) -> None:
     health = client.get("/api/health")
     assert health.status_code == 200
     payload = health.json()
-    assert "cuda_available" in payload
-    assert "whisper_device" in payload
-    assert "diarization_device" in payload
-    assert "whisper_compute_type" in payload
+    assert "llm_provider" in payload
+    assert "llm_available" in payload
+    assert "transcription_provider" in payload
+    assert "transcription_available" in payload
+    assert "database_available" in payload
 
 
-def test_health_reports_resolved_devices(monkeypatch) -> None:
+def test_health_reports_aws_providers(monkeypatch) -> None:
     from fastapi.testclient import TestClient
 
     from backend.main import app
-    from backend.services.whisper_service import whisper_service
 
+    mock_llm = MagicMock()
+    mock_llm.health_check.return_value = True
+    mock_asr = MagicMock()
+    mock_asr.name = "transcribe"
+    mock_asr.health_check.return_value = True
+    monkeypatch.setattr("backend.api.routes.health.get_llm_provider", lambda: mock_llm)
     monkeypatch.setattr(
-        "backend.api.routes.health.cuda_available",
-        lambda: True,
-    )
-    monkeypatch.setattr(whisper_service, "resolved_device", lambda: "cuda")
-    monkeypatch.setattr(whisper_service, "resolved_compute_type", lambda: "float16")
-    monkeypatch.setattr(whisper_service, "is_ready", lambda: True)
-    monkeypatch.setattr(
-        "backend.api.routes.health.diarization_service.resolved_device",
-        lambda: "cuda",
-    )
-    monkeypatch.setattr(
-        "backend.api.routes.health.diarization_service.is_available",
-        lambda: True,
+        "backend.api.routes.health.get_transcription_provider", lambda: mock_asr
     )
 
     client = TestClient(app)
     payload = client.get("/api/health").json()
-    assert payload["cuda_available"] is True
-    assert payload["whisper_device"] == "cuda"
-    assert payload["diarization_device"] == "cuda"
-    assert payload["whisper_compute_type"] == "float16"
+    assert payload["status"] == "ok"
+    assert payload["llm_available"] is True
+    assert payload["transcription_available"] is True
+    assert payload["transcription_provider"] == "transcribe"
+    assert payload["database_available"] is True
 
 
 def test_background_workflow_run_completes(monkeypatch) -> None:

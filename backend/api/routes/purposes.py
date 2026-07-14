@@ -25,7 +25,7 @@ def list_purposes() -> JSONResponse:
             id=module.config.id,
             name=module.config.name,
             description=module.config.description,
-            default_model=module.config.ollama_model,
+            default_model=module.config.resolved_model_id,
         )
         for module in module_registry.list_modules()
     ]

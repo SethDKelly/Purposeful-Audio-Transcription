@@ -12,19 +12,18 @@ class AudioValidationError(AppError):
         super().__init__(message, status_code=400)
 
 
-class WhisperError(AppError):
+class TranscriptionError(AppError):
     def __init__(self, message: str):
         super().__init__(message, status_code=500)
+
+
+# Backward-compatible alias
+WhisperError = TranscriptionError
 
 
 class LLMError(AppError):
     def __init__(self, message: str):
         super().__init__(message, status_code=503)
-
-
-class OllamaError(LLMError):
-    def __init__(self, message: str):
-        super().__init__(message)
 
 
 class ServiceUnavailableError(AppError):

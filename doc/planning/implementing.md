@@ -4,9 +4,9 @@ Material work in flight or next to ship for the **Relationship Reasoning Engine 
 
 | | |
 |---|---|
-| **Status** | **Tier 2** — P1-4 workflows on `tier-2-p1-trust-workflows`; AWS burn-in (P1-4f) when resumed |
+| **Status** | **Tier 2** — AWS-only prune (P1-7) done on branch; next P1-4f burn-in / P1-5 |
 | **Branch** | `tier-2-p1-trust-workflows` (from `main` @ v0.5.1) |
-| **Strategy** | AWS dev (account `521018312783`, `us-east-2`) via [aws-backbone](https://github.com/SethDKelly/aws-backbone); local for prompt/module + Whisper |
+| **Strategy** | **AWS only** — Bedrock + Transcribe + ECS + RDS (account `521018312783`, `us-east-2`) via [aws-backbone](https://github.com/SethDKelly/aws-backbone). No local Whisper/Ollama product runtime. |
 | **Cost control** | **Pause AWS when idle** (standing). Deploy wakes only on runtime/infra path pushes to `main`. See [aws-operations.md](../developer/aws-operations.md) |
 | **Architecture** | [aws-deployment.md](aws-deployment.md) |
 | **Design anchors** | [../design/01_product_vision_and_scope.md](../design/01_product_vision_and_scope.md) |
@@ -47,7 +47,7 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 | Longitudinal / progress tracking | Same-transcript compare only; no case view | 3 (P2-P) |
 | Module customization | Fixed YAML workflows only | 3 (P2-Q) |
 | Professional mode | No case files, session series, finding feedback | 3 (P2-P, P2-R) |
-| Air-gapped / data sovereignty (local) | AWS VPC Stage B done; local offline guide in backlog | backlog |
+| Data residency | VPC Stage B + in-account Bedrock/Transcribe | ✓ (local air-gap guide dropped) |
 
 ---
 
@@ -61,6 +61,7 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 [x] P1-3c — log redaction
 [x] P1-3d…f — privacy copy, retention, audit events
 [x] P1-4a–e — full multidisciplinary + research workflows (mocked tests)
+[x] P1-7 — prune local dual-path (Ollama / Whisper / fat image)
 [ ] P1-4f — burn-in on AWS dev with Bedrock (when stack resumed)
 [ ] P1-5 — CI & deploy reliability
 ```
@@ -92,12 +93,14 @@ Mostly complete. Remaining: **slim-image AWS validation** and closing formal not
 
 **Tier 1 acceptance:** Quick Review on Bedrock ✓ · Stage B no-egress ✓ · Transcribe path proven on AWS ✓ · operator can trace ALB → CloudWatch → `module_run_id`.
 
-### Hybrid runtime profiles
+### Runtime profile (AWS only)
 
 | Profile | API image | LLM | Audio ingest |
 |---------|-----------|-----|--------------|
-| **Local** | `Dockerfile` + `.[local]` | Ollama | Whisper + pyannote |
-| **Cloud** | `Dockerfile.cloud` | Bedrock | Amazon Transcribe |
+| **AWS** | `Dockerfile.cloud` | Bedrock | Amazon Transcribe |
+| **UI** | `Dockerfile.ui` | — | — |
+
+Local dual-path (`Dockerfile` + `.[local]` / Ollama / Whisper) is removed in **P1-7**.
 
 ---
 
@@ -155,6 +158,20 @@ Core product on AWS after slim cutover burn-in.
 | P1-4d | `WORKFLOW_SYNC_MODULE_LIMIT` env + UI warning for long suites | ✓ default **6**; UI warning + poll |
 | P1-4e | Integration tests with mocked LLM (pattern from existing workflow tests) | ✓ `tests/test_p1_4_workflows.py` |
 | P1-4f | Burn-in on AWS dev with Bedrock | **Pending** — resume Deploy when ready; stack paused to control cost |
+
+### P1-7 — Prune local dual-path (AWS-only codebase)
+
+**Goal:** Remove Ollama / Whisper / pyannote / fat `Dockerfile` so the repo matches the AWS-only product. Dev loop = edit → pytest (SQLite) → Deploy.
+
+| # | Task | Status |
+|---|------|--------|
+| P1-7a | Defaults: `LLM_PROVIDER=bedrock`, `TRANSCRIPTION_PROVIDER=transcribe`; drop Ollama/Whisper/diarization/HF settings surface | ✓ |
+| P1-7b | Remove Ollama adapter + `ollama` core dep; Bedrock-only LLM factory | ✓ |
+| P1-7c | Remove Whisper/pyannote/sliced ASR stack; Transcribe-only | ✓ |
+| P1-7d | Delete fat `Dockerfile` + `.[local]`; CI `pip install -e ".[dev]"` only | ✓ |
+| P1-7e | Health/models/UI: Bedrock-centric; `/api/models`; drop Whisper sidebar | ✓ |
+| P1-7f | Delete local-only scripts/tests; keep Transcribe/Bedrock mocks + SQLite pytest | ✓ |
+| P1-7g | Docs AWS-primary; note prune in [completed.md](completed.md) | ✓ |
 
 ### P1-5 — CI & deploy reliability
 

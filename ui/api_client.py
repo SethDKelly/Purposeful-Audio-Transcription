@@ -5,7 +5,7 @@ import httpx
 from config.settings import settings
 
 API_BASE = settings.api_base_url
-# Whisper + CPU diarization on long audio can exceed 10 minutes on first model load.
+# Amazon Transcribe jobs can take several minutes on longer audio.
 TRANSCRIBE_TIMEOUT = 1800.0
 PROCESS_TIMEOUT = 1200.0
 WORKFLOW_TIMEOUT = 1800.0
@@ -31,9 +31,9 @@ def fetch_health() -> dict | None:
     return None
 
 
-def fetch_ollama_models() -> list[str]:
+def fetch_llm_models() -> list[str]:
     try:
-        response = httpx.get(f"{API_BASE}/api/models/ollama", timeout=5.0)
+        response = httpx.get(f"{API_BASE}/api/models", timeout=5.0)
         if response.status_code == 200:
             return response.json().get("models", [])
     except httpx.HTTPError:

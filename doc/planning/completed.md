@@ -6,8 +6,8 @@ Record of shipped capabilities for the **Relationship Reasoning Engine (RRE)** t
 |---|---|
 | **Current branch** | `main` @ **v0.5.1** |
 | **Baseline release** | **v0.5.1** — AWS cloud cutover ([releases/v0.5.1.md](../releases/v0.5.1.md)) |
-| **In progress toward** | **v0.6.0** — Tier 2 trust (P1-3) + full workflows (P1-4) |
-| **Tests** | 174+ passing (CI) |
+| **In progress toward** | **v0.6.0** — AWS-only prune (P1-7) done on branch; burn-in / CI next |
+| **Tests** | 143+ passing (CI) |
 | **AWS account** | `521018312783`, `us-east-2` |
 | **Architecture detail** | [aws-deployment.md](aws-deployment.md) |
 
@@ -188,15 +188,27 @@ Original build goal: analyze a transcript with a representative module subset an
 
 ---
 
+## Tier 2 — Trust, workflows, AWS-only prune (P1-3, P1-4, P1-7)
+
+| # | Task | Status |
+|---|------|--------|
+| P1-3 | Cascade DELETE, log redaction, retention, audit, privacy copy | ✓ |
+| P1-4a–e | `full_multidisciplinary`, `research_oriented`, background defaults, sync limit, mocked tests | ✓ |
+| P1-7 | Remove Ollama/Whisper/pyannote/`.[local]`/fat Dockerfile; Bedrock + Transcribe only; docs AWS-primary | ✓ |
+| P1-4f | Live AWS burn-in for long suites | Pending (resume Deploy) |
+
+---
+
 ## Vision gaps closed (since v0.3.0)
 
 | Vision item | Was | Now |
 |-------------|-----|-----|
-| Segment speakers from audio | Single-speaker Whisper only | Local: pyannote + sliced Whisper; AWS: Transcribe speaker labels |
+| Segment speakers from audio | Single-speaker Whisper only | Amazon Transcribe speaker labels |
 | Reproducible deployment | Manual venv + host deps | Docker images + ECS Fargate + GitHub Actions |
 | Structured logging in cloud | Ad hoc logs | JSON logs + CloudWatch + correlation IDs |
-| LLM on AWS | Ollama-only coupling | `LLMProvider` + Bedrock adapter |
-| ASR on AWS (no HF) | Whisper/pyannote in fat image | `TranscriptionProvider` + Transcribe + slim image (code) |
+| LLM on AWS | Ollama coupling | Bedrock only |
+| ASR on AWS (no HF) | Whisper/pyannote in fat image | Transcribe + slim `Dockerfile.cloud` |
+| Dual local/cloud product paths | Hybrid defaults | **AWS-only** product (edit → pytest → Deploy) |
 
 ---
 
