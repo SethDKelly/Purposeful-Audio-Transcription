@@ -1,10 +1,13 @@
 # Purposeful Audio Transcription
 
-A local-first **Relationship Reasoning Engine (RRE)** that transcribes audio with **Whisper** and analyzes transcripts with **Ollama** — evidence-linked, multi-module workflows, and interactive exploration.
+**Relationship Reasoning Engine (RRE)** — evidence-linked, multi-module transcript analysis. Runs **locally** (Whisper + Ollama) and on **AWS dev** (Bedrock; Transcribe planned).
 
-**Release:** [v0.3.0](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v0.3.0)
+| | |
+|--|--|
+| **Baseline release** | [v0.3.0](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v0.3.0) |
+| **In progress** | v0.5.0 AWS pivot — [doc/planning/implementing.md](doc/planning/implementing.md) |
 
-## Quick start
+## Quick start (local)
 
 ```powershell
 python -m venv .venv
@@ -18,40 +21,43 @@ copy .env.example .env
 - **UI:** http://localhost:8501  
 - **API:** http://127.0.0.1:8000/docs  
 
-Full instructions: **[doc/user/getting-started.md](doc/user/getting-started.md)**
+Full local setup: [doc/user/getting-started.md](doc/user/getting-started.md)
 
 ## Documentation
 
 | Audience | Guide |
 |----------|-------|
-| **Users** | [doc/user/](doc/user/) — getting started, user guide, deployment, models |
-| **Developers** | [doc/developer/](doc/developer/) — architecture, API, contributing |
-| **Index** | [doc/README.md](doc/README.md) — full documentation map |
+| **Users** | [doc/user/](doc/user/) — getting started, guide, local deployment, models |
+| **Developers** | [doc/developer/](doc/developer/) — architecture, API, contributing, AWS ops |
+| **Planning** | [doc/planning/](doc/planning/) — completed / implementing / backlog |
+| **Index** | [doc/README.md](doc/README.md) |
 
-## Features (v0.3.0)
+## Capabilities
 
-- 13 analysis modules · 5 workflows · meta-synthesis
-- Evidence quote IDs (`Q001…`) on every finding
-- Speaker diarization for multi-speaker audio (pyannote, included in install)
-- Streamlit report + **Explore** tab (drill-down, follow-up Q&A)
-- Exports: Markdown, JSON, PDF, coach summary, mediation brief
-- Optional PostgreSQL, background jobs, API key auth
-- 144 automated tests
+- 13 analysis modules · 5 workflows · meta-synthesis  
+- Evidence quote IDs (`Q001…`) on findings  
+- Speaker diarization for multi-speaker audio (local pyannote)  
+- Streamlit report + Explore tab  
+- Exports: Markdown, JSON, PDF, coach summary, mediation brief  
+- Optional PostgreSQL, background jobs, API key auth  
+- AWS: ECS Fargate, Bedrock LLM, CloudWatch (see planning docs)
 
-## Prerequisites
+## Prerequisites (local)
 
-- Python 3.11+
-- [ffmpeg](https://ffmpeg.org/download.html) on PATH
-- [Ollama](https://ollama.com/) with at least one chat model
+- Python 3.11+  
+- [ffmpeg](https://ffmpeg.org/download.html) on PATH  
+- [Ollama](https://ollama.com/) with at least one chat model  
 
 ## Configuration
 
-See `.env.example`. Key settings:
+See `.env.example`. Common settings:
 
 | Variable | Purpose |
 |----------|---------|
-| `DEFAULT_OLLAMA_MODEL` | Default LLM for workflows |
-| `WHISPER_MODEL` | Whisper model size (`base`, `tiny`, etc.) |
+| `DEFAULT_OLLAMA_MODEL` | Default LLM for local workflows |
+| `LLM_PROVIDER` | `ollama` (local) or `bedrock` (AWS) |
+| `BEDROCK_MODEL_ID` | Bedrock inference profile (AWS) |
+| `WHISPER_MODEL` | Whisper size (`base`, `tiny`, …) |
 | `DATABASE_URL` | SQLite (default) or PostgreSQL |
 | `API_KEY` | Optional API authentication |
 
@@ -63,26 +69,26 @@ Details: [doc/user/model-setup.md](doc/user/model-setup.md) · [doc/user/deploym
 backend/          FastAPI application
 config/           Modules, workflows, prompts
 ui/               Streamlit UI
-tests/            Test suite
+infra/dev/        AWS Terraform (dev)
+tests/
 doc/
-  user/           User documentation
-  developer/      Developer documentation
-  design/         Product & technical design (01–16)
-  planning/       Implementation plans & roadmap
-  releases/       Release notes
+  user/           Local user docs
+  developer/      Dev + AWS ops
+  design/         Product design (01–16)
+  planning/       Active plan + AWS architecture
+  releases/
 ```
-
-## API
-
-Summary in [doc/developer/api-reference.md](doc/developer/api-reference.md). Interactive docs at `/docs` when the API is running.
 
 ## Roadmap
 
-- **Active plan:** [doc/planning/implementation_plan.md](doc/planning/implementation_plan.md) — AWS dev deploy (P0-AWS) this week, then Bedrock + Transcribe
-- **AWS detail:** [doc/planning/aws-deployment.md](doc/planning/aws-deployment.md) — backbone integration, no-egress model ops, CloudWatch
-- **Backlog:** [doc/planning/backlog.md](doc/planning/backlog.md) — React UI, local Docker, and other nice-to-haves
-- **Infrastructure:** [aws-backbone](https://github.com/SethDKelly/aws-backbone) — IAM/OIDC for account `521018312783`
+| Doc | Role |
+|-----|------|
+| [implementing.md](doc/planning/implementing.md) | Active tiers (VPC endpoints, Transcribe, …) |
+| [completed.md](doc/planning/completed.md) | What already shipped |
+| [aws-deployment.md](doc/planning/aws-deployment.md) | AWS architecture |
+| [backlog.md](doc/planning/backlog.md) | Deferred / nice-to-have |
+| [aws-backbone](https://github.com/SethDKelly/aws-backbone) | Account IAM/OIDC |
 
 ## Prompt storage
 
-Analysis prompts live in `config/prompts/` and link from `config/modules/*.yaml`. See [config/prompts/README.md](config/prompts/README.md).
+Prompts live in `config/prompts/` and link from `config/modules/*.yaml`. See [config/prompts/README.md](config/prompts/README.md).

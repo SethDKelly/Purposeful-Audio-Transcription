@@ -1,12 +1,13 @@
 # Documentation index
 
-**Relationship Reasoning Engine (RRE)** — v0.5.0 AWS pivot in progress
+**Relationship Reasoning Engine (RRE)** — local analysis + AWS dev pivot (v0.5.0 in progress).
 
 | Audience | Start here |
 |----------|------------|
-| **Users** | [user/getting-started.md](user/getting-started.md) → [user/user-guide.md](user/user-guide.md) |
+| **Users (local)** | [user/getting-started.md](user/getting-started.md) → [user/user-guide.md](user/user-guide.md) |
 | **Developers** | [developer/development.md](developer/development.md) → [developer/architecture.md](developer/architecture.md) |
-| **Operators** | [user/deployment.md](user/deployment.md) |
+| **AWS operators** | [developer/aws-operations.md](developer/aws-operations.md) · [planning/aws-deployment.md](planning/aws-deployment.md) · [../infra/dev/README.md](../infra/dev/README.md) |
+| **Active plan** | [planning/implementing.md](planning/implementing.md) |
 
 ---
 
@@ -14,9 +15,9 @@
 
 | Document | Description |
 |----------|-------------|
-| [user/getting-started.md](user/getting-started.md) | Install, configure, first run |
+| [user/getting-started.md](user/getting-started.md) | Install, configure, first local run |
 | [user/user-guide.md](user/user-guide.md) | Streamlit workflow, exploration, exports |
-| [user/deployment.md](user/deployment.md) | Private-use deploy, backup, upgrade, security |
+| [user/deployment.md](user/deployment.md) | Local private-use deploy, backup, upgrade |
 | [user/model-setup.md](user/model-setup.md) | Ollama models and per-module overrides |
 
 ## Developer documentation
@@ -27,11 +28,12 @@
 | [developer/architecture.md](developer/architecture.md) | Services, data flow, extension points |
 | [developer/api-reference.md](developer/api-reference.md) | REST API summary |
 | [developer/contributing.md](developer/contributing.md) | Conventions, PRs, adding modules |
+| [developer/aws-operations.md](developer/aws-operations.md) | CloudWatch Insights, deploy smoke, pause/resume |
 | [developer/cursor-workflow.md](developer/cursor-workflow.md) | AI-assisted development notes |
 
 ## Design package
 
-Product and technical design (`doc/01`–`doc/16`):
+Stable product/technical design (not a task tracker):
 
 | Doc | Topic |
 |-----|-------|
@@ -49,21 +51,34 @@ Product and technical design (`doc/01`–`doc/16`):
 | [design/14_testing_evaluation_and_safety.md](design/14_testing_evaluation_and_safety.md) | Testing and safety |
 | [design/16_additional_thoughts.md](design/16_additional_thoughts.md) | Design principles |
 
-## Planning and releases
+## Planning
+
+Canonical task tracking is three documents. Everything else is architecture, evaluation notes, or history.
 
 | Document | Description |
 |----------|-------------|
-| [planning/implementation_plan.md](planning/implementation_plan.md) | **Active implementation plan** (AWS P0–P2 priority order) |
-| [planning/aws-deployment.md](planning/aws-deployment.md) | AWS dev architecture, backbone integration, Bedrock/Transcribe |
-| [planning/backlog.md](planning/backlog.md) | Nice-to-have and deferred enhancements |
-| [planning/18_post_v0.3_plan.md](planning/18_post_v0.3_plan.md) | Post-v0.3.0 phase detail (M–U; superseded for priorities) |
-| [planning/15_future_roadmap.md](planning/15_future_roadmap.md) | Long-term strategic direction |
-| [planning/12_mvp_build_plan.md](planning/12_mvp_build_plan.md) | Original MVP build plan |
-| [releases/v0.3.0.md](releases/v0.3.0.md) | v0.3.0 release notes |
-| [releases/v0.2.0.md](releases/v0.2.0.md) | v0.2.0 MVP release notes |
+| [planning/README.md](planning/README.md) | Planning index |
+| [planning/completed.md](planning/completed.md) | Shipped capabilities |
+| [planning/implementing.md](planning/implementing.md) | Active priorities (Tier 1 → 3) |
+| [planning/backlog.md](planning/backlog.md) | Future / deferred |
+| [planning/aws-deployment.md](planning/aws-deployment.md) | AWS architecture and backbone integration |
+| [planning/llm-evaluation-bedrock.md](planning/llm-evaluation-bedrock.md) | Bedrock LLM decision (AWS-1b) |
+| [planning/asr-evaluation-transcribe.md](planning/asr-evaluation-transcribe.md) | Whisper vs Transcribe (AWS-1c) |
+| [planning/log-redaction.md](planning/log-redaction.md) | CloudWatch redaction design (P1-3c) |
+| [planning/archived/](planning/archived/) | Superseded planning docs |
 
-## Archived
+## Releases
 
-| Path | Description |
-|------|-------------|
-| [archived/](archived/) | Superseded plans and backlogs |
+| Document | Description |
+|----------|-------------|
+| [releases/v0.3.0.md](releases/v0.3.0.md) | Post-MVP release |
+| [releases/v0.2.0.md](releases/v0.2.0.md) | MVP release |
+
+## History
+
+| Path | Role |
+|------|------|
+| [archived/](archived/) | Pre-RRE / early backlog history |
+| [planning/archived/](planning/archived/) | Superseded planning docs |
+
+**Do not** add new tasks to archived files — use [planning/implementing.md](planning/implementing.md) or [planning/backlog.md](planning/backlog.md).

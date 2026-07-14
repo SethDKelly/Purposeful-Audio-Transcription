@@ -4,8 +4,8 @@ Formal record of the ASR approach for RRE after P1-1 implementation.
 
 | | |
 |---|---|
-| **Status** | Implementation accepted locally; **AWS burn-in pending** slim deploy |
-| **Date** | 2026-07-13 |
+| **Status** | **Accepted** — AWS Stage B live burn-in 2026-07-14 |
+| **Date** | 2026-07-14 |
 | **Local** | Whisper (`faster-whisper`) + optional pyannote (`TRANSCRIPTION_PROVIDER=whisper`, `.[local]`) |
 | **AWS** | Amazon Transcribe async jobs + speaker labels (`TRANSCRIPTION_PROVIDER=transcribe`, `Dockerfile.cloud`) |
 
@@ -56,7 +56,7 @@ Settings: `TRANSCRIPTION_PROVIDER`, `UPLOADS_BUCKET`, `TRANSCRIBE_LANGUAGE` (def
 - [x] Output maps into existing ingest (`TranscriptParser` labeled text)
 - [x] Failure modes: missing bucket, unsupported format, job failed — raised as app errors
 - [x] Unit tests for mapping + mocked job path
-- [ ] **Live AWS:** short audio upload under Stage B + smoke health
+- [x] **Live AWS:** short audio upload under Stage B + Transcribe job + Quick Review on Bedrock (2026-07-14)
 
 ### Quality (compare vs sliced Whisper+pyannote)
 
@@ -69,7 +69,16 @@ Settings: `TRANSCRIPTION_PROVIDER`, `UPLOADS_BUCKET`, `TRANSCRIBE_LANGUAGE` (def
 - [x] Task role includes Transcribe + S3 (iam.tf)
 - [x] Temp audio + transcript JSON deleted in `finally` (app); S3 lifecycle also set
 - [ ] No transcript body in CloudWatch (P1-3c)
-- [ ] VPC endpoint smoke: Transcribe job with Stage B tasks (after slim deploy)
+- [x] VPC endpoint smoke: Transcribe job with Stage B tasks (slim deploy burn-in)
+
+### Live burn-in notes (2026-07-14)
+
+| Step | Result |
+|------|--------|
+| Synthesized short WAV → `POST /api/transcribe` | HTTP 200, `transcription_mode=transcribe` |
+| Speaker labels | Single speaker (TTS); job + S3 output path OK |
+| Ingest + Quick Review | Run `001f5d84-…` **completed**; 3/3 modules on Bedrock |
+| Staging | Artifacts in `data/temp/burnin-*` (local) |
 
 ---
 

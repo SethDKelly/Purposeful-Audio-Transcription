@@ -1,6 +1,7 @@
-# 12 — MVP Build Plan
+# 12 — MVP Build Plan (archived)
 
-> **Active implementation plan:** [implementation_plan.md](implementation_plan.md)
+> **Archived July 2026.** Summary in [../completed.md](../completed.md) § Application — MVP.  
+> Active priorities: [../implementing.md](../implementing.md).
 
 ## MVP Goal
 

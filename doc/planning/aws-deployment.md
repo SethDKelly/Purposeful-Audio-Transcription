@@ -216,11 +216,11 @@ Formal note: [llm-evaluation-bedrock.md](llm-evaluation-bedrock.md) (AWS-1b).
 
 Formal note: [asr-evaluation-transcribe.md](asr-evaluation-transcribe.md) (AWS-1c).
 
-- [ ] Speaker diarization / max speaker labels vs pyannote quality
-- [ ] Async job polling from API
-- [ ] Map Transcribe output → existing labeled turns
-- [ ] S3 upload path for audio files
-- [x] VPC endpoint smoke under Stage B no-egress (`llm_available` via Bedrock; ECR pull succeeded)
+- [ ] Speaker diarization / max speaker labels vs pyannote quality (golden fixtures)
+- [x] Async job polling from API (live burn-in 2026-07-14)
+- [x] Map Transcribe output → existing labeled turns
+- [x] S3 upload path for audio files
+- [x] VPC endpoint smoke under Stage B no-egress (Transcribe job + Bedrock Quick Review)
 
 ---
 
@@ -318,7 +318,7 @@ fastapi, uvicorn, sqlalchemy, psycopg, boto3, pydantic-settings, alembic
 |-------|-----------|--------------|-----|
 | **Now (code)** | Slim `Dockerfile.cloud` | Amazon Transcribe | Bedrock |
 | **Local** | Fat `Dockerfile` + `.[local]` | Whisper + pyannote | Ollama |
-| **AWS validation** | Manual `workflow_dispatch` deploy of slim image | Live Transcribe burn-in next | Quick Review already proven |
+| **AWS validation** | Slim deploy green (2026-07) | Transcribe + Quick Review burn-in ✓ | Bedrock 3/3 modules |
 | **P1-1 target** | **Slim cloud image** | Amazon Transcribe | Bedrock |
 | **Local always** | Fat `Dockerfile` | Whisper + pyannote | Ollama |
 
@@ -458,12 +458,12 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 |------|-------|------------|--------|
 | 1. Merge aws-backbone PR (OIDC + `rre-dev-*`) | aws-backbone | — | ✓ |
 | 2. Architecture sign-off (this doc) | RRE | — | ✓ |
-| 3. `LLMProvider` + Bedrock spike | RRE | — | [ ] |
+| 3. `LLMProvider` + Bedrock spike | RRE | — | ✓ |
 | 4. Dockerfile + local smoke | RRE | — | ✓ |
 | 5. `infra/dev/` minimal (ECR, ECS, RDS, ALB, logs) | RRE | Step 1 | ✓ |
-| 6. `deploy-dev.yml` on `phase-m0-docs` | RRE | Steps 4–5 | ✓ (pending first run) |
-| 7. Quick Review on Bedrock in dev | RRE | Step 6 | [ ] |
-| 8. Transcribe path | RRE | Step 7 | [ ] |
+| 6. `deploy-dev.yml` on `phase-m0-docs` | RRE | Steps 4–5 | ✓ (`workflow_dispatch`) |
+| 7. Quick Review on Bedrock in dev | RRE | Step 6 | ✓ |
+| 8. Transcribe path | RRE | Step 7 | ✓ (slim + Stage B burn-in 2026-07-14) |
 | 9. PR `phase-m0-docs` → `main` | RRE | Stable dev | [ ] |
 
 ---

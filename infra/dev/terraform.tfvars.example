@@ -3,6 +3,13 @@
 
 # image_tag = "local-dev"
 
+# Slim API defaults (variables.tf): api_cpu=512, api_memory=2048
+# Fat / Whisper image (not used on AWS): raise to 1024 / 4096 if needed.
+# api_cpu    = 512
+# api_memory = 2048
+# ui_cpu     = 256
+# ui_memory  = 512
+
 # Stage B (default): no public IPs; VPC endpoints required.
 # Rollback to Stage A if ECR pulls fail:
 # enable_no_egress_networking = false

@@ -91,4 +91,5 @@ Add integration test with mocked LLM in `tests/test_workflow_engine.py` or simil
 
 - [development.md](development.md)
 - [architecture.md](architecture.md)
-- [../planning/18_post_v0.3_plan.md](../planning/18_post_v0.3_plan.md)
+- [../planning/implementing.md](../planning/implementing.md)
+- [../planning/completed.md](../planning/completed.md)

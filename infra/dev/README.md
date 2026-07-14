@@ -77,13 +77,15 @@ terraform output api_log_group
 
 ## Pause / resume (avoid Fargate + RDS compute charges)
 
-**Standing practice:** Pause whenever the stack sits idle (between coding sessions, after burn-in, overnight). Resume only when you need AWS again.
+**Standing practice:** After **v0.5.1 lands on `main`**, pause first, then whenever the stack sits idle (between coding sessions, overnight). Resume only when you need AWS again.
 
-**Pause** — GitHub Actions → **Pause AWS dev** → Run workflow.
+**Pause** — GitHub Actions → **Pause AWS dev** → Run workflow (requires workflow on default branch for Manual Dispatch; path-filter push on `phase-m0-docs` also works).
 
 This sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Terraform state stays in sync.
 
 **Resume** — run **Deploy to AWS dev** (`workflow_dispatch`; push auto-deploy is paused until slim cutover). The deploy workflow starts RDS if it was stopped, waits for it to become available, then scales ECS back to 1.
+
+**Task size (P1-2d):** Slim API defaults — `api_cpu=512`, `api_memory=2048` (was 1024 / 4096 for Whisper-era). UI remains `256` / `512`. Apply on next Terraform deploy.
 
 **Costs while paused:** ALB (~$16/mo), ECR image storage, Secrets Manager, RDS storage (no compute while stopped). RDS auto-restarts after ~7 days if not resumed.
 

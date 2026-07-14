@@ -1,14 +1,17 @@
-# 18 — Post-v0.3.0 Implementation Plan
+# 18 — Post-v0.3.0 Implementation Plan (archived)
 
-> **Superseded (July 2026):** Active priorities and Windows/local deployment constraints are in **[implementation_plan.md](implementation_plan.md)**. Nice-to-have items are in **[backlog.md](backlog.md)**. This file remains as detailed phase reference (M–U).
+> **Archived July 2026.** Consolidated into [../completed.md](../completed.md), [../implementing.md](../implementing.md), [../backlog.md](../backlog.md).
 
-Forward plan after merging **v0.3.0** (phases H–L) to `main`. Supersedes the “recommended next PR” notes at the end of [implementation_plan.md](implementation_plan.md).
+> **Superseded (July 2026):** Active priorities are in **[../implementing.md](../implementing.md)**. Completed work is in **[../completed.md](../completed.md)**. Nice-to-have items are in **[../backlog.md](../backlog.md)**.
+
+Forward plan after merging **v0.3.0** (phases H–L) to `main`.
 
 | | |
 |---|---|
-| **Baseline** | `v0.3.0` on `main` — 13 modules, 5 workflows; branch adds M/M1.5/M2 + Ollama fixes |
-| **Design anchors** | [../design/01_product_vision_and_scope.md](../design/01_product_vision_and_scope.md) · [../design/04_knowledge_ontology.md](../design/04_knowledge_ontology.md) · [../design/11_ui_ux_design.md](../design/11_ui_ux_design.md) · [15_future_roadmap.md](15_future_roadmap.md) · [../design/16_additional_thoughts.md](../design/16_additional_thoughts.md) |
-| **Documentation** | [../README.md](../README.md) · [../user/](../user/) · [../developer/](../developer/) |
+| **Baseline** | `v0.3.0` on `main` — 13 modules, 5 workflows |
+| **Design anchors** | [../../design/01_product_vision_and_scope.md](../../design/01_product_vision_and_scope.md) · [../../design/04_knowledge_ontology.md](../../design/04_knowledge_ontology.md) · [../../design/11_ui_ux_design.md](../../design/11_ui_ux_design.md) · [15_future_roadmap.md](15_future_roadmap.md) · [../../design/16_additional_thoughts.md](../../design/16_additional_thoughts.md) |
+| **Documentation** | [../../README.md](../../README.md) · [../../user/](../../user/) · [../../developer/](../../developer/) |
+| **Canonical plan now** | [../implementing.md](../implementing.md) · [../completed.md](../completed.md) · [../backlog.md](../backlog.md) |
 | **Principle** | Evidence traceability and progressive disclosure first; prompts remain replaceable |
 
 ---
@@ -45,20 +48,20 @@ Forward plan after merging **v0.3.0** (phases H–L) to `main`. Supersedes the �
 
 ### Documentation (resolved in M0)
 
-Documentation is organized under [doc/README.md](../README.md) with **user**, **developer**, **design**, and **planning** sections. v0.3.0 stats are reflected in [user/deployment.md](../user/deployment.md) and [planning/implementation_plan.md](implementation_plan.md).
+Documentation is organized under [doc/README.md](../../README.md) with **user**, **developer**, **design**, and **planning** sections. Live plan: [../implementing.md](../implementing.md) · [../completed.md](../completed.md).
 
 ---
 
 ## 2. Recommended priorities
 
-> **Superseded:** Priority order is in [implementation_plan.md](implementation_plan.md) §4. Summary below is historical.
+> **Superseded:** Priority order is in [implementing.md](implementing.md). Summary below is historical.
 
 ```text
 M0  Doc & release alignment     ✓ complete
 M   Speaker diarization        ✓ complete
 M1.5 Timeline smoothing       ✓ complete
 M2  Sliced transcription       core ✓; polish → P0-3 in implementation plan
-—   Platform / Ollama / Docker  P0 (see implementation_plan.md)
+—   Platform / Ollama / Docker  P0 (see ../implementing.md / ../completed.md)
 N   Full suite workflows       P1-1 (after P0)
 O–U See implementation_plan P2 + backlog.md
 ```
@@ -73,8 +76,8 @@ O–U See implementation_plan P2 + backlog.md
 - [x] [doc/README.md](../README.md) documentation index
 - [x] User guides: [getting-started](../user/getting-started.md), [user-guide](../user/user-guide.md), [deployment](../user/deployment.md), [model-setup](../user/model-setup.md)
 - [x] Developer guides: [architecture](../developer/architecture.md), [development](../developer/development.md), [api-reference](../developer/api-reference.md), [contributing](../developer/contributing.md)
-- [x] Update [implementation_plan.md](implementation_plan.md) §1 to v0.3.0
-- [x] Stub redirects at legacy paths (`doc/DEPLOYMENT.md`, etc.)
+- [x] Update planning docs to v0.3.0 baseline
+- [x] Remove legacy path stubs (July 2026 doc consolidation)
 - [x] Update root [README.md](../../README.md)
 
 **Acceptance:** New contributor can install from `main` using only current docs.
@@ -315,7 +318,7 @@ Extend exploration service:
 
 ## 10. Phase S — React frontend (parallel track)
 
-**Goal:** Exploration-first SPA consuming existing APIs ([implementation_plan](implementation_plan.md) Phase L deferral).
+**Goal:** Exploration-first SPA consuming existing APIs ([../backlog.md](../backlog.md)).
 
 ### Scope (MVP)
 
@@ -342,7 +345,7 @@ Run alongside every phase ([14_testing_evaluation_and_safety.md](14_testing_eval
 | Priority | Task |
 |----------|------|
 | P0 | Burn-in: run `quick_review`, `conflict_coaching`, `full_mvp` on real transcripts with your Ollama models |
-| P0 | Tune `DEFAULT_OLLAMA_MODEL` and per-module overrides ([MODEL_SETUP.md](MODEL_SETUP.md)) |
+| P0 | Tune `DEFAULT_OLLAMA_MODEL` and per-module overrides ([../../user/model-setup.md](../../user/model-setup.md)) |
 | P1 | Add 3–5 anonymized real scenarios to `tests/fixtures/transcripts/` |
 | P1 | Track safety validator false positives; adjust patterns |
 | P2 | Script: `scripts/eval_construct_coverage.py` — % runs with constructs populated |

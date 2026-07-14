@@ -106,11 +106,13 @@ Local (from repo root, with AWS + terraform state access):
 
 ## Pause / resume (when idle)
 
-**Standing practice:** If the AWS dev stack is not in active use (no deploy, burn-in, or demo in progress), pause it to avoid Fargate and RDS compute charges.
+**Standing practice:** After **v0.5.1 is on `main`**, pause AWS before leaving the stack idle (and thereafter between sessions). Pause was deferred during cutover so sizing/deploy could finish without an early scale-down.
 
 | Action | How |
 |--------|-----|
-| **Pause** | GitHub Actions → **Pause AWS dev** → Run workflow |
+| **Pause** | GitHub Actions → **Pause AWS dev** → Run workflow (`workflow_dispatch` works once `pause-dev.yml` is on `main`) |
 | **Resume** | GitHub Actions → **Deploy to AWS dev** → Run workflow (`workflow_dispatch`) |
 
 Pause sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Full steps, residual costs (ALB, ECR, Secrets Manager, RDS storage), and CLI equivalents: [infra/dev/README.md](../../infra/dev/README.md).
+
+**Note:** Local `ops-admin` cannot update ECS/RDS; use the GitHub workflow (OIDC `dev-github-deploy`).

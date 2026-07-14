@@ -4,9 +4,9 @@ Record of shipped capabilities for the **Relationship Reasoning Engine (RRE)** t
 
 | | |
 |---|---|
-| **Current branch** | `phase-m0-docs` (AWS slim cutover pending) |
+| **Current branch** | `phase-m0-docs` (v0.5.1 burn-in green; sizing / `main` PR next) |
 | **Baseline release** | **v0.3.0** on `main` — MVP + post-MVP |
-| **In progress toward** | **v0.5.1** — Transcribe + slim image AWS burn-in |
+| **In progress toward** | **v0.5.1** — P1-2d Fargate sizing → PR to `main`; then Pause AWS |
 | **Tests** | 174+ passing (CI) |
 | **AWS account** | `521018312783`, `us-east-2` |
 | **Architecture detail** | [aws-deployment.md](aws-deployment.md) |
@@ -183,8 +183,8 @@ Original build goal: analyze a transcript with a representative module subset an
 |---|------|--------|
 | P1-1a–d | `TranscriptionProvider`, Whisper + Amazon Transcribe adapters, route wiring | ✓ |
 | P1-2a–c,e | `Dockerfile.cloud`, CI cloud build, ECS Transcribe env, model-setup docs | ✓ |
-| P1-2d | Lower Fargate sizing | Pending after slim burn-in |
-| — | Live AWS Transcribe job under Stage B | Pending manual deploy |
+| P1-2d | Lower Fargate sizing | ✓ Defaults 512 CPU / 2048 MiB (apply on next deploy) |
+| — | Live AWS Transcribe + Quick Review under Stage B | ✓ 2026-07-14 |
 
 ---
 
@@ -208,7 +208,7 @@ Original build goal: analyze a transcript with a representative module subset an
 | **v0.3.0** | Post-MVP — 13 modules, 5 workflows, exploration, PostgreSQL |
 | **v0.4.x** | Diarization, sliced transcription, timeline smoothing, Ollama JSON fixes |
 | **v0.5.0** (ops) | AWS substrate — ECS, Terraform, Bedrock QR, Stage B, deploy smoke |
-| **v0.5.1** (code) | Transcribe provider + `Dockerfile.cloud` — AWS burn-in pending |
+| **v0.5.1** (burn-in) | Transcribe + slim image + Stage B QR — AWS validated 2026-07-14 |
 
 ---
 

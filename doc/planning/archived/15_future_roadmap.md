@@ -1,6 +1,8 @@
-# 15 — Future Roadmap
+# 15 — Future Roadmap (archived)
 
-> **Active priorities (July 2026):** AWS dev deployment — see [implementation_plan.md](implementation_plan.md) and [aws-deployment.md](aws-deployment.md). Local Windows path demoted to optional dev.
+> **Archived July 2026.** Consolidated into [../completed.md](../completed.md), [../implementing.md](../implementing.md), [../backlog.md](../backlog.md).
+
+> **Active priorities (July 2026):** AWS dev deployment — see [implementing.md](../implementing.md) and [aws-deployment.md](../aws-deployment.md). Local Windows path demoted to optional dev.
 
 > **Completed items:** Many near-term items below shipped in **v0.3.0** (phases H–L). See [../releases/v0.3.0.md](../releases/v0.3.0.md).
 
@@ -18,7 +20,7 @@
 
 **Status:** Implemented. Audio upload runs Whisper + optional [pyannote.audio](https://github.com/pyannote/pyannote-audio) diarization, aligns segments to **Person A / Person B** turns, and ingests labeled quotes.
 
-Setup: `pip install -e ".[diarization]"`, accept Hugging Face model terms, set `HF_TOKEN` in `.env`. See [18_post_v0.3_plan.md](18_post_v0.3_plan.md) §4 and [user/model-setup.md](../user/model-setup.md).
+Setup: `pip install -e ".[diarization]"`, accept Hugging Face model terms, set `HF_TOKEN` in `.env`. See [18_post_v0.3_plan.md](18_post_v0.3_plan.md) §4 and [../../user/model-setup.md](../../user/model-setup.md).
 
 ### Workflow library (gaps)
 

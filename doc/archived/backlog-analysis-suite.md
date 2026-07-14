@@ -1,3 +1,9 @@
+# Analysis suites (archived)
+
+> **Superseded.** Multi-module runs shipped as **workflows** in v0.3.0. See [../planning/completed.md](../planning/completed.md) and [../design/08_workflow_engine.md](../design/08_workflow_engine.md). Remaining suite work: [../planning/implementing.md](../planning/implementing.md) (P1-4). Historical notes below are not the live backlog.
+
+---
+
 # Backlog: Analysis Suite
 
 Future capability to run multiple analyses against a single transcript as a coordinated **suite**, rather than one purpose at a time. Suites differ by depth, runtime, and audience.
