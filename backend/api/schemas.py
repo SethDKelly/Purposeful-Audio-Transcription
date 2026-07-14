@@ -129,6 +129,8 @@ class WorkflowSchema(BaseModel):
     modules: list[str] = Field(default_factory=list)
     meta_synthesis: bool
     enabled: bool
+    default_background: bool = False
+    module_count: int = 0
 
 
 class WorkflowsResponse(BaseModel):

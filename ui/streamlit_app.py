@@ -1,6 +1,7 @@
 """Streamlit UI for Purposeful Audio Transcription / RRE."""
 
 import json
+import time
 
 import httpx
 import streamlit as st
@@ -14,6 +15,7 @@ from ui.api_client import (
     fetch_modules,
     fetch_ollama_models,
     fetch_workflows,
+    get_workflow_run,
     get_workflow_synthesis,
     module_display_name,
     module_name_map,
@@ -586,6 +588,27 @@ def main() -> None:
             + f" · Est. {workflow.get('estimated_runtime', 'n/a')}"
         )
 
+        module_count = len(workflow.get("modules", []))
+        sync_limit = settings.workflow_sync_module_limit
+        default_bg = bool(workflow.get("default_background"))
+        long_suite = sync_limit > 0 and module_count > sync_limit
+        if long_suite or default_bg:
+            st.warning(
+                f"This workflow has {module_count} modules"
+                + (
+                    f" (sync limit {sync_limit})"
+                    if long_suite
+                    else ""
+                )
+                + ". Prefer background execution and keep this tab open while it runs."
+            )
+
+        run_in_background = st.checkbox(
+            "Run in background (poll until complete)",
+            value=default_bg or long_suite,
+            key=f"workflow_bg_{workflow['id']}",
+        )
+
         default_model = settings.default_ollama_model or ollama_models[0]
         model_index = (
             ollama_models.index(default_model)
@@ -609,12 +632,31 @@ def main() -> None:
                 try:
                     for module_id in workflow.get("modules", []):
                         label = module_display_name(module_id, module_names)
-                        st.write(f"Running {label}...")
+                        st.write(f"Queued {label}...")
                     result = run_workflow(
                         transcript_id=transcript_id,
                         workflow_id=workflow["id"],
                         model=selected_model,
+                        background=run_in_background,
                     )
+                    terminal = {"completed", "failed", "cancelled"}
+                    if run_in_background and result.get("status") not in terminal:
+                        run_id = result["id"]
+                        status.write("Background job started; polling for completion...")
+                        for _ in range(900):
+                            time.sleep(2)
+                            result = get_workflow_run(run_id)
+                            done = sum(
+                                1
+                                for mr in result.get("module_runs", [])
+                                if mr.get("status") in {"completed", "failed"}
+                            )
+                            total = max(module_count, 1)
+                            status.write(
+                                f"Status: {result.get('status')} · modules done {done}/{total}"
+                            )
+                            if result.get("status") in terminal:
+                                break
                     st.session_state.workflow_run = result
                     st.session_state.synthesis_report = None
                     if result.get("status") == "completed":

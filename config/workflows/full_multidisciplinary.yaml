@@ -1,0 +1,26 @@
+id: full_multidisciplinary
+name: "Full Multidisciplinary Suite"
+version: "1.0.0"
+enabled: true
+description: >
+  Runs all twelve transcript-input analysis modules, then meta-synthesis.
+  Prefer background execution; expect 15–45 minutes depending on model.
+estimated_runtime: "15-45 min"
+recommended_model: null
+output_tone: integrative
+default_background: true
+modules:
+  - relationship_conversation_analysis
+  - nvc_analysis
+  - gottman_analysis
+  - attachment_interaction_matrix
+  - emotional_needs_values
+  - cognitive_analysis
+  - narrative_identity_analysis
+  - trauma_informed_communication
+  - exploratory_psychological_formulation
+  - mediation_analysis
+  - systems_analysis
+  - bias_epistemic_quality
+  - meta_synthesis
+meta_synthesis: true

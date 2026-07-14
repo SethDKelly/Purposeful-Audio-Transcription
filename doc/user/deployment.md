@@ -12,7 +12,7 @@ Private-use deployment for the **Relationship Reasoning Engine** on a single mac
 | Item | Value |
 |------|-------|
 | App baseline | v0.3.0+ on `main` / active branch |
-| Workflows | `quick_review`, `full_mvp`, `conflict_coaching`, `mediation_brief`, `clinical_exploration` |
+| Workflows | `quick_review`, `full_mvp`, `conflict_coaching`, `mediation_brief`, `clinical_exploration`, `research_oriented`, `full_multidisciplinary` |
 | Modules | 13 analysis modules + meta-synthesis |
 | Tests | `pytest tests/ -q` |
 
@@ -62,6 +62,7 @@ See [model-setup.md](model-setup.md) for Ollama configuration. Day-one walkthrou
 | `LOG_REDACT` | _(auto)_ | Redact transcript/prompt bodies from logs; auto-on for Bedrock / non-SQLite |
 | `TRANSCRIPT_RETENTION_DAYS` | _(unset)_ | When set, purge transcripts older than N days on API startup |
 | `WORKFLOW_BACKGROUND_DEFAULT` | `false` | Background workflow queue |
+| `WORKFLOW_SYNC_MODULE_LIMIT` | `6` | Longer suites auto-run in background; explicit `background=false` over the limit returns 400 |
 | `API_HOST` / `API_PORT` | `127.0.0.1` / `8000` | Keep on localhost for private use |
 | `STREAMLIT_PORT` | `8501` | UI port |
 | `OLLAMA_HOST` | `http://localhost:11434` | Ollama API |

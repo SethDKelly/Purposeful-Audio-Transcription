@@ -82,6 +82,11 @@ class WorkflowRunError(AppError):
         super().__init__(message, status_code=400)
 
 
+class WorkflowSyncLimitError(AppError):
+    def __init__(self, message: str):
+        super().__init__(message, status_code=400)
+
+
 class SynthesisNotFoundError(AppError):
     def __init__(self, message: str):
         super().__init__(message, status_code=404)

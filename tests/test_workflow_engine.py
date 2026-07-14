@@ -29,6 +29,13 @@ def _module_llm_response(module_id: str) -> str:
         )
     payload["module_id"] = module_id
     payload["module_version"] = module.config.version
+    ceiling = module.config.confidence_ceiling.value
+    for finding in payload.get("findings", []):
+        conf = finding.get("confidence")
+        if conf not in {"observed", "insufficient_evidence"} and conf != ceiling:
+            # Keep fixtures valid across modules with lower ceilings (e.g. trauma = low).
+            if conf in {"high", "moderate", "low", "exploratory"}:
+                finding["confidence"] = ceiling
     return f"```json\n{json.dumps(payload)}\n```"
 
 
@@ -143,7 +150,7 @@ def test_workflows_api(monkeypatch) -> None:
     client = TestClient(app)
     list_response = client.get("/api/workflows")
     assert list_response.status_code == 200
-    assert len(list_response.json()["workflows"]) == 5
+    assert len(list_response.json()["workflows"]) == 7
 
     transcript_response = client.post(
         "/api/transcripts",

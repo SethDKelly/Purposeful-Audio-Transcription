@@ -65,6 +65,8 @@ class Settings(BaseSettings):
     # None = auto (on for Bedrock / non-SQLite). Override with LOG_REDACT=true|false.
     log_redact: bool | None = None
     workflow_background_default: bool = False
+    # Sync runs with more modules than this are forced to background (unless explicitly refused).
+    workflow_sync_module_limit: int = 6
     module_run_max_retries: int = 2
     evidence_prompt_max_quotes: int = 120
     evidence_prompt_head_quotes: int = 80

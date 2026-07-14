@@ -52,6 +52,8 @@ When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected r
 }
 ```
 
+`background` is optional. When omitted, the API uses the workflow’s `default_background`, then `WORKFLOW_BACKGROUND_DEFAULT`. If the workflow still would run synchronously with more modules than `WORKFLOW_SYNC_MODULE_LIMIT` (default 6), it is forced to background; an explicit `"background": false` over that limit returns **400**.
+
 ## Exploration
 
 | Method | Path | Description |

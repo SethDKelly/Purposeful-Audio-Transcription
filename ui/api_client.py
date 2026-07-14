@@ -172,8 +172,16 @@ def process_audio(
     return response.json()
 
 
-def run_workflow(transcript_id: str, workflow_id: str, model: str | None = None) -> dict:
-    payload = {"transcript_id": transcript_id, "model": model}
+def run_workflow(
+    transcript_id: str,
+    workflow_id: str,
+    model: str | None = None,
+    *,
+    background: bool | None = None,
+) -> dict:
+    payload: dict[str, object] = {"transcript_id": transcript_id, "model": model}
+    if background is not None:
+        payload["background"] = background
     response = httpx.post(
         f"{API_BASE}/api/workflows/{workflow_id}/run",
         json=payload,

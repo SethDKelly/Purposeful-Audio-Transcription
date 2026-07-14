@@ -21,6 +21,7 @@ class WorkflowConfig(BaseModel):
     output_tone: str = ""
     modules: list[str] = Field(default_factory=list)
     meta_synthesis: bool = False
+    default_background: bool = False
 
 
 @dataclass(frozen=True)
