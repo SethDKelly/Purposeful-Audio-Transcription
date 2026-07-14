@@ -38,7 +38,9 @@ def test_bedrock_health_check_inference_profile(mock_settings, mock_bedrock_clie
     _runtime, control = mock_bedrock_clients
     mock_settings.resolved_aws_region = "us-east-2"
     mock_settings.resolved_bedrock_model_id = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
-    control.get_inference_profile.return_value = {"inferenceProfileId": "us.anthropic.claude-sonnet-4-5-20250929-v1:0"}
+    control.get_inference_profile.return_value = {
+        "inferenceProfileId": "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    }
 
     provider = BedrockProvider()
     assert provider.health_check() is True
@@ -49,18 +51,20 @@ def test_bedrock_health_check_inference_profile(mock_settings, mock_bedrock_clie
 
 
 @patch("backend.services.bedrock_provider.settings")
-def test_bedrock_chat_returns_text(mock_settings, mock_bedrock_clients) -> None:
-    runtime, control = mock_bedrock_clients
+def test_bedrock_chat_uses_structured_output(mock_settings, mock_bedrock_clients) -> None:
+    runtime, _control = mock_bedrock_clients
     mock_settings.resolved_aws_region = "us-east-2"
-    mock_settings.resolved_bedrock_model_id = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+    mock_settings.resolved_bedrock_model_id = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
     mock_settings.bedrock_max_tokens = 1024
+    mock_settings.bedrock_structured_output = True
     runtime.converse.return_value = {
-        "output": {"message": {"content": [{"text": '{"findings": []}'}]}}
+        "stopReason": "end_turn",
+        "output": {"message": {"content": [{"text": '{"findings": []}'}]}},
     }
 
     provider = BedrockProvider()
     text = provider.chat(
-        "anthropic.claude-3-5-sonnet-20241022-v2:0",
+        "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
         [
             {"role": "system", "content": "You are helpful."},
             {"role": "user", "content": "Return JSON"},
@@ -68,7 +72,68 @@ def test_bedrock_chat_returns_text(mock_settings, mock_bedrock_clients) -> None:
         json_mode=True,
     )
     assert text.startswith("{")
-    runtime.converse.assert_called_once()
+    kwargs = runtime.converse.call_args.kwargs
+    assert "outputConfig" in kwargs
+    assert kwargs["outputConfig"]["textFormat"]["type"] == "json_schema"
+
+
+@patch("backend.services.bedrock_provider.settings")
+def test_bedrock_chat_falls_back_when_structured_output_rejected(
+    mock_settings, mock_bedrock_clients
+) -> None:
+    from botocore.exceptions import ClientError
+
+    runtime, _control = mock_bedrock_clients
+    mock_settings.resolved_aws_region = "us-east-2"
+    mock_settings.resolved_bedrock_model_id = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    mock_settings.bedrock_max_tokens = 1024
+    mock_settings.bedrock_structured_output = True
+    runtime.converse.side_effect = [
+        ClientError(
+            {"Error": {"Code": "ValidationException", "Message": "outputConfig unsupported"}},
+            "Converse",
+        ),
+        {
+            "stopReason": "end_turn",
+            "output": {"message": {"content": [{"text": '{"ok": true}'}]}},
+        },
+    ]
+
+    provider = BedrockProvider()
+    text = provider.chat(
+        "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+        [{"role": "user", "content": "Return JSON"}],
+        json_mode=True,
+    )
+    assert text == '{"ok": true}'
+    assert runtime.converse.call_count == 2
+    assert "outputConfig" not in runtime.converse.call_args_list[1].kwargs
+
+
+@patch("backend.services.bedrock_provider.settings")
+def test_bedrock_chat_skips_empty_assistant_blocks(mock_settings, mock_bedrock_clients) -> None:
+    runtime, _control = mock_bedrock_clients
+    mock_settings.resolved_aws_region = "us-east-2"
+    mock_settings.resolved_bedrock_model_id = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    mock_settings.bedrock_max_tokens = 1024
+    mock_settings.bedrock_structured_output = False
+    runtime.converse.return_value = {
+        "stopReason": "end_turn",
+        "output": {"message": {"content": [{"text": '{"findings": []}'}]}},
+    }
+
+    provider = BedrockProvider()
+    provider.chat(
+        "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+        [
+            {"role": "user", "content": "x"},
+            {"role": "assistant", "content": ""},
+            {"role": "user", "content": "fix"},
+        ],
+        json_mode=False,
+    )
+    messages = runtime.converse.call_args.kwargs["messages"]
+    assert messages[1]["content"][0]["text"] == "{}"
 
 
 @patch("backend.services.bedrock_provider.settings")
@@ -79,6 +144,7 @@ def test_bedrock_chat_raises_llm_error(mock_settings, mock_bedrock_clients) -> N
     mock_settings.resolved_aws_region = "us-east-2"
     mock_settings.resolved_bedrock_model_id = "anthropic.claude-3-5-sonnet-20241022-v2:0"
     mock_settings.bedrock_max_tokens = 1024
+    mock_settings.bedrock_structured_output = False
     runtime.converse.side_effect = ClientError(
         {"Error": {"Code": "AccessDenied", "Message": "denied"}},
         "Converse",

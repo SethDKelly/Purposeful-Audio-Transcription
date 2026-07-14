@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from collections.abc import Iterator
 from typing import Any
@@ -11,6 +12,7 @@ from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 
 from backend.core.exceptions import LLMError
+from backend.schemas.module_output_json_schema import MODULE_OUTPUT_V1_JSON_SCHEMA
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -22,6 +24,19 @@ _BEDROCK_CLIENT_CONFIG = Config(
     read_timeout=600,
     retries={"max_attempts": 1, "mode": "standard"},
 )
+
+_JSON_OUTPUT_CONFIG = {
+    "textFormat": {
+        "type": "json_schema",
+        "structure": {
+            "jsonSchema": {
+                "name": "module_output_v1",
+                "description": "Structured RRE module analysis output",
+                "schema": json.dumps(MODULE_OUTPUT_V1_JSON_SCHEMA),
+            }
+        },
+    }
+}
 
 
 class BedrockProvider:
@@ -101,15 +116,39 @@ class BedrockProvider:
                     )
                 }
             ]
+            if settings.bedrock_structured_output:
+                request["outputConfig"] = _JSON_OUTPUT_CONFIG
 
         try:
-            response = self._runtime.converse(**request)
+            response = self._converse(request)
         except (ClientError, BotoCoreError) as exc:
-            raise LLMError(f"Bedrock converse failed: {exc}") from exc
+            # Structured-output schema can be rejected or unavailable; fall back once.
+            if json_mode and "outputConfig" in request:
+                logger.warning(
+                    "Bedrock structured output failed (%s); retrying without outputConfig",
+                    exc,
+                )
+                request.pop("outputConfig", None)
+                try:
+                    response = self._converse(request)
+                except (ClientError, BotoCoreError) as retry_exc:
+                    raise LLMError(f"Bedrock converse failed: {retry_exc}") from retry_exc
+            else:
+                raise LLMError(f"Bedrock converse failed: {exc}") from exc
 
+        stop_reason = response.get("stopReason")
         content = _extract_text(response)
         if not content:
-            raise LLMError("Bedrock returned an empty response")
+            raise LLMError(
+                f"Bedrock returned an empty response (stopReason={stop_reason!r})"
+            )
+        if stop_reason == "max_tokens":
+            logger.warning(
+                "Bedrock response truncated at max_tokens (%s); output length=%s",
+                settings.bedrock_max_tokens,
+                len(content),
+            )
+            # Still return content so the parser/repair path can salvage partial JSON.
         return content
 
     def chat_stream(
@@ -119,6 +158,9 @@ class BedrockProvider:
     ) -> Iterator[str]:
         # Streaming spike deferred — module runs use non-streaming chat.
         yield self.chat(model, messages, json_mode=False)
+
+    def _converse(self, request: dict[str, Any]) -> dict[str, Any]:
+        return self._runtime.converse(**request)
 
 
 def _is_inference_profile(model_id: str) -> bool:
@@ -135,6 +177,17 @@ def _split_messages(
         text = message.get("content", "")
         if role == "system":
             system.append({"text": text})
+        elif role == "assistant":
+            # Bedrock rejects empty assistant text blocks (repair turns).
+            if not str(text).strip():
+                conversation.append(
+                    {
+                        "role": "assistant",
+                        "content": [{"text": "{}"}],
+                    }
+                )
+            else:
+                conversation.append({"role": "assistant", "content": [{"text": text}]})
         else:
             conversation.append({"role": role, "content": [{"text": text}]})
     return system, conversation
@@ -144,5 +197,11 @@ def _extract_text(response: dict[str, Any]) -> str:
     output = response.get("output") or {}
     message = output.get("message") or {}
     parts = message.get("content") or []
-    texts = [part.get("text", "") for part in parts if isinstance(part, dict)]
+    texts: list[str] = []
+    for part in parts:
+        if not isinstance(part, dict):
+            continue
+        text = part.get("text")
+        if isinstance(text, str) and text.strip():
+            texts.append(text)
     return "".join(texts).strip()

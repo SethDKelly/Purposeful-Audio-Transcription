@@ -2,7 +2,8 @@
 
 # Output Schema Instructions
 
-Respond with a single JSON object matching `module_output_v1`, then a human-readable markdown report.
+Respond with a single JSON object matching `module_output_v1` only.
+Put any human-readable report inside `raw_markdown_report` — do not emit markdown outside the JSON.
 
 ## Required JSON Shape
 

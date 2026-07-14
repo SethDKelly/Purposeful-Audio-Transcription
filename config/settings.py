@@ -14,7 +14,8 @@ class Settings(BaseSettings):
     llm_provider: str = "bedrock"
     transcription_provider: str = "transcribe"
     bedrock_model_id: str = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
-    bedrock_max_tokens: int = 8192
+    bedrock_max_tokens: int = 16384
+    bedrock_structured_output: bool = True
     aws_region: str = ""
     uploads_bucket: str = ""
     transcribe_language: str = ""

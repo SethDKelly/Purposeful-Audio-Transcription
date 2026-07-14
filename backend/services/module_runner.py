@@ -34,7 +34,8 @@ _REPAIR_PROMPT = (
     "Your previous response failed validation. Return only a corrected JSON object "
     "matching module_output_v1. Fix these issues:\n\n{issues}\n\n"
     "Use only the provided evidence quote IDs. Include alternative_explanations "
-    "for inferred findings. Do not exceed the module confidence ceiling."
+    "for inferred findings. Do not exceed the module confidence ceiling. "
+    "Do not emit markdown outside the JSON object."
 )
 
 

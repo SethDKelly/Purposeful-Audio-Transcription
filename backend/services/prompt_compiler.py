@@ -10,7 +10,7 @@ from backend.domain.transcript import TranscriptBundle
 from backend.services.evidence_index import EvidenceIndexService
 from config.settings import settings
 
-COMPILER_VERSION = "1.0.0"
+COMPILER_VERSION = "1.1.0"
 _VERSION_PATTERN = re.compile(r"version:\s*([\d.]+)", re.IGNORECASE)
 
 
@@ -140,7 +140,7 @@ class PromptCompiler:
             f"- Do not assign confidence above **{module.config.confidence_ceiling.value}**.\n"
             "- Every finding must cite at least one evidence quote ID unless it is a "
             "general methodological limitation.\n"
-            "- Inferred findings should include alternative explanations when plausible.\n"
+            "- Inferred findings must include at least one alternative explanation.\n"
             "- Use only quote IDs provided in the evidence index."
         )
 
@@ -154,7 +154,8 @@ class PromptCompiler:
             "## Evidence Index\n\n"
             "Each line is a quotable turn. Cite using the bracketed quote ID.\n\n"
             f"{evidence_text}\n\n"
-            "Return JSON matching the required schema, then a markdown report."
+            "Return only one JSON object matching module_output_v1. "
+            "Put the human-readable report inside raw_markdown_report."
         )
 
     def _build_module_outputs_user_message(
@@ -167,7 +168,8 @@ class PromptCompiler:
             "Do not re-analyze the raw transcript. Use only the structured outputs below.\n\n"
             "## Prior Module Outputs\n\n"
             f"{module_outputs.strip()}\n\n"
-            "Return JSON matching the required schema, then a markdown report."
+            "Return only one JSON object matching module_output_v1. "
+            "Put the human-readable report inside raw_markdown_report."
         )
 
 

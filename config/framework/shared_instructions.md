@@ -1,4 +1,4 @@
-<!-- version: 1.0.0 -->
+<!-- version: 1.1.0 -->
 
 # Shared Analytical Framework Rules
 
@@ -49,6 +49,6 @@ State relevant limitations such as missing tone, body language, prior history, o
 
 ## Output Discipline
 
-- Produce valid JSON matching the required schema first.
-- Include a readable `raw_markdown_report` after the JSON block.
+- Reply with **only** one JSON object matching the required schema (no prose, no markdown fences).
+- Put any human-readable report text inside the `raw_markdown_report` string field — never after the JSON.
 - Every finding must include at least one `evidence_quote_id` unless it is a general methodological limitation.
