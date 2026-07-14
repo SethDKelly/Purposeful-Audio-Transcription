@@ -102,6 +102,34 @@ def test_parse_input_coerces_bedrock_construct_aliases() -> None:
     assert parsed.relationships[0].confidence == "exploratory"
 
 
+def test_normalize_fills_alternative_explanations_for_inferred() -> None:
+    parser = OutputParser()
+    registry = ModuleRegistry()
+    module = registry.get("relationship_conversation_analysis")
+    output = parser.normalize(
+        {
+            "module_id": "relationship_conversation_analysis",
+            "module_version": "1.0.0",
+            "executive_summary": "x",
+            "findings": [
+                {
+                    "id": "F001",
+                    "type": "hypothesis",
+                    "title": "Pattern",
+                    "summary": "Inferred cycle.",
+                    "confidence": "moderate",
+                    "evidence_quote_ids": ["Q001"],
+                    "alternative_explanations": [],
+                }
+            ],
+        },
+        module,
+        "run-alts",
+    )
+    assert output.findings[0].alternative_explanations
+    assert "inferred" in output.findings[0].alternative_explanations[0].lower()
+
+
 def test_normalize_unknown_relationship_type_defaults() -> None:
     parser = OutputParser()
     registry = ModuleRegistry()

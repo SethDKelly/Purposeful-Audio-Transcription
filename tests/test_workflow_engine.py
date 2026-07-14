@@ -119,7 +119,7 @@ def test_workflow_engine_full_mvp_runs_synthesis_last() -> None:
 def test_workflow_engine_fails_when_module_fails() -> None:
     mock_llm = MagicMock()
     bad_payload = json.loads((FIXTURES / "sample_module_output.json").read_text(encoding="utf-8"))
-    bad_payload["findings"][2]["alternative_explanations"] = []
+    bad_payload["findings"][0]["evidence_quote_ids"] = ["Q999"]
     mock_llm.chat.return_value = f"```json\n{json.dumps(bad_payload)}\n```"
     engine = _build_engine(mock_llm)
     transcripts = TranscriptService()

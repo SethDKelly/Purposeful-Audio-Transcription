@@ -55,7 +55,7 @@ def test_module_runner_completes_with_valid_output() -> None:
 def test_module_runner_retries_then_succeeds() -> None:
     mock_llm = MagicMock()
     bad_payload = json.loads((FIXTURES / "sample_module_output.json").read_text(encoding="utf-8"))
-    bad_payload["findings"][2]["alternative_explanations"] = []
+    bad_payload["findings"][0]["evidence_quote_ids"] = ["Q999"]
     mock_llm.chat.side_effect = [
         f"```json\n{json.dumps(bad_payload)}\n```",
         _valid_llm_response(),
@@ -80,7 +80,7 @@ def test_module_runner_retries_then_succeeds() -> None:
 def test_module_runner_fails_after_retries() -> None:
     mock_llm = MagicMock()
     bad_payload = json.loads((FIXTURES / "sample_module_output.json").read_text(encoding="utf-8"))
-    bad_payload["findings"][2]["alternative_explanations"] = []
+    bad_payload["findings"][0]["evidence_quote_ids"] = ["Q999"]
     mock_llm.chat.return_value = f"```json\n{json.dumps(bad_payload)}\n```"
     runner = _build_runner(mock_llm)
 
