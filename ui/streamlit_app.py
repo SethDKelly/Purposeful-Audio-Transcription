@@ -684,7 +684,8 @@ def main() -> None:
                             )
                             total = max(module_count, 1)
                             line = (
-                                f"Status: {result.get('status')} - modules done {done}/{total}"
+                                f"Status: {_format_workflow_status(result.get('status'))} "
+                                f"- modules done {done}/{total}"
                             )
                             if line != last_line:
                                 status.write(line)
