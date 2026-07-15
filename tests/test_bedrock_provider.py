@@ -57,6 +57,7 @@ def test_bedrock_chat_uses_structured_output(mock_settings, mock_bedrock_clients
     mock_settings.resolved_bedrock_model_id = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
     mock_settings.bedrock_max_tokens = 1024
     mock_settings.bedrock_structured_output = True
+    mock_settings.bedrock_prompt_cache = False
     runtime.converse.return_value = {
         "stopReason": "end_turn",
         "output": {"message": {"content": [{"text": '{"findings": []}'}]}},
@@ -75,6 +76,57 @@ def test_bedrock_chat_uses_structured_output(mock_settings, mock_bedrock_clients
     kwargs = runtime.converse.call_args.kwargs
     assert "outputConfig" in kwargs
     assert kwargs["outputConfig"]["textFormat"]["type"] == "json_schema"
+
+
+@patch("backend.services.bedrock_provider.settings")
+def test_bedrock_chat_cached_inserts_cache_points(mock_settings, mock_bedrock_clients) -> None:
+    from backend.services.prompt_compiler import CompiledPrompt
+    from backend.domain.enums import Confidence
+
+    runtime, _control = mock_bedrock_clients
+    mock_settings.resolved_aws_region = "us-east-2"
+    mock_settings.resolved_bedrock_model_id = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+    mock_settings.bedrock_max_tokens = 1024
+    mock_settings.bedrock_structured_output = True
+    mock_settings.bedrock_prompt_cache = True
+    mock_settings.bedrock_prompt_cache_ttl = "1h"
+    runtime.converse.return_value = {
+        "stopReason": "end_turn",
+        "usage": {"cacheWriteInputTokens": 5000, "cacheReadInputTokens": 0},
+        "output": {"message": {"content": [{"text": '{"ok": true}'}]}},
+    }
+
+    compiled = CompiledPrompt(
+        messages=[
+            {"role": "system", "content": "shared"},
+            {"role": "user", "content": "evidence\n\ntask"},
+        ],
+        module_id="nvc_analysis",
+        module_version="1.0.0",
+        compiler_version="1.2.0",
+        shared_instructions_version="1.1.0",
+        output_schema_id="module_output_v1",
+        prompt_template_hash="a" * 64,
+        confidence_ceiling=Confidence.MODERATE,
+        cache_system_text="shared framework",
+        cache_user_prefix="## Evidence Index\n\n[Q001] hi",
+        cache_user_suffix="Analyze with NVC",
+    )
+    provider = BedrockProvider()
+    text = provider.chat_cached(
+        "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+        compiled,
+        json_mode=True,
+    )
+    assert text == '{"ok": true}'
+    kwargs = runtime.converse.call_args.kwargs
+    assert kwargs["system"][0]["text"] == "shared framework"
+    assert kwargs["system"][1]["cachePoint"]["type"] == "default"
+    assert kwargs["system"][1]["cachePoint"]["ttl"] == "1h"
+    user_blocks = kwargs["messages"][0]["content"]
+    assert user_blocks[0]["text"].startswith("## Evidence Index")
+    assert user_blocks[1]["cachePoint"]["type"] == "default"
+    assert user_blocks[2]["text"] == "Analyze with NVC"
 
 
 @patch("backend.services.bedrock_provider.settings")

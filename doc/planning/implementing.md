@@ -48,6 +48,7 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 | Module customization | Fixed YAML workflows only | 3 (P2-Q) |
 | Professional mode | No case files, session series, finding feedback | 3 (P2-P, P2-R) |
 | Data residency | VPC Stage B + in-account Bedrock/Transcribe | ✓ |
+| Secure client connection | Public ALB is **HTTP only**; optional `API_KEY` unused in UI (P2-R2). HTTPS/TLS → [backlog](backlog.md) — promote before external UAT of sensitive audio | Backlog → promote |
 
 ---
 
@@ -260,6 +261,9 @@ Start after **v0.6.0** Tier 2 closeout (P1-4f done, branch merged, Pause practic
 | **2 uvicorn workers** | Keep liveness responsive during Converse |
 | **Structured Bedrock JSON** | Reduce prose-only parse failures on Sonnet 4.5 |
 | **Compact meta handoff** | Drop `raw_markdown_report` from prior outputs for token cost |
+| **Bounded parallel transcript modules** | `WORKFLOW_MODULE_CONCURRENCY` (default 3 on Postgres); barrier before meta; SQLite serial |
+| **Lean Bedrock outputs + fewer retries** | `bedrock_max_tokens=8192`, `module_run_max_retries=1`, short/empty markdown guidance |
+| **Bedrock prompt caching** | Cache framework + evidence prefix across modules (`BEDROCK_PROMPT_CACHE`, TTL 1h) |
 | **Constructs before React** | Graph UI useless without populated data |
 | **Cases before custom workflows** | Longitudinal value for coach/therapist personas |
 | **SQLite for pytest only** | Product DB is RDS Postgres on AWS |

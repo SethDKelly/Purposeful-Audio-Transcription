@@ -82,6 +82,10 @@ def test_prompt_compiler_asks_for_json_only() -> None:
     assert "after the JSON block" not in system_message
     assert "raw_markdown_report" in user_message
     assert "only one JSON object" in user_message
+    assert compiled.cache_system_text
+    assert "Evidence Index" in compiled.cache_user_prefix
+    assert "Analyze the conversation" in compiled.cache_user_suffix
+    assert "empty" in compiled.cache_user_suffix.lower()
 
 
 def test_prompt_compiler_module_outputs_path() -> None:

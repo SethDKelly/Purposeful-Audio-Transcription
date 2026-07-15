@@ -76,6 +76,7 @@ AWS images and Terraform exist. Remaining items:
 
 | Item | Notes | Effort |
 |------|-------|--------|
+| **HTTPS / TLS on ALB** | Dev ALB is **HTTP :80 only** today (diagram in aws-deployment.md is aspirational). Add ACM cert (custom domain or temporary cert), HTTPS listener, HTTP→HTTPS redirect; keep UI→API on Cloud Map HTTP inside VPC. Pair with enabling `API_KEY` in Secrets Manager + P2-R2 UI header. Optional: IP allowlist / VPN-only. **Promote to implementing before sharing sensitive session audio outside a trusted LAN.** | 2–4 days |
 | **Helm chart** | K8s ingress if org move off ECS | Deferred |
 | **Production AWS account** | `prod-github-deploy` in aws-backbone | Deferred |
 | **Distributed job queue** | Celery/Redis multi-host — prefer single ECS worker service first (above) | Large |
@@ -88,6 +89,24 @@ AWS images and Terraform exist. Remaining items:
 On-prem Ollama/Whisper air-gap guides are out of scope. AWS VPC Stage B + in-account Bedrock/Transcribe is the data residency model.
 
 ---
+
+---
+
+## Analysis performance (speed without raising model spend)
+
+Independent transcript modules already run with **bounded parallelism** (`WORKFLOW_MODULE_CONCURRENCY`, default 3 on AWS; SQLite forces 1). Meta-synthesis stays sequential. **Shipped on branch:** leaner module outputs (`bedrock_max_tokens=8192`, fewer retries, short/empty `raw_markdown_report` guidance) and **Bedrock prompt caching** on shared framework + evidence prefix (`BEDROCK_PROMPT_CACHE`, TTL `1h` for Sonnet 4.5).
+
+If wall-clock timeouts persist after that, prefer these before spending more on larger models:
+
+| Item | Notes | Effort |
+|------|-------|--------|
+| **Haiku / cheaper model routing for light modules** | Keep Sonnet for hard lenses + meta; A/B first (`llm-evaluation-bedrock.md`). Same or lower $. | 2–4 days + eval |
+| **Per-module `max_tokens` / inference YAML** | Smaller modules finish sooner; overlaps backlog `inference:` block. Too low → more retries. | 1–2 days |
+| **Meta handoff v2 (findings/constructs only)** | Shrink synthesis prompt beyond dropping `raw_markdown_report`. | 2–3 days |
+| **Module duration telemetry / SLOs** | Know which lenses dominate wall clock before further tuning. | 1–2 days |
+| **Raise concurrency carefully (4–5)** | Only after health + Bedrock throttle stay green under parallel=3. | Config + soak |
+
+**Avoid:** unbounded parallel Sonnet; Opus-on-everything; raising `bedrock_max_tokens` for “speed.”
 
 ---
 

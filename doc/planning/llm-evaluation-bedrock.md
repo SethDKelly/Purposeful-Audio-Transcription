@@ -107,6 +107,8 @@ Track CloudWatch `module.run.*` durations before publishing SLOs.
 ## Open items
 
 - [ ] Haiku A/B for cheaper modules after quality bar is set
-- [ ] Formal token/cost sampling from CloudWatch + Billing
-- [x] Meta-synthesis / long suites: compact prior outputs + 16k max tokens + structured JSON
+- [ ] Formal token/cost sampling from CloudWatch + Billing (include cacheRead/Write tokens)
+- [x] Meta-synthesis / long suites: compact prior outputs + structured JSON
 - [x] JSON-only prompts (no markdown-after-JSON) after parse failures in burn-in
+- [x] Leaner generation: `bedrock_max_tokens=8192`, fewer retries, short/empty `raw_markdown_report`
+- [x] Bedrock prompt caching on shared framework + evidence prefix (TTL 1h on Sonnet 4.5)

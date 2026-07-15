@@ -113,7 +113,8 @@ def test_module_runner_fails_after_retries() -> None:
 
     assert run.status == ModuleRunStatus.FAILED.value
     assert run.validation_errors
-    assert mock_llm.chat.call_count == 3
+    # module_run_max_retries=1 → initial attempt + one repair = 2 Converse calls
+    assert mock_llm.chat.call_count == 2
 
 
 def test_module_runner_rejects_meta_synthesis_direct_run() -> None:

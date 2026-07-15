@@ -14,8 +14,13 @@ class Settings(BaseSettings):
     llm_provider: str = "bedrock"
     transcription_provider: str = "transcribe"
     bedrock_model_id: str = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
-    bedrock_max_tokens: int = 16384
+    # Lean structured JSON; long raw_markdown_report is discouraged in prompts.
+    bedrock_max_tokens: int = 8192
     bedrock_structured_output: bool = True
+    # Cache shared framework (+ transcript evidence prefix) across modules in a run.
+    bedrock_prompt_cache: bool = True
+    # Sonnet 4.5 supports 5m and 1h; 1h fits long suite waves.
+    bedrock_prompt_cache_ttl: str = "1h"
     aws_region: str = ""
     uploads_bucket: str = ""
     transcribe_language: str = ""
@@ -44,7 +49,11 @@ class Settings(BaseSettings):
     log_redact: bool | None = None
     workflow_background_default: bool = False
     workflow_sync_module_limit: int = 6
-    module_run_max_retries: int = 2
+    # Parallel transcript modules within a workflow (meta-synthesis stays sequential).
+    # Capped to limit Bedrock TPS / API load; SQLite forces 1 in the engine.
+    workflow_module_concurrency: int = 3
+    # One repair attempt (2 Converse calls total) after structured-output hardening.
+    module_run_max_retries: int = 1
     evidence_prompt_max_quotes: int = 120
     evidence_prompt_head_quotes: int = 80
     evidence_prompt_tail_quotes: int = 40

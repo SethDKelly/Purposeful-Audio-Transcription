@@ -62,9 +62,8 @@ Use one of: observation, interaction_cycle, emotion, need, value, belief, narrat
 3. Inferred findings (confidence high, moderate, low, or exploratory) **must** include at least one non-empty `alternative_explanations` entry.
 4. Confidence values must not exceed the module confidence ceiling.
 5. Only use quote IDs that appear in the provided evidence index.
-6. Keep `raw_markdown_report` as a readable summary for humans; it may expand on the JSON findings.
+6. Put the real analysis in structured fields (`findings`, `constructs`, `relationships`, `recommendations`). Prefer `raw_markdown_report` as `""`; if used, keep it under ~150 words. Do not duplicate the full finding list as markdown.
 
 ## Response Format
 
 Return **only** a single JSON object (no markdown fences, no prose outside JSON).
-Put the human-readable report inside `raw_markdown_report`.

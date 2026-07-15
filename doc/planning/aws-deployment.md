@@ -96,7 +96,7 @@ Today `modules/dev-iam/main.tf` and `app_deploy_iam.tf` scope IAM mutations to `
          └────────────────────┴────────────────────┘
                               │
                     ┌─────────▼─────────┐
-                    │  ALB (HTTPS)      │
+                    │  ALB (HTTP today; HTTPS backlog) │
                     └─────────┬─────────┘
               ┌───────────────┴───────────────┐
               ▼                               ▼
@@ -343,7 +343,7 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 | ECS Fargate vs EC2 GPU for interim Whisper | Fargate only if Transcribe is fast-follow | After Transcribe spike |
 | Single vs split ECS services (API + UI) | Split recommended (independent scale/restart) | Infra PR |
 | Bedrock model default | Claude 3.5 Sonnet vs Llama 3.1 70B | After JSON spike |
-| Public ALB vs VPN-only | ALB + API key for dev; document IP allowlist | Security preference |
+| Public ALB vs VPN-only | Today: public HTTP ALB, optional API key unused. Target: ACM HTTPS + API key (+ IP allowlist/VPN) — [backlog HTTPS/TLS](backlog.md) | Before external sensitive UAT |
 | NAT gateway | Required if tasks need outbound non-AWS; avoid for no-egress goal | Network design |
 | Slim cloud image cutover | After Bedrock only vs after Transcribe too | After P1-1 spike |
 | `Dockerfile.cloud` naming | Separate file vs multi-stage `target` | Infra PR |

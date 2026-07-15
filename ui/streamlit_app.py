@@ -80,6 +80,8 @@ def _apply_transcript_bundle(bundle: dict, *, source_name: str = "transcript") -
     }
     st.session_state.workflow_run = None
     st.session_state.synthesis_report = None
+    st.session_state.speaker_names_editor_open = False
+    st.session_state.pop("speaker_names_flash", None)
 
 
 def render_sidebar() -> None:
@@ -509,16 +511,28 @@ def main() -> None:
 
         bundle = st.session_state.transcript_bundle
         if bundle and bundle.get("speakers"):
-            with st.expander("Edit speaker display names", expanded=False):
-                speaker_updates = []
-                for speaker in bundle["speakers"]:
-                    display_name = st.text_input(
-                        f"Display name for {speaker['label']}",
-                        value=speaker.get("display_name") or speaker["label"],
-                        key=f"speaker_{speaker['id']}",
-                    )
-                    speaker_updates.append({"id": speaker["id"], "display_name": display_name})
-                if st.button("Save speaker names"):
+            if "speaker_names_editor_open" not in st.session_state:
+                st.session_state.speaker_names_editor_open = False
+            flash = st.session_state.pop("speaker_names_flash", None)
+            if flash:
+                st.success(flash)
+            with st.expander(
+                "Edit speaker display names",
+                expanded=st.session_state.speaker_names_editor_open,
+            ):
+                with st.form("speaker_display_names_form"):
+                    st.caption("Edit all names below, then save once.")
+                    speaker_updates = []
+                    for speaker in bundle["speakers"]:
+                        display_name = st.text_input(
+                            f"Display name for {speaker['label']}",
+                            value=speaker.get("display_name") or speaker["label"],
+                        )
+                        speaker_updates.append(
+                            {"id": speaker["id"], "display_name": display_name}
+                        )
+                    saved = st.form_submit_button("Save speaker names", type="primary")
+                if saved:
                     try:
                         updated = update_transcript_speakers(
                             bundle["transcript"]["id"],
@@ -526,8 +540,11 @@ def main() -> None:
                         )
                         st.session_state.transcript_bundle = updated
                         st.session_state.transcript_meta["speakers"] = updated["speakers"]
-                        st.success("Speaker names updated.")
+                        st.session_state.speaker_names_editor_open = False
+                        st.session_state.speaker_names_flash = "Speaker names updated."
+                        st.rerun()
                     except (RuntimeError, httpx.HTTPError) as exc:
+                        st.session_state.speaker_names_editor_open = True
                         st.error(str(exc))
 
         st.session_state.transcript = st.text_area(
@@ -641,7 +658,8 @@ def main() -> None:
                         run_id = result["id"]
                         status.write("Background job started; polling for completion...")
                         last_line: str | None = None
-                        for _ in range(60):
+                        # 120 * 30s ? 60 minutes (long suites + parallel Bedrock still need headroom).
+                        for _ in range(120):
                             time.sleep(30)
                             result = get_workflow_run(run_id)
                             done = sum(

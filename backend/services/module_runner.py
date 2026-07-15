@@ -194,7 +194,22 @@ class ModuleRunner:
                     self._update_status(run, status)
 
                     try:
-                        raw_output = self._llm.chat(resolved_model, messages, json_mode=True)
+                        if (
+                            attempt == 0
+                            and getattr(self._llm, "name", None) == "bedrock"
+                            and hasattr(self._llm, "chat_cached")
+                            and settings.bedrock_prompt_cache
+                            and compiled.cache_user_prefix
+                        ):
+                            raw_output = self._llm.chat_cached(
+                                resolved_model,
+                                compiled,
+                                json_mode=True,
+                            )
+                        else:
+                            raw_output = self._llm.chat(
+                                resolved_model, messages, json_mode=True
+                            )
                     except LLMError as exc:
                         return self._fail_run(
                             run,
@@ -315,6 +330,10 @@ class ModuleRunner:
         output: ModuleRunOutput,
         safety_flags: list[str],
     ) -> ModuleRun:
+        # Cap stored markdown so UI/synthesis stay lean even if the model sprawls.
+        markdown = (output.raw_markdown_report or "").strip()
+        if len(markdown) > 1200:
+            output.raw_markdown_report = markdown[:1200].rstrip() + "..."
         run.status = ModuleRunStatus.COMPLETED.value
         run.parsed_output = output.model_dump(mode="json")
         run.validation_errors = None

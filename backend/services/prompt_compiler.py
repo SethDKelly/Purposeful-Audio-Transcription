@@ -10,7 +10,7 @@ from backend.domain.transcript import TranscriptBundle
 from backend.services.evidence_index import EvidenceIndexService
 from config.settings import settings
 
-COMPILER_VERSION = "1.1.0"
+COMPILER_VERSION = "1.2.0"
 _VERSION_PATTERN = re.compile(r"version:\s*([\d.]+)", re.IGNORECASE)
 
 
@@ -24,6 +24,10 @@ class CompiledPrompt:
     output_schema_id: str
     prompt_template_hash: str
     confidence_ceiling: Confidence
+    # Stable prefixes for Bedrock prompt caching (framework + evidence/priors).
+    cache_system_text: str = ""
+    cache_user_prefix: str = ""
+    cache_user_suffix: str = ""
 
 
 class PromptCompiler:
@@ -60,8 +64,9 @@ class PromptCompiler:
             bundle.evidence_quotes,
             bundle.speakers,
         )
-        user_content = self._build_transcript_user_message(module, evidence_text)
-        return self._compile(module, user_content)
+        user_prefix = self._build_evidence_user_prefix(evidence_text)
+        user_suffix = self._build_transcript_user_task(module)
+        return self._compile(module, user_prefix=user_prefix, user_suffix=user_suffix)
 
     def compile_for_module_outputs(
         self,
@@ -73,11 +78,23 @@ class PromptCompiler:
                 f"Module {module.config.id} expects input_type={module.config.input_type}"
             )
 
-        user_content = self._build_module_outputs_user_message(module, module_outputs)
-        return self._compile(module, user_content)
+        user_prefix = self._build_module_outputs_user_prefix(module_outputs)
+        user_suffix = self._build_module_outputs_user_task(module)
+        return self._compile(module, user_prefix=user_prefix, user_suffix=user_suffix)
 
-    def _compile(self, module: AnalysisModule, user_content: str) -> CompiledPrompt:
-        system_content = self._build_system_message(module)
+    def _compile(
+        self,
+        module: AnalysisModule,
+        *,
+        user_prefix: str,
+        user_suffix: str,
+    ) -> CompiledPrompt:
+        cache_system = self._build_cacheable_system()
+        module_system = self._build_module_system(module)
+        system_content = "\n\n---\n\n".join(
+            section for section in (cache_system, module_system) if section
+        )
+        user_content = f"{user_prefix.strip()}\n\n{user_suffix.strip()}"
         prompt_template_hash = _hash_text(
             system_content,
             user_content,
@@ -97,15 +114,20 @@ class PromptCompiler:
             output_schema_id=module.config.output_schema,
             prompt_template_hash=prompt_template_hash,
             confidence_ceiling=module.config.confidence_ceiling,
+            cache_system_text=cache_system,
+            cache_user_prefix=user_prefix,
+            cache_user_suffix=f"{module_system}\n\n---\n\n{user_suffix}".strip(),
         )
 
-    def _build_system_message(self, module: AnalysisModule) -> str:
+    def _build_cacheable_system(self) -> str:
+        sections = [self._shared_instructions, self._output_schema_instructions]
+        return "\n\n---\n\n".join(section for section in sections if section)
+
+    def _build_module_system(self, module: AnalysisModule) -> str:
         sections = [
-            self._shared_instructions,
             self._build_module_role_section(module),
             module.module_prompt,
             self._build_validation_section(module),
-            self._output_schema_instructions,
         ]
         return "\n\n---\n\n".join(section for section in sections if section)
 
@@ -141,35 +163,38 @@ class PromptCompiler:
             "- Every finding must cite at least one evidence quote ID unless it is a "
             "general methodological limitation.\n"
             "- Inferred findings must include at least one alternative explanation.\n"
-            "- Use only quote IDs provided in the evidence index."
+            "- Use only quote IDs provided in the evidence index.\n"
+            "- Prefer structured `findings` / `constructs` over long prose; keep "
+            "`raw_markdown_report` empty or under ~150 words."
         )
 
-    def _build_transcript_user_message(
-        self,
-        module: AnalysisModule,
-        evidence_text: str,
-    ) -> str:
+    def _build_evidence_user_prefix(self, evidence_text: str) -> str:
         return (
-            f"Analyze the conversation using the **{module.config.name}** module.\n\n"
             "## Evidence Index\n\n"
             "Each line is a quotable turn. Cite using the bracketed quote ID.\n\n"
-            f"{evidence_text}\n\n"
-            "Return only one JSON object matching module_output_v1. "
-            "Put the human-readable report inside raw_markdown_report."
+            f"{evidence_text}"
         )
 
-    def _build_module_outputs_user_message(
-        self,
-        module: AnalysisModule,
-        module_outputs: str,
-    ) -> str:
+    def _build_transcript_user_task(self, module: AnalysisModule) -> str:
         return (
-            f"Synthesize the prior module outputs using the **{module.config.name}** module.\n\n"
+            f"Analyze the conversation using the **{module.config.name}** module.\n\n"
+            "Return only one JSON object matching module_output_v1. "
+            "Put primary analysis in structured fields. "
+            "Leave `raw_markdown_report` empty unless a short prose note is essential."
+        )
+
+    def _build_module_outputs_user_prefix(self, module_outputs: str) -> str:
+        return (
             "Do not re-analyze the raw transcript. Use only the structured outputs below.\n\n"
             "## Prior Module Outputs\n\n"
-            f"{module_outputs.strip()}\n\n"
+            f"{module_outputs.strip()}"
+        )
+
+    def _build_module_outputs_user_task(self, module: AnalysisModule) -> str:
+        return (
+            f"Synthesize the prior module outputs using the **{module.config.name}** module.\n\n"
             "Return only one JSON object matching module_output_v1. "
-            "Put the human-readable report inside raw_markdown_report."
+            "Prefer structured synthesis fields; keep `raw_markdown_report` brief or empty."
         )
 
 
