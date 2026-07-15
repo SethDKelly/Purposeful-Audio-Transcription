@@ -640,8 +640,9 @@ def main() -> None:
                     if run_in_background and result.get("status") not in terminal:
                         run_id = result["id"]
                         status.write("Background job started; polling for completion...")
-                        for _ in range(900):
-                            time.sleep(2)
+                        last_line: str | None = None
+                        for _ in range(60):
+                            time.sleep(30)
                             result = get_workflow_run(run_id)
                             done = sum(
                                 1
@@ -649,9 +650,12 @@ def main() -> None:
                                 if mr.get("status") in {"completed", "failed"}
                             )
                             total = max(module_count, 1)
-                            status.write(
+                            line = (
                                 f"Status: {result.get('status')} - modules done {done}/{total}"
                             )
+                            if line != last_line:
+                                status.write(line)
+                                last_line = line
                             if result.get("status") in terminal:
                                 break
                     st.session_state.workflow_run = result
