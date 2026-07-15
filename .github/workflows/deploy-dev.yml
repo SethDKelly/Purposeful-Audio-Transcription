@@ -145,8 +145,9 @@ jobs:
 
       - name: Wait for ECS services stable
         env:
-          ECS_WAIT_MAX_ATTEMPTS: "60"
+          ECS_WAIT_MAX_ATTEMPTS: "80"
           ECS_WAIT_SLEEP_SECS: "30"
+          ECS_STEADY_POLLS: "3"
         run: |
           set -euo pipefail
           python3 scripts/wait-ecs-stable.py rre-dev-cluster rre-dev-api rre-dev-ui

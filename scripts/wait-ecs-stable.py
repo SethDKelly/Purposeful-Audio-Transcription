@@ -34,10 +34,16 @@ def describe_services(cluster: str, services: list[str]) -> dict:
     return json.loads(result.stdout)
 
 
-def is_stable(data: dict) -> tuple[bool, bool]:
-    """Return (stable, failed_rollout)."""
+def is_stable(data: dict) -> tuple[bool, bool, bool]:
+    """Return (stable, failed_rollout, counts_steady).
+
+    counts_steady means desired==running, pending==0, single deployment.
+    ECS sometimes leaves PRIMARY rolloutState as IN_PROGRESS after tasks are
+    already serving; treat sustained counts_steady as success.
+    """
     ok = True
     failed = False
+    counts_ok = True
     for svc in data.get("services", []):
         name = svc["serviceName"]
         desired = int(svc.get("desiredCount") or 0)
@@ -52,12 +58,14 @@ def is_stable(data: dict) -> tuple[bool, bool]:
         )
         if rollout == "FAILED":
             failed = True
-        if desired != running or pending != 0 or len(deployments) != 1:
+        service_counts_ok = desired == running and pending == 0 and len(deployments) == 1
+        if not service_counts_ok:
+            counts_ok = False
             ok = False
         elif rollout not in ("COMPLETED", "n/a"):
-            # Single deployment still rolling out.
+            # Counts look good but ECS has not marked COMPLETED yet.
             ok = False
-    return ok, failed
+    return ok, failed, counts_ok
 
 
 def task_arns_from_list_output(raw: str) -> list[str]:
@@ -136,19 +144,32 @@ def dump_failure(cluster: str, services: list[str]) -> None:
 def main() -> int:
     cluster = sys.argv[1] if len(sys.argv) > 1 else "rre-dev-cluster"
     services = sys.argv[2:] or ["rre-dev-api", "rre-dev-ui"]
-    max_attempts = int(os.environ.get("ECS_WAIT_MAX_ATTEMPTS", "40"))
+    max_attempts = int(os.environ.get("ECS_WAIT_MAX_ATTEMPTS", "80"))
     sleep_secs = int(os.environ.get("ECS_WAIT_SLEEP_SECS", "30"))
+    steady_needed = int(os.environ.get("ECS_STEADY_POLLS", "3"))
+    steady_streak = 0
 
     for attempt in range(1, max_attempts + 1):
         data = describe_services(cluster, services)
-        stable, failed = is_stable(data)
+        stable, failed, counts_ok = is_stable(data)
         if failed:
             print("::error::ECS deployment rollout FAILED", file=sys.stderr, flush=True)
             dump_failure(cluster, services)
             return 1
         if stable:
-            log("ECS services stable")
+            log("ECS services stable (rollout COMPLETED)")
             return 0
+        if counts_ok:
+            steady_streak += 1
+            log(
+                f"Counts steady ({steady_streak}/{steady_needed}); "
+                "waiting for COMPLETED or sustained steady state"
+            )
+            if steady_streak >= steady_needed:
+                log("ECS services stable (sustained desired==running)")
+                return 0
+        else:
+            steady_streak = 0
         log(f"Waiting for ECS steady state... ({attempt}/{max_attempts})")
         time.sleep(sleep_secs)
 
