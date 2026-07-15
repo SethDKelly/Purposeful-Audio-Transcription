@@ -35,6 +35,7 @@ resource "aws_ecs_task_definition" "api" {
       { name = "BEDROCK_MODEL_ID", value = var.bedrock_model_id },
       { name = "UPLOADS_BUCKET", value = aws_s3_bucket.uploads.bucket },
       { name = "TRANSCRIPTION_PROVIDER", value = var.transcription_provider },
+      { name = "TRANSCRIBE_TIMEOUT_SECONDS", value = "3600" },
       { name = "DIARIZATION_ENABLED", value = var.diarization_enabled ? "true" : "false" },
       { name = "ALEMBIC_AUTO_UPGRADE", value = "true" },
       { name = "TEMP_DIR", value = "/tmp/rre" },

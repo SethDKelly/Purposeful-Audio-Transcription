@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     transcribe_language: str = ""
     transcribe_max_speakers: int = 10
     transcribe_poll_seconds: float = 5.0
-    transcribe_timeout_seconds: float = 600.0
+    transcribe_timeout_seconds: float = 3600.0
     speaker_prefix: str = "Person"
     max_upload_mb: int = 100
     temp_dir: Path = Path("./data/temp")

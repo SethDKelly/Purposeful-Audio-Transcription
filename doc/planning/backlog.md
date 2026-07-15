@@ -95,11 +95,26 @@ On-prem Ollama/Whisper air-gap guides are out of scope. AWS VPC Stage B + in-acc
 
 Structured logging and CloudWatch are done ([completed.md](completed.md)).
 
+**Already shipped (do not re-backlog):** workflow **background** runs — `background=true` / `default_background` / sync module limit → `WorkflowJobService` ThreadPool on the API task; UI polls run status. Gaps below are durability, cancel, and ASR parity — not “make workflows async.”
+
+### Dependency chain (jobs / long-running work)
+
+```text
+1. Async / background Transcribe     (ingest must finish before a workflow starts)
+        ↓
+2. Basic workflow cancel (P2-R6 in implementing.md) → advanced cancel (below)
+        ↓
+3. Dedicated ECS worker service      (if API health flaps under Bedrock load)
+        ↓
+4. Distributed job queue             (only if dedicated worker is not enough)
+```
+
 | Item | Notes | Effort |
 |------|-------|--------|
+| **Async / background Transcribe** | Submit job → poll/status (+ UI progress). Needed so long audio matches workflow submit/poll UX. Poll wait default is already 3600s. **Depends on:** nothing. **Blocks:** clean long-session ingest → analyze UX. | 3–5 days |
+| **Workflow run cancellation (advanced)** | Cancel in-flight background workflow with partial cleanup. **Depends on:** P2-R6 basic cancel. Stronger with (3) dedicated worker so cancel is not limited to in-process threads. | 2–3 days |
 | **Run telemetry dashboard** | Aggregate module durations, failure rates, model used | 1 week |
 | **Prometheus metrics endpoint** | Optional `/metrics` for operators | 2–3 days |
-| **Workflow run cancellation (advanced)** | Cancel in-flight background workflow with partial cleanup — basic cancel may land in P2-R | 2–3 days |
 
 ---
 
@@ -109,9 +124,9 @@ Structured logging and CloudWatch are done ([completed.md](completed.md)).
 |------|-------|--------|
 | **Module scaffolding CLI** | `scripts/new_module.py` — YAML + prompt stub | 1 day |
 | **mypy / typed CI** | Optional strictness beyond ruff F401/E9 | 2–3 days |
-| **Dedicated ECS worker service** | Run Bedrock module jobs off the ALB-facing API task if health flaps return under load | 1–2 weeks |
+| **Dedicated ECS worker service** | Run Bedrock (and eventually Transcribe poll) off the ALB-facing API task if health flaps return under load. **Depends on:** validating need after clear-before-deploy + multi-worker mitigations. **Enables:** stronger cancel + room for durable job handoff. | 1–2 weeks |
 
-*Pre-commit Tier 1–2 + `validate_config` are done on the Tier 2 branch ([implementing.md](implementing.md) P1-5d). Golden LLM fixtures and pinned lockfiles remain P1-5a/b.*
+*Pre-commit Tier 1–2 + `validate_config` are done on the Tier 2 branch ([implementing.md](implementing.md) P1-5d). Golden LLM fixtures and pinned lockfiles remain P1-5a/b. Distributed queue stays under Platform & deployment and still assumes a worker path first.*
 
 ---
 

@@ -6,7 +6,8 @@ from config.settings import settings
 
 API_BASE = settings.api_base_url
 # Amazon Transcribe jobs can take several minutes on longer audio.
-TRANSCRIBE_TIMEOUT = 1800.0
+# Keep above backend TRANSCRIBE_TIMEOUT_SECONDS (default 3600).
+TRANSCRIBE_TIMEOUT = 3900.0
 PROCESS_TIMEOUT = 1200.0
 WORKFLOW_TIMEOUT = 1800.0
 

@@ -43,7 +43,7 @@ Whisper remains the local path (`TRANSCRIPTION_PROVIDER=whisper`).
 | Transcribe | `amazon_transcribe_provider.py` — S3 upload, job, S3 output JSON, labeled turns |
 | Routes | `/api/transcribe` + orchestrator via `get_transcription_provider()` |
 
-Settings: `TRANSCRIPTION_PROVIDER`, `UPLOADS_BUCKET`, `TRANSCRIBE_LANGUAGE` (default `en-US`), poll/timeout.
+Settings: `TRANSCRIPTION_PROVIDER`, `UPLOADS_BUCKET`, `TRANSCRIBE_LANGUAGE` (default `en-US`), `TRANSCRIBE_POLL_SECONDS` (default 5), `TRANSCRIBE_TIMEOUT_SECONDS` (default **3600**). Async submit/poll UI is backlog.
 
 ---
 
