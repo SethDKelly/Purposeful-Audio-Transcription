@@ -115,6 +115,21 @@ def render_sidebar() -> None:
         st.sidebar.caption("No workflows configured")
 
 
+def _format_workflow_status(status: str | None) -> str:
+    """Human-readable workflow run status for UI copy."""
+    raw = (status or "unknown").strip()
+    labels = {
+        "running_modules": "running workflows",
+        "synthesizing": "synthesizing",
+        "completed": "completed",
+        "failed": "failed",
+        "cancelled": "cancelled",
+        "created": "created",
+        "preprocessing": "preprocessing",
+    }
+    return labels.get(raw, raw.replace("_", " "))
+
+
 def _render_workflow_progress(
     workflow_run: dict,
     module_names: dict[str, str],
@@ -145,7 +160,7 @@ def _render_report_dashboard(
 
     if workflow_run.get("status") != "completed":
         st.warning(
-            f"Workflow status: {workflow_run.get('status')}. "
+            f"Workflow status: {_format_workflow_status(workflow_run.get('status'))}. "
             f"{workflow_run.get('error_log') or ''}"
         )
         _render_workflow_progress(workflow_run, names)
