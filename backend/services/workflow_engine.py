@@ -198,6 +198,13 @@ class WorkflowEngine:
                     failed = flush_transcript_wave()
                     if failed is not None:
                         return failed
+                    with get_session() as session:
+                        self._graph_merge.merge_workflow_constructs_in_session(
+                            session, workflow_run.id
+                        )
+                        self._convergence.score_workflow_constructs_in_session(
+                            session, workflow_run.id
+                        )
                     workflow_run.status = WorkflowRunStatus.SYNTHESIZING.value
                     self._persist(workflow_run)
                     module_run = self._runner.run_synthesis(

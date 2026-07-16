@@ -36,10 +36,18 @@ class SynthesisPreprocessResult:
     module_summaries: dict[str, str] = field(default_factory=dict)
     allowed_quote_ids: set[str] = field(default_factory=set)
     source_module_run_ids: list[str] = field(default_factory=list)
+    structured_inventory: dict | None = None
+    robust_construct_ids: list[str] = field(default_factory=list)
+    exploratory_construct_ids: list[str] = field(default_factory=list)
 
 
 class SynthesisPreprocessor:
-    def process(self, module_runs: list[ModuleRun]) -> SynthesisPreprocessResult:
+    def process(
+        self,
+        module_runs: list[ModuleRun],
+        *,
+        workflow_run_id: str | None = None,
+    ) -> SynthesisPreprocessResult:
         result = SynthesisPreprocessResult()
         indexed_findings: list[IndexedFinding] = []
 
@@ -75,6 +83,34 @@ class SynthesisPreprocessor:
 
         result.convergence = self._detect_convergence(indexed_findings)
         result.divergence = self._detect_divergence(indexed_findings)
+
+        if workflow_run_id:
+            from backend.services.structured_graph_service import structured_graph_service
+
+            handoff = structured_graph_service.synthesis_handoff(workflow_run_id)
+            if handoff.get("findings") or handoff.get("robust_constructs"):
+                result.structured_inventory = handoff
+                result.robust_construct_ids = [
+                    item["id"] for item in handoff.get("robust_constructs", []) if item.get("id")
+                ]
+                result.exploratory_construct_ids = [
+                    item["id"]
+                    for item in handoff.get("exploratory_constructs", [])
+                    if item.get("id")
+                ]
+                for finding in handoff.get("findings", []):
+                    result.allowed_quote_ids.update(finding.get("evidence_quote_ids", []))
+                for construct in handoff.get("robust_constructs", []):
+                    result.allowed_quote_ids.update(construct.get("evidence_quote_ids", []))
+                for construct in handoff.get("exploratory_constructs", []):
+                    result.allowed_quote_ids.update(construct.get("evidence_quote_ids", []))
+                for construct in handoff.get("robust_constructs", []):
+                    modules = ", ".join(construct.get("module_ids") or [])
+                    result.convergence.append(
+                        f"Structured construct '{construct.get('label')}' "
+                        f"({construct.get('convergence_score')}) supported by {modules}."
+                    )
+
         return result
 
     def _detect_convergence(self, findings: list[IndexedFinding]) -> list[str]:

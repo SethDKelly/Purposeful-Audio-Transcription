@@ -26,6 +26,10 @@ No single framework should dominate the final formulation without clear evidenti
 
 # Inputs
 
+When the payload includes `structured_inventory`, treat it as the **primary** synthesis input.
+Cite `finding_key` and construct `id` / `source_id` values from that inventory.
+Prefer `robust_constructs` over `exploratory_constructs`. Use `module_outputs` only as secondary detail.
+
 This prompt assumes the following analyses may be available.
 
 Examples include:

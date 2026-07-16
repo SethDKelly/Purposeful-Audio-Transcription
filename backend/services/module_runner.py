@@ -31,6 +31,10 @@ from backend.services.llm_provider import LLMProvider
 from backend.services.output_parser import OutputParseError, OutputParser, output_parser
 from backend.services.prompt_compiler import CompiledPrompt
 from backend.services.safety_validator import SafetyValidator, safety_validator
+from backend.services.structured_graph_service import (
+    StructuredGraphService,
+    structured_graph_service,
+)
 from backend.services.transcript_service import TranscriptService, transcript_service
 
 logger = logging.getLogger(__name__)
@@ -70,6 +74,7 @@ class ModuleRunner:
         findings: FindingRepository | None = None,
         constructs: ConstructRepository | None = None,
         relationships: ConstructRelationshipRepository | None = None,
+        structured_graph: StructuredGraphService | None = None,
     ) -> None:
         self._registry = registry
         self._compiler = compiler or prompt_compiler
@@ -82,6 +87,7 @@ class ModuleRunner:
         self._findings = findings or FindingRepository()
         self._constructs = constructs or ConstructRepository()
         self._relationships = relationships or ConstructRelationshipRepository()
+        self._structured_graph = structured_graph or structured_graph_service
 
     def run(
         self,
@@ -122,10 +128,29 @@ class ModuleRunner:
 
         bundle = self._transcripts.get(transcript_id)
         resolved_model = self._resolve_model(module, model)
-        outputs_text = json.dumps(prior_outputs, indent=2)
+        handoff: dict[str, Any] = {
+            "module_outputs": prior_outputs,
+        }
+        if workflow_run_id:
+            structured = self._structured_graph.synthesis_handoff(workflow_run_id)
+            if structured.get("findings") or structured.get("robust_constructs"):
+                handoff = {
+                    "structured_inventory": structured,
+                    "module_outputs": prior_outputs,
+                }
+        outputs_text = json.dumps(handoff, indent=2)
         compiled = self._compiler.compile_for_module_outputs(module, outputs_text)
         valid_quote_ids = {quote.quote_id for quote in bundle.evidence_quotes}
         valid_quote_ids |= collect_quote_ids(prior_outputs)
+        if "structured_inventory" in handoff:
+            for finding in handoff["structured_inventory"].get("findings", []):
+                valid_quote_ids.update(finding.get("evidence_quote_ids", []))
+            for construct in handoff["structured_inventory"].get("robust_constructs", []):
+                valid_quote_ids.update(construct.get("evidence_quote_ids", []))
+            for construct in handoff["structured_inventory"].get(
+                "exploratory_constructs", []
+            ):
+                valid_quote_ids.update(construct.get("evidence_quote_ids", []))
 
         return self._execute(
             module=module,
