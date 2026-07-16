@@ -221,7 +221,7 @@ class ModuleRunner:
                     self._persist_run(run)
 
                     try:
-                        parsed_output = self._parse_and_validate(
+                        parsed_output, coverage_warnings, coverage = self._parse_and_validate(
                             raw_output,
                             module,
                             run.id,
@@ -252,6 +252,8 @@ class ModuleRunner:
                                 run,
                                 parsed_output,
                                 safety_result.flags,
+                                validation_warnings=coverage_warnings,
+                                construct_coverage=coverage,
                             )
 
                     if attempt < max_attempts - 1:
@@ -311,7 +313,7 @@ class ModuleRunner:
         valid_quote_ids: set[str],
         *,
         require_evidence: bool = True,
-    ) -> ModuleRunOutput:
+    ) -> tuple[ModuleRunOutput, list[str], dict | None]:
         data = self._parser.extract_json(raw_output)
         output = self._parser.normalize(data, module, module_run_id)
         validation = self._validator.validate(
@@ -322,21 +324,32 @@ class ModuleRunner:
         )
         if not validation.is_valid:
             raise OutputParseError("; ".join(validation.errors))
-        return output
+        coverage = (
+            validation.construct_coverage.as_dict()
+            if validation.construct_coverage is not None
+            else None
+        )
+        return output, list(validation.warnings), coverage
 
     def _complete_run(
         self,
         run: ModuleRun,
         output: ModuleRunOutput,
         safety_flags: list[str],
+        validation_warnings: list[str] | None = None,
+        construct_coverage: dict | None = None,
     ) -> ModuleRun:
         # Cap stored markdown so UI/synthesis stay lean even if the model sprawls.
         markdown = (output.raw_markdown_report or "").strip()
         if len(markdown) > 1200:
             output.raw_markdown_report = markdown[:1200].rstrip() + "..."
         run.status = ModuleRunStatus.COMPLETED.value
-        run.parsed_output = output.model_dump(mode="json")
+        parsed = output.model_dump(mode="json")
+        if construct_coverage is not None:
+            parsed["construct_coverage"] = construct_coverage
+        run.parsed_output = parsed
         run.validation_errors = None
+        run.validation_warnings = validation_warnings or None
         run.safety_flags = safety_flags or None
         run.completed_at = utc_now()
         self._persist_run(run)

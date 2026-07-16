@@ -30,6 +30,8 @@ def list_modules() -> ModulesResponse:
             enabled=module.config.enabled,
             input_type=module.config.input_type,
             recommended_companions=module.config.recommended_companions,
+            expected_constructs=module.config.expected_constructs,
+            min_constructs=module.config.min_constructs,
         )
         for module in module_registry.list_modules()
     ]

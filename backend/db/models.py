@@ -83,6 +83,7 @@ class ModuleRunRow(Base):
     raw_output: Mapped[str | None] = mapped_column(Text, nullable=True)
     parsed_output: Mapped[str | None] = mapped_column(Text, nullable=True)
     validation_errors: Mapped[str | None] = mapped_column(Text, nullable=True)
+    validation_warnings: Mapped[str | None] = mapped_column(Text, nullable=True)
     safety_flags: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

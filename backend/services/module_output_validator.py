@@ -1,10 +1,16 @@
 """Validate structured module output against business rules."""
 
+from __future__ import annotations
+
+import logging
 from dataclasses import dataclass, field
 
 from backend.core.module_registry import AnalysisModule
+from backend.core.ontology_registry import OntologyRegistry, ontology_registry
 from backend.domain.enums import CONFIDENCE_RANK, Confidence
 from backend.schemas.module_output_v1 import ModuleRunOutput
+
+logger = logging.getLogger(__name__)
 
 _INFERRED_CONFIDENCES = {
     Confidence.HIGH,
@@ -15,8 +21,35 @@ _INFERRED_CONFIDENCES = {
 
 
 @dataclass
+class ConstructCoverage:
+    expected: list[str] = field(default_factory=list)
+    found: list[str] = field(default_factory=list)
+    missing: list[str] = field(default_factory=list)
+    construct_count: int = 0
+    min_constructs: int = 0
+
+    @property
+    def coverage_rate(self) -> float:
+        if not self.expected:
+            return 1.0
+        return len(self.found) / len(self.expected)
+
+    def as_dict(self) -> dict:
+        return {
+            "expected": list(self.expected),
+            "found": list(self.found),
+            "missing": list(self.missing),
+            "construct_count": self.construct_count,
+            "min_constructs": self.min_constructs,
+            "coverage_rate": round(self.coverage_rate, 3),
+        }
+
+
+@dataclass
 class ModuleOutputValidationResult:
     errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    construct_coverage: ConstructCoverage | None = None
 
     @property
     def is_valid(self) -> bool:
@@ -24,6 +57,9 @@ class ModuleOutputValidationResult:
 
 
 class ModuleOutputValidator:
+    def __init__(self, ontology: OntologyRegistry | None = None) -> None:
+        self._ontology = ontology or ontology_registry
+
     def validate(
         self,
         output: ModuleRunOutput,
@@ -74,7 +110,76 @@ class ModuleOutputValidator:
                     f"exceeds module ceiling {config.confidence_ceiling.value}"
                 )
 
+        result.construct_coverage = self._assess_construct_coverage(output, module)
+        result.warnings.extend(
+            self._coverage_warnings(result.construct_coverage, module.config.id)
+        )
         return result
+
+    def _assess_construct_coverage(
+        self,
+        output: ModuleRunOutput,
+        module: AnalysisModule,
+    ) -> ConstructCoverage:
+        expected_raw = list(module.config.expected_constructs or [])
+        expected: list[str] = []
+        for item in expected_raw:
+            resolved = self._ontology.resolve_construct(item) or item
+            if resolved not in expected:
+                expected.append(resolved)
+
+        emitted: set[str] = set()
+        for construct in output.constructs:
+            resolved = self._ontology.resolve_construct(construct.type) or construct.type
+            emitted.add(resolved)
+        for finding in output.findings:
+            finding_type = getattr(finding.type, "value", str(finding.type))
+            resolved = self._ontology.resolve_construct(finding_type) or finding_type
+            emitted.add(resolved)
+
+        found = [item for item in expected if item in emitted]
+        missing = [item for item in expected if item not in emitted]
+        min_constructs = module.config.min_constructs
+        if min_constructs is None:
+            min_constructs = 1 if expected else 0
+
+        return ConstructCoverage(
+            expected=expected,
+            found=found,
+            missing=missing,
+            construct_count=len(output.constructs),
+            min_constructs=min_constructs,
+        )
+
+    def _coverage_warnings(
+        self,
+        coverage: ConstructCoverage,
+        module_id: str,
+    ) -> list[str]:
+        warnings: list[str] = []
+        if coverage.missing:
+            warnings.append(
+                f"Weak construct coverage for {module_id}: missing "
+                f"{', '.join(coverage.missing)} "
+                f"(found {len(coverage.found)}/{len(coverage.expected)}, "
+                f"rate={coverage.coverage_rate:.2f})"
+            )
+        if coverage.construct_count < coverage.min_constructs:
+            warnings.append(
+                f"Construct count below minimum for {module_id}: "
+                f"{coverage.construct_count} < {coverage.min_constructs}"
+            )
+        if warnings:
+            logger.info(
+                "Module construct coverage warning",
+                extra={
+                    "event": "module.construct_coverage",
+                    "module_id": module_id,
+                    "coverage": coverage.as_dict(),
+                    "warnings": warnings,
+                },
+            )
+        return warnings
 
     def _validate_finding(
         self,
@@ -94,7 +199,7 @@ class ModuleOutputValidator:
         } and CONFIDENCE_RANK[finding.confidence] > ceiling_rank:
             result.errors.append(
                 f"finding {finding.id} confidence {finding.confidence.value} "
-                f"exceeds module ceiling"
+                "exceeds module ceiling"
             )
 
         is_limitation_only = finding.type.value == "uncertainty" and not finding.evidence_quote_ids

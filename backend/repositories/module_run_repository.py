@@ -80,6 +80,9 @@ def _to_row(run: ModuleRun) -> ModuleRunRow:
         raw_output=run.raw_output,
         parsed_output=json.dumps(run.parsed_output) if run.parsed_output else None,
         validation_errors=json.dumps(run.validation_errors) if run.validation_errors else None,
+        validation_warnings=(
+            json.dumps(run.validation_warnings) if run.validation_warnings else None
+        ),
         safety_flags=json.dumps(run.safety_flags) if run.safety_flags else None,
         created_at=run.created_at,
         completed_at=run.completed_at,
@@ -95,6 +98,9 @@ def _update_row(row: ModuleRunRow, run: ModuleRun) -> None:
     row.raw_output = run.raw_output
     row.parsed_output = json.dumps(run.parsed_output) if run.parsed_output else None
     row.validation_errors = json.dumps(run.validation_errors) if run.validation_errors else None
+    row.validation_warnings = (
+        json.dumps(run.validation_warnings) if run.validation_warnings else None
+    )
     row.safety_flags = json.dumps(run.safety_flags) if run.safety_flags else None
     row.completed_at = run.completed_at
 
@@ -114,6 +120,9 @@ def _from_row(row: ModuleRunRow) -> ModuleRun:
         raw_output=row.raw_output,
         parsed_output=json.loads(row.parsed_output) if row.parsed_output else None,
         validation_errors=json.loads(row.validation_errors) if row.validation_errors else None,
+        validation_warnings=(
+            json.loads(row.validation_warnings) if row.validation_warnings else None
+        ),
         safety_flags=json.loads(row.safety_flags) if row.safety_flags else None,
         created_at=row.created_at,
         completed_at=row.completed_at,
