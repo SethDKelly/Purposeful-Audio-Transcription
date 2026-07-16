@@ -29,6 +29,65 @@ def test_validator_accepts_valid_output() -> None:
     module, output, quote_ids = _sample_output()
     result = ModuleOutputValidator().validate(output, module, quote_ids)
     assert result.is_valid
+    # Sample fixture has empty constructs[]; soft warning expected.
+    assert result.warnings
+    assert result.construct_coverage is not None
+    assert result.construct_coverage.missing
+
+
+def test_validator_reports_full_construct_coverage() -> None:
+    module, output, quote_ids = _sample_output()
+    from backend.domain.enums import Confidence
+    from backend.domain.finding import Construct
+
+    output.constructs = [
+        Construct(
+            id="C001",
+            type="interaction_cycle",
+            label="Cycle",
+            confidence=Confidence.OBSERVED,
+            evidence_quote_ids=["Q001"],
+        ),
+        Construct(
+            id="C002",
+            type="escalation_point",
+            label="Escalation",
+            confidence=Confidence.OBSERVED,
+            evidence_quote_ids=["Q002"],
+        ),
+        Construct(
+            id="C003",
+            type="repair_attempt",
+            label="Repair",
+            confidence=Confidence.OBSERVED,
+            evidence_quote_ids=["Q004"],
+        ),
+        Construct(
+            id="C004",
+            type="emotion",
+            label="Emotion",
+            confidence=Confidence.OBSERVED,
+            evidence_quote_ids=["Q001"],
+        ),
+    ]
+    result = ModuleOutputValidator().validate(output, module, quote_ids)
+    assert result.is_valid
+    assert not result.warnings
+    assert result.construct_coverage is not None
+    assert result.construct_coverage.missing == []
+    assert result.construct_coverage.coverage_rate == 1.0
+
+
+def test_validator_counts_finding_types_toward_coverage() -> None:
+    module, output, quote_ids = _sample_output()
+    # Findings already include emotion, repair_attempt, interaction_cycle.
+    # Still missing escalation_point from expected_constructs.
+    result = ModuleOutputValidator().validate(output, module, quote_ids)
+    assert result.is_valid
+    assert result.construct_coverage is not None
+    assert "escalation_point" in result.construct_coverage.missing
+    assert "emotion" in result.construct_coverage.found
+    assert "repair_attempt" in result.construct_coverage.found
 
 
 def test_validator_rejects_unknown_quote_id() -> None:

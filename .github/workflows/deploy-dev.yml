@@ -1,18 +1,13 @@
 name: Deploy to AWS dev
 
-# Docs-only / markdown-only pushes do not wake AWS. Runtime changes still auto-deploy.
-# Manual: Actions → Deploy to AWS dev → Run workflow.
+# Deploy on demand for minor-version releases (e.g. v0.7.0), not every main push.
+# Intra-minor work commits to main without waking AWS.
+# Manual: Actions → Deploy to AWS dev → Run workflow (optionally after tagging).
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - "**/*.md"
-      - "doc/**"
-      - ".github/workflows/**"
-      - ".gitignore"
-      - ".gitattributes"
-      - "LICENSE*"
   workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
 
 permissions:
   id-token: write

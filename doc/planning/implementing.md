@@ -11,6 +11,7 @@ Material work in flight for the **Relationship Reasoning Engine (RRE)** after **
 | **Branch** | `main` @ v0.6.0 (phase branches per priority) |
 | **Strategy** | **AWS only** — Bedrock + Transcribe + ECS + RDS (`521018312783`, `us-east-2`) |
 | **Cost control** | **Pause AWS when idle** — [../developer/aws-operations.md](../developer/aws-operations.md) |
+| **Deploy policy** | Deploy on **minor-version completion** (tag / manual), not every main push |
 | **Architecture** | [aws-deployment.md](aws-deployment.md) |
 
 **Scope rule:** Follow the roadmap sequence. Do **not** add analysis modules for breadth. Prefer structure, trust, and evidence quality.
@@ -46,16 +47,16 @@ security → transcript quality → ontology → structured persistence
 ## Immediate next steps
 
 ```text
-[ ] v0.7 Priority 1 — Secure external UAT readiness (HTTPS, API key UI, safe errors, request IDs, privacy/deletion/redaction)
-[ ] v0.7 Priority 2 — Transcript preparation workspace
+[x] v0.7 Priority 1 — Secure external UAT readiness (HTTPS, API key UI, safe errors, request IDs, privacy/deletion/redaction)
+[x] v0.7 Priority 2 — Transcript preparation workspace
 [x] v0.7 Priority 3 — Ontology vocabulary v1
-[ ] v0.7 Priority 4 — Module construct expectations
+[x] v0.7 Priority 4 — Module construct expectations
 [ ] v0.7 Priority 5 — Golden fixtures + evaluation foundation (GT001/GT002 landed; expand to 5–10)
 [ ] v0.7 Priority 6 — Cost / latency / module telemetry
-[ ] Release v0.7.0 · Pause AWS when idle · then v0.8
+[ ] Release v0.7.0 · Deploy once · Pause AWS when idle · then v0.8
 ```
 
-**Standing ops:** Pause when idle; docs-only pushes do not deploy. Full product UAT after security + prep land.
+**Standing ops:** Pause when idle. **Deploy only on minor-version completion** (tag `vX.Y.Z` or manual **Deploy to AWS dev**). Intra-v0.7 commits do not auto-deploy. Full product UAT after security + prep land.
 
 ---
 
@@ -93,7 +94,7 @@ Detail and acceptance criteria: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.m
 
 | # | Task | Status | Links |
 |---|------|--------|-------|
-| V07-4a–c | `expected_constructs` metadata + soft coverage warnings + metadata visibility | Pending | module YAML, validators |
+| V07-4a–c | `expected_constructs` metadata + soft coverage warnings + metadata visibility | Done | module YAML, `module_output_validator`, `validation_warnings` on module runs |
 
 ### Priority 5 — Golden Fixture & Evaluation Foundation
 

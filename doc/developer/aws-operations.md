@@ -136,7 +136,7 @@ Expect: `research_oriented` (6 modules) then `full_multidisciplinary` (13). Scri
 
 ## Pause / resume (when idle)
 
-**Standing practice:** Pause AWS when the stack is idle. Deploy does **not** run on docs-only pushes to `main` (path filters). Resume via **Deploy to AWS dev** (`workflow_dispatch`) or a runtime/infra push.
+**Standing practice:** Pause AWS when the stack is idle. **Deploy only for minor-version releases** — push of tag `v*.*.*` or manual **Deploy to AWS dev** (`workflow_dispatch`). Ordinary commits to `main` do **not** wake AWS. Resume via that same deploy workflow.
 
 | Action | How |
 |--------|-----|

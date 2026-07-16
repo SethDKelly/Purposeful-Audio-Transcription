@@ -25,6 +25,8 @@ class ModuleConfig(BaseModel):
     secondary_questions: list[str] = Field(default_factory=list)
     required_constructs: list[str] = Field(default_factory=list)
     expected_constructs: list[str] = Field(default_factory=list)
+    # Soft floor for populated constructs[]; None → 1 when expected_constructs set.
+    min_constructs: int | None = None
     output_schema: str = "module_output_v1"
     recommended_companions: list[str] = Field(default_factory=list)
     dependencies: list[str] = Field(default_factory=list)

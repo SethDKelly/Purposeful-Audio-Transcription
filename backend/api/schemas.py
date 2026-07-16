@@ -67,6 +67,8 @@ class ModuleSchema(BaseModel):
     enabled: bool
     input_type: str
     recommended_companions: list[str] = Field(default_factory=list)
+    expected_constructs: list[str] = Field(default_factory=list)
+    min_constructs: int | None = None
 
 
 class ModulesResponse(BaseModel):
@@ -91,6 +93,7 @@ class ModuleRunResponse(BaseModel):
     raw_output: str | None = None
     parsed_output: dict | None = None
     validation_errors: list[str] | None = None
+    validation_warnings: list[str] | None = None
     safety_flags: list[str] | None = None
     created_at: str
     completed_at: str | None = None
@@ -110,6 +113,7 @@ def module_run_to_response(run) -> ModuleRunResponse:
         raw_output=run.raw_output,
         parsed_output=run.parsed_output,
         validation_errors=run.validation_errors,
+        validation_warnings=run.validation_warnings,
         safety_flags=run.safety_flags,
         created_at=run.created_at.isoformat(),
         completed_at=run.completed_at.isoformat() if run.completed_at else None,
@@ -146,6 +150,7 @@ class WorkflowRunModuleSummary(BaseModel):
     module_id: str
     status: str
     parsed_output: dict | None = None
+    validation_warnings: list[str] | None = None
 
 
 class WorkflowRunResponse(BaseModel):
@@ -246,6 +251,7 @@ def workflow_run_to_response(
                 module_id=run.module_id,
                 status=run.status,
                 parsed_output=run.parsed_output,
+                validation_warnings=getattr(run, "validation_warnings", None),
             )
             for run in module_runs
         ]

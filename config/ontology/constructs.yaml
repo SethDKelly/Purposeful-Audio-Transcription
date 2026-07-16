@@ -85,6 +85,7 @@ constructs:
       - escalation_pattern
       - escalation_cycle
       - protest_behavior
+      - defensiveness
 
   - id: deescalation_point
     label: De-escalation Point
