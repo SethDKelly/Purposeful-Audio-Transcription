@@ -442,20 +442,24 @@ class KnowledgeGraphNode(BaseModel):
     module_id: str
     confidence: str | None = None
     evidence_quote_ids: list[str] = Field(default_factory=list)
+    row_id: str | None = None
+    convergence_score: str | None = None
 
 
 class KnowledgeGraphEdge(BaseModel):
     source: str
     target: str
     relationship_type: str
-    module_id: str
+    module_id: str | None = None
     confidence: str | None = None
+    row_id: str | None = None
 
 
 class KnowledgeGraphResponse(BaseModel):
     workflow_run_id: str
     nodes: list[KnowledgeGraphNode] = Field(default_factory=list)
     edges: list[KnowledgeGraphEdge] = Field(default_factory=list)
+    source: str | None = None
 
 
 class CompareWorkflowRunsRequest(BaseModel):

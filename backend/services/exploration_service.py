@@ -10,6 +10,7 @@ from backend.core.exceptions import ExplorationError, FindingNotFoundError, LLME
 from backend.db.base import get_session
 from backend.domain.enums import WorkflowRunStatus
 from backend.domain.finding import ModuleRun
+from backend.repositories.construct_repository import ConstructRepository
 from backend.repositories.finding_repository import FindingRepository
 from backend.repositories.workflow_run_repository import WorkflowRunRepository
 from backend.services.llm_factory import get_llm_provider
@@ -62,6 +63,7 @@ class ExplorationService:
         llm: LLMProvider | None = None,
         workflow_runs: WorkflowRunRepository | None = None,
         findings: FindingRepository | None = None,
+        constructs: ConstructRepository | None = None,
     ) -> None:
         self._workflows = workflows or workflow_engine
         self._transcripts = transcripts or transcript_service
@@ -69,6 +71,7 @@ class ExplorationService:
         self._llm = llm or get_llm_provider()
         self._workflow_runs = workflow_runs or WorkflowRunRepository()
         self._findings = findings or FindingRepository()
+        self._constructs = constructs or ConstructRepository()
 
     def list_findings(self, workflow_run_id: str) -> list[dict]:
         with get_session() as session:
@@ -146,6 +149,31 @@ class ExplorationService:
         }
 
     def get_knowledge_graph(self, workflow_run_id: str) -> dict:
+        with get_session() as session:
+            constructs = self._constructs.list_by_workflow_run_id(
+                session, workflow_run_id, canonical_only=True
+            )
+        if constructs:
+            nodes: dict[str, dict] = {}
+            for construct in constructs:
+                node_id = f"{construct['module_id']}:{construct['source_id']}"
+                nodes[node_id] = {
+                    "id": node_id,
+                    "type": construct["ontology_type"],
+                    "label": construct["label"],
+                    "module_id": construct["module_id"],
+                    "confidence": construct["confidence"],
+                    "evidence_quote_ids": construct["evidence_quote_ids"],
+                    "row_id": construct["row_id"],
+                    "convergence_score": construct.get("convergence_score"),
+                }
+            return {
+                "workflow_run_id": workflow_run_id,
+                "nodes": list(nodes.values()),
+                "edges": [],  # P3 fills from normalized relationships
+                "source": "normalized",
+            }
+
         _, module_runs = self._workflows.get_with_module_runs(workflow_run_id)
         nodes: dict[str, dict] = {}
         edges: list[dict] = []
@@ -182,6 +210,7 @@ class ExplorationService:
             "workflow_run_id": workflow_run_id,
             "nodes": list(nodes.values()),
             "edges": edges,
+            "source": "parsed_output",
         }
 
     def compare_workflow_runs(self, workflow_run_ids: list[str]) -> dict:

@@ -47,7 +47,7 @@ security → transcript quality → ontology → structured persistence
 ```text
 [x] Release v0.7.0 · Deploy once · Pause AWS when idle
 [x] v0.8 Priority 1 — Normalized findings persistence
-[ ] v0.8 Priority 2 — Normalized constructs persistence
+[x] v0.8 Priority 2 — Normalized constructs persistence
 [ ] v0.8 Priority 3 — Construct relationship persistence
 [ ] v0.8 Priority 4 — Graph merge / deduplication
 [ ] v0.8 Priority 5 — Deterministic convergence and confidence scoring
@@ -84,7 +84,7 @@ Promote findings, constructs, evidence, confidence, and relationships from JSON 
 | Priority | Status | Notes |
 |----------|--------|-------|
 | P1 Findings | **Done** | `findings` + evidence/alternatives tables; write on module complete; exploration prefers DB |
-| P2 Constructs | Pending | |
+| P2 Constructs | **Done** | `constructs` + evidence/sources; ontology resolve/warn; knowledge graph prefers DB |
 | P3 Relationships | Pending | |
 | P4 Merge / dedup | Pending | |
 | P5 Convergence scoring | Pending | |

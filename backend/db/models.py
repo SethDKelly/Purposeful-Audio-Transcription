@@ -150,3 +150,48 @@ class FindingAlternativeExplanationRow(Base):
     finding_id: Mapped[str] = mapped_column(ForeignKey("findings.id"), index=True)
     text: Mapped[str] = mapped_column(Text)
     position: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class ConstructRow(Base):
+    """Normalized construct row (v0.8 P2)."""
+
+    __tablename__ = "constructs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    source_id: Mapped[str] = mapped_column(String(64))
+    module_run_id: Mapped[str] = mapped_column(ForeignKey("module_runs.id"), index=True)
+    workflow_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    module_id: Mapped[str] = mapped_column(String(128))
+    ontology_type: Mapped[str] = mapped_column(String(128))
+    label: Mapped[str] = mapped_column(String(512))
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    confidence: Mapped[str] = mapped_column(String(32))
+    ontology_resolved: Mapped[bool] = mapped_column(Boolean, default=True)
+    ontology_warning: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # P4/P5 fields (nullable until merge/scoring)
+    merged_into_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    is_canonical: Mapped[bool] = mapped_column(Boolean, default=True)
+    convergence_score: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    convergence_rationale_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class ConstructEvidenceQuoteRow(Base):
+    __tablename__ = "construct_evidence_quotes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    construct_id: Mapped[str] = mapped_column(ForeignKey("constructs.id"), index=True)
+    quote_id: Mapped[str] = mapped_column(String(16))
+    position: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class ConstructSourceRow(Base):
+    """Tracks contributing module runs (used by merge in P4; one row at write time)."""
+
+    __tablename__ = "construct_sources"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    construct_id: Mapped[str] = mapped_column(ForeignKey("constructs.id"), index=True)
+    module_run_id: Mapped[str] = mapped_column(String(36))
+    module_id: Mapped[str] = mapped_column(String(128))
+    source_construct_id: Mapped[str] = mapped_column(String(64))

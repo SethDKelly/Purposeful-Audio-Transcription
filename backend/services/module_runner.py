@@ -20,6 +20,7 @@ from backend.db.base import get_session
 from backend.domain.enums import ModuleRunStatus, SourceType
 from backend.domain.finding import ModuleRun
 from backend.domain.telemetry import ModuleRunTelemetry, estimate_cost_usd
+from backend.repositories.construct_repository import ConstructRepository
 from backend.repositories.finding_repository import FindingRepository
 from backend.repositories.module_run_repository import ModuleRunRepository, utc_now
 from backend.schemas.module_output_v1 import ModuleRunOutput
@@ -66,6 +67,7 @@ class ModuleRunner:
         llm: LLMProvider | None = None,
         repository: ModuleRunRepository | None = None,
         findings: FindingRepository | None = None,
+        constructs: ConstructRepository | None = None,
     ) -> None:
         self._registry = registry
         self._compiler = compiler or prompt_compiler
@@ -76,6 +78,7 @@ class ModuleRunner:
         self._llm = llm or get_llm_provider()
         self._repository = repository or ModuleRunRepository()
         self._findings = findings or FindingRepository()
+        self._constructs = constructs or ConstructRepository()
 
     def run(
         self,
@@ -528,6 +531,7 @@ class ModuleRunner:
                 output.findings,
                 module_version=output.module_version,
             )
+            self._constructs.replace_for_module_run(session, run, output.constructs)
 
 
 def collect_quote_ids(outputs: list[dict[str, Any]]) -> set[str]:
