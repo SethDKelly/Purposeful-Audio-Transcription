@@ -10,6 +10,7 @@ from ui.api_client import (
     create_case,
     get_case,
     list_cases,
+    run_longitudinal_synthesis,
 )
 
 
@@ -107,6 +108,20 @@ def render_case_dashboard(current_transcript_id: str | None = None) -> None:
             st.session_state["case_comparison"] = comparison
         except RuntimeError as exc:
             st.error(str(exc))
+
+    if len(transcripts) >= 2 and st.button("Run longitudinal synthesis"):
+        try:
+            with st.spinner("Running longitudinal synthesis..."):
+                result = run_longitudinal_synthesis(selected_case_id)
+            st.session_state["longitudinal_synthesis"] = result
+            st.success(f"Synthesis status: {result.get('status')}")
+        except RuntimeError as exc:
+            st.error(str(exc))
+
+    synthesis = st.session_state.get("longitudinal_synthesis")
+    if synthesis and synthesis.get("parsed_output"):
+        st.markdown("#### Longitudinal synthesis")
+        st.write(synthesis["parsed_output"].get("executive_summary", ""))
 
     comparison = st.session_state.get("case_comparison")
     if comparison and comparison.get("case_id") == selected_case_id:

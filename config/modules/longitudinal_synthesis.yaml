@@ -1,0 +1,33 @@
+id: longitudinal_synthesis
+name: "Longitudinal Synthesis"
+version: "1.0.0"
+enabled: true
+description: >
+  Synthesizes structured findings across multiple transcripts in a case over time.
+  Consumes session inventories and comparison themes, not a single raw transcript.
+primary_lens: "Longitudinal Formulation"
+analytical_level: integrative
+unit_of_analysis: multi_session_case
+primary_question: "What persists, changes, and remains uncertain across sessions in this case?"
+secondary_questions:
+  - Which themes recur across sessions?
+  - What appears new or resolved?
+  - What hypotheses should guide the next session?
+required_constructs:
+  - convergence
+  - divergence
+  - narrative
+expected_constructs:
+  - uncertainty
+  - repair_attempt
+  - interaction_cycle
+  - interpretation
+output_schema: module_output_v1
+recommended_companions: []
+inference_depth: high
+confidence_ceiling: moderate
+dependencies:
+  - prior_module_runs
+prompt_file: "14 Longitudinal-Synthesis.md"
+ollama_model: null
+input_type: module_outputs

@@ -112,4 +112,4 @@ def test_all_modules_load_with_ontology_validation() -> None:
         modules_dir=settings.modules_dir,
         prompts_dir=settings.prompts_dir,
     )
-    assert len(registry.list_modules(enabled_only=False)) == 13
+    assert len(registry.list_modules(enabled_only=False)) == 14

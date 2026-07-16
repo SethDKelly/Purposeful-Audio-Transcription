@@ -172,6 +172,19 @@ def compare_case_transcripts(case_id: str) -> dict:
     return response.json()
 
 
+def run_longitudinal_synthesis(case_id: str, model: str | None = None) -> dict:
+    payload: dict = {}
+    if model:
+        payload["model"] = model
+    response = _post(
+        f"/api/cases/{case_id}/longitudinal-synthesis",
+        timeout=WORKFLOW_TIMEOUT,
+        json=payload or None,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
 def module_name_map(modules: list[dict]) -> dict[str, str]:
     return {module["id"]: module["name"] for module in modules if module.get("id")}
 

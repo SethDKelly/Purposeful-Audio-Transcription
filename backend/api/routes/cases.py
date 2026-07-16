@@ -72,6 +72,25 @@ def delete_case(case_id: str) -> Response:
     return Response(status_code=204)
 
 
+@router.post("/cases/{case_id}/longitudinal-synthesis")
+def run_longitudinal_synthesis(case_id: str, model: str | None = None) -> dict:
+    from backend.services.longitudinal_synthesis_service import (
+        longitudinal_synthesis_service,
+    )
+
+    run = longitudinal_synthesis_service.run(case_id, model=model)
+    return {
+        "id": run.id,
+        "module_id": run.module_id,
+        "transcript_id": run.transcript_id,
+        "status": run.status,
+        "parsed_output": run.parsed_output,
+        "validation_errors": run.validation_errors,
+        "validation_warnings": run.validation_warnings,
+        "model_used": run.model_used,
+    }
+
+
 @router.patch(
     "/transcripts/{transcript_id}/case",
     response_model=AssignTranscriptCaseResponse,
