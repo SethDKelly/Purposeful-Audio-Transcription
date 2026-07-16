@@ -81,7 +81,7 @@ Detail and acceptance criteria: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.m
 
 | # | Task | Status | Links |
 |---|------|--------|-------|
-| V07-2a–g | Review, edit speakers/turns, exclude sections, regen evidence, quality warnings, Ready to Analyze | Pending | [../product/transcript_preparation_workspace.md](../product/transcript_preparation_workspace.md) |
+| V07-2a–g | Review, edit speakers/turns, exclude sections, regen evidence, quality warnings, Ready to Analyze | Done (split/merge deferred) | [../product/transcript_preparation_workspace.md](../product/transcript_preparation_workspace.md) |
 
 ### Priority 3 — Ontology Vocabulary v1
 

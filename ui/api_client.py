@@ -186,6 +186,35 @@ def update_transcript_speakers(transcript_id: str, speakers: list[dict]) -> dict
     return response.json()
 
 
+def update_transcript_turns(transcript_id: str, turns: list[dict]) -> dict:
+    response = _patch(
+        f"/api/transcripts/{transcript_id}/turns",
+        json={"turns": turns},
+        timeout=30.0,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
+def rebuild_transcript_evidence(transcript_id: str) -> dict:
+    response = _post(
+        f"/api/transcripts/{transcript_id}/evidence/rebuild",
+        timeout=30.0,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
+def mark_transcript_ready(transcript_id: str, *, skip_review: bool = False) -> dict:
+    response = _post(
+        f"/api/transcripts/{transcript_id}/ready",
+        json={"skip_review": skip_review},
+        timeout=30.0,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
 def delete_transcript(transcript_id: str) -> None:
     response = _delete(f"/api/transcripts/{transcript_id}", timeout=30.0)
     _raise_for_status(response)

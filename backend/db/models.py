@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.db.base import Base
@@ -15,6 +15,9 @@ class TranscriptRow(Base):
     source_type: Mapped[str] = mapped_column(String(32))
     language: Mapped[str | None] = mapped_column(String(16), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime)
+    analysis_ready: Mapped[bool] = mapped_column(Boolean, default=False)
+    ready_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    skip_review: Mapped[bool] = mapped_column(Boolean, default=False)
 
     speakers: Mapped[list["SpeakerRow"]] = relationship(back_populates="transcript")
     turns: Mapped[list["TurnRow"]] = relationship(back_populates="transcript")
@@ -44,6 +47,7 @@ class TurnRow(Base):
     text: Mapped[str] = mapped_column(Text)
     start_time: Mapped[str | None] = mapped_column(String(32), nullable=True)
     end_time: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    excluded_from_analysis: Mapped[bool] = mapped_column(Boolean, default=False)
 
     transcript: Mapped["TranscriptRow"] = relationship(back_populates="turns")
 

@@ -10,6 +10,7 @@ if _TEST_DB.exists():
 os.environ["DATABASE_URL"] = f"sqlite:///{_TEST_DB.as_posix()}"
 os.environ["ALEMBIC_AUTO_UPGRADE"] = "false"
 os.environ["API_KEY"] = ""
+os.environ["AUTO_MARK_TRANSCRIPT_READY"] = "true"
 
 
 @pytest.fixture(autouse=True)

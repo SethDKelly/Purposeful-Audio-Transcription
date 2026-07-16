@@ -58,6 +58,9 @@ class Settings(BaseSettings):
     evidence_prompt_head_quotes: int = 80
     evidence_prompt_tail_quotes: int = 40
     transcript_retention_days: int | None = None
+    # Pytest-only convenience: auto-approve transcripts when workflows start.
+    # Never enable on AWS ECS.
+    auto_mark_transcript_ready: bool = False
 
     allowed_extensions: frozenset[str] = frozenset(
         {".mp3", ".wav", ".m4a", ".flac", ".ogg", ".webm", ".mp4"}

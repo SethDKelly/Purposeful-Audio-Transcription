@@ -2,8 +2,10 @@ from fastapi import APIRouter, File, Form, Response, UploadFile
 
 from backend.api.schemas import (
     CreateTranscriptRequest,
+    MarkReadyRequest,
     TranscriptBundleResponse,
     UpdateSpeakersRequest,
+    UpdateTurnsRequest,
     bundle_to_response,
 )
 from backend.core.exceptions import TranscriptValidationError
@@ -70,4 +72,33 @@ def update_speakers(
         for item in request.speakers
     ]
     bundle = transcript_service.update_speakers(transcript_id, updates)
+    return bundle_to_response(bundle)
+
+
+@router.patch("/transcripts/{transcript_id}/turns", response_model=TranscriptBundleResponse)
+def update_turns(
+    transcript_id: str, request: UpdateTurnsRequest
+) -> TranscriptBundleResponse:
+    patches = [item.model_dump(exclude_unset=True) for item in request.turns]
+    bundle = transcript_service.update_turns(transcript_id, patches)
+    return bundle_to_response(bundle)
+
+
+@router.post(
+    "/transcripts/{transcript_id}/evidence/rebuild",
+    response_model=TranscriptBundleResponse,
+)
+def rebuild_evidence(transcript_id: str) -> TranscriptBundleResponse:
+    bundle = transcript_service.rebuild_evidence_index(transcript_id)
+    return bundle_to_response(bundle)
+
+
+@router.post("/transcripts/{transcript_id}/ready", response_model=TranscriptBundleResponse)
+def mark_transcript_ready(
+    transcript_id: str, request: MarkReadyRequest | None = None
+) -> TranscriptBundleResponse:
+    body = request or MarkReadyRequest()
+    bundle = transcript_service.mark_ready(
+        transcript_id, skip_review=body.skip_review
+    )
     return bundle_to_response(bundle)

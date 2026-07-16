@@ -16,12 +16,14 @@ from ui.api_client import (
     fetch_workflows,
     get_workflow_run,
     get_workflow_synthesis,
+    mark_transcript_ready,
     module_display_name,
     module_name_map,
     record_audit_event,
     run_workflow,
     transcribe_audio,
     update_transcript_speakers,
+    update_transcript_turns,
     upload_transcript_text,
 )
 from ui.components.evidence_quote_viewer import (
@@ -556,6 +558,7 @@ def main() -> None:
                         )
                         st.session_state.transcript_bundle = updated
                         st.session_state.transcript_meta["speakers"] = updated["speakers"]
+                        st.session_state.transcript = updated["transcript"]["raw_text"]
                         st.session_state.speaker_names_editor_open = False
                         st.session_state.speaker_names_flash = "Speaker names updated."
                         st.rerun()
@@ -563,13 +566,122 @@ def main() -> None:
                         st.session_state.speaker_names_editor_open = True
                         st.error(str(exc))
 
-        st.session_state.transcript = st.text_area(
-            "Transcript",
-            value=st.session_state.transcript,
-            height=220,
-            label_visibility="collapsed",
-        )
         transcript_id = meta.get("transcript_id")
+        if bundle and bundle.get("turns") and transcript_id:
+            st.markdown("#### Transcript review")
+            warnings = bundle.get("quality_warnings") or []
+            for warning in warnings:
+                st.warning(warning)
+            tmeta = bundle.get("transcript") or {}
+            if tmeta.get("analysis_ready"):
+                ready_note = "Ready to analyze"
+                if tmeta.get("skip_review"):
+                    ready_note += " (review skipped)"
+                st.success(ready_note)
+            else:
+                st.info(
+                    "Review turns below, save edits, then mark Ready to Analyze "
+                    "before running a workflow."
+                )
+
+            speaker_options = {
+                s["id"]: (s.get("display_name") or s["label"])
+                for s in bundle.get("speakers") or []
+            }
+            with st.form("transcript_turns_form"):
+                turn_patches = []
+                for turn in bundle["turns"]:
+                    excluded = bool(turn.get("excluded_from_analysis"))
+                    label = f"Turn {turn['turn_index']}"
+                    if excluded:
+                        label += " (excluded)"
+                    st.markdown(f"**{label}**")
+                    cols = st.columns([2, 5, 1])
+                    speaker_ids = list(speaker_options.keys())
+                    current_speaker = turn.get("speaker_id")
+                    speaker_index = (
+                        speaker_ids.index(current_speaker)
+                        if current_speaker in speaker_ids
+                        else 0
+                    )
+                    new_speaker = cols[0].selectbox(
+                        "Speaker",
+                        options=speaker_ids,
+                        index=speaker_index,
+                        format_func=lambda sid: speaker_options.get(sid, sid),
+                        key=f"turn_speaker_{turn['id']}",
+                    )
+                    new_text = cols[1].text_area(
+                        "Text",
+                        value=turn.get("text") or "",
+                        height=68,
+                        key=f"turn_text_{turn['id']}",
+                        label_visibility="collapsed",
+                    )
+                    new_excluded = cols[2].checkbox(
+                        "Exclude",
+                        value=excluded,
+                        key=f"turn_exclude_{turn['id']}",
+                        help="Excluded turns are omitted from analysis and quote IDs.",
+                    )
+                    turn_patches.append(
+                        {
+                            "id": turn["id"],
+                            "speaker_id": new_speaker,
+                            "text": new_text,
+                            "excluded_from_analysis": new_excluded,
+                        }
+                    )
+                saved_turns = st.form_submit_button(
+                    "Save turn edits", type="primary"
+                )
+            if saved_turns:
+                try:
+                    updated = update_transcript_turns(transcript_id, turn_patches)
+                    st.session_state.transcript_bundle = updated
+                    st.session_state.transcript = updated["transcript"]["raw_text"]
+                    st.session_state.transcript_meta["speakers"] = updated["speakers"]
+                    st.success(
+                        "Turns saved; evidence quote IDs regenerated. "
+                        "Mark Ready to Analyze when finished."
+                    )
+                    st.rerun()
+                except (RuntimeError, httpx.HTTPError) as exc:
+                    st.error(str(exc))
+
+            ready_cols = st.columns(2)
+            if ready_cols[0].button("Ready to Analyze", type="primary"):
+                try:
+                    updated = mark_transcript_ready(transcript_id, skip_review=False)
+                    st.session_state.transcript_bundle = updated
+                    st.session_state.transcript = updated["transcript"]["raw_text"]
+                    st.success("Transcript approved for analysis.")
+                    st.rerun()
+                except (RuntimeError, httpx.HTTPError) as exc:
+                    st.error(str(exc))
+            if ready_cols[1].button(
+                "Skip review (not recommended)",
+                help="Marks the transcript ready without an intentional review pass.",
+            ):
+                try:
+                    updated = mark_transcript_ready(transcript_id, skip_review=True)
+                    st.session_state.transcript_bundle = updated
+                    st.session_state.transcript = updated["transcript"]["raw_text"]
+                    st.warning("Review skipped. Analysis is unlocked.")
+                    st.rerun()
+                except (RuntimeError, httpx.HTTPError) as exc:
+                    st.error(str(exc))
+
+            with st.expander("Raw transcript text (read-only preview)"):
+                st.text(st.session_state.transcript or tmeta.get("raw_text") or "")
+        elif st.session_state.transcript:
+            st.text_area(
+                "Transcript",
+                value=st.session_state.transcript,
+                height=220,
+                label_visibility="collapsed",
+            )
+
         if transcript_id:
             st.caption(
                 "Deletion removes the transcript and cascaded workflow runs, "
@@ -654,16 +766,22 @@ def main() -> None:
         selected_model = st.selectbox("LLM model", options=llm_models, index=model_index)
 
         transcript_id = st.session_state.transcript_meta.get("transcript_id")
-        bundle_text = (st.session_state.transcript_bundle or {}).get("transcript", {}).get(
-            "raw_text", ""
+        tmeta = (st.session_state.transcript_bundle or {}).get("transcript") or {}
+        analysis_unlocked = bool(
+            tmeta.get("analysis_ready") or tmeta.get("skip_review")
         )
-        if transcript_id and bundle_text.strip() != st.session_state.transcript.strip():
+        if transcript_id and not analysis_unlocked:
             st.warning(
-                "Transcript text was edited after preparation. Re-prepare to refresh "
-                "evidence quotes, or run with the stored transcript ID."
+                "Mark the transcript Ready to Analyze in Step 2 before running a workflow."
             )
+        elif tmeta.get("skip_review"):
+            st.caption("Analysis unlocked via skipped review.")
 
-        if st.button("Run workflow", type="primary", disabled=not transcript_id):
+        if st.button(
+            "Run workflow",
+            type="primary",
+            disabled=not transcript_id or not analysis_unlocked,
+        ):
             with st.status(f"Running {selected_workflow_name}...", expanded=True) as status:
                 try:
                     for module_id in workflow.get("modules", []):

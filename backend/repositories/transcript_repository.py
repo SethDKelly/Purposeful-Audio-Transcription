@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from backend.core.exceptions import TranscriptNotFoundError
+from backend.core.exceptions import TranscriptNotFoundError, TranscriptValidationError
 from backend.db.models import (
     EvidenceQuoteRow,
     ModuleRunRow,
@@ -35,6 +35,9 @@ class TranscriptRepository:
                 source_type=transcript.source_type.value,
                 language=transcript.language,
                 created_at=transcript.created_at,
+                analysis_ready=transcript.analysis_ready,
+                ready_at=transcript.ready_at,
+                skip_review=transcript.skip_review,
             )
         )
         for speaker in bundle.speakers:
@@ -57,6 +60,7 @@ class TranscriptRepository:
                     text=turn.text,
                     start_time=turn.start_time,
                     end_time=turn.end_time,
+                    excluded_from_analysis=turn.excluded_from_analysis,
                 )
             )
         session.flush()
@@ -87,6 +91,9 @@ class TranscriptRepository:
             source_type=SourceType(row.source_type),
             language=row.language,
             created_at=row.created_at,
+            analysis_ready=bool(row.analysis_ready),
+            ready_at=row.ready_at,
+            skip_review=bool(row.skip_review),
         )
         speakers = [
             Speaker(
@@ -106,6 +113,7 @@ class TranscriptRepository:
                 text=turn.text,
                 start_time=turn.start_time,
                 end_time=turn.end_time,
+                excluded_from_analysis=bool(turn.excluded_from_analysis),
             )
             for turn in sorted(row.turns, key=lambda t: t.turn_index)
         ]
@@ -157,6 +165,106 @@ class TranscriptRepository:
             )
             for speaker in sorted(row.speakers, key=lambda s: s.label)
         ]
+
+    def update_turns(
+        self,
+        session: Session,
+        transcript_id: str,
+        patches: list[dict],
+    ) -> None:
+        row = session.get(TranscriptRow, transcript_id)
+        if row is None:
+            raise TranscriptNotFoundError(f"Transcript not found: {transcript_id}")
+
+        speaker_ids = {speaker.id for speaker in row.speakers}
+        turn_rows = {turn.id: turn for turn in row.turns}
+        for patch in patches:
+            turn_row = turn_rows.get(patch["id"])
+            if turn_row is None:
+                raise TranscriptNotFoundError(f"Turn not found: {patch['id']}")
+            if "text" in patch and patch["text"] is not None:
+                text = str(patch["text"]).strip()
+                if not text:
+                    raise TranscriptValidationError(
+                        f"Turn text cannot be empty: {patch['id']}"
+                    )
+                turn_row.text = text
+            if "speaker_id" in patch and patch["speaker_id"] is not None:
+                speaker_id = str(patch["speaker_id"])
+                if speaker_id not in speaker_ids:
+                    raise TranscriptNotFoundError(f"Speaker not found: {speaker_id}")
+                turn_row.speaker_id = speaker_id
+            if "excluded_from_analysis" in patch and patch["excluded_from_analysis"] is not None:
+                turn_row.excluded_from_analysis = bool(patch["excluded_from_analysis"])
+
+        # Re-number turn_index in stable order
+        ordered = sorted(row.turns, key=lambda t: t.turn_index)
+        for index, turn_row in enumerate(ordered, start=1):
+            turn_row.turn_index = index
+
+        row.analysis_ready = False
+        row.ready_at = None
+        row.skip_review = False
+        session.flush()
+
+    def replace_evidence_quotes(
+        self, session: Session, transcript_id: str, quotes: list[EvidenceQuote]
+    ) -> None:
+        row = session.get(TranscriptRow, transcript_id)
+        if row is None:
+            raise TranscriptNotFoundError(f"Transcript not found: {transcript_id}")
+        session.execute(
+            delete(EvidenceQuoteRow).where(EvidenceQuoteRow.transcript_id == transcript_id)
+        )
+        session.flush()
+        for quote in quotes:
+            session.add(
+                EvidenceQuoteRow(
+                    id=quote.id,
+                    transcript_id=quote.transcript_id,
+                    turn_id=quote.turn_id,
+                    speaker_id=quote.speaker_id,
+                    quote_index=quote.quote_index,
+                    quote_id=quote.quote_id,
+                    text=quote.text,
+                    context_before=quote.context_before,
+                    context_after=quote.context_after,
+                )
+            )
+        session.flush()
+
+    def sync_raw_text_from_turns(self, session: Session, transcript_id: str) -> None:
+        row = session.get(TranscriptRow, transcript_id)
+        if row is None:
+            raise TranscriptNotFoundError(f"Transcript not found: {transcript_id}")
+        speaker_names = {
+            speaker.id: (speaker.display_name or speaker.label) for speaker in row.speakers
+        }
+        lines: list[str] = []
+        for turn in sorted(row.turns, key=lambda t: t.turn_index):
+            if turn.excluded_from_analysis:
+                continue
+            name = speaker_names.get(turn.speaker_id, "Unknown")
+            lines.append(f"{name}: {turn.text}")
+        row.raw_text = "\n".join(lines)
+        session.flush()
+
+    def set_preparation_state(
+        self,
+        session: Session,
+        transcript_id: str,
+        *,
+        analysis_ready: bool,
+        skip_review: bool = False,
+        ready_at: datetime | None = None,
+    ) -> None:
+        row = session.get(TranscriptRow, transcript_id)
+        if row is None:
+            raise TranscriptNotFoundError(f"Transcript not found: {transcript_id}")
+        row.analysis_ready = analysis_ready
+        row.skip_review = skip_review
+        row.ready_at = ready_at
+        session.flush()
 
     def delete_cascade(self, session: Session, transcript_id: str) -> None:
         """Delete transcript and all dependent runs/reports/quotes/turns/speakers."""

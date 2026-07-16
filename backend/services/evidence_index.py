@@ -40,6 +40,42 @@ class EvidenceIndexService:
 
         return quotes
 
+    def build_index_from_turns(
+        self,
+        transcript_id: str,
+        turns: list,
+        *,
+        include_excluded: bool = False,
+    ) -> list[EvidenceQuote]:
+        """Rebuild quote IDs from current turn rows (skips excluded by default)."""
+        from backend.domain.transcript import Turn
+
+        ordered = sorted(turns, key=lambda t: t.turn_index)
+        included: list[Turn] = [
+            turn
+            for turn in ordered
+            if include_excluded or not getattr(turn, "excluded_from_analysis", False)
+        ]
+        turn_texts = [turn.text for turn in included]
+        quotes: list[EvidenceQuote] = []
+        for index, turn in enumerate(included, start=1):
+            quotes.append(
+                EvidenceQuote(
+                    id=str(uuid.uuid4()),
+                    transcript_id=transcript_id,
+                    turn_id=turn.id,
+                    speaker_id=turn.speaker_id,
+                    quote_index=index,
+                    quote_id=f"Q{index:03d}",
+                    text=turn.text,
+                    context_before=_truncate(turn_texts[index - 2] if index > 1 else None),
+                    context_after=_truncate(
+                        turn_texts[index] if index < len(turn_texts) else None
+                    ),
+                )
+            )
+        return quotes
+
     def lookup_by_quote_id(
         self, quotes: list[EvidenceQuote], quote_id: str
     ) -> EvidenceQuote | None:

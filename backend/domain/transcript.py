@@ -12,6 +12,9 @@ class Transcript(BaseModel):
     source_type: SourceType
     language: str | None = None
     created_at: datetime
+    analysis_ready: bool = False
+    ready_at: datetime | None = None
+    skip_review: bool = False
 
 
 class Speaker(BaseModel):
@@ -29,6 +32,7 @@ class Turn(BaseModel):
     text: str
     start_time: str | None = None
     end_time: str | None = None
+    excluded_from_analysis: bool = False
 
 
 class EvidenceQuote(BaseModel):

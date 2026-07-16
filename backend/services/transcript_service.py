@@ -2,7 +2,11 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 from backend.core.audit import audit_event
-from backend.core.exceptions import TranscriptNotFoundError
+from backend.core.exceptions import (
+    TranscriptNotFoundError,
+    TranscriptNotReadyError,
+    TranscriptValidationError,
+)
 from backend.db.base import get_session
 from backend.domain.enums import SourceType
 from backend.domain.transcript import Speaker, Transcript, TranscriptBundle, Turn
@@ -40,6 +44,9 @@ class TranscriptService:
             source_type=source_type,
             language=language,
             created_at=now,
+            analysis_ready=False,
+            ready_at=None,
+            skip_review=False,
         )
 
         speaker_id_by_label: dict[str, str] = {}
@@ -65,6 +72,7 @@ class TranscriptService:
                     speaker_id=speaker_id_by_label[parsed_turn.speaker_label],
                     turn_index=index,
                     text=parsed_turn.text,
+                    excluded_from_analysis=False,
                 )
             )
 
@@ -134,6 +142,102 @@ class TranscriptService:
         with get_session() as session:
             self._repository.update_speakers(session, transcript_id, speaker_updates)
             return self._repository.get_bundle(session, transcript_id)
+
+    def update_turns(
+        self, transcript_id: str, patches: list[dict]
+    ) -> TranscriptBundle:
+        if not patches:
+            raise TranscriptValidationError("No turn patches provided")
+        with get_session() as session:
+            self._repository.update_turns(session, transcript_id, patches)
+            self._repository.sync_raw_text_from_turns(session, transcript_id)
+            bundle = self._repository.get_bundle(session, transcript_id)
+            quotes = self._evidence_index.build_index_from_turns(
+                transcript_id, bundle.turns
+            )
+            self._repository.replace_evidence_quotes(session, transcript_id, quotes)
+            return self._repository.get_bundle(session, transcript_id)
+
+    def rebuild_evidence_index(self, transcript_id: str) -> TranscriptBundle:
+        with get_session() as session:
+            bundle = self._repository.get_bundle(session, transcript_id)
+            quotes = self._evidence_index.build_index_from_turns(
+                transcript_id, bundle.turns
+            )
+            self._repository.replace_evidence_quotes(session, transcript_id, quotes)
+            self._repository.sync_raw_text_from_turns(session, transcript_id)
+            # Edits already clear ready; rebuild alone does not approve.
+            return self._repository.get_bundle(session, transcript_id)
+
+    def mark_ready(
+        self,
+        transcript_id: str,
+        *,
+        skip_review: bool = False,
+    ) -> TranscriptBundle:
+        with get_session() as session:
+            bundle = self._repository.get_bundle(session, transcript_id)
+            included = [t for t in bundle.turns if not t.excluded_from_analysis]
+            if not included:
+                raise TranscriptValidationError(
+                    "Cannot mark ready: no turns included for analysis"
+                )
+            quotes = self._evidence_index.build_index_from_turns(
+                transcript_id, bundle.turns
+            )
+            self._repository.replace_evidence_quotes(session, transcript_id, quotes)
+            self._repository.sync_raw_text_from_turns(session, transcript_id)
+            self._repository.set_preparation_state(
+                session,
+                transcript_id,
+                analysis_ready=True,
+                skip_review=skip_review,
+                ready_at=utc_now().replace(tzinfo=None),
+            )
+            ready = self._repository.get_bundle(session, transcript_id)
+        audit_event(
+            "transcript.ready",
+            transcript_id=transcript_id,
+            skip_review=skip_review,
+            quote_count=len(ready.evidence_quotes),
+        )
+        return ready
+
+    def quality_warnings(self, bundle: TranscriptBundle) -> list[str]:
+        warnings: list[str] = []
+        included = [t for t in bundle.turns if not t.excluded_from_analysis]
+        if not included:
+            warnings.append("No turns are included for analysis.")
+            return warnings
+        if len(bundle.speakers) < 2:
+            warnings.append("Only one speaker label is present.")
+        blank = [t for t in included if not t.text.strip()]
+        if blank:
+            warnings.append(f"{len(blank)} included turn(s) have empty text.")
+        short = [t for t in included if 0 < len(t.text.strip()) < 8]
+        if short:
+            warnings.append(f"{len(short)} included turn(s) are very short (< 8 chars).")
+        unnamed = [
+            s
+            for s in bundle.speakers
+            if not (s.display_name or s.label or "").strip()
+        ]
+        if unnamed:
+            warnings.append("One or more speakers lack a display name.")
+        if not bundle.evidence_quotes and included:
+            warnings.append("Evidence index is empty; rebuild before analysis.")
+        return warnings
+
+    def ensure_ready_for_analysis(self, transcript_id: str) -> TranscriptBundle:
+        bundle = self.get(transcript_id)
+        if bundle.transcript.analysis_ready or bundle.transcript.skip_review:
+            return bundle
+        if settings.auto_mark_transcript_ready:
+            return self.mark_ready(transcript_id)
+        raise TranscriptNotReadyError(
+            "Transcript is not marked Ready to Analyze. "
+            "Review and approve it in Prepare, or skip review intentionally."
+        )
 
     def ingest_from_audio(
         self,

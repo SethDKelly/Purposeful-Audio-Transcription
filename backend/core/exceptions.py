@@ -51,6 +51,11 @@ class TranscriptValidationError(AppError):
         super().__init__(message, status_code=400)
 
 
+class TranscriptNotReadyError(AppError):
+    def __init__(self, message: str):
+        super().__init__(message, status_code=422)
+
+
 class ModuleNotFoundError(AppError):
     def __init__(self, message: str):
         super().__init__(message, status_code=404)
