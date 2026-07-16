@@ -13,6 +13,8 @@ from ui.api_client import (
     fetch_health,
     fetch_modules,
     fetch_llm_models,
+    fetch_transcript_length_assessment,
+    fetch_transcript_safety_assessment,
     fetch_workflows,
     get_workflow_run,
     get_workflow_synthesis,
@@ -20,6 +22,7 @@ from ui.api_client import (
     module_display_name,
     module_name_map,
     record_audit_event,
+    run_custom_workflow,
     run_workflow,
     transcribe_audio,
     update_transcript_speakers,
@@ -42,7 +45,11 @@ from ui.components.report_exports import (
     build_workflow_report_markdown,
     build_workflow_report_pdf,
 )
-from ui.components.safety_disclaimer import render_privacy_note, render_safety_disclaimer
+from ui.components.safety_disclaimer import (
+    render_privacy_note,
+    render_safety_banner,
+    render_safety_disclaimer,
+)
 from ui.components.synthesis_panel import render_synthesis_panel
 
 ALLOWED_EXTENSIONS = sorted(settings.allowed_extensions)
@@ -70,6 +77,28 @@ def _cached_workflows() -> list[dict]:
 @st.cache_data(ttl=30, show_spinner=False)
 def _cached_modules() -> list[dict]:
     return fetch_modules()
+
+
+def _render_transcript_assessment_banners(
+    transcript_id: str,
+    *,
+    workflow_safety_mode: bool = False,
+) -> None:
+    try:
+        length = fetch_transcript_length_assessment(transcript_id)
+        if length.get("warning"):
+            st.warning(length["warning"])
+    except (RuntimeError, httpx.HTTPError):
+        pass
+    try:
+        safety = fetch_transcript_safety_assessment(transcript_id)
+        render_safety_banner(
+            safety_mode=workflow_safety_mode,
+            risk_level=None if workflow_safety_mode else safety.get("risk_level"),
+        )
+    except (RuntimeError, httpx.HTTPError):
+        if workflow_safety_mode:
+            render_safety_banner(safety_mode=True)
 
 
 def _apply_transcript_bundle(bundle: dict, *, source_name: str = "transcript") -> None:
@@ -160,6 +189,8 @@ def _render_report_dashboard(
     default_model: str | None = None,
 ) -> None:
     render_safety_disclaimer()
+    if workflow_run.get("safety_mode"):
+        render_safety_banner(safety_mode=True)
     names = module_names or {}
 
     if workflow_run.get("status") != "completed":
@@ -612,6 +643,7 @@ def main() -> None:
             warnings = bundle.get("quality_warnings") or []
             for warning in warnings:
                 st.warning(warning)
+            _render_transcript_assessment_banners(transcript_id)
             tmeta = bundle.get("transcript") or {}
             if tmeta.get("analysis_ready"):
                 ready_note = "Ready to analyze"
@@ -760,6 +792,9 @@ def main() -> None:
             options=list(workflow_options.keys()),
         )
         workflow = workflow_options[selected_workflow_name]
+        transcript_id = st.session_state.transcript_meta.get("transcript_id")
+        if transcript_id:
+            _render_transcript_assessment_banners(transcript_id)
         st.caption(workflow.get("description", ""))
         tone = workflow.get("output_tone")
         if tone:
@@ -810,6 +845,11 @@ def main() -> None:
         analysis_unlocked = bool(
             tmeta.get("analysis_ready") or tmeta.get("skip_review")
         )
+        force_safety_mode = st.checkbox(
+            "Force safety-aware report mode",
+            value=False,
+            help="Skips exploratory modules and uses safety-oriented synthesis framing.",
+        )
         if transcript_id and not analysis_unlocked:
             st.warning(
                 "Mark the transcript Ready to Analyze in Step 2 before running a workflow."
@@ -832,6 +872,7 @@ def main() -> None:
                         workflow_id=workflow["id"],
                         model=selected_model,
                         background=run_in_background,
+                        safety_mode=force_safety_mode or None,
                     )
                     terminal = {"completed", "failed", "cancelled"}
                     if run_in_background and result.get("status") not in terminal:
@@ -876,6 +917,62 @@ def main() -> None:
                 except (RuntimeError, httpx.HTTPError) as exc:
                     status.update(label="Workflow failed", state="error")
                     st.error(str(exc))
+
+        with st.expander("Custom workflow", expanded=False):
+            enabled_modules = [
+                module for module in _cached_modules() if module.get("enabled")
+            ]
+            module_labels = {
+                module_display_name(module["id"], module_names): module["id"]
+                for module in enabled_modules
+            }
+            custom_selected = st.multiselect(
+                "Modules",
+                options=list(module_labels.keys()),
+                help="If meta-synthesis is included, it must be selected last.",
+            )
+            custom_name = st.text_input("Custom workflow name (optional)")
+            custom_background = st.checkbox(
+                "Run custom workflow in background",
+                value=False,
+                key="custom_workflow_bg",
+            )
+            custom_force_safety = st.checkbox(
+                "Force safety-aware mode (custom)",
+                value=False,
+                key="custom_workflow_safety",
+            )
+            if st.button(
+                "Run custom workflow",
+                disabled=not transcript_id or not analysis_unlocked or not custom_selected,
+            ):
+                ordered_ids = [module_labels[label] for label in custom_selected]
+                with st.status("Running custom workflow...", expanded=True) as custom_status:
+                    try:
+                        result = run_custom_workflow(
+                            transcript_id=transcript_id,
+                            modules=ordered_ids,
+                            name=custom_name or None,
+                            model=selected_model,
+                            background=custom_background,
+                            safety_mode=custom_force_safety or None,
+                        )
+                        st.session_state.workflow_run = result
+                        st.session_state.synthesis_report = None
+                        if result.get("status") == "completed":
+                            try:
+                                st.session_state.synthesis_report = get_workflow_synthesis(
+                                    result["id"]
+                                )
+                            except RuntimeError as exc:
+                                st.warning(f"Synthesis unavailable: {exc}")
+                            custom_status.update(label="Custom workflow complete", state="complete")
+                        else:
+                            custom_status.update(label="Custom workflow failed", state="error")
+                            st.error(result.get("error_log") or "Custom workflow failed.")
+                    except (RuntimeError, httpx.HTTPError) as exc:
+                        custom_status.update(label="Custom workflow failed", state="error")
+                        st.error(str(exc))
 
     # --- Step 4: Report ---
     st.subheader("Step 4 - Report")

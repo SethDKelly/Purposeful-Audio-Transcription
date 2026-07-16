@@ -152,7 +152,7 @@ configure_logging()
 app = FastAPI(
     title="Relationship Reasoning Engine",
     description="AWS transcript analysis with Bedrock and Amazon Transcribe",
-    version="0.6.0",
+    version="1.0.0",
     lifespan=lifespan,
 )
 app.add_middleware(APIKeyMiddleware)

@@ -22,3 +22,6 @@ class WorkflowRun(BaseModel):
     completed_at: datetime | None = None
     error_log: str | None = None
     telemetry_summary: dict | None = None
+    cancel_requested: bool = False
+    attempt_count: int = 0
+    safety_mode: bool = False

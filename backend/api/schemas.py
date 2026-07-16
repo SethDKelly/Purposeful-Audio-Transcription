@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+from backend.core.workflow_dag import WorkflowStepConfig
 from backend.domain.enums import SourceType
 
 
@@ -145,6 +146,31 @@ class RunWorkflowRequest(BaseModel):
     transcript_id: str
     model: str | None = None
     background: bool | None = None
+    safety_mode: bool | None = None
+
+
+class RunCustomWorkflowRequest(BaseModel):
+    transcript_id: str
+    modules: list[str]
+    name: str | None = None
+    model: str | None = None
+    background: bool | None = None
+    steps: list[WorkflowStepConfig] = Field(default_factory=list)
+    safety_mode: bool | None = None
+
+
+class TranscriptLengthAssessmentResponse(BaseModel):
+    quote_count: int
+    max_quotes: int
+    strategy: str
+    warning: str | None = None
+    omitted_quotes: int = 0
+
+
+class TranscriptSafetyAssessmentResponse(BaseModel):
+    risk_level: str
+    matched_categories: list[str] = Field(default_factory=list)
+    safety_mode_recommended: bool = False
 
 
 class WorkflowRunModuleSummary(BaseModel):
@@ -165,6 +191,9 @@ class WorkflowRunResponse(BaseModel):
     completed_at: str | None = None
     error_log: str | None = None
     telemetry_summary: dict | None = None
+    cancel_requested: bool = False
+    attempt_count: int = 0
+    safety_mode: bool = False
     module_runs: list[WorkflowRunModuleSummary] = Field(default_factory=list)
 
 
@@ -270,6 +299,9 @@ def workflow_run_to_response(
         else None,
         error_log=workflow_run.error_log,
         telemetry_summary=getattr(workflow_run, "telemetry_summary", None),
+        cancel_requested=bool(getattr(workflow_run, "cancel_requested", False)),
+        attempt_count=int(getattr(workflow_run, "attempt_count", 0) or 0),
+        safety_mode=bool(getattr(workflow_run, "safety_mode", False)),
         module_runs=summaries,
     )
 

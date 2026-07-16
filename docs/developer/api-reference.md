@@ -57,9 +57,11 @@ Module run responses may include:
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/workflows` | List workflows |
-| `POST` | `/api/workflows/{id}/run` | Run workflow (`background` optional) |
-| `GET` | `/api/workflow-runs/{id}` | Run status + module runs + `telemetry_summary` |
+| `GET` | `/api/workflows` | List workflows (linear `modules` and/or DAG `steps`) |
+| `POST` | `/api/workflows/{id}/run` | Run workflow (`background`, optional `safety_mode`) |
+| `POST` | `/api/workflows/custom/run` | Run ephemeral custom module suite |
+| `GET` | `/api/workflow-runs/{id}` | Run status + module runs + `telemetry_summary` + job fields |
+| `POST` | `/api/workflow-runs/{id}/cancel` | Request cancel (queued → cancelled; in-flight cooperative) |
 | `GET` | `/api/workflow-runs/{id}/synthesis` | Synthesis report |
 
 ### Run workflow body
@@ -68,11 +70,35 @@ Module run responses may include:
 {
   "transcript_id": "uuid",
   "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
-  "background": false
+  "background": false,
+  "safety_mode": false
 }
 ```
 
 `background` is optional. When omitted, the API uses the workflow’s `default_background`, then `WORKFLOW_BACKGROUND_DEFAULT`. If the workflow still would run synchronously with more modules than `WORKFLOW_SYNC_MODULE_LIMIT` (default 6), it is forced to background; an explicit `"background": false` over that limit returns **400**.
+
+On AWS with `WORKFLOW_WORKER_ENABLED=true`, background runs stay `created` until the dedicated worker claims them. Job timeout: `WORKFLOW_JOB_TIMEOUT_SECONDS` (default 7200). Retries: `WORKFLOW_JOB_MAX_ATTEMPTS` (default 2).
+
+### Custom workflow body
+
+```json
+{
+  "transcript_id": "uuid",
+  "modules": ["relationship_conversation_analysis", "nvc_analysis", "meta_synthesis"],
+  "name": "My suite",
+  "background": true,
+  "safety_mode": false
+}
+```
+
+`meta_synthesis`, if present, must be last. Optional `steps` use the same DAG shape as YAML workflows.
+
+## Transcript assessments
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/transcripts/{id}/length-assessment` | Quote count vs prompt budget; sampling strategy / warning |
+| `GET` | `/api/transcripts/{id}/safety-assessment` | High-risk scan (`none` / `elevated` / `high`) |
 
 ## Exploration
 

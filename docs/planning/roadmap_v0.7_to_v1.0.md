@@ -186,7 +186,7 @@ Plan detail: [../architecture/structured_persistence_plan.md](../architecture/st
 
 ## v1.0 — Workflow Hardening and External Readiness
 
-**Status:** **Active** — tracker [implementing.md](implementing.md).
+**Status:** **Released** as [v1.0.0](../releases/v1.0.0.md) (July 2026).
 
 **Strategic goal:** Reliable enough for external users, longer workflows, custom suites, production-like operation.
 

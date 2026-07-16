@@ -5,8 +5,9 @@ locals {
   api_image = "${aws_ecr_repository.api.repository_url}:${var.image_tag}"
   ui_image  = "${aws_ecr_repository.ui.repository_url}:${var.image_tag}"
 
-  api_log_group = "/rre/dev/api"
-  ui_log_group  = "/rre/dev/ui"
+  api_log_group    = "/rre/dev/api"
+  ui_log_group     = "/rre/dev/ui"
+  worker_log_group = "/rre/dev/worker"
 
   # UI server-side httpx calls: public ALB when tasks have public IPs; Cloud Map when private.
   https_enabled   = trimspace(var.acm_certificate_arn) != ""

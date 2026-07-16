@@ -1,20 +1,20 @@
 # Implementing — Active Priorities
 
-Material work in flight for the **Relationship Reasoning Engine (RRE)** after **v0.9.0**.
+Material work in flight for the **Relationship Reasoning Engine (RRE)** after **v1.0.0**.
 
 | | |
 |---|---|
-| **Status** | **v1.0 in progress** — Workflow hardening + external readiness |
-| **Canonical roadmap** | [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md) |
+| **Status** | **Post-v1.0** — roadmap complete through external readiness; backlog-driven |
+| **Canonical roadmap** | [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md) (**complete**) |
 | **Deferred ideas** | [future_considerations.md](future_considerations.md) |
-| **Completed** | [completed.md](completed.md) · [../releases/v0.9.0.md](../releases/v0.9.0.md) |
-| **Branch** | `v1.0/workflow-hardening` |
+| **Completed** | [completed.md](completed.md) · [../releases/v1.0.0.md](../releases/v1.0.0.md) |
+| **Branch** | `post-v1.0/backlog` |
 | **Strategy** | **AWS only** — Bedrock + Transcribe + ECS + RDS (`521018312783`, `us-east-2`) |
 | **Cost control** | **Pause AWS when idle** — [../developer/aws-operations.md](../developer/aws-operations.md) |
 | **Deploy policy** | Deploy on **minor-version completion** (tag `vX.Y.Z` or manual), not every main push |
 | **Architecture** | [aws-deployment.md](aws-deployment.md) |
 
-**Scope rule:** Follow the roadmap sequence. Do **not** add analysis modules for breadth. Prefer durable execution, safety, and evidence quality.
+**Scope rule:** Prefer reliability, evidence quality, and operator trust. Pull from [future_considerations.md](future_considerations.md) deliberately — do not expand analysis modules for breadth.
 
 **North star:**
 
@@ -25,11 +25,11 @@ Domain Model → Ontology → Module Definitions → Workflow Engine → Prompt 
 
 ---
 
-## Guiding sequence
+## Guiding sequence (complete through v1.0)
 
 ```text
 security → transcript quality → ontology → structured persistence
-  → graph reasoning → cases → workflow hardening
+  → graph reasoning → cases → workflow hardening ✓
 ```
 
 | Release | Theme | Status |
@@ -38,58 +38,46 @@ security → transcript quality → ontology → structured persistence
 | **v0.7.0** | Secure UAT + transcript prep + ontology foundation | **Released** |
 | **v0.8.0** | Normalized findings/constructs/relationships + graph | **Released** |
 | **v0.9.0** | Cases + longitudinal + feedback | **Released** |
-| **v1.0** | Workers + DAG + custom workflows + safety mode | **Active** |
+| **v1.0.0** | Workers + DAG + custom workflows + safety mode | **Released** |
 
 ---
 
 ## Immediate next steps
 
 ```text
-[x] Release v0.9.0 · Deploy once · Pause AWS when idle
-[ ] v1.0 Priority 1 — Dedicated worker service
-[ ] v1.0 Priority 2 — Workflow DAG engine
-[ ] v1.0 Priority 3 — Custom workflow builder
-[ ] v1.0 Priority 4 — Long transcript strategy
-[ ] v1.0 Priority 5 — Safety-aware report mode
-[ ] v1.0 Priority 6 — Production-grade API and documentation
-[ ] Release v1.0.0 · Deploy once · Pause
+[x] Release v1.0.0 · Deploy once · Pause AWS when idle
+[ ] Pick next work from future_considerations (stitch, richer graph UI, multi-user, etc.)
 ```
 
 **Standing ops:** Pause when idle. Deploy only on minor-version completion.
 
 ---
 
-## v0.9 — Complete (summary)
+## v1.0 — Complete (summary)
 
-Detail: [../releases/v0.9.0.md](../releases/v0.9.0.md). Roadmap: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md#v09--cases-and-longitudinal-analysis).
+Detail: [../releases/v1.0.0.md](../releases/v1.0.0.md).
 
 | Priority | Status |
 |----------|--------|
-| P1 Case data model | Done |
-| P2 Case dashboard | Done |
-| P3 Longitudinal comparison | Done |
-| P4 Longitudinal synthesis | Done |
-| P5 Report package export | Done |
-| P6 Feedback loop | Done |
+| P1 Dedicated worker | Done |
+| P2 Workflow DAG | Done |
+| P3 Custom workflow builder | Done |
+| P4 Long transcript strategy | Done |
+| P5 Safety-aware report mode | Done |
+| P6 Production API/docs | Done |
 
 ---
 
-## v1.0 — Active work
+## Post-v1.0 — Active work
 
-Roadmap: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md#v10--workflow-hardening-and-external-readiness).
+Select from [future_considerations.md](future_considerations.md). Suggested themes:
 
-Plan detail: [../architecture/workflow_dag_plan.md](../architecture/workflow_dag_plan.md) · [../product/safety_aware_report_mode.md](../product/safety_aware_report_mode.md).
-
-Reliable enough for external users, longer workflows, custom suites, production-like operation.
-
-| Priority | Status | Notes |
-|----------|--------|-------|
-| P1 Dedicated worker | Pending | Jobs survive API; cancel; timeout; retries |
-| P2 Workflow DAG | Pending | Dependencies, parallel groups, synthesis gates |
-| P3 Custom workflow builder | Pending | User-defined module suites |
-| P4 Long transcript strategy | Pending | Chunk-aware; no silent head/tail-only |
-| P5 Safety-aware report mode | Pending | [../product/safety_aware_report_mode.md](../product/safety_aware_report_mode.md) |
-| P6 Production API/docs | Pending | External-readiness polish |
+| Theme | Notes |
+|-------|-------|
+| Multi-file audio stitch | Deferred from prep workspace |
+| Richer knowledge-graph UI | Beyond table-first |
+| Production account / HTTPS hardening | When external users need it |
+| Collaborative review | Beyond finding feedback |
 
 ---
 
@@ -106,14 +94,14 @@ Reliable enough for external users, longer workflows, custom suites, production-
 | **docs/ folder** | Renamed from `doc/` in v0.7.0 |
 | **Normalized app tables (not a graph DB)** | v0.8 persistence choice |
 | **Cases optional on transcripts** | Delete case unlinks; does not delete transcripts |
+| **Dedicated worker on ECS** | Jobs survive API task recycle |
 
 ---
 
 ## Explicitly out of scope
 
 - Modifying **MinneAnalytics** in aws-backbone
-- Multi-user SaaS / billing / RBAC beyond API key (+ HTTPS optional)
-- Production AWS account until v1.0 docs readiness
+- Multi-user SaaS / billing / RBAC beyond API key (+ HTTPS optional) until explicitly pulled in
 - Runtime Hugging Face downloads
 - Graph database backend (normalized app tables shipped in v0.8)
 - Reintroducing local Whisper/Ollama
@@ -124,7 +112,7 @@ Reliable enough for external users, longer workflows, custom suites, production-
 
 | Document | Purpose |
 |----------|---------|
-| [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md) | Full phased roadmap + acceptance |
+| [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md) | Phased roadmap (complete) |
 | [future_considerations.md](future_considerations.md) | Deferred backlog |
 | [aws-deployment.md](aws-deployment.md) | AWS architecture |
 | [../developer/aws-operations.md](../developer/aws-operations.md) | Deploy / pause / smoke |

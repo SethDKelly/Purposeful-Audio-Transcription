@@ -13,7 +13,7 @@ The Relationship Reasoning Engine runs on **AWS ECS** (API + UI), **RDS PostgreS
 
 | Item | Value |
 |------|-------|
-| App baseline | **v0.9.0** on `main` |
+| App baseline | **v1.0.0** on `main` |
 | Runtime | `Dockerfile.cloud` (API) · `Dockerfile.ui` (Streamlit) |
 | LLM | Bedrock (`LLM_PROVIDER=bedrock`) |
 | ASR | Amazon Transcribe (`TRANSCRIPTION_PROVIDER=transcribe`) |

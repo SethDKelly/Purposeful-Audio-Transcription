@@ -121,6 +121,7 @@ class ModuleRunner:
         prior_outputs: list[dict[str, Any]],
         model: str | None = None,
         workflow_run_id: str | None = None,
+        safety_mode: bool = False,
     ) -> ModuleRun:
         module = self._registry.get(module_id)
         if module.config.input_type != "module_outputs":
@@ -139,7 +140,9 @@ class ModuleRunner:
                     "module_outputs": prior_outputs,
                 }
         outputs_text = json.dumps(handoff, indent=2)
-        compiled = self._compiler.compile_for_module_outputs(module, outputs_text)
+        compiled = self._compiler.compile_for_module_outputs(
+            module, outputs_text, safety_mode=safety_mode
+        )
         valid_quote_ids = {quote.quote_id for quote in bundle.evidence_quotes}
         valid_quote_ids |= collect_quote_ids(prior_outputs)
         if "structured_inventory" in handoff:

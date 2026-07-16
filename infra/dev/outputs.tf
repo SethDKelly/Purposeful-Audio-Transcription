@@ -44,6 +44,10 @@ output "ecs_ui_service_name" {
   value = aws_ecs_service.ui.name
 }
 
+output "ecs_worker_service_name" {
+  value = aws_ecs_service.worker.name
+}
+
 output "api_target_group_arn" {
   description = "ALB target group ARN for API smoke (AWS-3f)."
   value       = aws_lb_target_group.api.arn

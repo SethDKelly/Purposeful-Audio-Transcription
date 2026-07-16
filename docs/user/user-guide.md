@@ -94,6 +94,18 @@ Use the **Cases & longitudinal** expander to:
 - Run **longitudinal synthesis** across sessions
 - Open a session transcript for analysis/report
 
+## Custom workflows
+
+In Analyze, open **Custom workflow** to pick modules and run an ad-hoc suite (`meta_synthesis` must be last if included).
+
+## Safety mode
+
+When the transcript risk scan is high (or you force safety mode), the UI shows a stronger caution banner, exploratory modules may be skipped, and synthesis framing avoids reconciliation pressure.
+
+## Long transcripts
+
+If the evidence index exceeds the prompt budget, the app uses **balanced sampling** (head + middle + tail) and surfaces a warning — truncation is never silent.
+
 ## Exports
 
 From the report dashboard:

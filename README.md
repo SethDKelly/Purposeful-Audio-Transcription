@@ -4,9 +4,9 @@
 
 | | |
 |--|--|
-| **Canonical release** | [v0.9.0](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v0.9.0) |
+| **Canonical release** | [v1.0.0](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v1.0.0) |
 | **Runtime** | AWS only (account `521018312783`, `us-east-2`) |
-| **Active work** | [docs/planning/implementing.md](docs/planning/implementing.md) · [docs/planning/roadmap_v0.7_to_v1.0.md](docs/planning/roadmap_v0.7_to_v1.0.md) |
+| **Active work** | [docs/planning/implementing.md](docs/planning/implementing.md) · [docs/planning/future_considerations.md](docs/planning/future_considerations.md) |
 
 ## Quick start (operators)
 
@@ -39,24 +39,26 @@ Tests use SQLite. There is **no** supported local Whisper/Ollama server — inte
 | **Planning** | [docs/planning/](docs/planning/) — completed / implementing / backlog |
 | **Index** | [docs/README.md](docs/README.md) |
 
-## Capabilities (v0.9.0)
+## Capabilities (v1.0.0)
 
-- 14 analysis modules · 7 workflows · meta-synthesis over **structured inventory**
-- **Cases** — group transcripts by case; session labels/dates; longitudinal compare + synthesis
-- Normalized persistence: findings, constructs, relationships (Alembic `005`–`007`)
-- Graph merge + deterministic convergence scores on canonical constructs
-- Table-first structured inventory explorer + knowledge graph
-- Finding feedback (helpful / unhelpful / unsure) on report cards
-- Report package ZIP (manifest + report + evidence appendix + findings index)
+- 14 analysis modules · 7 workflows · DAG `steps` (e.g. `full_mvp`) · custom suites
+- Dedicated ECS workflow worker — cancel, job timeout, retries
+- **Cases** — group transcripts; longitudinal compare + synthesis
+- Normalized persistence: findings, constructs, relationships
+- Graph merge + deterministic convergence scores
+- Table-first structured inventory + knowledge graph
+- Safety-aware report mode (risk scan, banner, framing, exploratory skip)
+- Long-transcript balanced quote sampling (explicit strategy, not silent truncation)
+- Finding feedback + report package ZIP
 - Transcript preparation workspace (edit turns, exclude, Ready to Analyze)
-- Ontology vocabulary v1 (`config/ontology/`) + `expected_constructs` soft coverage warnings
-- Evidence quote IDs (`Q001…`) on findings; golden transcript fixtures (GT001/GT002)
-- Per-module / workflow telemetry (latency, tokens, estimated cost)
-- **LLM:** Amazon Bedrock · **ASR:** Amazon Transcribe (speaker labels)
-- Stage B VPC (no public task IPs); shared API key auth; optional HTTPS via ACM
-- Streamlit report + Explore tab + Cases expander
-- Exports: Markdown, JSON, PDF, coach summary, mediation brief, report package ZIP
-- RDS PostgreSQL, background jobs
+- Ontology vocabulary v1 + `expected_constructs` soft coverage warnings
+- Evidence quote IDs (`Q001…`); golden transcript fixtures
+- Per-module / workflow telemetry
+- **LLM:** Amazon Bedrock · **ASR:** Amazon Transcribe
+- Stage B VPC; shared API key auth; optional HTTPS via ACM
+- Streamlit report + Explore + Cases + custom workflow builder
+- RDS PostgreSQL, background jobs / worker queue
+
 
 ## Deploy policy
 

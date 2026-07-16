@@ -41,6 +41,9 @@ resource "aws_ecs_task_definition" "api" {
       { name = "BEDROCK_PROMPT_CACHE_TTL", value = "1h" },
       { name = "BEDROCK_MAX_TOKENS", value = "8192" },
       { name = "MODULE_RUN_MAX_RETRIES", value = "1" },
+      { name = "WORKFLOW_WORKER_ENABLED", value = "true" },
+      { name = "WORKFLOW_JOB_TIMEOUT_SECONDS", value = "7200" },
+      { name = "WORKFLOW_JOB_MAX_ATTEMPTS", value = "2" },
       { name = "DIARIZATION_ENABLED", value = var.diarization_enabled ? "true" : "false" },
       { name = "ALEMBIC_AUTO_UPGRADE", value = "true" },
       { name = "TEMP_DIR", value = "/tmp/rre" },
@@ -202,6 +205,94 @@ resource "aws_ecs_service" "ui" {
 
   depends_on = [
     aws_lb_listener.http,
+    aws_vpc_endpoint.s3,
+    aws_vpc_endpoint.interface,
+  ]
+}
+
+resource "aws_ecs_task_definition" "worker" {
+  family                   = "${local.name}-worker"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = var.worker_cpu
+  memory                   = var.worker_memory
+  execution_role_arn       = aws_iam_role.ecs_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
+
+  container_definitions = jsonencode([{
+    name      = "worker"
+    image     = local.api_image
+    essential = true
+
+    environment = [
+      { name = "RRE_PROCESS", value = "worker" },
+      { name = "LOG_JSON", value = "true" },
+      { name = "LOG_LEVEL", value = "INFO" },
+      { name = "PYTHONUNBUFFERED", value = "1" },
+      { name = "LLM_PROVIDER", value = var.llm_provider },
+      { name = "BEDROCK_MODEL_ID", value = var.bedrock_model_id },
+      { name = "UPLOADS_BUCKET", value = aws_s3_bucket.uploads.bucket },
+      { name = "TRANSCRIPTION_PROVIDER", value = var.transcription_provider },
+      { name = "TRANSCRIBE_TIMEOUT_SECONDS", value = "3600" },
+      { name = "WORKFLOW_MODULE_CONCURRENCY", value = "3" },
+      { name = "BEDROCK_PROMPT_CACHE", value = "true" },
+      { name = "BEDROCK_PROMPT_CACHE_TTL", value = "1h" },
+      { name = "BEDROCK_MAX_TOKENS", value = "8192" },
+      { name = "MODULE_RUN_MAX_RETRIES", value = "1" },
+      { name = "WORKFLOW_JOB_TIMEOUT_SECONDS", value = "7200" },
+      { name = "WORKFLOW_JOB_MAX_ATTEMPTS", value = "2" },
+      { name = "WORKFLOW_WORKER_POLL_SECONDS", value = "2" },
+      { name = "DIARIZATION_ENABLED", value = var.diarization_enabled ? "true" : "false" },
+      { name = "ALEMBIC_AUTO_UPGRADE", value = "false" },
+      { name = "TEMP_DIR", value = "/tmp/rre" },
+      { name = "AWS_REGION", value = var.aws_region },
+      { name = "AWS_DEFAULT_REGION", value = var.aws_region },
+    ]
+
+    secrets = [
+      {
+        name      = "DATABASE_URL"
+        valueFrom = "${aws_secretsmanager_secret.database.arn}:database_url::"
+      },
+      {
+        name      = "API_KEY"
+        valueFrom = "${aws_secretsmanager_secret.api_key.arn}:api_key::"
+      },
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.worker.name
+        awslogs-region        = var.aws_region
+        awslogs-stream-prefix = "worker"
+      }
+    }
+  }])
+}
+
+resource "aws_ecs_service" "worker" {
+  name            = "${local.name}-worker"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.worker.arn
+  desired_count   = var.worker_desired_count
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = data.aws_subnets.default.ids
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    assign_public_ip = !var.enable_no_egress_networking
+  }
+
+  deployment_minimum_healthy_percent = 0
+  deployment_maximum_percent         = 200
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
+  depends_on = [
     aws_vpc_endpoint.s3,
     aws_vpc_endpoint.interface,
   ]

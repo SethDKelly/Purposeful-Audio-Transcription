@@ -50,6 +50,22 @@ variable "ui_desired_count" {
   default = 1
 }
 
+variable "worker_desired_count" {
+  type        = number
+  default     = 1
+  description = "Dedicated workflow worker tasks (RRE_PROCESS=worker)."
+}
+
+variable "worker_cpu" {
+  type    = number
+  default = 512
+}
+
+variable "worker_memory" {
+  type    = number
+  default = 1024
+}
+
 variable "db_instance_class" {
   type    = string
   default = "db.t4g.micro"

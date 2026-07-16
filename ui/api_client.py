@@ -359,14 +359,65 @@ def run_workflow(
     model: str | None = None,
     *,
     background: bool | None = None,
+    safety_mode: bool | None = None,
 ) -> dict:
     payload: dict[str, object] = {"transcript_id": transcript_id, "model": model}
     if background is not None:
         payload["background"] = background
+    if safety_mode is not None:
+        payload["safety_mode"] = safety_mode
     response = _post(
         f"/api/workflows/{workflow_id}/run",
         json=payload,
         timeout=WORKFLOW_TIMEOUT,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
+def run_custom_workflow(
+    transcript_id: str,
+    modules: list[str],
+    *,
+    name: str | None = None,
+    model: str | None = None,
+    background: bool | None = None,
+    safety_mode: bool | None = None,
+) -> dict:
+    payload: dict[str, object] = {
+        "transcript_id": transcript_id,
+        "modules": modules,
+    }
+    if name:
+        payload["name"] = name
+    if model:
+        payload["model"] = model
+    if background is not None:
+        payload["background"] = background
+    if safety_mode is not None:
+        payload["safety_mode"] = safety_mode
+    response = _post(
+        "/api/workflows/custom/run",
+        json=payload,
+        timeout=WORKFLOW_TIMEOUT,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
+def fetch_transcript_length_assessment(transcript_id: str) -> dict:
+    response = _get(
+        f"/api/transcripts/{transcript_id}/length-assessment",
+        timeout=30.0,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
+def fetch_transcript_safety_assessment(transcript_id: str) -> dict:
+    response = _get(
+        f"/api/transcripts/{transcript_id}/safety-assessment",
+        timeout=30.0,
     )
     _raise_for_status(response)
     return response.json()

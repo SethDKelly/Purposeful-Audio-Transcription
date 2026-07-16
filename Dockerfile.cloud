@@ -24,14 +24,15 @@ ENV API_HOST=0.0.0.0 \
     TRANSCRIPTION_PROVIDER=transcribe \
     DIARIZATION_ENABLED=false \
     ALEMBIC_AUTO_UPGRADE=true \
-    UVICORN_WORKERS=2
+    UVICORN_WORKERS=2 \
+    RRE_PROCESS=api
 
 EXPOSE 8000
 
 # Looser than default so brief Bedrock load spikes don't flip the Docker HEALTHCHECK.
+# Worker process has no HTTP port — HEALTHCHECK only applies when RRE_PROCESS=api.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
-    CMD curl -f "http://127.0.0.1:8000/api/live" || exit 1
+    CMD sh -c 'if [ "${RRE_PROCESS:-api}" = "worker" ]; then exit 0; fi; curl -f "http://127.0.0.1:8000/api/live" || exit 1'
 
-# Shell form so UVICORN_WORKERS is expandable. Multiple workers keep /api/live
-# responsive while another worker handles long Bedrock Converse calls.
-CMD ["sh", "-c", "exec uvicorn backend.main:app --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS:-2}"]
+# RRE_PROCESS=api (default) or worker. Same image for API and dedicated worker tasks.
+CMD ["sh", "-c", "if [ \"${RRE_PROCESS:-api}\" = \"worker\" ]; then exec python -m backend.worker; else exec uvicorn backend.main:app --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS:-2}; fi"]

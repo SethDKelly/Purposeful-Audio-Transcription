@@ -58,6 +58,13 @@ class Settings(BaseSettings):
     # Parallel transcript modules within a workflow (meta-synthesis stays sequential).
     # Capped to limit Bedrock TPS / API load; SQLite forces 1 in the engine.
     workflow_module_concurrency: int = 3
+    # Dedicated worker polls CREATED jobs when true; API does not run them inline.
+    workflow_worker_enabled: bool = False
+    workflow_worker_poll_seconds: float = 2.0
+    # Wall-clock timeout for a single workflow job attempt (0 = disabled).
+    workflow_job_timeout_seconds: float = 7200.0
+    # Requeue failed attempts up to this count (includes the first try).
+    workflow_job_max_attempts: int = 2
     # One repair attempt (2 Converse calls total) after structured-output hardening.
     module_run_max_retries: int = 1
     evidence_prompt_max_quotes: int = 120

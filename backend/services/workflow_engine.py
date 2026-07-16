@@ -6,7 +6,7 @@ import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from backend.core.exceptions import WorkflowRunError
+from backend.core.exceptions import WorkflowRunCancelled, WorkflowRunError, WorkflowRunTimeout
 from backend.core.log_context import log_context_extra, workflow_run_id_var
 from backend.core.module_registry import module_registry
 from backend.core.workflow_registry import WorkflowDefinition, workflow_registry
@@ -27,6 +27,7 @@ from backend.services.module_runner import (
     module_runner,
 )
 from backend.services.transcript_service import TranscriptService, transcript_service
+from backend.services.safety_risk_scanner import SKIP_IN_SAFETY_MODE
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -56,6 +57,9 @@ class WorkflowEngine:
         workflow_id: str,
         transcript_id: str,
         model: str | None = None,
+        *,
+        queued: bool = False,
+        safety_mode: bool = False,
     ) -> WorkflowRun:
         self._workflows.get(workflow_id)
         self._transcripts.ensure_ready_for_analysis(transcript_id)
@@ -66,10 +70,35 @@ class WorkflowEngine:
                 workflow_id=workflow_id,
                 transcript_id=transcript_id,
                 model_used=model,
+                status=(
+                    WorkflowRunStatus.CREATED.value
+                    if queued
+                    else WorkflowRunStatus.RUNNING_MODULES.value
+                ),
+                safety_mode=safety_mode,
             )
-            workflow_run.status = WorkflowRunStatus.RUNNING_MODULES.value
-            self._repository.save(session, workflow_run)
+            if not queued:
+                workflow_run.status = WorkflowRunStatus.RUNNING_MODULES.value
+                self._repository.save(session, workflow_run)
         return workflow_run
+
+    def request_cancel(self, run_id: str) -> WorkflowRun:
+        with get_session() as session:
+            workflow_run = self._repository.get(session, run_id)
+            terminal = {
+                WorkflowRunStatus.COMPLETED.value,
+                WorkflowRunStatus.FAILED.value,
+                WorkflowRunStatus.CANCELLED.value,
+            }
+            if workflow_run.status in terminal:
+                return workflow_run
+            workflow_run.cancel_requested = True
+            if workflow_run.status == WorkflowRunStatus.CREATED.value:
+                workflow_run.status = WorkflowRunStatus.CANCELLED.value
+                workflow_run.completed_at = utc_now()
+                workflow_run.error_log = "Cancelled before execution"
+            self._repository.save(session, workflow_run)
+            return workflow_run
 
     def run(
         self,
@@ -78,6 +107,7 @@ class WorkflowEngine:
         model: str | None = None,
         *,
         run_id: str | None = None,
+        safety_mode: bool | None = None,
     ) -> WorkflowRun:
         workflow = self._workflows.get(workflow_id)
         self._transcripts.ensure_ready_for_analysis(transcript_id)
@@ -90,11 +120,21 @@ class WorkflowEngine:
                 raise WorkflowRunError("Workflow run does not match transcript_id")
             existing_module_runs = self._runner.list_by_workflow_run(run_id)
             resolved_model = model or workflow_run.model_used
+            resolved_safety = (
+                workflow_run.safety_mode if safety_mode is None else safety_mode
+            )
         else:
-            workflow_run = self.create_run(workflow_id, transcript_id, model=model)
+            resolved_safety = bool(safety_mode)
+            workflow_run = self.create_run(
+                workflow_id,
+                transcript_id,
+                model=model,
+                safety_mode=resolved_safety,
+            )
             existing_module_runs = []
             resolved_model = model
 
+        workflow_run.safety_mode = resolved_safety
         return self._execute(
             workflow,
             workflow_run,
@@ -115,11 +155,38 @@ class WorkflowEngine:
         with get_session() as session:
             return self._repository.list_incomplete(session)
 
+    def list_queued(self) -> list[WorkflowRun]:
+        with get_session() as session:
+            return self._repository.list_queued(session)
+
+    def claim_queued(self, run_id: str) -> WorkflowRun | None:
+        with get_session() as session:
+            return self._repository.claim_queued(session, run_id)
+
     def _module_concurrency(self) -> int:
         # SQLite write contention makes parallel module runs unsafe in pytest/local DB.
         if settings.is_sqlite:
             return 1
         return max(1, int(settings.workflow_module_concurrency or 1))
+
+    def _check_abort(self, workflow_run: WorkflowRun, started: float) -> None:
+        refreshed = self.get(workflow_run.id)
+        workflow_run.cancel_requested = refreshed.cancel_requested
+        workflow_run.status = refreshed.status
+        if refreshed.cancel_requested or refreshed.status == WorkflowRunStatus.CANCELLED.value:
+            workflow_run.status = WorkflowRunStatus.CANCELLED.value
+            workflow_run.completed_at = utc_now()
+            workflow_run.error_log = "Cancelled by user"
+            self._persist(workflow_run)
+            raise WorkflowRunCancelled(f"Workflow run {workflow_run.id} cancelled")
+
+        timeout = float(settings.workflow_job_timeout_seconds or 0)
+        if timeout > 0 and (time.monotonic() - started) > timeout:
+            workflow_run.status = WorkflowRunStatus.FAILED.value
+            workflow_run.completed_at = utc_now()
+            workflow_run.error_log = f"Timed out after {int(timeout)}s"
+            self._persist(workflow_run)
+            raise WorkflowRunTimeout(workflow_run.error_log)
 
     def _execute(
         self,
@@ -160,44 +227,35 @@ class WorkflowEngine:
         self._persist(workflow_run)
 
         try:
-            pending_transcript: list[str] = []
-
-            def flush_transcript_wave() -> WorkflowRun | None:
-                nonlocal pending_transcript
-                if not pending_transcript:
-                    return None
-                wave = pending_transcript
-                pending_transcript = []
-                return self._run_transcript_wave(
-                    workflow_run=workflow_run,
-                    transcript_id=transcript_id,
-                    module_ids=wave,
-                    model=model,
-                    module_runs=module_runs,
-                    prior_outputs=prior_outputs,
-                    started=started,
+            waves = workflow.waves
+            if waves is None:
+                return self._execute_linear(
+                    workflow,
+                    workflow_run,
+                    transcript_id,
+                    completed_module_ids,
+                    prior_outputs,
+                    module_runs,
+                    model,
+                    started,
                 )
 
-            for module_id in workflow.module_sequence:
-                if module_id in completed_module_ids:
-                    logger.info(
-                        "Skipping completed module %s for workflow run %s",
-                        module_id,
-                        workflow_run.id,
-                        extra={
-                            "event": "workflow.module.skipped",
-                            "run_id": workflow_run.id,
-                            "workflow_id": workflow.config.id,
-                            "module_id": module_id,
-                        },
+            for wave in waves:
+                self._check_abort(workflow_run, started)
+                pending = [
+                    m
+                    for m in wave.module_ids
+                    if m not in completed_module_ids
+                    and not (
+                        workflow_run.safety_mode and m in SKIP_IN_SAFETY_MODE
                     )
+                ]
+                if not pending:
                     continue
-
-                module = self._modules.get(module_id)
-                if module.config.input_type == "module_outputs":
-                    failed = flush_transcript_wave()
-                    if failed is not None:
-                        return failed
+                if wave.is_synthesis or any(
+                    self._modules.get(m).config.input_type == "module_outputs"
+                    for m in pending
+                ):
                     with get_session() as session:
                         self._graph_merge.merge_workflow_constructs_in_session(
                             session, workflow_run.id
@@ -207,33 +265,48 @@ class WorkflowEngine:
                         )
                     workflow_run.status = WorkflowRunStatus.SYNTHESIZING.value
                     self._persist(workflow_run)
-                    module_run = self._runner.run_synthesis(
-                        module_id=module_id,
-                        transcript_id=transcript_id,
-                        prior_outputs=prior_outputs,
-                        model=model,
-                        workflow_run_id=workflow_run.id,
-                    )
-                    module_runs.append(module_run)
-                    if module_run.status != ModuleRunStatus.COMPLETED.value:
-                        return self._fail_workflow(
-                            workflow_run,
-                            module_run,
-                            f"Module {module_id} failed",
-                            started,
+                    for module_id in pending:
+                        self._check_abort(workflow_run, started)
+                        module_run = self._runner.run_synthesis(
+                            module_id=module_id,
+                            transcript_id=transcript_id,
+                            prior_outputs=prior_outputs,
+                            model=model,
+                            workflow_run_id=workflow_run.id,
+                            safety_mode=workflow_run.safety_mode,
                         )
-                    if module_run.parsed_output:
-                        prior_outputs.append(
-                            compact_module_output_for_handoff(module_run.parsed_output)
-                        )
+                        module_runs.append(module_run)
+                        if module_run.status != ModuleRunStatus.COMPLETED.value:
+                            return self._fail_workflow(
+                                workflow_run,
+                                module_run,
+                                f"Module {module_id} failed",
+                                started,
+                            )
+                        if module_run.parsed_output:
+                            prior_outputs.append(
+                                compact_module_output_for_handoff(module_run.parsed_output)
+                            )
+                        completed_module_ids.add(module_id)
                 else:
-                    pending_transcript.append(module_id)
-
-            failed = flush_transcript_wave()
-            if failed is not None:
-                return failed
+                    failed = self._run_transcript_wave(
+                        workflow_run=workflow_run,
+                        transcript_id=transcript_id,
+                        module_ids=pending,
+                        model=model,
+                        module_runs=module_runs,
+                        prior_outputs=prior_outputs,
+                        started=started,
+                    )
+                    if failed is not None:
+                        return failed
+                    completed_module_ids.update(pending)
 
             return self._complete_workflow(workflow_run, module_runs, started)
+        except WorkflowRunCancelled:
+            return self.get(workflow_run.id)
+        except WorkflowRunTimeout:
+            return self.get(workflow_run.id)
         except WorkflowRunError:
             raise
         except Exception as exc:
@@ -254,6 +327,108 @@ class WorkflowEngine:
             raise WorkflowRunError(f"Workflow failed: {exc}") from exc
         finally:
             workflow_run_id_var.reset(workflow_token)
+
+    def _execute_linear(
+        self,
+        workflow: WorkflowDefinition,
+        workflow_run: WorkflowRun,
+        transcript_id: str,
+        completed_module_ids: set[str],
+        prior_outputs: list[dict],
+        module_runs: list[ModuleRun],
+        model: str | None,
+        started: float,
+    ) -> WorkflowRun:
+        pending_transcript: list[str] = []
+
+        def flush_transcript_wave() -> WorkflowRun | None:
+            nonlocal pending_transcript
+            if not pending_transcript:
+                return None
+            wave = pending_transcript
+            pending_transcript = []
+            return self._run_transcript_wave(
+                workflow_run=workflow_run,
+                transcript_id=transcript_id,
+                module_ids=wave,
+                model=model,
+                module_runs=module_runs,
+                prior_outputs=prior_outputs,
+                started=started,
+            )
+
+        for module_id in workflow.module_sequence:
+            self._check_abort(workflow_run, started)
+            if workflow_run.safety_mode and module_id in SKIP_IN_SAFETY_MODE:
+                logger.info(
+                    "Skipping module %s for safety_mode on workflow run %s",
+                    module_id,
+                    workflow_run.id,
+                    extra={
+                        "event": "workflow.module.skipped",
+                        "run_id": workflow_run.id,
+                        "workflow_id": workflow.config.id,
+                        "module_id": module_id,
+                        "reason": "safety_mode",
+                    },
+                )
+                continue
+            if module_id in completed_module_ids:
+                logger.info(
+                    "Skipping completed module %s for workflow run %s",
+                    module_id,
+                    workflow_run.id,
+                    extra={
+                        "event": "workflow.module.skipped",
+                        "run_id": workflow_run.id,
+                        "workflow_id": workflow.config.id,
+                        "module_id": module_id,
+                    },
+                )
+                continue
+
+            module = self._modules.get(module_id)
+            if module.config.input_type == "module_outputs":
+                failed = flush_transcript_wave()
+                if failed is not None:
+                    return failed
+                with get_session() as session:
+                    self._graph_merge.merge_workflow_constructs_in_session(
+                        session, workflow_run.id
+                    )
+                    self._convergence.score_workflow_constructs_in_session(
+                        session, workflow_run.id
+                    )
+                workflow_run.status = WorkflowRunStatus.SYNTHESIZING.value
+                self._persist(workflow_run)
+                module_run = self._runner.run_synthesis(
+                    module_id=module_id,
+                    transcript_id=transcript_id,
+                    prior_outputs=prior_outputs,
+                    model=model,
+                    workflow_run_id=workflow_run.id,
+                    safety_mode=workflow_run.safety_mode,
+                )
+                module_runs.append(module_run)
+                if module_run.status != ModuleRunStatus.COMPLETED.value:
+                    return self._fail_workflow(
+                        workflow_run,
+                        module_run,
+                        f"Module {module_id} failed",
+                        started,
+                    )
+                if module_run.parsed_output:
+                    prior_outputs.append(
+                        compact_module_output_for_handoff(module_run.parsed_output)
+                    )
+            else:
+                pending_transcript.append(module_id)
+
+        failed = flush_transcript_wave()
+        if failed is not None:
+            return failed
+
+        return self._complete_workflow(workflow_run, module_runs, started)
 
     def _run_transcript_wave(
         self,
@@ -293,6 +468,7 @@ class WorkflowEngine:
         results: dict[str, ModuleRun] = {}
         if concurrency == 1:
             for module_id in module_ids:
+                self._check_abort(workflow_run, started)
                 module_run = self._runner.run(
                     module_id=module_id,
                     transcript_id=transcript_id,

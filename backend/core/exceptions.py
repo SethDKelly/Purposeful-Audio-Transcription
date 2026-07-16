@@ -81,6 +81,11 @@ class ModuleRunError(AppError):
         super().__init__(message, status_code=400)
 
 
+class CustomWorkflowValidationError(AppError):
+    def __init__(self, message: str):
+        super().__init__(message, status_code=400)
+
+
 class WorkflowNotFoundError(AppError):
     def __init__(self, message: str):
         super().__init__(message, status_code=404)
@@ -94,6 +99,14 @@ class WorkflowRunNotFoundError(AppError):
 class WorkflowRunError(AppError):
     def __init__(self, message: str):
         super().__init__(message, status_code=400)
+
+
+class WorkflowRunCancelled(WorkflowRunError):
+    """Cooperative cancel of an in-flight or queued workflow run."""
+
+
+class WorkflowRunTimeout(WorkflowRunError):
+    """Workflow job exceeded WORKFLOW_JOB_TIMEOUT_SECONDS."""
 
 
 class WorkflowSyncLimitError(AppError):

@@ -122,6 +122,9 @@ class WorkflowRunRow(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     error_log: Mapped[str | None] = mapped_column(Text, nullable=True)
     telemetry_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cancel_requested: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    safety_mode: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
 
 
 class SynthesisReportRow(Base):
