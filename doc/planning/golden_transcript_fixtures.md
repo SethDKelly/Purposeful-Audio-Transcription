@@ -1,12 +1,13 @@
 # Golden Transcript Fixtures — Implementation Note
 
-**Status:** Active evaluation substrate for **v0.7 Priority 5** (and usable earlier for ingest/quote/workflow smoke).  
+**Status:** Active evaluation substrate for **v0.7 Priority 5**.  
 **Canonical plan:** [implementing.md](implementing.md) · [../evaluation/golden_fixture_evaluation_plan.md](../evaluation/golden_fixture_evaluation_plan.md)
 
 ## Location
 
 ```text
 tests/fixtures/golden_transcripts/
+  README.md
   GT001_missed_dinner_couple/
   GT002_caregiving_siblings/
   …
@@ -21,34 +22,44 @@ One subdirectory per fixture. Existing short `.txt` fixtures under `tests/fixtur
 | `transcript.md` | Human-readable labeled dialogue |
 | `transcript.json` | Machine-readable turns + scenario metadata fields |
 | `expected_signals.md` | Human evaluator guide (construct targets, module expectations) |
-| `metadata.yaml` | Stable machine metadata (id, participants, tags, recommended workflows) |
-| `expected_assertions.yaml` | Machine-checkable assertions for automated / golden tests |
+| `metadata.yaml` | Stable machine metadata (id, participants, patterns, safety bounds) |
+| `expected_assertions.yaml` | Signal-based machine assertions (`required_signals`, forbidden claims) |
 
 ## Why these fixtures exist
 
-Golden transcripts are needed to:
+Golden transcripts support:
 
-- Regression-test ingest → quote ID assignment without depending on live Bedrock
-- Smoke-test workflows/modules with **mocked** LLM outputs against realistic multi-turn dialogue
-- Anchor human + automated evaluation (construct signals, safety bounds) before growing the module set
-- Optionally run **live model** golden checks marked `@pytest.mark.integration` + `@pytest.mark.golden` (not in default CI)
+- Regression-test ingest → quote ID assignment without live Bedrock
+- Smoke-test workflows/modules with **mocked** LLM outputs against realistic dialogue
+- Signal-based evaluation (constructs, evidence, confidence bounds) — not prose snapshots
+- Optional **live model** golden checks (`RUN_LIVE_GOLDEN_TESTS=1`)
 
-## Pytest coverage expectations
+## Pytest coverage
 
-1. Load each fixture's `transcript.json` (schema sanity: `fixture_id`, `turns`, speakers)
-2. Generate/validate sequential quote IDs (`Q001`…) after ingest
-3. Parse `expected_assertions.yaml` successfully
-4. Smoke-test workflow/module execution against fixtures with mocked LLM outputs
-5. Optional live Bedrock golden tests: `@pytest.mark.integration` and `@pytest.mark.golden` (skipped unless explicitly selected)
+| File | Purpose |
+|------|---------|
+| `test_golden_fixture_loading.py` | Directory layout, JSON/YAML validity |
+| `test_golden_expected_assertions.py` | Assertion schema, signal structure |
+| `test_golden_evidence_index.py` | Quote IDs, required substring presence |
+| `test_golden_module_contracts.py` | Mocked module output + evidence validation |
+| `test_golden_workflow_smoke.py` | Mocked workflow smoke; optional live ingest |
+
+Run:
+
+```bash
+pytest -m golden
+pytest -m "golden and not live_model"
+RUN_LIVE_GOLDEN_TESTS=1 pytest -m "golden and live_model"
+```
 
 ## Adding a new fixture
 
-1. Create `tests/fixtures/golden_transcripts/<ID>_<slug>/`
-2. Add the five files above (signals + assertions should agree on high-confidence targets)
-3. Extend `tests/test_golden_transcripts.py` discovery (auto-discovers subdirs with `transcript.json`)
-4. Prefer anonymized content; keep `safety_level` accurate in metadata
+1. Create `tests/fixtures/golden_transcripts/<ID>_<slug>/` with all five files.
+2. Align `metadata.yaml` and `expected_assertions.yaml` on `fixture_id`.
+3. Ensure `required_quote_substrings` and each signal's `must_reference_any` appear in `transcript.json`.
+4. Discovery is automatic — no test file edits required.
 
 ## Related
 
-- Loader helper: `tests/helpers/golden_transcripts.py`
-- Tests: `tests/test_golden_transcripts.py`
+- Fixture README: `tests/fixtures/golden_transcripts/README.md`
+- Loader + evaluation helpers: `tests/helpers/golden_transcripts.py`

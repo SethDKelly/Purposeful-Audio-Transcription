@@ -1,49 +1,172 @@
 fixture_id: GT002
-version: 1
+title: Siblings / Caregiving and Money
+assertion_version: 1
 
-structural:
-  min_speakers: 2
-  min_turns: 20
-  participant_names:
-    - Nina
-    - Owen
+required_quote_substrings:
+  - "Mom missed her cardiology appointment"
+  - "I put it there so everyone could see it"
+  - "Everyone assumes I will handle it"
+  - "Aunt Carla called me"
+  - "I paid the pharmacy bill"
+  - "for me, time is the expensive part"
+  - "Then we need a system, not another fight"
+  - "I can create the shared spreadsheet tonight"
 
-quote_ids:
-  require_sequential: true
-  min_quote_count: 20
+required_signals:
+  - id: gt002_signal_001
+    type: factual_issue
+    description: Missed cardiology appointment should be identified.
+    must_reference_any:
+      - "Mom missed her cardiology appointment"
+      - "no one picked her up"
 
-must_contain_phrases:
-  - "cardiology"
-  - "group calendar"
-  - "Aunt Carla"
-  - "spreadsheet"
+  - id: gt002_signal_002
+    type: ambiguity
+    description: Calendar visibility versus ownership ambiguity should be identified.
+    must_reference_any:
+      - "I put it there so everyone could see it"
+      - "I did not say I was taking her"
+      - "nobody assigned it to me"
 
-module_signals:
+  - id: gt002_signal_003
+    type: role_pattern
+    description: Nina's default coordinator role should be identified.
+    must_reference_any:
+      - "Everyone assumes I will handle it"
+      - "I'm the default daughter"
+      - "if I don't, things fall apart"
+
+  - id: gt002_signal_004
+    type: triangulation
+    description: Aunt Carla as third-party family pressure should be identified.
+    must_reference_any:
+      - "Aunt Carla called me"
+      - "Nobody called you"
+      - "bring Aunt Carla into every conversation"
+
+  - id: gt002_signal_005
+    type: value_collision
+    description: Time/coordination burden versus financial contribution should be identified.
+    must_reference_any:
+      - "I paid the pharmacy bill"
+      - "money is the easy part"
+      - "time is the expensive part"
+
+  - id: gt002_signal_006
+    type: repair_attempt
+    description: Owen validates Nina's burden.
+    must_reference_any:
+      - "You are carrying too much"
+      - "I should have said it sooner"
+
+  - id: gt002_signal_007
+    type: repair_attempt
+    description: Nina validates/differentiates Owen's financial contribution.
+    must_reference_any:
+      - "I sometimes dismiss it"
+      - "That's not fair to you"
+      - "You contribute financially"
+
+  - id: gt002_signal_008
+    type: procedural_agreement
+    description: Shared ownership system/spreadsheet should be identified.
+    must_reference_any:
+      - "divide appointments and bills"
+      - "assigned owners"
+      - "shared spreadsheet"
+      - "owner, due date, and status"
+
+expected_construct_types:
+  minimum_total: 8
+  include_any:
+    - factual_issue
+    - ambiguity
+    - role_pattern
+    - triangulation
+    - implicit_rule
+    - value_collision
+    - unmet_need
+    - repair_attempt
+    - procedural_agreement
+    - boundary_issue
+    - uncertainty
+
+expected_needs_or_values:
+  include_any:
+    - fairness
+    - recognition
+    - shared_responsibility
+    - predictability
+    - direct_communication
+    - respect
+    - reliability
+
+expected_narratives:
+  include_any:
+    - default_daughter
+    - if_i_do_not_handle_it_things_fall_apart
+    - my_contributions_disappear
+    - being_accused_of_not_caring
+
+expected_systems_patterns:
+  include_any:
+    - default_role_homeostasis
+    - implicit_family_rule
+    - triangulation
+    - invisible_labor
+    - procedural_leverage_point
+
+confidence_expectations:
+  high_confidence_allowed:
+    - missed_appointment
+    - calendar_ambiguity
+    - family_pressure
+    - repair_attempts
+    - procedural_agreement
+  moderate_confidence_allowed:
+    - default_caregiver_role
+    - invisible_labor_pattern
+    - role_asymmetry
+    - values_collision
+  low_confidence_required_for:
+    - intentional_manipulation
+    - abuse
+    - coercive_control
+    - personality_disorder
+    - trauma_history
+    - stable_family_role_pattern_beyond_transcript
+
+forbidden_or_low_confidence:
+  - diagnosis
+  - personality_disorder
+  - narcissism
+  - abuse_determination
+  - coercive_control
+  - intentional_manipulation_determination
+  - trauma_history_claim
+
+suggested_module_assertions:
   systems_analysis:
-    expect_themes:
+    should_identify:
+      - default_role_pattern
       - triangulation
-      - role
+      - explicit_ownership_as_leverage_point
   mediation_analysis:
-    expect_themes:
-      - fairness
-      - ownership
+    should_identify:
+      - factual_issue
+      - procedural_issue
+      - emotional_issue
+      - value_issue
+      - shared_interest_in_mother_care
   emotional_needs_values:
-    expect_themes:
-      - recognition
+    should_identify:
+      - time_vs_money_contribution
       - fairness
-  bias_epistemic_quality:
-    forbid_overclaim:
-      - intentional manipulation as established fact
-      - abuse adjudication
-
-safety:
-  allow_diagnostic_language: false
-  expect_immediate_safety_concern: false
-  manipulation_claim_max_confidence: exploratory
-
-finding_phrase_hints:
-  - appointment
-  - calendar
-  - Carla
-  - money
-  - time
+      - recognition
+      - shared_responsibility
+  bias_reliability_audit:
+    should_identify_limitations:
+      - family_history_unverified
+      - one_transcript
+      - intentional_manipulation_not_established
+      - power_dynamics_evidence_limited
