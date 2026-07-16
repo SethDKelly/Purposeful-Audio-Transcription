@@ -7,6 +7,9 @@ from ui.components.finding_card import render_finding_card
 def render_module_tabs(
     module_runs: list[dict],
     quotes_by_id: dict[str, dict],
+    *,
+    workflow_run_id: str | None = None,
+    transcript_id: str | None = None,
 ) -> None:
     completed_runs = [
         run
@@ -41,6 +44,8 @@ def render_module_tabs(
                         module_id=module_id,
                         quotes_by_id=quotes_by_id,
                         key_prefix=f"{module_id}_{index}",
+                        workflow_run_id=workflow_run_id,
+                        transcript_id=transcript_id,
                     )
 
             recommendations = parsed.get("recommendations", [])

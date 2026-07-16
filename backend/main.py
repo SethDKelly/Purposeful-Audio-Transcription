@@ -12,6 +12,7 @@ from backend.api.routes import (
     audit,
     cases,
     exploration,
+    feedback,
     health,
     models,
     module_stream,
@@ -168,6 +169,7 @@ app.include_router(exploration.router)
 app.include_router(process.router)
 app.include_router(transcripts.router)
 app.include_router(cases.router)
+app.include_router(feedback.router)
 app.include_router(audit.router)
 
 

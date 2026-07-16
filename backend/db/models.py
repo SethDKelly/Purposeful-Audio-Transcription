@@ -248,3 +248,21 @@ class ConstructRelationshipEvidenceQuoteRow(Base):
     )
     quote_id: Mapped[str] = mapped_column(String(16))
     position: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class FindingFeedbackRow(Base):
+    """Analyst review feedback on findings (v0.9 P6)."""
+
+    __tablename__ = "finding_feedback"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    finding_row_id: Mapped[str | None] = mapped_column(
+        ForeignKey("findings.id"), nullable=True, index=True
+    )
+    finding_key: Mapped[str] = mapped_column(String(256), index=True)
+    workflow_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    transcript_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    case_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    rating: Mapped[str] = mapped_column(String(32))
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)

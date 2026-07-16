@@ -351,6 +351,25 @@ class AssignTranscriptCaseResponse(BaseModel):
     session_date: str | None = None
 
 
+class FindingFeedbackRequest(BaseModel):
+    rating: str
+    note: str | None = None
+    transcript_id: str | None = None
+    case_id: str | None = None
+
+
+class FindingFeedbackResponse(BaseModel):
+    id: str
+    finding_key: str
+    finding_row_id: str | None = None
+    workflow_run_id: str | None = None
+    transcript_id: str | None = None
+    case_id: str | None = None
+    rating: str
+    note: str | None = None
+    created_at: str
+
+
 class SpeakerUpdateItem(BaseModel):
     id: str
     label: str | None = None

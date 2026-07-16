@@ -185,6 +185,34 @@ def run_longitudinal_synthesis(case_id: str, model: str | None = None) -> dict:
     return response.json()
 
 
+def submit_finding_feedback(
+    workflow_run_id: str,
+    finding_key: str,
+    *,
+    rating: str,
+    note: str | None = None,
+    transcript_id: str | None = None,
+    case_id: str | None = None,
+) -> dict:
+    from urllib.parse import quote
+
+    payload: dict = {"rating": rating}
+    if note is not None:
+        payload["note"] = note
+    if transcript_id is not None:
+        payload["transcript_id"] = transcript_id
+    if case_id is not None:
+        payload["case_id"] = case_id
+    encoded = quote(finding_key, safe="")
+    response = _post(
+        f"/api/workflow-runs/{workflow_run_id}/findings/{encoded}/feedback",
+        timeout=30.0,
+        json=payload,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
 def module_name_map(modules: list[dict]) -> dict[str, str]:
     return {module["id"]: module["name"] for module in modules if module.get("id")}
 
