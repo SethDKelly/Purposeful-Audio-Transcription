@@ -47,8 +47,8 @@ security → transcript quality → ontology → structured persistence
 ```text
 [x] Release v0.8.0 · Deploy once · Pause AWS when idle
 [x] v0.9 Priority 1 — Case data model
-[ ] v0.9 Priority 2 — Case dashboard
-[ ] v0.9 Priority 3 — Longitudinal comparison
+[x] v0.9 Priority 2 — Case dashboard
+[x] v0.9 Priority 3 — Longitudinal comparison
 [ ] v0.9 Priority 4 — Longitudinal synthesis module
 [ ] v0.9 Priority 5 — Report package export
 [ ] v0.9 Priority 6 — User feedback / analyst review loop

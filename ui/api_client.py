@@ -120,6 +120,58 @@ def fetch_modules() -> list[dict]:
     return []
 
 
+def list_cases() -> list[dict]:
+    response = _get("/api/cases", timeout=30.0)
+    _raise_for_status(response)
+    return response.json().get("cases", [])
+
+
+def create_case(title: str, notes: str | None = None) -> dict:
+    payload: dict = {"title": title}
+    if notes is not None:
+        payload["notes"] = notes
+    response = _post("/api/cases", timeout=30.0, json=payload)
+    _raise_for_status(response)
+    return response.json()
+
+
+def get_case(case_id: str) -> dict:
+    response = _get(f"/api/cases/{case_id}", timeout=30.0)
+    _raise_for_status(response)
+    return response.json()
+
+
+def assign_transcript_case(
+    transcript_id: str,
+    *,
+    case_id: str | None,
+    session_label: str | None = None,
+    session_date: str | None = None,
+) -> dict:
+    payload: dict = {"case_id": case_id}
+    if session_label is not None:
+        payload["session_label"] = session_label
+    if session_date is not None:
+        payload["session_date"] = session_date
+    response = _patch(
+        f"/api/transcripts/{transcript_id}/case",
+        timeout=30.0,
+        json=payload,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
+def compare_case_transcripts(case_id: str) -> dict:
+    response = _post(
+        "/api/exploration/compare-transcripts",
+        timeout=60.0,
+        json={"case_id": case_id},
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
 def module_name_map(modules: list[dict]) -> dict[str, str]:
     return {module["id"]: module["name"] for module in modules if module.get("id")}
 

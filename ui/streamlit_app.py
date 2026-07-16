@@ -26,6 +26,7 @@ from ui.api_client import (
     update_transcript_turns,
     upload_transcript_text,
 )
+from ui.components.case_dashboard import render_case_dashboard
 from ui.components.evidence_quote_viewer import (
     build_quotes_index,
     index_modules_by_quote,
@@ -373,9 +374,16 @@ def main() -> None:
         ("transcript_bundle", None),
         ("workflow_run", None),
         ("synthesis_report", None),
+        ("case_comparison", None),
     ):
         if key not in st.session_state:
             st.session_state[key] = default
+
+    current_tid = None
+    if st.session_state.transcript_bundle:
+        current_tid = st.session_state.transcript_bundle.get("transcript", {}).get("id")
+    with st.expander("Cases & longitudinal", expanded=False):
+        render_case_dashboard(current_transcript_id=current_tid)
 
     # --- Step 1: Ingest ---
     st.subheader("Step 1 - Ingest")
