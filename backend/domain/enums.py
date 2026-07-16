@@ -49,9 +49,14 @@ class RelationshipType(StrEnum):
     DEESCALATES = "deescalates"
     PROTECTS = "protects"
     THREATENS = "threatens"
+    MAINTAINS = "maintains"
+    REPAIRS = "repairs"
     CO_OCCURS_WITH = "co_occurs_with"
     ALTERNATIVE_TO = "alternative_to"
+    EVIDENCE_FOR = "evidence_for"
+    EVIDENCE_AGAINST = "evidence_against"
     INTERVENTION_FOR = "intervention_for"
+    SOURCE_OF_UNCERTAINTY_FOR = "source_of_uncertainty_for"
 
 
 class ModuleRunStatus(StrEnum):

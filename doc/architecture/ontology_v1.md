@@ -4,14 +4,14 @@ Implementation plan for **v0.7 Priority 3**. Complements conceptual design in [.
 
 ## Placement
 
-Prefer machine-readable definitions under:
+Machine-readable definitions:
 
 ```text
-config/ontology/constructs.yaml   # or ontology.yaml
+config/ontology/constructs.yaml
 config/ontology/relationships.yaml
 ```
 
-Optional Python loader: `backend/domain/ontology.py`. Human summary stays in this doc.
+Loader: `backend/core/ontology_registry.py`. Human summary stays in this doc.
 
 Each type needs: **stable ID**, **label**, **description**, optional **confidence ceiling**, optional **aliases**.
 

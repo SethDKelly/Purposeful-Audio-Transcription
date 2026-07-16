@@ -18,6 +18,11 @@ required_constructs:
   - trigger_pattern
   - dysregulation_signal
   - co_regulation_opportunity
+expected_constructs:
+  - safety_cue
+  - threat_cue
+  - emotion
+  - repair_attempt
 output_schema: module_output_v1
 recommended_companions:
   - nvc_analysis

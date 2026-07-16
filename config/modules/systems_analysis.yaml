@@ -19,6 +19,12 @@ required_constructs:
   - role
   - boundary
   - leverage_point
+expected_constructs:
+  - interaction_cycle
+  - feedback_loop
+  - identity_theme
+  - boundary
+  - intervention
 output_schema: module_output_v1
 recommended_companions:
   - nvc_analysis

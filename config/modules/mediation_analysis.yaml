@@ -18,6 +18,11 @@ required_constructs:
   - interest
   - misunderstanding
   - resolution_pathway
+expected_constructs:
+  - assumption
+  - need
+  - value
+  - intervention
 output_schema: module_output_v1
 recommended_companions:
   - nvc_analysis

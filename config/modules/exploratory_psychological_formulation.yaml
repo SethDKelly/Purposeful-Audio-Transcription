@@ -18,6 +18,11 @@ required_constructs:
   - protective_factor
   - vulnerability_pattern
   - uncertainty
+expected_constructs:
+  - interpretation
+  - uncertainty
+  - strength
+  - threat_cue
 output_schema: module_output_v1
 recommended_companions:
   - cognitive_analysis

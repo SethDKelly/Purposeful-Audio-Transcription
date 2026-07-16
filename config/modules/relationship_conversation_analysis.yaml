@@ -18,6 +18,11 @@ required_constructs:
   - escalation_cycle
   - repair_attempt
   - emotional_dynamic
+expected_constructs:
+  - interaction_cycle
+  - escalation_point
+  - repair_attempt
+  - emotion
 output_schema: module_output_v1
 recommended_companions:
   - nvc_analysis

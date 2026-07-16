@@ -18,6 +18,11 @@ required_constructs:
   - identity_theme
   - meaning_making
   - narrative_reframe
+expected_constructs:
+  - narrative
+  - identity_theme
+  - belief
+  - interpretation
 output_schema: module_output_v1
 recommended_companions:
   - exploratory_psychological_formulation

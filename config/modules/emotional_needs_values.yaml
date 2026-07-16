@@ -18,6 +18,11 @@ required_constructs:
   - value
   - unmet_need
   - value_conflict
+expected_constructs:
+  - need
+  - value
+  - emotion
+  - value_collision
 output_schema: module_output_v1
 recommended_companions:
   - nvc_analysis

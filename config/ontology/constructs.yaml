@@ -1,0 +1,226 @@
+version: 1
+description: Canonical construct vocabulary for RRE module outputs and graph persistence.
+
+constructs:
+  - id: observation
+    label: Observation
+    description: Observable utterance or behavior stated in the transcript.
+    category: core
+
+  - id: interpretation
+    label: Interpretation
+    description: Inferred meaning beyond direct observation.
+    category: core
+
+  - id: emotion
+    label: Emotion
+    description: Affective state expressed or implied in the exchange.
+    category: core
+    aliases:
+      - feeling
+      - emotional_dynamic
+      - emotional_need
+      - dysregulation_signal
+
+  - id: need
+    label: Need
+    description: Underlying need that may drive behavior or distress.
+    category: core
+    aliases:
+      - unmet_need
+      - interest
+
+  - id: value
+    label: Value
+    description: Stated or implied value at stake in the interaction.
+    category: core
+    aliases:
+      - value_conflict
+
+  - id: belief
+    label: Belief
+    description: Belief or assumption about self, other, or world.
+    category: core
+    aliases:
+      - automatic_thought
+      - core_belief
+
+  - id: narrative
+    label: Narrative
+    description: Storyline a participant appears to be living in.
+    category: core
+    aliases:
+      - personal_narrative
+      - meaning_making
+      - narrative_reframe
+      - integrated_model
+
+  - id: identity_theme
+    label: Identity Theme
+    description: Identity-relevant theme shaping how the speaker positions themselves.
+    category: core
+    aliases:
+      - role
+      - role_pattern
+
+  - id: repair_attempt
+    label: Repair Attempt
+    description: Bid to repair rupture or restore connection.
+    category: core
+    aliases:
+      - repair_opportunity
+      - bid_for_connection
+      - co_regulation_opportunity
+
+  - id: missed_repair
+    label: Missed Repair
+    description: Repair opportunity that was not taken or not received.
+    category: core
+
+  - id: escalation_point
+    label: Escalation Point
+    description: Moment that increases conflict intensity or defensiveness.
+    category: core
+    aliases:
+      - escalation_pattern
+      - escalation_cycle
+      - protest_behavior
+
+  - id: deescalation_point
+    label: De-escalation Point
+    description: Moment that reduces conflict intensity.
+    category: core
+
+  - id: interaction_cycle
+    label: Interaction Cycle
+    description: Recurring interaction pattern across turns.
+    category: core
+    aliases:
+      - communication_pattern
+
+  - id: feedback_loop
+    label: Feedback Loop
+    description: Reinforcing or balancing loop maintaining a pattern.
+    category: core
+
+  - id: threat_cue
+    label: Threat Cue
+    description: Cue experienced as threatening to safety or connection.
+    category: core
+    aliases:
+      - trigger_pattern
+      - vulnerability_pattern
+      - withdrawal_pattern
+
+  - id: safety_cue
+    label: Safety Cue
+    description: Cue experienced as increasing safety or connection.
+    category: core
+
+  - id: boundary
+    label: Boundary
+    description: Boundary stated, tested, or crossed in the exchange.
+    category: core
+    aliases:
+      - boundary_issue
+
+  - id: assumption
+    label: Assumption
+    description: Unexamined assumption influencing interpretation.
+    category: core
+    aliases:
+      - position
+      - misunderstanding
+
+  - id: cognitive_distortion
+    label: Cognitive Distortion
+    description: Distorted cognition pattern framed non-diagnostically.
+    category: core
+    aliases:
+      - bias
+
+  - id: attribution
+    label: Attribution
+    description: Causal attribution about intent, blame, or responsibility.
+    category: core
+
+  - id: request
+    label: Request
+    description: Explicit or implicit request for action or change.
+    category: core
+
+  - id: intervention
+    label: Intervention
+    description: Suggested intervention or leverage point (non-prescriptive coaching).
+    category: core
+    aliases:
+      - leverage_point
+      - resolution_pathway
+
+  - id: uncertainty
+    label: Uncertainty
+    description: Explicit uncertainty about interpretation or evidence.
+    category: core
+    aliases:
+      - divergence
+      - formulation_hypothesis
+
+  - id: limitation
+    label: Limitation
+    description: Limitation of evidence or analysis scope.
+    category: core
+    aliases:
+      - evidence_gap
+      - reliability_issue
+
+  - id: strength
+    label: Strength
+    description: Relational strength or resource visible in the exchange.
+    category: core
+    aliases:
+      - protective_factor
+      - relationship_strength
+
+  - id: alternative_explanation
+    label: Alternative Explanation
+    description: Competing explanation for the same evidence.
+    category: core
+    aliases:
+      - convergence
+
+  - id: missed_expectation
+    label: Missed Expectation
+    description: Expectation that was not met in the interaction.
+    category: extension
+
+  - id: factual_issue
+    label: Factual Issue
+    description: Disputed or salient factual matter in the conversation.
+    category: extension
+
+  - id: ambiguity
+    label: Ambiguity
+    description: Ambiguity about roles, ownership, or meaning.
+    category: extension
+
+  - id: triangulation
+    label: Triangulation
+    description: Third party drawn into a dyadic conflict or coordination issue.
+    category: extension
+
+  - id: value_collision
+    label: Value Collision
+    description: Competing values or contribution models in conflict.
+    category: extension
+
+  - id: procedural_agreement
+    label: Procedural Agreement
+    description: Agreement on process, ownership, or next steps.
+    category: extension
+    aliases:
+      - practical_agreement
+
+  - id: implicit_rule
+    label: Implicit Rule
+    description: Unspoken family or relational rule shaping behavior.
+    category: extension

@@ -18,6 +18,11 @@ required_constructs:
   - feeling
   - need
   - request
+expected_constructs:
+  - observation
+  - emotion
+  - need
+  - request
 output_schema: module_output_v1
 recommended_companions:
   - relationship_conversation_analysis
