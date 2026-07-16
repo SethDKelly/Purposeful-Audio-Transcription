@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import UTC, datetime
 
@@ -91,6 +92,9 @@ def _to_row(run: WorkflowRun) -> WorkflowRunRow:
         started_at=run.started_at,
         completed_at=run.completed_at,
         error_log=run.error_log,
+        telemetry_summary=(
+            json.dumps(run.telemetry_summary) if run.telemetry_summary else None
+        ),
     )
 
 
@@ -99,6 +103,9 @@ def _update_row(row: WorkflowRunRow, run: WorkflowRun) -> None:
     row.model_used = run.model_used
     row.completed_at = run.completed_at
     row.error_log = run.error_log
+    row.telemetry_summary = (
+        json.dumps(run.telemetry_summary) if run.telemetry_summary else None
+    )
 
 
 def _from_row(row: WorkflowRunRow) -> WorkflowRun:
@@ -111,4 +118,7 @@ def _from_row(row: WorkflowRunRow) -> WorkflowRun:
         started_at=row.started_at,
         completed_at=row.completed_at,
         error_log=row.error_log,
+        telemetry_summary=(
+            json.loads(row.telemetry_summary) if row.telemetry_summary else None
+        ),
     )

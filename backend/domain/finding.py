@@ -73,5 +73,6 @@ class ModuleRun(BaseModel):
     validation_errors: list[str] | None = None
     validation_warnings: list[str] | None = None
     safety_flags: list[str] | None = None
+    telemetry: dict | None = None
     created_at: datetime
     completed_at: datetime | None = None

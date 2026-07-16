@@ -84,6 +84,7 @@ def _to_row(run: ModuleRun) -> ModuleRunRow:
             json.dumps(run.validation_warnings) if run.validation_warnings else None
         ),
         safety_flags=json.dumps(run.safety_flags) if run.safety_flags else None,
+        telemetry=json.dumps(run.telemetry) if run.telemetry else None,
         created_at=run.created_at,
         completed_at=run.completed_at,
     )
@@ -102,6 +103,7 @@ def _update_row(row: ModuleRunRow, run: ModuleRun) -> None:
         json.dumps(run.validation_warnings) if run.validation_warnings else None
     )
     row.safety_flags = json.dumps(run.safety_flags) if run.safety_flags else None
+    row.telemetry = json.dumps(run.telemetry) if run.telemetry else None
     row.completed_at = run.completed_at
 
 
@@ -124,6 +126,7 @@ def _from_row(row: ModuleRunRow) -> ModuleRun:
             json.loads(row.validation_warnings) if row.validation_warnings else None
         ),
         safety_flags=json.loads(row.safety_flags) if row.safety_flags else None,
+        telemetry=json.loads(row.telemetry) if row.telemetry else None,
         created_at=row.created_at,
         completed_at=row.completed_at,
     )

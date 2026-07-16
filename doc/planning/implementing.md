@@ -51,8 +51,8 @@ security → transcript quality → ontology → structured persistence
 [x] v0.7 Priority 2 — Transcript preparation workspace
 [x] v0.7 Priority 3 — Ontology vocabulary v1
 [x] v0.7 Priority 4 — Module construct expectations
-[ ] v0.7 Priority 5 — Golden fixtures + evaluation foundation (GT001/GT002 landed; expand to 5–10)
-[ ] v0.7 Priority 6 — Cost / latency / module telemetry
+[x] v0.7 Priority 5 — Golden fixtures + evaluation foundation (GT001/GT002 + rubric; expand count later)
+[x] v0.7 Priority 6 — Cost / latency / module telemetry
 [ ] Release v0.7.0 · Deploy once · Pause AWS when idle · then v0.8
 ```
 
@@ -100,13 +100,13 @@ Detail and acceptance criteria: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.m
 
 | # | Task | Status | Links |
 |---|------|--------|-------|
-| V07-5a–c | 5–10 fixtures, automated checks, manual rubric | **In progress** — GT001/GT002 with signal-based `expected_assertions.yaml`, split pytest suite (`test_golden_*`), evaluation helpers; see [golden_transcript_fixtures.md](golden_transcript_fixtures.md) | [../evaluation/golden_fixture_evaluation_plan.md](../evaluation/golden_fixture_evaluation_plan.md) |
+| V07-5a–c | 5–10 fixtures, automated checks, manual rubric | **Foundation done** — GT001/GT002 + signal tests + [../evaluation/golden_manual_rubric.md](../evaluation/golden_manual_rubric.md); expand fixture count opportunistically | [../evaluation/golden_fixture_evaluation_plan.md](../evaluation/golden_fixture_evaluation_plan.md) |
 
 ### Priority 6 — Cost, Latency & Module Telemetry
 
 | # | Task | Status | Links |
 |---|------|--------|-------|
-| V07-6a–b | Per-module telemetry fields + workflow cost/duration summary | Pending | module run persistence |
+| V07-6a–b | Per-module telemetry fields + workflow cost/duration summary | Done | `ModuleRun.telemetry`, `WorkflowRun.telemetry_summary` |
 
 ---
 

@@ -85,6 +85,7 @@ class ModuleRunRow(Base):
     validation_errors: Mapped[str | None] = mapped_column(Text, nullable=True)
     validation_warnings: Mapped[str | None] = mapped_column(Text, nullable=True)
     safety_flags: Mapped[str | None] = mapped_column(Text, nullable=True)
+    telemetry: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
@@ -100,6 +101,7 @@ class WorkflowRunRow(Base):
     started_at: Mapped[datetime] = mapped_column(DateTime)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     error_log: Mapped[str | None] = mapped_column(Text, nullable=True)
+    telemetry_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class SynthesisReportRow(Base):

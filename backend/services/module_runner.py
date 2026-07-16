@@ -2,6 +2,7 @@
 
 import json
 import logging
+import time
 from collections.abc import Iterator
 from typing import Any
 
@@ -18,6 +19,7 @@ from backend.services.prompt_compiler import PromptCompiler, prompt_compiler
 from backend.db.base import get_session
 from backend.domain.enums import ModuleRunStatus, SourceType
 from backend.domain.finding import ModuleRun
+from backend.domain.telemetry import ModuleRunTelemetry, estimate_cost_usd
 from backend.repositories.module_run_repository import ModuleRunRepository, utc_now
 from backend.schemas.module_output_v1 import ModuleRunOutput
 from backend.services.module_output_validator import ModuleOutputValidator, module_output_validator
@@ -188,12 +190,19 @@ class ModuleRunner:
                 messages = list(compiled.messages)
                 validation_errors: list[str] = []
                 max_attempts = settings.module_run_max_retries + 1
+                total_latency_ms = 0
+                total_input_tokens = 0
+                total_output_tokens = 0
+                total_cache_read = 0
+                total_cache_write = 0
+                validation_failure_count = 0
 
                 for attempt in range(max_attempts):
                     status = ModuleRunStatus.RETRYING if attempt > 0 else ModuleRunStatus.RUNNING
                     self._update_status(run, status)
 
                     try:
+                        chat_started = time.perf_counter()
                         if (
                             attempt == 0
                             and getattr(self._llm, "name", None) == "bedrock"
@@ -210,11 +219,33 @@ class ModuleRunner:
                             raw_output = self._llm.chat(
                                 resolved_model, messages, json_mode=True
                             )
+                        total_latency_ms += int((time.perf_counter() - chat_started) * 1000)
+                        usage = getattr(self._llm, "last_usage", None) or {}
+                        if isinstance(usage, dict):
+                            total_input_tokens += int(usage.get("input_tokens") or 0)
+                            total_output_tokens += int(usage.get("output_tokens") or 0)
+                            total_cache_read += int(usage.get("cache_read_input_tokens") or 0)
+                            total_cache_write += int(usage.get("cache_write_input_tokens") or 0)
+                            if usage.get("latency_ms"):
+                                # Prefer provider-measured latency when present.
+                                total_latency_ms = max(
+                                    total_latency_ms, int(usage["latency_ms"])
+                                )
                     except LLMError as exc:
                         return self._fail_run(
                             run,
                             f"LLM chat failed: {exc.message}",
                             error_type="LLMError",
+                            telemetry=self._build_telemetry(
+                                model=resolved_model,
+                                latency_ms=total_latency_ms,
+                                retry_count=attempt,
+                                input_tokens=total_input_tokens,
+                                output_tokens=total_output_tokens,
+                                cache_read=total_cache_read,
+                                cache_write=total_cache_write,
+                                validation_failure_count=validation_failure_count,
+                            ),
                         )
 
                     run.raw_output = raw_output
@@ -230,6 +261,7 @@ class ModuleRunner:
                         )
                     except OutputParseError as exc:
                         validation_errors = [str(exc)]
+                        validation_failure_count += 1
                         logger.warning(
                             "Module output parse failed on attempt %s",
                             attempt + 1,
@@ -247,13 +279,27 @@ class ModuleRunner:
                         safety_result = self._safety.validate(parsed_output)
                         if safety_result.violations:
                             validation_errors = safety_result.violations
+                            validation_failure_count += 1
                         else:
+                            telemetry = self._build_telemetry(
+                                model=resolved_model,
+                                latency_ms=total_latency_ms,
+                                retry_count=attempt,
+                                input_tokens=total_input_tokens,
+                                output_tokens=total_output_tokens,
+                                cache_read=total_cache_read,
+                                cache_write=total_cache_write,
+                                validation_failure_count=validation_failure_count,
+                                output=parsed_output,
+                                coverage=coverage,
+                            )
                             return self._complete_run(
                                 run,
                                 parsed_output,
                                 safety_result.flags,
                                 validation_warnings=coverage_warnings,
                                 construct_coverage=coverage,
+                                telemetry=telemetry,
                             )
 
                     if attempt < max_attempts - 1:
@@ -273,6 +319,16 @@ class ModuleRunner:
                     "Module output failed validation after retries",
                     validation_errors=validation_errors,
                     error_type="ValidationError",
+                    telemetry=self._build_telemetry(
+                        model=resolved_model,
+                        latency_ms=total_latency_ms,
+                        retry_count=max_attempts - 1,
+                        input_tokens=total_input_tokens,
+                        output_tokens=total_output_tokens,
+                        cache_read=total_cache_read,
+                        cache_write=total_cache_write,
+                        validation_failure_count=validation_failure_count,
+                    ),
                 )
             finally:
                 module_run_id_var.reset(run_id_token)
@@ -338,6 +394,7 @@ class ModuleRunner:
         safety_flags: list[str],
         validation_warnings: list[str] | None = None,
         construct_coverage: dict | None = None,
+        telemetry: dict | None = None,
     ) -> ModuleRun:
         # Cap stored markdown so UI/synthesis stay lean even if the model sprawls.
         markdown = (output.raw_markdown_report or "").strip()
@@ -351,8 +408,19 @@ class ModuleRunner:
         run.validation_errors = None
         run.validation_warnings = validation_warnings or None
         run.safety_flags = safety_flags or None
+        run.telemetry = telemetry
         run.completed_at = utc_now()
         self._persist_run(run)
+        if telemetry:
+            logger.info(
+                "Module run %s telemetry",
+                run.id,
+                extra={
+                    "event": "module.run.telemetry",
+                    "module_id": run.module_id,
+                    "telemetry": telemetry,
+                },
+            )
         return run
 
     def _fail_run(
@@ -362,9 +430,11 @@ class ModuleRunner:
         validation_errors: list[str] | None = None,
         *,
         error_type: str = "ModuleRunFailed",
+        telemetry: dict | None = None,
     ) -> ModuleRun:
         run.status = ModuleRunStatus.FAILED.value
         run.validation_errors = validation_errors or [message]
+        run.telemetry = telemetry
         run.completed_at = utc_now()
         self._persist_run(run)
         logger.error(
@@ -381,6 +451,62 @@ class ModuleRunner:
             ),
         )
         return run
+
+    def _build_telemetry(
+        self,
+        *,
+        model: str | None,
+        latency_ms: int,
+        retry_count: int,
+        input_tokens: int,
+        output_tokens: int,
+        cache_read: int,
+        cache_write: int,
+        validation_failure_count: int,
+        output: ModuleRunOutput | None = None,
+        coverage: dict | None = None,
+    ) -> dict:
+        cost = estimate_cost_usd(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cache_read_input_tokens=cache_read,
+            cache_write_input_tokens=cache_write,
+            input_per_mtok=settings.bedrock_input_cost_per_mtok,
+            output_per_mtok=settings.bedrock_output_cost_per_mtok,
+            cache_read_per_mtok=settings.bedrock_cache_read_cost_per_mtok,
+            cache_write_per_mtok=settings.bedrock_cache_write_cost_per_mtok,
+        )
+        quote_ids: set[str] = set()
+        finding_count = 0
+        construct_count = 0
+        relationship_count = 0
+        if output is not None:
+            finding_count = len(output.findings)
+            construct_count = len(output.constructs)
+            relationship_count = len(output.relationships)
+            for finding in output.findings:
+                quote_ids.update(finding.evidence_quote_ids)
+            for construct in output.constructs:
+                quote_ids.update(construct.evidence_quote_ids)
+        coverage_rate = None
+        if coverage is not None:
+            coverage_rate = coverage.get("coverage_rate")
+        return ModuleRunTelemetry(
+            model=model,
+            latency_ms=latency_ms,
+            retry_count=retry_count,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cache_read_input_tokens=cache_read,
+            cache_write_input_tokens=cache_write,
+            estimated_cost_usd=cost,
+            finding_count=finding_count,
+            construct_count=construct_count,
+            relationship_count=relationship_count,
+            evidence_quote_count=len(quote_ids),
+            validation_failure_count=validation_failure_count,
+            coverage_rate=coverage_rate,
+        ).as_dict()
 
     def _update_status(self, run: ModuleRun, status: ModuleRunStatus) -> None:
         run.status = status.value

@@ -11,6 +11,7 @@ from backend.core.log_context import log_context_extra, workflow_run_id_var
 from backend.core.module_registry import module_registry
 from backend.core.workflow_registry import WorkflowDefinition, workflow_registry
 from backend.db.base import get_session
+from backend.domain.telemetry import aggregate_workflow_telemetry
 from backend.domain.enums import ModuleRunStatus, WorkflowRunStatus
 from backend.domain.finding import ModuleRun
 from backend.domain.workflow import WorkflowRun
@@ -361,6 +362,13 @@ class WorkflowEngine:
         workflow_run.status = WorkflowRunStatus.COMPLETED.value
         workflow_run.completed_at = utc_now()
         workflow_run.error_log = None
+        module_telem = [
+            run.telemetry
+            for run in module_runs
+            if isinstance(run.telemetry, dict)
+        ]
+        if module_telem:
+            workflow_run.telemetry_summary = aggregate_workflow_telemetry(module_telem)
         self._persist(workflow_run)
         duration_ms = int((time.monotonic() - started) * 1000)
         logger.info(
@@ -373,6 +381,7 @@ class WorkflowEngine:
                 "workflow_id": workflow_run.workflow_id,
                 "status": workflow_run.status,
                 "duration_ms": duration_ms,
+                "telemetry_summary": workflow_run.telemetry_summary,
             },
         )
         return workflow_run

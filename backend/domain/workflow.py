@@ -21,3 +21,4 @@ class WorkflowRun(BaseModel):
     started_at: datetime
     completed_at: datetime | None = None
     error_log: str | None = None
+    telemetry_summary: dict | None = None

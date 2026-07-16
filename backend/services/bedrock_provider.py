@@ -7,6 +7,8 @@ import logging
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
+import time
+
 import boto3
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
@@ -63,6 +65,7 @@ class BedrockProvider:
             region_name=region,
             config=_BEDROCK_CLIENT_CONFIG,
         )
+        self.last_usage: dict[str, int] | None = None
 
     def health_check(self) -> bool:
         model_id = settings.resolved_bedrock_model_id
@@ -194,7 +197,9 @@ class BedrockProvider:
         json_mode: bool,
     ) -> str:
         try:
+            started = time.perf_counter()
             response = self._converse(request)
+            elapsed_ms = (time.perf_counter() - started) * 1000
         except (ClientError, BotoCoreError) as exc:
             if json_mode and "outputConfig" in request:
                 logger.warning(
@@ -204,15 +209,26 @@ class BedrockProvider:
                 request = dict(request)
                 request.pop("outputConfig", None)
                 try:
+                    started = time.perf_counter()
                     response = self._converse(request)
+                    elapsed_ms = (time.perf_counter() - started) * 1000
                 except (ClientError, BotoCoreError) as retry_exc:
                     raise LLMError(f"Bedrock converse failed: {retry_exc}") from retry_exc
             else:
                 raise LLMError(f"Bedrock converse failed: {exc}") from exc
 
         usage = response.get("usage") or {}
-        cache_read = usage.get("cacheReadInputTokens") or 0
-        cache_write = usage.get("cacheWriteInputTokens") or 0
+        cache_read = int(usage.get("cacheReadInputTokens") or 0)
+        cache_write = int(usage.get("cacheWriteInputTokens") or 0)
+        input_tokens = int(usage.get("inputTokens") or 0)
+        output_tokens = int(usage.get("outputTokens") or 0)
+        self.last_usage = {
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "cache_read_input_tokens": cache_read,
+            "cache_write_input_tokens": cache_write,
+            "latency_ms": int(elapsed_ms),
+        }
         if cache_read or cache_write:
             logger.info(
                 "Bedrock prompt cache usage read=%s write=%s",
