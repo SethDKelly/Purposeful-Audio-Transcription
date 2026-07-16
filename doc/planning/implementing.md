@@ -4,8 +4,8 @@ Material work in flight or next to ship for the **Relationship Reasoning Engine 
 
 | | |
 |---|---|
-| **Status** | **Tier 2 closeout** — P1-3/P1-4a–e/P1-7 done; P1-4f burn-in in progress on AWS; then merge path + P1-5 |
-| **Branch** | `tier-2-p1-trust-workflows` (from `main` @ v0.5.1) |
+| **Status** | **v0.6.0 released** — Tier 2 closeout done; next is Tier 3 (P2-A / P2-O / P2-P) toward v0.7.0 |
+| **Branch** | `main` @ v0.6.0 |
 | **Strategy** | **AWS only** — Bedrock + Transcribe + ECS + RDS (account `521018312783`, `us-east-2`) via [aws-backbone](https://github.com/SethDKelly/aws-backbone). No local Whisper/Ollama product runtime. |
 | **Cost control** | **Pause AWS when idle** (standing). Deploy wakes only on runtime/infra path pushes to `main`. See [aws-operations.md](../developer/aws-operations.md) |
 | **Architecture** | [aws-deployment.md](aws-deployment.md) |
@@ -31,8 +31,8 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 | Tier | Meaning | When |
 |------|---------|------|
 | **1 — Critical** | Blocks cloud validation, Bedrock proof, or secure AWS operation | Done (gate held) |
-| **2 — Significant** | Core product on AWS — trust, workflows, prune, burn-in, CI | **Now** |
-| **3 — Materially important** | Application depth — ontology, cases, customization | After v0.6.0 Tier 2 closeout |
+| **2 — Significant** | Core product on AWS — trust, workflows, prune, burn-in, CI | **Done (v0.6.0)** |
+| **3 — Materially important** | Application depth — multi-file stitch, ontology, cases, customization | **Next** (toward v0.7.0) |
 
 ---
 
@@ -40,8 +40,8 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 
 | Vision item | Gap | Tier |
 |-------------|-----|------|
-| Full Multidisciplinary Suite | Workflow + mocked tests ✓; **live Bedrock burn-in** (P1-4f) | 2 |
-| Research-oriented analysis | Workflow + mocked tests ✓; **live Bedrock burn-in** (P1-4f) | 2 |
+| Full Multidisciplinary Suite | Workflow + live burn-in / component UAT ✓; fuller UAT after v0.7 | 2 ✓ / next UAT |
+| Research-oriented analysis | Workflow + live burn-in / component UAT ✓; fuller UAT after v0.7 | 2 ✓ / next UAT |
 | Interactive exploration | No counterfactual presets | 3 (P2-O) / backlog |
 | Knowledge graph | APIs exist; constructs/relationships rarely populated | 3 (P2-O) |
 | Longitudinal / progress tracking | Same-transcript compare only; no case view | 3 (P2-P) |
@@ -53,23 +53,22 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 
 ---
 
-## Immediate next steps (post this branch)
+## Immediate next steps (post v0.6.0)
 
 ```text
-[x] v0.5.1 on `main` · Tier 2 branch · P1-3 trust · P1-4a–e workflows · P1-7 AWS-only prune
-[ ] P1-4f — finish live burn-in (`research_oriented` + `full_multidisciplinary`); record run IDs
-[ ] Push remaining branch commits if any · Deploy once · confirm synthesis findings in UI
-[ ] Merge `tier-2-p1-trust-workflows` → `main` (toward v0.6.0) · Pause AWS when idle
-[ ] P1-5 remaining — lockfile + golden fixtures (pre-commit / health hardening already on branch)
-[ ] P1-6 — broader workflow burn-in on anonymized fixtures (no Ollama)
-[ ] Then Tier 3 (P2-O ontology population first)
+[x] v0.6.0 on `main` · Tier 2 closeout · component UAT complete
+[ ] Pause AWS when idle (after this deploy)
+[ ] P1-5 remaining — lockfile + golden fixtures (optional harden before / during Tier 3)
+[ ] P1-6 — broader workflow burn-in on anonymized fixtures (feeds full UAT)
+[ ] Tier 3 toward v0.7.0 — prefer P2-A (multi-file stitch) and/or P2-O (ontology) first
+[ ] Full UAT after next release
 ```
 
 **Standing ops rule:** When AWS is idle, run **Pause AWS_dev**. Resume with **Deploy to AWS_dev**. Docs-only pushes do **not** deploy. [aws-operations.md](../developer/aws-operations.md) · [infra/dev/README.md](../../infra/dev/README.md).
 
 **Burn-in helper:** `python scripts/p1_4f_burnin.py <alb-url>` — requires `background=true` long suites; fails if synthesis returns zero findings.
 
-**Burn-in (2026-07-14+ on branch):** Quick Review / Transcribe previously green. Research-oriented completed live with meta-synthesis findings on Bedrock (buckets populated; API `findings` rollup added for clients). Full multidisciplinary burn-in in progress / affirm before checkmark.
+**Burn-in / UAT (2026-07):** Research-oriented + full multidisciplinary components validated on Bedrock for v0.6.0. Full product UAT deferred until after the next release.
 
 ---
 
@@ -154,7 +153,7 @@ Local dual-path removed in **P1-7**.
 | P1-4c | Default background for long workflows | ✓ |
 | P1-4d | `WORKFLOW_SYNC_MODULE_LIMIT` + UI warning | ✓ |
 | P1-4e | Mocked integration tests | ✓ |
-| P1-4f | Live AWS burn-in (research + full multidisciplinary) | **In progress** — research green on Bedrock; finish full suite + record IDs |
+| P1-4f | Live AWS burn-in (research + full multidisciplinary) | ✓ Component UAT for v0.6.0; full UAT after next release |
 
 ### P1-7 — Prune local dual-path ✓
 
@@ -187,7 +186,7 @@ Local dual-path removed in **P1-7**.
 
 ## Tier 3 — Materially important
 
-Start after **v0.6.0** Tier 2 closeout (P1-4f done, branch merged, Pause practiced).
+**v0.6.0** is on `main`. Work below targets **v0.7.0**.
 
 ### P2-A — Multi-file audio upload & transcript stitching
 
@@ -248,7 +247,7 @@ Related backlog (not on this slice): **Multi-conversation report pack** — expo
 | Release | Theme | Status |
 |---------|--------|--------|
 | **v0.5.1** | Transcribe + slim cloud + main deploy/pause | **Released** |
-| **v0.6.0** | Trust + full/research workflows + AWS-only prune + burn-in | **In progress** on `tier-2-p1-trust-workflows` |
+| **v0.6.0** | Trust + full/research workflows + AWS-only prune + burn-in / component UAT | **Released** |
 | **v0.7.0** | Ontology + cases + multi-file audio / transcript stitch (P2-A) | Pending |
 | **v1.0.0** | Stable `main` deploy + API contract | Pending |
 

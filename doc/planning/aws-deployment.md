@@ -7,7 +7,7 @@ Architecture and integration guide for deploying the Relationship Reasoning Engi
 | **Account** | `521018312783` |
 | **Region** | `us-east-2` (Ohio) |
 | **Deploy role** | `arn:aws:iam::521018312783:role/dev-github-deploy` |
-| **Branch** | `main` @ **v0.5.1** (canonical) |
+| **Branch** | `main` @ **v0.6.0** (canonical) |
 | **Deploy** | Path-filtered push to `main` + `workflow_dispatch` |
 | **Active plan** | [implementing.md](implementing.md) |
 

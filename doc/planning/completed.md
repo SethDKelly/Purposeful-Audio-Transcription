@@ -4,9 +4,9 @@ Record of shipped capabilities for the **Relationship Reasoning Engine (RRE)** t
 
 | | |
 |---|---|
-| **Current branch** | `tier-2-p1-trust-workflows` (toward merge to `main`) |
-| **Baseline release** | **v0.5.1** — AWS cloud cutover ([releases/v0.5.1.md](../releases/v0.5.1.md)) |
-| **In progress toward** | **v0.6.0** — trust + workflows + AWS-only prune; P1-4f burn-in closing |
+| **Current branch** | `main` @ **v0.6.0** |
+| **Baseline release** | **v0.6.0** — trust + workflows + AWS-only ([releases/v0.6.0.md](../releases/v0.6.0.md)) |
+| **Next** | **v0.7.0** — multi-file stitch, ontology, cases ([implementing.md](implementing.md)) |
 | **Tests** | ~150 passing locally / CI |
 | **AWS account** | `521018312783`, `us-east-2` |
 | **Architecture detail** | [aws-deployment.md](aws-deployment.md) |
@@ -233,7 +233,8 @@ Original build goal: analyze a transcript with a representative module subset an
 | **v0.3.0** | Post-MVP — 13 modules, 5 workflows, exploration, PostgreSQL |
 | **v0.4.x** | Diarization, sliced transcription, timeline smoothing, Ollama JSON fixes |
 | **v0.5.0** (ops) | AWS substrate — folded into v0.5.1 |
-| **v0.5.1** | **Canonical** — Transcribe + slim image + Stage B + main deploy/pause |
+| **v0.5.1** | AWS cloud cutover — Transcribe + slim image + Stage B + main deploy/pause |
+| **v0.6.0** | **Canonical** — trust + full/research workflows + AWS-only prune + component UAT |
 
 ---
 

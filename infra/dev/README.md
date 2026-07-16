@@ -77,7 +77,7 @@ terraform output api_log_group
 
 ## Pause / resume (avoid Fargate + RDS compute charges)
 
-**Standing practice:** After **v0.5.1 lands on `main`**, pause first, then whenever the stack sits idle (between coding sessions, overnight). Resume only when you need AWS again.
+**Standing practice:** After **v0.6.0 lands on `main`**, pause first, then whenever the stack sits idle (between coding sessions, overnight). Resume only when you need AWS again.
 
 **Pause** — GitHub Actions → **Pause AWS dev** → Run workflow (requires workflow on default branch for Manual Dispatch; path-filter push on `phase-m0-docs` also works).
 

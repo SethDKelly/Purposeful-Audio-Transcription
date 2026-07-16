@@ -1,6 +1,6 @@
 # Documentation index
 
-**Relationship Reasoning Engine (RRE)** — AWS-only (Bedrock + Transcribe + ECS + RDS). Canonical release **v0.5.1** on `main`.
+**Relationship Reasoning Engine (RRE)** — AWS-only (Bedrock + Transcribe + ECS + RDS). Canonical release **v0.6.0** on `main`.
 
 | Audience | Start here |
 |----------|------------|
@@ -71,7 +71,8 @@ Canonical task tracking is three documents. Everything else is architecture, eva
 
 | Document | Description |
 |----------|-------------|
-| [releases/v0.5.1.md](releases/v0.5.1.md) | **Canonical** — AWS cloud cutover |
+| [releases/v0.6.0.md](releases/v0.6.0.md) | **Canonical** — trust + workflows + AWS-only |
+| [releases/v0.5.1.md](releases/v0.5.1.md) | AWS cloud cutover |
 | [releases/v0.3.0.md](releases/v0.3.0.md) | Post-MVP release |
 | [releases/v0.2.0.md](releases/v0.2.0.md) | MVP release |
 
