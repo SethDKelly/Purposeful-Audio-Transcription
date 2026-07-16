@@ -4,14 +4,27 @@ Record of shipped capabilities for the **Relationship Reasoning Engine (RRE)** t
 
 | | |
 |---|---|
-| **Current branch** | `main` @ **v0.9.0** |
-| **Baseline release** | **v0.9.0** — cases + longitudinal ([releases/v0.9.0.md](../releases/v0.9.0.md)) |
-| **Next** | **v1.0** — workflow hardening ([implementing.md](implementing.md)) |
+| **Current branch** | `main` @ **v1.0.0** |
+| **Baseline release** | **v1.0.0** — workflow hardening ([releases/v1.0.0.md](../releases/v1.0.0.md)) |
+| **Next** | **Post-v1.0** backlog ([implementing.md](implementing.md) · [future_considerations.md](future_considerations.md)) |
 | **Deferred** | [future_considerations.md](future_considerations.md) |
 | **Tests** | ~220+ passing locally / CI |
 | **AWS account** | `521018312783`, `us-east-2` |
 | **Architecture detail** | [aws-deployment.md](aws-deployment.md) |
 | **Docs root** | `docs/` (renamed from `doc/` in v0.7.0) |
+
+---
+
+## v1.0.0 — Workflow hardening (July 2026)
+
+| Area | Delivered |
+|------|-----------|
+| Dedicated worker | ECS worker process; cancel / timeout / retries |
+| Workflow DAG | `steps` / `depends_on` / parallel waves |
+| Custom workflows | API + Streamlit builder |
+| Long transcripts | Balanced sampling + length assessment |
+| Safety mode | Risk scan, banner, framing, exploratory skip |
+| Migrations | Alembic `010`–`011` |
 
 ---
 

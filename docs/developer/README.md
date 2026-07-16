@@ -9,4 +9,4 @@
 | [aws-operations.md](aws-operations.md) | AWS CloudWatch, deploy smoke, pause/resume |
 | [cursor-workflow.md](cursor-workflow.md) | AI-assisted development |
 
-**Design:** [../design/](../design/) · **Planning:** [../planning/](../planning/) · **AWS architecture:** [../planning/aws-deployment.md](../planning/aws-deployment.md) · **Release:** [../releases/v0.9.0.md](../releases/v0.9.0.md)
+**Design:** [../design/](../design/) · **Planning:** [../planning/](../planning/) · **AWS architecture:** [../planning/aws-deployment.md](../planning/aws-deployment.md) · **Release:** [../releases/v1.0.0.md](../releases/v1.0.0.md)

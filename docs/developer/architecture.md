@@ -2,20 +2,19 @@
 
 High-level map of the RRE codebase. Deep design specs live in [../design/](../design/). Runtime is **AWS only**.
 
-**Current release:** **v0.9.0**. Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Next: workflow hardening (v1.0) in [../planning/implementing.md](../planning/implementing.md).
+**Current release:** **v1.0.0**. Roadmap complete through v1.0: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Next: [../planning/implementing.md](../planning/implementing.md).
 
 ## System diagram
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
 │  Streamlit UI (ECS)                                          │
-│  Ingest · Prepare · Cases · Analyze · Report · Explore       │
+│  Ingest · Prepare · Cases · Analyze · Custom · Report · Explore │
 └──────────────────────────┬──────────────────────────────────┘
                            │ HTTP + optional X-API-Key
 ┌──────────────────────────▼──────────────────────────────────┐
-│  FastAPI (ECS)                                               │
+│  FastAPI (ECS) — queues workflow jobs when worker enabled    │
 │  /transcripts · /cases · /workflows · /modules · /transcribe │
-│  Generic errors + request_id · /api/live + /api/health       │
 └──────────────────────────┬──────────────────────────────────┘
                            │
      ┌─────────────────────┼─────────────────────┐
@@ -24,12 +23,15 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
  CaseService         ModuleRunner        SynthesisEngine
  EvidenceIndex       PromptCompiler      LongitudinalSynthesis
  OntologyRegistry    WorkflowJobService  FindingFeedback
+ SafetyRiskScanner   CustomWorkflow      TranscriptLength
      ┌─────────────────┴─────────────────┐
      ▼                                     ▼
  AmazonTranscribeProvider              BedrockProvider
-   (S3 uploads bucket)                   (Claude + usage)
                            │
-                     RDS PostgreSQL (SQLAlchemy + Alembic)
+                     RDS PostgreSQL
+                           │
+              ECS Worker (RRE_PROCESS=worker)
+              polls CREATED → runs modules
 ```
 
 ## Core services
@@ -39,14 +41,16 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 | `AmazonTranscribeProvider` | Audio → S3 → Transcribe job → labeled turns |
 | `TranscriptService` | Parse, ingest, prepare (edit/exclude/ready), store quotes |
 | `CaseService` | Cases CRUD; assign transcripts with session label/date |
-| `EvidenceIndexService` | Assign `Q001…` quote IDs; rebuild after turn edits |
+| `EvidenceIndexService` | Quote IDs; balanced sampling when over prompt budget |
+| `TranscriptLengthService` | Length assessment / truncation strategy |
+| `SafetyRiskScanner` | High-risk cue scan for safety mode |
 | `OntologyRegistry` | Canonical construct/relationship vocabulary + aliases |
 | `BedrockProvider` | LLM chat; records token/cache usage for telemetry |
-| `ModuleRegistry` / `WorkflowRegistry` | YAML definitions; ontology validation on load |
-| `PromptCompiler` | Build messages from framework + module + evidence |
-| `ModuleRunner` | Run → parse JSON → validate → soft coverage warnings → retry → persist normalized rows |
-| `ModuleOutputValidator` | Hard schema/evidence rules + soft `expected_constructs` coverage |
-| `WorkflowEngine` / `WorkflowJobService` | Parallel transcript modules; merge/score before synthesis |
+| `ModuleRegistry` / `WorkflowRegistry` | YAML definitions; DAG steps; ephemeral custom workflows |
+| `PromptCompiler` | Build messages; safety framing when `safety_mode` |
+| `ModuleRunner` | Run → parse → validate → persist normalized rows |
+| `WorkflowEngine` / `WorkflowJobService` | Linear or DAG waves; cancel/timeout; queue for worker |
+| `CustomWorkflowService` | Validate and register ephemeral suites |
 | `GraphMergeService` | Cross-module construct deduplication |
 | `ConvergenceScoringService` | Deterministic construct convergence scores |
 | `StructuredGraphService` | Normalized inventory + synthesis handoff |
@@ -56,16 +60,17 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 
 ## Domain layer
 
-`backend/domain/` — Pydantic models: `Transcript`, `Finding`, `Construct`, `ConstructRelationship`, `ModuleRun` (with `validation_warnings`, `telemetry`), `WorkflowRun` (with `telemetry_summary`), `SynthesisReport`, etc.
+`backend/domain/` — Pydantic models: `Transcript`, `Finding`, `Construct`, `ConstructRelationship`, `ModuleRun` (with `validation_warnings`, `telemetry`), `WorkflowRun` (with `telemetry_summary`, `cancel_requested`, `attempt_count`, `safety_mode`), `SynthesisReport`, etc.
 
 ## Persistence
 
 - **RDS PostgreSQL** on AWS
 - **SQLite** in pytest only
-- **Alembic** migrations in `alembic/versions/` (through `009_finding_feedback`)
-- **Normalized tables:** `findings`, `constructs`, `construct_relationships` (+ evidence/source junctions). Raw `module_runs.parsed_output` kept for audit.
-- **Cases / feedback:** `cases`; transcript `case_id` / session fields; `finding_feedback`
-- Repositories: `FindingRepository`, `ConstructRepository`, `ConstructRelationshipRepository`, `CaseRepository`, `FindingFeedbackRepository`
+- **Alembic** migrations in `alembic/versions/` (through `011_safety_mode`)
+- **Normalized tables:** `findings`, `constructs`, `construct_relationships` (+ evidence/source junctions)
+- **Cases / feedback / jobs:** `cases`; `finding_feedback`; workflow job control + `safety_mode`
+- Repositories: `FindingRepository`, `ConstructRepository`, `ConstructRelationshipRepository`, `CaseRepository`, `FindingFeedbackRepository`, `WorkflowRunRepository`
+
 
 ## Configuration
 
