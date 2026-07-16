@@ -45,6 +45,7 @@ Prompts are replaceable; enduring assets are the domain model, evidence/confiden
 | Interactive exploration | No counterfactual presets | 3 (P2-O) / backlog |
 | Knowledge graph | APIs exist; constructs/relationships rarely populated | 3 (P2-O) |
 | Longitudinal / progress tracking | Same-transcript compare only; no case view | 3 (P2-P) |
+| Multi-part recordings | One audio file per transcript; no ordered stitch across successive clips | 3 (P2-A) |
 | Module customization | Fixed YAML workflows only | 3 (P2-Q) |
 | Professional mode | No case files, session series, finding feedback | 3 (P2-P, P2-R) |
 | Data residency | VPC Stage B + in-account Bedrock/Transcribe | ✓ |
@@ -188,6 +189,22 @@ Local dual-path removed in **P1-7**.
 
 Start after **v0.6.0** Tier 2 closeout (P1-4f done, branch merged, Pause practiced).
 
+### P2-A — Multi-file audio upload & transcript stitching
+
+**Goal:** When a conversation is recorded as successive clips (phone stops mid-session, multi-segment capture), users can upload multiple audio files, transcribe each individually, then stitch the transcripts in order into one evidence-ready transcript for workflows.
+
+| # | Task | Notes |
+|---|------|-------|
+| P2-A1 | UI multi-file audio upload with explicit clip order | Drag-reorder or numbered list; reject empty set |
+| P2-A2 | Transcribe each clip as its own ingest job | Reuse Amazon Transcribe path; surface per-clip status/errors |
+| P2-A3 | Stitch API: ordered merge into one transcript | Concatenate turns/segments; adjust timestamps with cumulative offset; preserve speaker labels where Transcribe provides them |
+| P2-A4 | Persist stitch provenance | Store source clip transcript IDs + order so audits and re-stitch are possible |
+| P2-A5 | Run workflows on the stitched transcript | Same Analyze path as a single-file transcript; no double-charge for stitch-only |
+
+**Acceptance:** Two+ ordered recordings → per-clip transcripts succeed → one stitched transcript → Quick Review (or longer suite) runs with continuous evidence. Partial clip failure does not silently drop order (fail visible or allow stitch of completed subset with warning).
+
+**Non-goals (this slice):** Cross-conversation case files (P2-P); merging unrelated sessions; audio-level concat before ASR (prefer transcript stitch so failed clips stay isolatable).
+
 ### P2-O — Ontology & construct population
 
 | # | Task |
@@ -232,7 +249,7 @@ Related backlog (not on this slice): **Multi-conversation report pack** — expo
 |---------|--------|--------|
 | **v0.5.1** | Transcribe + slim cloud + main deploy/pause | **Released** |
 | **v0.6.0** | Trust + full/research workflows + AWS-only prune + burn-in | **In progress** on `tier-2-p1-trust-workflows` |
-| **v0.7.0** | Ontology + cases | Pending |
+| **v0.7.0** | Ontology + cases + multi-file audio / transcript stitch (P2-A) | Pending |
 | **v1.0.0** | Stable `main` deploy + API contract | Pending |
 
 ---
@@ -268,6 +285,7 @@ Related backlog (not on this slice): **Multi-conversation report pack** — expo
 | **Bedrock prompt caching** | Cache framework + evidence prefix across modules (`BEDROCK_PROMPT_CACHE`, TTL 1h) |
 | **Constructs before React** | Graph UI useless without populated data |
 | **Cases before custom workflows** | Longitudinal value for coach/therapist personas |
+| **Transcript stitch over audio concat** | Process successive clips via Transcribe individually, then merge ordered transcripts (isolates clip failures; keeps speaker/timing provenance) |
 | **SQLite for pytest only** | Product DB is RDS Postgres on AWS |
 
 ---
