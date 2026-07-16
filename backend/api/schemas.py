@@ -95,6 +95,7 @@ class ModuleRunResponse(BaseModel):
     validation_errors: list[str] | None = None
     validation_warnings: list[str] | None = None
     safety_flags: list[str] | None = None
+    telemetry: dict | None = None
     created_at: str
     completed_at: str | None = None
 
@@ -115,6 +116,7 @@ def module_run_to_response(run) -> ModuleRunResponse:
         validation_errors=run.validation_errors,
         validation_warnings=run.validation_warnings,
         safety_flags=run.safety_flags,
+        telemetry=run.telemetry,
         created_at=run.created_at.isoformat(),
         completed_at=run.completed_at.isoformat() if run.completed_at else None,
     )
@@ -162,6 +164,7 @@ class WorkflowRunResponse(BaseModel):
     started_at: str
     completed_at: str | None = None
     error_log: str | None = None
+    telemetry_summary: dict | None = None
     module_runs: list[WorkflowRunModuleSummary] = Field(default_factory=list)
 
 
@@ -266,6 +269,7 @@ def workflow_run_to_response(
         if workflow_run.completed_at
         else None,
         error_log=workflow_run.error_log,
+        telemetry_summary=getattr(workflow_run, "telemetry_summary", None),
         module_runs=summaries,
     )
 

@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     bedrock_prompt_cache: bool = True
     # Sonnet 4.5 supports 5m and 1h; 1h fits long suite waves.
     bedrock_prompt_cache_ttl: str = "1h"
+    # Approximate Bedrock Sonnet rates (USD per 1M tokens) for telemetry estimates.
+    bedrock_input_cost_per_mtok: float = 3.0
+    bedrock_output_cost_per_mtok: float = 15.0
+    bedrock_cache_read_cost_per_mtok: float = 0.30
+    bedrock_cache_write_cost_per_mtok: float = 3.75
     aws_region: str = ""
     uploads_bucket: str = ""
     transcribe_language: str = ""

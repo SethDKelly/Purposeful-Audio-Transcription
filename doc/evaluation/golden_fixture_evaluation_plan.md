@@ -40,17 +40,17 @@ Rich scenarios live under `tests/fixtures/golden_transcripts/<ID>_<slug>/` (one 
 
 ## Manual rubric
 
-Use `expected_signals.md` for human review (construct targets, module expectations, safety bounds).
+See [golden_manual_rubric.md](golden_manual_rubric.md). Use `expected_signals.md` for construct targets, module expectations, and safety bounds.
 
 ## Live golden tests
 
-Mark with `@pytest.mark.integration` and `@pytest.mark.golden`. Skip unless `RUN_GOLDEN_LIVE=1`. Do not run in default Deploy CI.
+Mark with `@pytest.mark.integration` and `@pytest.mark.golden`. Skip unless `RUN_LIVE_GOLDEN_TESTS=1` (or `RUN_GOLDEN_LIVE=1`). Do not run in default Deploy CI.
 
 ## Acceptance
 
-Fixtures run locally; failures easy to inspect; prompt/compiler changes comparable to prior snapshots/contracts.
+Fixtures run locally; failures easy to inspect; prompt/compiler changes comparable via signal/contract tests (not prose snapshots).
 
 ## Tests
 
-- `tests/helpers/golden_transcripts.py` — loader
-- `tests/test_golden_transcripts.py` — load JSON, quote IDs, parse assertions, mocked smoke, optional live marker
+- `tests/helpers/golden_transcripts.py` — loader + evaluation helpers
+- `tests/test_golden_*.py` — loading, assertions, evidence, module contracts, workflow smoke, construct coverage
