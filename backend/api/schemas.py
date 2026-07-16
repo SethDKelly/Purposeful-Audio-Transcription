@@ -535,6 +535,21 @@ class CompareWorkflowRunsRequest(BaseModel):
     workflow_run_ids: list[str] = Field(min_length=2)
 
 
+class CompareCaseTranscriptsRequest(BaseModel):
+    case_id: str
+
+
+class CompareCaseTranscriptsResponse(BaseModel):
+    case_id: str
+    case_title: str
+    sessions: list[dict] = Field(default_factory=list)
+    shared_themes: list[dict] = Field(default_factory=list)
+    new_themes: list[dict] = Field(default_factory=list)
+    resolved_themes: list[dict] = Field(default_factory=list)
+    recurring_evidence_quote_ids: list[str] = Field(default_factory=list)
+    counts: dict = Field(default_factory=dict)
+
+
 class CompareWorkflowRunSummary(BaseModel):
     workflow_run_id: str
     workflow_id: str

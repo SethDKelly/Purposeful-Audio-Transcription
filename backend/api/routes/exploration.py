@@ -3,6 +3,8 @@ from fastapi import APIRouter
 from backend.api.schemas import (
     AskFollowupRequest,
     AskFollowupResponse,
+    CompareCaseTranscriptsRequest,
+    CompareCaseTranscriptsResponse,
     CompareWorkflowRunsRequest,
     CompareWorkflowRunsResponse,
     CrossModuleAlignmentResponse,
@@ -77,6 +79,18 @@ def ask_followup(run_id: str, request: AskFollowupRequest) -> AskFollowupRespons
 @router.post("/exploration/compare", response_model=CompareWorkflowRunsResponse)
 def compare_workflow_runs(request: CompareWorkflowRunsRequest) -> CompareWorkflowRunsResponse:
     return CompareWorkflowRunsResponse(**exploration_service.compare_workflow_runs(request.workflow_run_ids))
+
+
+@router.post(
+    "/exploration/compare-transcripts",
+    response_model=CompareCaseTranscriptsResponse,
+)
+def compare_case_transcripts(
+    request: CompareCaseTranscriptsRequest,
+) -> CompareCaseTranscriptsResponse:
+    return CompareCaseTranscriptsResponse(
+        **exploration_service.compare_case_transcripts(request.case_id)
+    )
 
 
 @router.get(

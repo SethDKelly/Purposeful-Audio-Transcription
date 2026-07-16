@@ -84,8 +84,8 @@ Multiple transcripts over time; longitudinal reasoning and feedback loops.
 | Priority | Status | Notes |
 |----------|--------|-------|
 | P1 Case data model | **Done** | `cases` table; transcript `case_id` / session fields; CRUD + assign API |
-| P2 Case dashboard | Pending | |
-| P3 Longitudinal comparison | Pending | |
+| P2 Case dashboard | **Done** | Streamlit Cases expander: create/assign/list sessions |
+| P3 Longitudinal comparison | **Done** | `POST /api/exploration/compare-transcripts` + UI |
 | P4 Longitudinal synthesis | Pending | |
 | P5 Report package export | Pending | |
 | P6 Feedback loop | Pending | |

@@ -10,6 +10,7 @@ from backend.core.exceptions import ExplorationError, FindingNotFoundError, LLME
 from backend.db.base import get_session
 from backend.domain.enums import WorkflowRunStatus
 from backend.domain.finding import ModuleRun
+from backend.repositories.case_repository import CaseRepository
 from backend.repositories.construct_repository import ConstructRepository
 from backend.repositories.finding_repository import FindingRepository
 from backend.repositories.relationship_repository import ConstructRelationshipRepository
@@ -66,6 +67,7 @@ class ExplorationService:
         findings: FindingRepository | None = None,
         constructs: ConstructRepository | None = None,
         relationships: ConstructRelationshipRepository | None = None,
+        cases: CaseRepository | None = None,
     ) -> None:
         self._workflows = workflows or workflow_engine
         self._transcripts = transcripts or transcript_service
@@ -75,6 +77,7 @@ class ExplorationService:
         self._findings = findings or FindingRepository()
         self._constructs = constructs or ConstructRepository()
         self._relationships = relationships or ConstructRelationshipRepository()
+        self._cases = cases or CaseRepository()
 
     def list_findings(self, workflow_run_id: str) -> list[dict]:
         with get_session() as session:
@@ -261,6 +264,114 @@ class ExplorationService:
             "runs": runs,
             "shared_themes": shared_themes,
             "recurring_evidence_quote_ids": recurring_quotes,
+        }
+
+    def compare_case_transcripts(self, case_id: str) -> dict:
+        """Longitudinal comparison across transcripts in a case (v0.9 P3)."""
+        with get_session() as session:
+            detail = self._cases.get_detail(session, case_id)
+        if len(detail.transcripts) < 2:
+            raise ExplorationError("A case needs at least two transcripts to compare")
+
+        sessions: list[dict] = []
+        for transcript in detail.transcripts:
+            runs = self.list_transcript_workflow_runs(transcript.id)
+            completed = [run for run in runs if run.get("status") == "completed"]
+            findings: list[dict] = []
+            constructs: list[dict] = []
+            if completed:
+                latest = completed[-1]
+                run_id = latest["id"]
+                findings = self.list_findings(run_id)
+                with get_session() as session:
+                    constructs = self._constructs.list_by_workflow_run_id(
+                        session, run_id, canonical_only=True
+                    )
+            theme_keys = {
+                _theme_key(item.get("title"), item.get("type"))
+                for item in findings
+                if item.get("title")
+            }
+            theme_keys |= {
+                _theme_key(item.get("label"), item.get("ontology_type"))
+                for item in constructs
+                if item.get("label")
+            }
+            quote_ids: set[str] = set()
+            for item in findings:
+                quote_ids.update(item.get("evidence_quote_ids") or [])
+            for item in constructs:
+                quote_ids.update(item.get("evidence_quote_ids") or [])
+            sessions.append(
+                {
+                    "transcript_id": transcript.id,
+                    "title": transcript.title,
+                    "session_label": transcript.session_label,
+                    "session_date": transcript.session_date.isoformat()
+                    if transcript.session_date
+                    else None,
+                    "workflow_run_id": completed[-1]["id"] if completed else None,
+                    "theme_keys": sorted(theme_keys),
+                    "finding_count": len(findings),
+                    "construct_count": len(constructs),
+                    "evidence_quote_ids": sorted(quote_ids),
+                    "findings": findings,
+                    "constructs": [
+                        {
+                            "label": c.get("label"),
+                            "type": c.get("ontology_type"),
+                            "confidence": c.get("confidence"),
+                            "convergence_score": c.get("convergence_score"),
+                        }
+                        for c in constructs
+                    ],
+                }
+            )
+
+        earliest = sessions[0]
+        latest = sessions[-1]
+        earliest_themes = set(earliest["theme_keys"])
+        latest_themes = set(latest["theme_keys"])
+        shared = sorted(earliest_themes & latest_themes)
+        new_themes = sorted(latest_themes - earliest_themes)
+        resolved = sorted(earliest_themes - latest_themes)
+
+        quote_counts: dict[str, int] = {}
+        for session in sessions:
+            for quote_id in session["evidence_quote_ids"]:
+                quote_counts[quote_id] = quote_counts.get(quote_id, 0) + 1
+        recurring = sorted(
+            quote_id for quote_id, count in quote_counts.items() if count >= 2
+        )
+
+        def _theme_rows(keys: list[str]) -> list[dict]:
+            return [{"theme": key} for key in keys]
+
+        return {
+            "case_id": case_id,
+            "case_title": detail.case.title,
+            "sessions": [
+                {
+                    "transcript_id": s["transcript_id"],
+                    "title": s["title"],
+                    "session_label": s["session_label"],
+                    "session_date": s["session_date"],
+                    "workflow_run_id": s["workflow_run_id"],
+                    "finding_count": s["finding_count"],
+                    "construct_count": s["construct_count"],
+                }
+                for s in sessions
+            ],
+            "shared_themes": _theme_rows(shared),
+            "new_themes": _theme_rows(new_themes),
+            "resolved_themes": _theme_rows(resolved),
+            "recurring_evidence_quote_ids": recurring,
+            "counts": {
+                "transcripts": len(sessions),
+                "shared_themes": len(shared),
+                "new_themes": len(new_themes),
+                "resolved_themes": len(resolved),
+            },
         }
 
     def ask_followup(
@@ -511,6 +622,14 @@ def _linked_constructs(target: IndexedFinding, module_runs: list[ModuleRun]) -> 
             if construct.get("id") in construct_ids:
                 linked.append(construct)
     return linked
+
+
+def _theme_key(label: str | None, type_name: str | None = None) -> str:
+    text = (label or "").strip().casefold()
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    prefix = (type_name or "theme").strip().casefold()
+    return f"{prefix}:{text}" if text else prefix
 
 
 def _tokenize_title(title: str) -> set[str]:
