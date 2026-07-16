@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from backend.core.exceptions import TranscriptNotFoundError, TranscriptValidationError
 from backend.db.models import (
     ConstructEvidenceQuoteRow,
+    ConstructRelationshipEvidenceQuoteRow,
+    ConstructRelationshipRow,
     ConstructRow,
     ConstructSourceRow,
     EvidenceQuoteRow,
@@ -314,6 +316,25 @@ class TranscriptRepository:
                     )
                 )
                 session.execute(delete(FindingRow).where(FindingRow.id.in_(finding_ids)))
+
+            rel_ids = list(
+                session.scalars(
+                    select(ConstructRelationshipRow.id).where(
+                        ConstructRelationshipRow.module_run_id.in_(module_run_ids)
+                    )
+                ).all()
+            )
+            if rel_ids:
+                session.execute(
+                    delete(ConstructRelationshipEvidenceQuoteRow).where(
+                        ConstructRelationshipEvidenceQuoteRow.relationship_id.in_(rel_ids)
+                    )
+                )
+                session.execute(
+                    delete(ConstructRelationshipRow).where(
+                        ConstructRelationshipRow.id.in_(rel_ids)
+                    )
+                )
 
             construct_ids = list(
                 session.scalars(

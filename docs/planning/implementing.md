@@ -48,7 +48,7 @@ security → transcript quality → ontology → structured persistence
 [x] Release v0.7.0 · Deploy once · Pause AWS when idle
 [x] v0.8 Priority 1 — Normalized findings persistence
 [x] v0.8 Priority 2 — Normalized constructs persistence
-[ ] v0.8 Priority 3 — Construct relationship persistence
+[x] v0.8 Priority 3 — Construct relationship persistence
 [ ] v0.8 Priority 4 — Graph merge / deduplication
 [ ] v0.8 Priority 5 — Deterministic convergence and confidence scoring
 [ ] v0.8 Priority 6 — Graph exploration UI (table-first)

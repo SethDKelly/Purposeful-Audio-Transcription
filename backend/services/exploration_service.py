@@ -12,6 +12,7 @@ from backend.domain.enums import WorkflowRunStatus
 from backend.domain.finding import ModuleRun
 from backend.repositories.construct_repository import ConstructRepository
 from backend.repositories.finding_repository import FindingRepository
+from backend.repositories.relationship_repository import ConstructRelationshipRepository
 from backend.repositories.workflow_run_repository import WorkflowRunRepository
 from backend.services.llm_factory import get_llm_provider
 from backend.services.llm_provider import LLMProvider
@@ -64,6 +65,7 @@ class ExplorationService:
         workflow_runs: WorkflowRunRepository | None = None,
         findings: FindingRepository | None = None,
         constructs: ConstructRepository | None = None,
+        relationships: ConstructRelationshipRepository | None = None,
     ) -> None:
         self._workflows = workflows or workflow_engine
         self._transcripts = transcripts or transcript_service
@@ -72,6 +74,7 @@ class ExplorationService:
         self._workflow_runs = workflow_runs or WorkflowRunRepository()
         self._findings = findings or FindingRepository()
         self._constructs = constructs or ConstructRepository()
+        self._relationships = relationships or ConstructRelationshipRepository()
 
     def list_findings(self, workflow_run_id: str) -> list[dict]:
         with get_session() as session:
@@ -153,7 +156,10 @@ class ExplorationService:
             constructs = self._constructs.list_by_workflow_run_id(
                 session, workflow_run_id, canonical_only=True
             )
-        if constructs:
+            relationships = self._relationships.list_by_workflow_run_id(
+                session, workflow_run_id
+            )
+        if constructs or relationships:
             nodes: dict[str, dict] = {}
             for construct in constructs:
                 node_id = f"{construct['module_id']}:{construct['source_id']}"
@@ -167,10 +173,21 @@ class ExplorationService:
                     "row_id": construct["row_id"],
                     "convergence_score": construct.get("convergence_score"),
                 }
+            edges = [
+                {
+                    "source": f"{rel['module_id']}:{rel['source_construct_id']}",
+                    "target": f"{rel['module_id']}:{rel['target_construct_id']}",
+                    "relationship_type": rel["relationship_type"],
+                    "module_id": rel["module_id"],
+                    "confidence": rel["confidence"],
+                    "row_id": rel["row_id"],
+                }
+                for rel in relationships
+            ]
             return {
                 "workflow_run_id": workflow_run_id,
                 "nodes": list(nodes.values()),
-                "edges": [],  # P3 fills from normalized relationships
+                "edges": edges,
                 "source": "normalized",
             }
 

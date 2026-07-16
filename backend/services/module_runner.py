@@ -23,6 +23,7 @@ from backend.domain.telemetry import ModuleRunTelemetry, estimate_cost_usd
 from backend.repositories.construct_repository import ConstructRepository
 from backend.repositories.finding_repository import FindingRepository
 from backend.repositories.module_run_repository import ModuleRunRepository, utc_now
+from backend.repositories.relationship_repository import ConstructRelationshipRepository
 from backend.schemas.module_output_v1 import ModuleRunOutput
 from backend.services.module_output_validator import ModuleOutputValidator, module_output_validator
 from backend.services.llm_factory import get_llm_provider
@@ -68,6 +69,7 @@ class ModuleRunner:
         repository: ModuleRunRepository | None = None,
         findings: FindingRepository | None = None,
         constructs: ConstructRepository | None = None,
+        relationships: ConstructRelationshipRepository | None = None,
     ) -> None:
         self._registry = registry
         self._compiler = compiler or prompt_compiler
@@ -79,6 +81,7 @@ class ModuleRunner:
         self._repository = repository or ModuleRunRepository()
         self._findings = findings or FindingRepository()
         self._constructs = constructs or ConstructRepository()
+        self._relationships = relationships or ConstructRelationshipRepository()
 
     def run(
         self,
@@ -532,6 +535,9 @@ class ModuleRunner:
                 module_version=output.module_version,
             )
             self._constructs.replace_for_module_run(session, run, output.constructs)
+            self._relationships.replace_for_module_run(
+                session, run, output.relationships
+            )
 
 
 def collect_quote_ids(outputs: list[dict[str, Any]]) -> set[str]:
