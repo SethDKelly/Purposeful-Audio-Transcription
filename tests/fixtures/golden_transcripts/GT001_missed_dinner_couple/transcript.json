@@ -1,0 +1,268 @@
+{
+  "fixture_id": "GT001",
+  "title": "Missed Dinner / Texting Expectations",
+  "relationship_type": "romantic_partners",
+  "resolution_status": "partial_repair",
+  "safety_level": "ordinary_conflict_no_immediate_safety_concern",
+  "participants": [
+    "Maya",
+    "Leo"
+  ],
+  "turns": [
+    {
+      "turn_id": "T001",
+      "speaker": "Maya",
+      "text": "I waited at the restaurant for forty minutes, Leo. I kept checking my phone, and I felt embarrassed sitting there alone."
+    },
+    {
+      "turn_id": "T002",
+      "speaker": "Leo",
+      "text": "I know. I should have texted. My meeting ran over and then Alex pulled me into that budget call."
+    },
+    {
+      "turn_id": "T003",
+      "speaker": "Maya",
+      "text": "You always have a reason. It is never just, \"I forgot you.\""
+    },
+    {
+      "turn_id": "T004",
+      "speaker": "Leo",
+      "text": "That is not fair. I didn't forget you. I was dealing with work."
+    },
+    {
+      "turn_id": "T005",
+      "speaker": "Maya",
+      "text": "It felt like you forgot me."
+    },
+    {
+      "turn_id": "T006",
+      "speaker": "Leo",
+      "text": "Okay, but that's different from saying I did. I don't like being accused of not caring."
+    },
+    {
+      "turn_id": "T007",
+      "speaker": "Maya",
+      "text": "I'm not trying to accuse you. I'm trying to explain that I felt like I didn't matter."
+    },
+    {
+      "turn_id": "T008",
+      "speaker": "Leo",
+      "text": "I hear that, but when you say \"you always\" and \"you never,\" it makes me feel like there is no point in explaining."
+    },
+    {
+      "turn_id": "T009",
+      "speaker": "Maya",
+      "text": "Maybe because the explanations come after the damage is already done."
+    },
+    {
+      "turn_id": "T010",
+      "speaker": "Leo",
+      "text": "What was I supposed to do? Walk out of a meeting with the CFO?"
+    },
+    {
+      "turn_id": "T011",
+      "speaker": "Maya",
+      "text": "Send one text. \"Running late.\" That is all."
+    },
+    {
+      "turn_id": "T012",
+      "speaker": "Leo",
+      "text": "I agree I could have done that."
+    },
+    {
+      "turn_id": "T013",
+      "speaker": "Maya",
+      "text": "You say that now, but this keeps happening. Last month it was my cousin's birthday, and before that it was the airport pickup."
+    },
+    {
+      "turn_id": "T014",
+      "speaker": "Leo",
+      "text": "The airport pickup was different. Your flight landed early."
+    },
+    {
+      "turn_id": "T015",
+      "speaker": "Maya",
+      "text": "See, this is what I mean. You turn every example into a technicality."
+    },
+    {
+      "turn_id": "T016",
+      "speaker": "Leo",
+      "text": "Because the details matter. I feel like I'm being put on trial."
+    },
+    {
+      "turn_id": "T017",
+      "speaker": "Maya",
+      "text": "I feel like I have to build a case for you to take me seriously."
+    },
+    {
+      "turn_id": "T018",
+      "speaker": "Leo",
+      "text": "I do take you seriously."
+    },
+    {
+      "turn_id": "T019",
+      "speaker": "Maya",
+      "text": "Then why do I have to get this upset before you listen?"
+    },
+    {
+      "turn_id": "T020",
+      "speaker": "Leo",
+      "text": "I don't know. Maybe because when you start with \"you always,\" I get defensive immediately."
+    },
+    {
+      "turn_id": "T021",
+      "speaker": "Maya",
+      "text": "I can own that. I was angry, and I said it too broadly."
+    },
+    {
+      "turn_id": "T022",
+      "speaker": "Leo",
+      "text": "Thank you. I also own that I should have texted. I messed up there."
+    },
+    {
+      "turn_id": "T023",
+      "speaker": "Maya",
+      "text": "I appreciate you saying that."
+    },
+    {
+      "turn_id": "T024",
+      "speaker": "Leo",
+      "text": "I don't want you sitting somewhere feeling abandoned."
+    },
+    {
+      "turn_id": "T025",
+      "speaker": "Maya",
+      "text": "That's the word. Abandoned. I know it sounds dramatic, but that's what it felt like."
+    },
+    {
+      "turn_id": "T026",
+      "speaker": "Leo",
+      "text": "It doesn't sound dramatic. I can see how sitting there alone would feel awful."
+    },
+    {
+      "turn_id": "T027",
+      "speaker": "Maya",
+      "text": "Thank you."
+    },
+    {
+      "turn_id": "T028",
+      "speaker": "Leo",
+      "text": "But I also need you to understand that when work explodes, I'm not choosing work over you. Sometimes I'm just trying not to drop a ball."
+    },
+    {
+      "turn_id": "T029",
+      "speaker": "Maya",
+      "text": "I can understand that. I don't need instant replies all day. I need to know when plans change."
+    },
+    {
+      "turn_id": "T030",
+      "speaker": "Leo",
+      "text": "That seems reasonable."
+    },
+    {
+      "turn_id": "T031",
+      "speaker": "Maya",
+      "text": "And I need you not to make me feel silly for being upset."
+    },
+    {
+      "turn_id": "T032",
+      "speaker": "Leo",
+      "text": "I didn't mean to. When I said it was \"just dinner,\" that was dismissive."
+    },
+    {
+      "turn_id": "T033",
+      "speaker": "Maya",
+      "text": "Yeah. That hurt."
+    },
+    {
+      "turn_id": "T034",
+      "speaker": "Leo",
+      "text": "I'm sorry. It wasn't just dinner to you. It was me not showing up."
+    },
+    {
+      "turn_id": "T035",
+      "speaker": "Maya",
+      "text": "Exactly."
+    },
+    {
+      "turn_id": "T036",
+      "speaker": "Leo",
+      "text": "Could we agree that if either of us is going to be more than fifteen minutes late, we text?"
+    },
+    {
+      "turn_id": "T037",
+      "speaker": "Maya",
+      "text": "Yes. And if you truly can't text, then call as soon as you can and say what happened without making me drag it out."
+    },
+    {
+      "turn_id": "T038",
+      "speaker": "Leo",
+      "text": "I can do that."
+    },
+    {
+      "turn_id": "T039",
+      "speaker": "Maya",
+      "text": "I also need to work on not jumping straight to \"you don't care.\""
+    },
+    {
+      "turn_id": "T040",
+      "speaker": "Leo",
+      "text": "That would help. Because I do care."
+    },
+    {
+      "turn_id": "T041",
+      "speaker": "Maya",
+      "text": "I know you do. I just don't always feel it in those moments."
+    },
+    {
+      "turn_id": "T042",
+      "speaker": "Leo",
+      "text": "Maybe when that happens, you can say, \"I'm starting to feel unimportant,\" instead of \"you never care.\""
+    },
+    {
+      "turn_id": "T043",
+      "speaker": "Maya",
+      "text": "That sounds fair. I might not say it perfectly when I'm angry."
+    },
+    {
+      "turn_id": "T044",
+      "speaker": "Leo",
+      "text": "I don't need perfect. I just need a chance to hear you before I'm already the villain."
+    },
+    {
+      "turn_id": "T045",
+      "speaker": "Maya",
+      "text": "And I need a chance to be hurt without you immediately defending yourself."
+    },
+    {
+      "turn_id": "T046",
+      "speaker": "Leo",
+      "text": "Okay. So, text if late, acknowledge first, explain second?"
+    },
+    {
+      "turn_id": "T047",
+      "speaker": "Maya",
+      "text": "Yes. And I will try to use less absolute language."
+    },
+    {
+      "turn_id": "T048",
+      "speaker": "Leo",
+      "text": "Deal."
+    },
+    {
+      "turn_id": "T049",
+      "speaker": "Maya",
+      "text": "I'm still upset, but I feel better than I did ten minutes ago."
+    },
+    {
+      "turn_id": "T050",
+      "speaker": "Leo",
+      "text": "Me too. I love you."
+    },
+    {
+      "turn_id": "T051",
+      "speaker": "Maya",
+      "text": "I love you too."
+    }
+  ]
+}

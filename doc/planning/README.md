@@ -9,6 +9,7 @@ Active planning for the **Relationship Reasoning Engine** after v0.6.0.
 | **[implementing.md](implementing.md)** | Active execution tracker (currently **v0.7**) |
 | **[roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md)** | Phased roadmap v0.7 → v1.0 with acceptance criteria |
 | **[future_considerations.md](future_considerations.md)** | Deferred / later backlog (do not delete ideas — defer them) |
+| **[golden_transcript_fixtures.md](golden_transcript_fixtures.md)** | Golden transcript layout, metadata/assertions, pytest expectations |
 | **[completed.md](completed.md)** | Shipped capabilities |
 | **[backlog.md](backlog.md)** | Index into future considerations |
 

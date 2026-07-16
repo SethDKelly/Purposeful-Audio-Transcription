@@ -1,0 +1,54 @@
+fixture_id: GT001
+version: 1
+
+# Machine-checkable expectations. Soft signals stay in expected_signals.md.
+
+structural:
+  min_speakers: 2
+  min_turns: 20
+  participant_names:
+    - Maya
+    - Leo
+
+quote_ids:
+  # After ingest, evidence quotes must be sequential Q001… for included turns.
+  require_sequential: true
+  min_quote_count: 20
+
+# Strings that should appear somewhere in transcript text (ingest smoke).
+must_contain_phrases:
+  - "forty minutes"
+  - "you always"
+  - "I should have texted"
+  - "fifteen minutes"
+
+# For future module/golden evaluation (mocked or live).
+module_signals:
+  relationship_conversation_analysis:
+    expect_themes:
+      - criticism
+      - defensiveness
+      - repair
+  nvc_analysis:
+    expect_themes:
+      - reliability
+      - predictability
+  gottman_analysis:
+    expect_themes:
+      - criticism
+      - defensiveness
+  bias_epistemic_quality:
+    forbid_overclaim:
+      - attachment style diagnosis
+      - personality disorder
+
+safety:
+  allow_diagnostic_language: false
+  expect_immediate_safety_concern: false
+
+# Live golden tests may assert finding text contains at least one of these (soft).
+finding_phrase_hints:
+  - text
+  - late
+  - apology
+  - repair

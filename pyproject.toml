@@ -56,3 +56,7 @@ packages = ["backend", "config", "ui"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "integration: hits live AWS / external services (not default CI)",
+    "golden: golden transcript evaluation (mocked by default; live when RUN_GOLDEN_LIVE=1)",
+]
