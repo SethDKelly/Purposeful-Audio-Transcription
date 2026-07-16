@@ -27,12 +27,18 @@ MAX_WAIT = {
 
 
 def http_json(method: str, path: str, body: dict | None = None, timeout: float = 180):
+    import os
+
     data = None if body is None else json.dumps(body).encode("utf-8")
+    headers = {"Content-Type": "application/json", "Accept": "application/json"}
+    api_key = os.environ.get("API_KEY", "").strip()
+    if api_key:
+        headers["X-API-Key"] = api_key
     req = urllib.request.Request(
         f"{BASE}{path}",
         data=data,
         method=method,
-        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        headers=headers,
     )
     last_err: Exception | None = None
     for attempt in range(1, 9):
@@ -136,6 +142,15 @@ def main() -> int:
         )
         transcript_id = created["transcript"]["id"]
         print(f"ingest transcript_id={transcript_id}")
+        _, ready = http_json(
+            "POST",
+            f"/api/transcripts/{transcript_id}/ready",
+            {"skip_review": True},
+        )
+        print(
+            f"marked ready analysis_ready={ready['transcript'].get('analysis_ready')} "
+            f"skip_review={ready['transcript'].get('skip_review')}"
+        )
 
     results: dict[str, str] = {}
     plan = (

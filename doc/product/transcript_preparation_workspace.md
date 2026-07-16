@@ -22,4 +22,6 @@ Edited approved transcript is the sole source for evidence index + workflow engi
 
 ## Out of scope here
 
-Multi-file audio stitch → [../planning/future_considerations.md](../planning/future_considerations.md). Case attachment → v0.9.
+- Split/merge turns — deferred (edit + exclude cover the primary review path for v0.7).
+- Multi-file audio stitch → [../planning/future_considerations.md](../planning/future_considerations.md).
+- Case attachment → v0.9.

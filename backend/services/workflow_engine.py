@@ -48,7 +48,7 @@ class WorkflowEngine:
         model: str | None = None,
     ) -> WorkflowRun:
         self._workflows.get(workflow_id)
-        self._transcripts.get(transcript_id)
+        self._transcripts.ensure_ready_for_analysis(transcript_id)
 
         with get_session() as session:
             workflow_run = self._repository.create(
@@ -70,7 +70,7 @@ class WorkflowEngine:
         run_id: str | None = None,
     ) -> WorkflowRun:
         workflow = self._workflows.get(workflow_id)
-        self._transcripts.get(transcript_id)
+        self._transcripts.ensure_ready_for_analysis(transcript_id)
 
         if run_id:
             workflow_run = self.get(run_id)

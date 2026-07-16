@@ -299,6 +299,21 @@ class UpdateSpeakersRequest(BaseModel):
     speakers: list[SpeakerUpdateItem]
 
 
+class TurnUpdateItem(BaseModel):
+    id: str
+    text: str | None = None
+    speaker_id: str | None = None
+    excluded_from_analysis: bool | None = None
+
+
+class UpdateTurnsRequest(BaseModel):
+    turns: list[TurnUpdateItem]
+
+
+class MarkReadyRequest(BaseModel):
+    skip_review: bool = False
+
+
 class TranscriptResponse(BaseModel):
     id: str
     title: str
@@ -306,6 +321,9 @@ class TranscriptResponse(BaseModel):
     source_type: SourceType
     language: str | None = None
     created_at: str
+    analysis_ready: bool = False
+    ready_at: str | None = None
+    skip_review: bool = False
 
 
 class SpeakerResponse(BaseModel):
@@ -323,6 +341,7 @@ class TurnResponse(BaseModel):
     text: str
     start_time: str | None = None
     end_time: str | None = None
+    excluded_from_analysis: bool = False
 
 
 class EvidenceQuoteResponse(BaseModel):
@@ -342,6 +361,7 @@ class TranscriptBundleResponse(BaseModel):
     speakers: list[SpeakerResponse] = Field(default_factory=list)
     turns: list[TurnResponse] = Field(default_factory=list)
     evidence_quotes: list[EvidenceQuoteResponse] = Field(default_factory=list)
+    quality_warnings: list[str] = Field(default_factory=list)
 
 
 class ExplorationFindingSummary(BaseModel):
@@ -479,6 +499,8 @@ class TranscriptWorkflowRunsResponse(BaseModel):
 
 
 def bundle_to_response(bundle) -> TranscriptBundleResponse:
+    from backend.services.transcript_service import transcript_service
+
     transcript = bundle.transcript
     return TranscriptBundleResponse(
         transcript=TranscriptResponse(
@@ -488,6 +510,9 @@ def bundle_to_response(bundle) -> TranscriptBundleResponse:
             source_type=transcript.source_type,
             language=transcript.language,
             created_at=transcript.created_at.isoformat(),
+            analysis_ready=bool(transcript.analysis_ready),
+            ready_at=transcript.ready_at.isoformat() if transcript.ready_at else None,
+            skip_review=bool(transcript.skip_review),
         ),
         speakers=[
             SpeakerResponse(
@@ -507,6 +532,7 @@ def bundle_to_response(bundle) -> TranscriptBundleResponse:
                 text=turn.text,
                 start_time=turn.start_time,
                 end_time=turn.end_time,
+                excluded_from_analysis=bool(turn.excluded_from_analysis),
             )
             for turn in bundle.turns
         ],
@@ -524,4 +550,5 @@ def bundle_to_response(bundle) -> TranscriptBundleResponse:
             )
             for quote in bundle.evidence_quotes
         ],
+        quality_warnings=transcript_service.quality_warnings(bundle),
     )
