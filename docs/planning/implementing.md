@@ -4,11 +4,11 @@ Material work in flight for the **Relationship Reasoning Engine (RRE)** after **
 
 | | |
 |---|---|
-| **Status** | **v0.9 pending** — Cases + longitudinal analysis |
+| **Status** | **v0.9 in progress** — Cases + longitudinal analysis |
 | **Canonical roadmap** | [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md) |
 | **Deferred ideas** | [future_considerations.md](future_considerations.md) |
 | **Completed** | [completed.md](completed.md) · [../releases/v0.8.0.md](../releases/v0.8.0.md) |
-| **Branch** | `main` @ **v0.8.0** |
+| **Branch** | `v0.9/cases-longitudinal` |
 | **Strategy** | **AWS only** — Bedrock + Transcribe + ECS + RDS (`521018312783`, `us-east-2`) |
 | **Cost control** | **Pause AWS when idle** — [../developer/aws-operations.md](../developer/aws-operations.md) |
 | **Deploy policy** | Deploy on **minor-version completion** (tag `vX.Y.Z` or manual), not every main push |
@@ -46,7 +46,7 @@ security → transcript quality → ontology → structured persistence
 
 ```text
 [x] Release v0.8.0 · Deploy once · Pause AWS when idle
-[ ] v0.9 Priority 1 — Case data model
+[x] v0.9 Priority 1 — Case data model
 [ ] v0.9 Priority 2 — Case dashboard
 [ ] v0.9 Priority 3 — Longitudinal comparison
 [ ] v0.9 Priority 4 — Longitudinal synthesis module
@@ -80,6 +80,15 @@ Detail: [../releases/v0.8.0.md](../releases/v0.8.0.md) · plan: [../architecture
 Roadmap: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md#v09--cases-and-longitudinal-analysis).
 
 Multiple transcripts over time; longitudinal reasoning and feedback loops.
+
+| Priority | Status | Notes |
+|----------|--------|-------|
+| P1 Case data model | **Done** | `cases` table; transcript `case_id` / session fields; CRUD + assign API |
+| P2 Case dashboard | Pending | |
+| P3 Longitudinal comparison | Pending | |
+| P4 Longitudinal synthesis | Pending | |
+| P5 Report package export | Pending | |
+| P6 Feedback loop | Pending | |
 
 ---
 

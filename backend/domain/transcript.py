@@ -15,6 +15,9 @@ class Transcript(BaseModel):
     analysis_ready: bool = False
     ready_at: datetime | None = None
     skip_review: bool = False
+    case_id: str | None = None
+    session_label: str | None = None
+    session_date: datetime | None = None
 
 
 class Speaker(BaseModel):

@@ -46,6 +46,9 @@ class TranscriptRepository:
                 analysis_ready=transcript.analysis_ready,
                 ready_at=transcript.ready_at,
                 skip_review=transcript.skip_review,
+                case_id=transcript.case_id,
+                session_label=transcript.session_label,
+                session_date=transcript.session_date,
             )
         )
         for speaker in bundle.speakers:
@@ -102,6 +105,9 @@ class TranscriptRepository:
             analysis_ready=bool(row.analysis_ready),
             ready_at=row.ready_at,
             skip_review=bool(row.skip_review),
+            case_id=row.case_id,
+            session_label=row.session_label,
+            session_date=row.session_date,
         )
         speakers = [
             Speaker(

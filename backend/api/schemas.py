@@ -297,6 +297,58 @@ class CreateTranscriptRequest(BaseModel):
     source_type: SourceType = SourceType.PASTE
     title: str | None = None
     language: str | None = None
+    case_id: str | None = None
+    session_label: str | None = None
+
+
+class AssignTranscriptCaseRequest(BaseModel):
+    case_id: str | None = None
+    session_label: str | None = None
+    session_date: str | None = None
+
+
+class CreateCaseRequest(BaseModel):
+    title: str
+    notes: str | None = None
+
+
+class UpdateCaseRequest(BaseModel):
+    title: str | None = None
+    notes: str | None = None
+
+
+class CaseResponse(BaseModel):
+    id: str
+    title: str
+    notes: str | None = None
+    created_at: str
+    updated_at: str | None = None
+
+
+class CaseTranscriptSummaryResponse(BaseModel):
+    id: str
+    title: str
+    session_label: str | None = None
+    session_date: str | None = None
+    created_at: str
+    analysis_ready: bool = False
+    workflow_run_count: int = 0
+
+
+class CaseDetailResponse(BaseModel):
+    case: CaseResponse
+    transcripts: list[CaseTranscriptSummaryResponse] = Field(default_factory=list)
+
+
+class CasesResponse(BaseModel):
+    cases: list[CaseResponse] = Field(default_factory=list)
+
+
+class AssignTranscriptCaseResponse(BaseModel):
+    transcript_id: str
+    case_id: str | None = None
+    session_label: str | None = None
+    session_date: str | None = None
 
 
 class SpeakerUpdateItem(BaseModel):
@@ -334,6 +386,9 @@ class TranscriptResponse(BaseModel):
     analysis_ready: bool = False
     ready_at: str | None = None
     skip_review: bool = False
+    case_id: str | None = None
+    session_label: str | None = None
+    session_date: str | None = None
 
 
 class SpeakerResponse(BaseModel):
@@ -541,6 +596,11 @@ def bundle_to_response(bundle) -> TranscriptBundleResponse:
             analysis_ready=bool(transcript.analysis_ready),
             ready_at=transcript.ready_at.isoformat() if transcript.ready_at else None,
             skip_review=bool(transcript.skip_review),
+            case_id=transcript.case_id,
+            session_label=transcript.session_label,
+            session_date=(
+                transcript.session_date.isoformat() if transcript.session_date else None
+            ),
         ),
         speakers=[
             SpeakerResponse(

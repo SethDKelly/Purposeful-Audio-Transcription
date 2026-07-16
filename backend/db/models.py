@@ -18,12 +18,32 @@ class TranscriptRow(Base):
     analysis_ready: Mapped[bool] = mapped_column(Boolean, default=False)
     ready_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     skip_review: Mapped[bool] = mapped_column(Boolean, default=False)
+    case_id: Mapped[str | None] = mapped_column(
+        ForeignKey("cases.id"), nullable=True, index=True
+    )
+    session_label: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    session_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     speakers: Mapped[list["SpeakerRow"]] = relationship(back_populates="transcript")
     turns: Mapped[list["TurnRow"]] = relationship(back_populates="transcript")
     evidence_quotes: Mapped[list["EvidenceQuoteRow"]] = relationship(
         back_populates="transcript"
     )
+    case: Mapped["CaseRow | None"] = relationship(back_populates="transcripts")
+
+
+class CaseRow(Base):
+    """Case grouping multiple transcripts over time (v0.9)."""
+
+    __tablename__ = "cases"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    title: Mapped[str] = mapped_column(String(255))
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    transcripts: Mapped[list["TranscriptRow"]] = relationship(back_populates="case")
 
 
 class SpeakerRow(Base):

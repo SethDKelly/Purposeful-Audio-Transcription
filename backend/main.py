@@ -10,6 +10,7 @@ from sqlalchemy import text
 from backend.api.middleware import APIKeyMiddleware, RequestContextMiddleware
 from backend.api.routes import (
     audit,
+    cases,
     exploration,
     health,
     models,
@@ -166,6 +167,7 @@ app.include_router(workflows.router)
 app.include_router(exploration.router)
 app.include_router(process.router)
 app.include_router(transcripts.router)
+app.include_router(cases.router)
 app.include_router(audit.router)
 
 
