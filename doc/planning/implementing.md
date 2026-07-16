@@ -204,6 +204,8 @@ Start after **v0.6.0** Tier 2 closeout (P1-4f done, branch merged, Pause practic
 |---|------|
 | P2-P1–4 | Case entity, APIs, compare-across-transcripts, Streamlit case dashboard |
 
+Related backlog (not on this slice): **Multi-conversation report pack** — export → upload several workflow reports for richer cross-session guidance without requiring every transcript to live in one case yet ([backlog.md](backlog.md#analysis--ontology-speculative--incremental)).
+
 ### P2-Q — Custom workflows
 
 | # | Task |

@@ -56,6 +56,7 @@ Core ontology work is **P2-O** in [implementing.md](implementing.md).
 | **Eval script: construct coverage** | `scripts/eval_construct_coverage.py` — % runs with populated constructs | 1 day |
 | **Coaching action plan export** | May land in P2-R7 — short actionable markdown distinct from coach summary | 1–2 days |
 | **Additional analysis prompts** | Escalation/repair mapping, emotional needs gaps, etc. ([archived/backlog-analysis-suite.md](../archived/backlog-analysis-suite.md)) | Per prompt |
+| **Multi-conversation report pack** | A single conversation bounds what analysis can say. Let users export each workflow report, then upload several reports (same partnership / theme over time or across sessions) for a deeper cross-conversation synthesis — patterns, progression, contradictions, and guidance that one run cannot support. **Relates to P2-P** (cases & longitudinal) in [implementing.md](implementing.md): this can be a lighter import path (report artifacts only, without re-ingesting every transcript) or an early slice that feeds case comparison later. Prefer structured exports (JSON/md findings) over raw paste so meta-synthesis stays attributable. | Large |
 
 ---
 
