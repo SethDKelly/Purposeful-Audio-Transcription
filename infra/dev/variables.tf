@@ -60,6 +60,12 @@ variable "log_retention_days" {
   default = 14
 }
 
+variable "acm_certificate_arn" {
+  description = "Optional ACM certificate ARN in this region. When set, ALB serves HTTPS :443 and HTTP :80 redirects to HTTPS (V07-1a). Leave empty for HTTP-only (default ALB DNS has no cert)."
+  type        = string
+  default     = ""
+}
+
 variable "llm_provider" {
   description = "LLM backend for API tasks: ollama (local) or bedrock (AWS)."
   type        = string

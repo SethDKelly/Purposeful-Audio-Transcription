@@ -22,6 +22,7 @@ from backend.api.routes import (
     workflows,
 )
 from backend.core.exceptions import AppError
+from backend.core.log_context import request_id_var
 from backend.core.logging_config import configure_logging
 from backend.db.base import engine, init_db
 from backend.services.transcript_service import transcript_service
@@ -29,6 +30,22 @@ from backend.services.workflow_job_service import workflow_job_service
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
+
+_GENERIC_INTERNAL_ERROR = (
+    "An unexpected error occurred. Retry later or contact support with the request ID."
+)
+
+
+def _error_payload(detail: str, request: Request | None = None) -> dict[str, object]:
+    payload: dict[str, object] = {"detail": detail}
+    request_id = None
+    if request is not None:
+        request_id = getattr(request.state, "request_id", None)
+    if not request_id:
+        request_id = request_id_var.get()
+    if request_id:
+        payload["request_id"] = request_id
+    return payload
 
 # Postgres advisory lock key so only one uvicorn worker runs migrations / purge.
 _STARTUP_LOCK_KEY = 87422014
@@ -153,15 +170,18 @@ app.include_router(audit.router)
 
 
 @app.exception_handler(AppError)
-async def app_error_handler(_request: Request, exc: AppError) -> JSONResponse:
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message},
-    )
+async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
+    payload = _error_payload(exc.message, request)
+    response = JSONResponse(status_code=exc.status_code, content=payload)
+    request_id = payload.get("request_id")
+    if isinstance(request_id, str) and request_id:
+        response.headers["X-Request-ID"] = request_id
+    return response
 
 
 @app.exception_handler(Exception)
 async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    request_id = getattr(request.state, "request_id", None) or request_id_var.get() or "-"
     logger.exception(
         "Unhandled error on %s %s",
         request.method,
@@ -169,12 +189,15 @@ async def unhandled_error_handler(request: Request, exc: Exception) -> JSONRespo
         extra={
             "event": "request.unhandled_error",
             "error_type": type(exc).__name__,
+            "request_id": request_id,
         },
     )
-    return JSONResponse(
-        status_code=500,
-        content={"detail": f"{type(exc).__name__}: {exc}"},
-    )
+    payload = _error_payload(_GENERIC_INTERNAL_ERROR, request)
+    response = JSONResponse(status_code=500, content=payload)
+    rid = payload.get("request_id")
+    if isinstance(rid, str) and rid:
+        response.headers["X-Request-ID"] = rid
+    return response
 
 
 @app.get("/")

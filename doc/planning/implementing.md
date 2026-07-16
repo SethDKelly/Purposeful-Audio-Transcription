@@ -67,13 +67,13 @@ Detail and acceptance criteria: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.m
 
 | # | Task | Status | Links |
 |---|------|--------|-------|
-| V07-1a | HTTPS/TLS on ALB + HTTP→HTTPS redirect | Pending | `infra/dev/alb.tf`, ACM |
-| V07-1b | UI sends `X-API-Key` when configured | Pending | `ui/api_client.py`, P2-R2 |
-| V07-1c | Generic user-facing API/UI errors (no stack traces) | Pending | `backend/main.py` |
-| V07-1d | Request / correlation IDs in API + UI errors | Pending | logging middleware |
-| V07-1e | Privacy & retention notice (user-facing) | Pending | Streamlit |
-| V07-1f | Transcript/audio deletion controls in UI | Pending | cascade DELETE exists |
-| V07-1g | Export redaction option (default-on) | Pending | export routes |
+| V07-1a | HTTPS/TLS on ALB + HTTP→HTTPS redirect | Pending — Terraform ready when `acm_certificate_arn` set; HTTP-only until ACM/domain available | `infra/dev/alb.tf`, ACM |
+| V07-1b | UI sends `X-API-Key` when configured | Done (code) — ECS injects shared secret | `ui/api_client.py`, Secrets Manager |
+| V07-1c | Generic user-facing API/UI errors (no stack traces) | Done | `backend/main.py` |
+| V07-1d | Request / correlation IDs in API + UI errors | Done | logging middleware + error payload |
+| V07-1e | Privacy & retention notice (user-facing) | Done | Streamlit captions |
+| V07-1f | Transcript/audio deletion controls in UI | Done (clarify caption) | cascade DELETE exists |
+| V07-1g | Export redaction option (default-on) | Done | export checkbox default True |
 
 **Acceptance / tests:** see roadmap Priority 1.
 

@@ -9,5 +9,7 @@ locals {
   ui_log_group  = "/rre/dev/ui"
 
   # UI server-side httpx calls: public ALB when tasks have public IPs; Cloud Map when private.
-  ui_api_base_url = var.enable_no_egress_networking ? "http://api.${var.name_prefix}.local:8000" : "http://${aws_lb.main.dns_name}"
+  https_enabled   = trimspace(var.acm_certificate_arn) != ""
+  alb_scheme      = local.https_enabled ? "https" : "http"
+  ui_api_base_url = var.enable_no_egress_networking ? "http://api.${var.name_prefix}.local:8000" : "${local.alb_scheme}://${aws_lb.main.dns_name}"
 }

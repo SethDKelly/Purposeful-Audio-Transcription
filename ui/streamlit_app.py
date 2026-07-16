@@ -232,8 +232,9 @@ def _render_report_dashboard(
     )
     redact_exports = st.checkbox(
         "Redact speaker labels and omit raw module reports from exports",
-        value=False,
+        value=True,
         key="export_redact",
+        help="Default on for sensitive sessions. Uncheck only when you need full labels.",
     )
     export_md = build_workflow_report_markdown(
         workflow_run,
@@ -569,6 +570,12 @@ def main() -> None:
             label_visibility="collapsed",
         )
         transcript_id = meta.get("transcript_id")
+        if transcript_id:
+            st.caption(
+                "Deletion removes the transcript and cascaded workflow runs, "
+                "module outputs, and synthesis reports from the database. "
+                "Temp audio objects are cleaned up after transcription."
+            )
         if transcript_id and st.button(
             "Delete transcript and related runs",
             type="secondary",

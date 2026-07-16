@@ -1,6 +1,6 @@
 import streamlit as st
 
-from ui.components.constants import PRIVACY_NOTE, SAFETY_DISCLAIMER
+from ui.components.constants import PRIVACY_NOTE, RETENTION_NOTE, SAFETY_DISCLAIMER
 
 
 def render_safety_disclaimer() -> None:
@@ -9,3 +9,4 @@ def render_safety_disclaimer() -> None:
 
 def render_privacy_note() -> None:
     st.caption(PRIVACY_NOTE)
+    st.caption(RETENTION_NOTE)

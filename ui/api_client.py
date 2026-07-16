@@ -12,19 +12,77 @@ PROCESS_TIMEOUT = 1200.0
 WORKFLOW_TIMEOUT = 3600.0
 
 
+def _api_headers() -> dict[str, str]:
+    """Attach API key when configured (V07-1b)."""
+    if settings.api_key:
+        return {"X-API-Key": settings.api_key}
+    return {}
+
+
 def _raise_for_status(response: httpx.Response) -> None:
     if response.status_code < 400:
         return
+    request_id = response.headers.get("X-Request-ID")
+    detail: object
     try:
-        detail = response.json().get("detail", response.text)
+        body = response.json()
+        detail = body.get("detail", response.text)
+        if not request_id:
+            request_id = body.get("request_id")
     except Exception:
         detail = response.text
-    raise RuntimeError(detail)
+    message = str(detail)
+    if request_id:
+        message = f"{message} (request ID: {request_id})"
+    raise RuntimeError(message)
+
+
+def _get(path: str, *, timeout: float) -> httpx.Response:
+    return httpx.get(
+        f"{API_BASE}{path}",
+        headers=_api_headers(),
+        timeout=timeout,
+    )
+
+
+def _post(
+    path: str,
+    *,
+    timeout: float,
+    json: dict | None = None,
+    files=None,
+    data: dict | None = None,
+) -> httpx.Response:
+    return httpx.post(
+        f"{API_BASE}{path}",
+        headers=_api_headers(),
+        timeout=timeout,
+        json=json,
+        files=files,
+        data=data,
+    )
+
+
+def _patch(path: str, *, timeout: float, json: dict) -> httpx.Response:
+    return httpx.patch(
+        f"{API_BASE}{path}",
+        headers=_api_headers(),
+        timeout=timeout,
+        json=json,
+    )
+
+
+def _delete(path: str, *, timeout: float) -> httpx.Response:
+    return httpx.delete(
+        f"{API_BASE}{path}",
+        headers=_api_headers(),
+        timeout=timeout,
+    )
 
 
 def fetch_health() -> dict | None:
     try:
-        response = httpx.get(f"{API_BASE}/api/health", timeout=5.0)
+        response = _get("/api/health", timeout=5.0)
         if response.status_code == 200:
             return response.json()
     except httpx.HTTPError:
@@ -34,7 +92,7 @@ def fetch_health() -> dict | None:
 
 def fetch_llm_models() -> list[str]:
     try:
-        response = httpx.get(f"{API_BASE}/api/models", timeout=5.0)
+        response = _get("/api/models", timeout=5.0)
         if response.status_code == 200:
             return response.json().get("models", [])
     except httpx.HTTPError:
@@ -44,7 +102,7 @@ def fetch_llm_models() -> list[str]:
 
 def fetch_workflows() -> list[dict]:
     try:
-        response = httpx.get(f"{API_BASE}/api/workflows", timeout=5.0)
+        response = _get("/api/workflows", timeout=5.0)
         if response.status_code == 200:
             return response.json().get("workflows", [])
     except httpx.HTTPError:
@@ -54,7 +112,7 @@ def fetch_workflows() -> list[dict]:
 
 def fetch_modules() -> list[dict]:
     try:
-        response = httpx.get(f"{API_BASE}/api/modules", timeout=5.0)
+        response = _get("/api/modules", timeout=5.0)
         if response.status_code == 200:
             return response.json().get("modules", [])
     except httpx.HTTPError:
@@ -80,8 +138,8 @@ def transcribe_audio(
     if num_speakers is not None:
         data["num_speakers"] = str(num_speakers)
 
-    response = httpx.post(
-        f"{API_BASE}/api/transcribe",
+    response = _post(
+        "/api/transcribe",
         files={"file": (filename, file_bytes)},
         data=data,
         timeout=TRANSCRIBE_TIMEOUT,
@@ -102,14 +160,14 @@ def create_transcript(
         "title": title,
         "language": language,
     }
-    response = httpx.post(f"{API_BASE}/api/transcripts", json=payload, timeout=30.0)
+    response = _post("/api/transcripts", json=payload, timeout=30.0)
     _raise_for_status(response)
     return response.json()
 
 
 def upload_transcript_text(file_bytes: bytes, filename: str, title: str | None = None) -> dict:
-    response = httpx.post(
-        f"{API_BASE}/api/transcripts/upload",
+    response = _post(
+        "/api/transcripts/upload",
         files={"file": (filename, file_bytes)},
         data={"title": title or filename},
         timeout=30.0,
@@ -119,8 +177,8 @@ def upload_transcript_text(file_bytes: bytes, filename: str, title: str | None =
 
 
 def update_transcript_speakers(transcript_id: str, speakers: list[dict]) -> dict:
-    response = httpx.patch(
-        f"{API_BASE}/api/transcripts/{transcript_id}/speakers",
+    response = _patch(
+        f"/api/transcripts/{transcript_id}/speakers",
         json={"speakers": speakers},
         timeout=30.0,
     )
@@ -129,7 +187,7 @@ def update_transcript_speakers(transcript_id: str, speakers: list[dict]) -> dict
 
 
 def delete_transcript(transcript_id: str) -> None:
-    response = httpx.delete(f"{API_BASE}/api/transcripts/{transcript_id}", timeout=30.0)
+    response = _delete(f"/api/transcripts/{transcript_id}", timeout=30.0)
     _raise_for_status(response)
 
 
@@ -147,7 +205,7 @@ def record_audit_event(
         "export_format": export_format,
     }
     try:
-        response = httpx.post(f"{API_BASE}/api/audit/events", json=payload, timeout=5.0)
+        response = _post("/api/audit/events", json=payload, timeout=5.0)
         if response.status_code >= 400:
             return
     except httpx.HTTPError:
@@ -163,8 +221,8 @@ def process_audio(
     data: dict[str, str] = {"workflow_id": workflow_id}
     if model:
         data["model"] = model
-    response = httpx.post(
-        f"{API_BASE}/api/process",
+    response = _post(
+        "/api/process",
         files={"file": (filename, file_bytes)},
         data=data,
         timeout=PROCESS_TIMEOUT,
@@ -183,8 +241,8 @@ def run_workflow(
     payload: dict[str, object] = {"transcript_id": transcript_id, "model": model}
     if background is not None:
         payload["background"] = background
-    response = httpx.post(
-        f"{API_BASE}/api/workflows/{workflow_id}/run",
+    response = _post(
+        f"/api/workflows/{workflow_id}/run",
         json=payload,
         timeout=WORKFLOW_TIMEOUT,
     )
@@ -193,20 +251,20 @@ def run_workflow(
 
 
 def get_workflow_run(run_id: str) -> dict:
-    response = httpx.get(f"{API_BASE}/api/workflow-runs/{run_id}", timeout=30.0)
+    response = _get(f"/api/workflow-runs/{run_id}", timeout=30.0)
     _raise_for_status(response)
     return response.json()
 
 
 def get_workflow_synthesis(run_id: str) -> dict:
-    response = httpx.get(f"{API_BASE}/api/workflow-runs/{run_id}/synthesis", timeout=30.0)
+    response = _get(f"/api/workflow-runs/{run_id}/synthesis", timeout=30.0)
     _raise_for_status(response)
     return response.json()
 
 
 def fetch_exploration_findings(run_id: str) -> list[dict]:
-    response = httpx.get(
-        f"{API_BASE}/api/workflow-runs/{run_id}/exploration/findings",
+    response = _get(
+        f"/api/workflow-runs/{run_id}/exploration/findings",
         timeout=30.0,
     )
     _raise_for_status(response)
@@ -214,8 +272,8 @@ def fetch_exploration_findings(run_id: str) -> list[dict]:
 
 
 def fetch_finding_drilldown(run_id: str, finding_key: str) -> dict:
-    response = httpx.get(
-        f"{API_BASE}/api/workflow-runs/{run_id}/exploration/findings/{finding_key}",
+    response = _get(
+        f"/api/workflow-runs/{run_id}/exploration/findings/{finding_key}",
         timeout=30.0,
     )
     _raise_for_status(response)
@@ -223,8 +281,8 @@ def fetch_finding_drilldown(run_id: str, finding_key: str) -> dict:
 
 
 def fetch_cross_module_alignment(run_id: str) -> dict:
-    response = httpx.get(
-        f"{API_BASE}/api/workflow-runs/{run_id}/exploration/cross-module",
+    response = _get(
+        f"/api/workflow-runs/{run_id}/exploration/cross-module",
         timeout=30.0,
     )
     _raise_for_status(response)
@@ -232,8 +290,8 @@ def fetch_cross_module_alignment(run_id: str) -> dict:
 
 
 def fetch_knowledge_graph(run_id: str) -> dict:
-    response = httpx.get(
-        f"{API_BASE}/api/workflow-runs/{run_id}/exploration/knowledge-graph",
+    response = _get(
+        f"/api/workflow-runs/{run_id}/exploration/knowledge-graph",
         timeout=30.0,
     )
     _raise_for_status(response)
@@ -241,8 +299,8 @@ def fetch_knowledge_graph(run_id: str) -> dict:
 
 
 def fetch_transcript_workflow_runs(transcript_id: str) -> list[dict]:
-    response = httpx.get(
-        f"{API_BASE}/api/transcripts/{transcript_id}/workflow-runs",
+    response = _get(
+        f"/api/transcripts/{transcript_id}/workflow-runs",
         timeout=30.0,
     )
     _raise_for_status(response)
@@ -250,8 +308,8 @@ def fetch_transcript_workflow_runs(transcript_id: str) -> list[dict]:
 
 
 def compare_workflow_runs(workflow_run_ids: list[str]) -> dict:
-    response = httpx.post(
-        f"{API_BASE}/api/exploration/compare",
+    response = _post(
+        "/api/exploration/compare",
         json={"workflow_run_ids": workflow_run_ids},
         timeout=60.0,
     )
@@ -271,8 +329,8 @@ def ask_workflow_followup(
         payload["model"] = model
     if finding_key:
         payload["finding_key"] = finding_key
-    response = httpx.post(
-        f"{API_BASE}/api/workflow-runs/{run_id}/exploration/ask",
+    response = _post(
+        f"/api/workflow-runs/{run_id}/exploration/ask",
         json=payload,
         timeout=120.0,
     )

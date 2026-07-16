@@ -48,10 +48,16 @@ resource "aws_ecs_task_definition" "api" {
       { name = "AWS_DEFAULT_REGION", value = var.aws_region },
     ]
 
-    secrets = [{
-      name      = "DATABASE_URL"
-      valueFrom = "${aws_secretsmanager_secret.database.arn}:database_url::"
-    }]
+    secrets = [
+      {
+        name      = "DATABASE_URL"
+        valueFrom = "${aws_secretsmanager_secret.database.arn}:database_url::"
+      },
+      {
+        name      = "API_KEY"
+        valueFrom = "${aws_secretsmanager_secret.api_key.arn}:api_key::"
+      },
+    ]
 
     logConfiguration = {
       logDriver = "awslogs"
@@ -96,6 +102,11 @@ resource "aws_ecs_task_definition" "ui" {
       { name = "RRE_API_BASE_URL", value = local.ui_api_base_url },
       { name = "LOG_JSON", value = "true" },
     ]
+
+    secrets = [{
+      name      = "API_KEY"
+      valueFrom = "${aws_secretsmanager_secret.api_key.arn}:api_key::"
+    }]
 
     logConfiguration = {
       logDriver = "awslogs"

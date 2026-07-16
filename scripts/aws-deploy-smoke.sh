@@ -38,7 +38,37 @@ wait_http() {
 }
 
 echo "== HTTP checks =="
-wait_http "/api/health" "API health"
+# ALB / ECS use /api/live; full /api/health can be slow while Bedrock warms.
+wait_http "/api/live" "API live"
+
+API_KEY_SECRET_ARN=$(terraform output -raw api_key_secret_arn 2>/dev/null || true)
+API_KEY_HEADER=()
+if [ -n "${API_KEY_SECRET_ARN}" ] && [ "${API_KEY_SECRET_ARN}" != "None" ]; then
+  API_KEY=$(aws secretsmanager get-secret-value --secret-id "$API_KEY_SECRET_ARN" \
+    --query 'SecretString' --output text | python3 -c 'import json,sys; print(json.load(sys.stdin).get("api_key",""))')
+  if [ -n "$API_KEY" ]; then
+    API_KEY_HEADER=(-H "X-API-Key: ${API_KEY}")
+    echo "Using API key from Secrets Manager for authenticated smoke checks"
+  fi
+fi
+
+wait_http_auth() {
+  local path="$1"
+  local label="$2"
+  local i
+  for i in $(seq 1 "$MAX_ATTEMPTS"); do
+    if curl -sf --max-time 60 "${API_KEY_HEADER[@]}" "${ALB_URL}${path}" >/tmp/rre-smoke-body.json; then
+      echo "$label OK (${path})"
+      return 0
+    fi
+    echo "Waiting for ${label}... ($i/$MAX_ATTEMPTS)"
+    sleep "$SLEEP_SECS"
+  done
+  echo "::error::${label} failed after ${MAX_ATTEMPTS} attempts: ${ALB_URL}${path}"
+  return 1
+}
+
+wait_http_auth "/api/health" "API health"
 
 python3 - <<'PY'
 import json, sys
@@ -66,7 +96,7 @@ print(
 )
 PY
 
-wait_http "/api/workflows" "API workflows"
+wait_http_auth "/api/workflows" "API workflows"
 python3 - <<'PY'
 import json, sys
 with open("/tmp/rre-smoke-body.json", encoding="utf-8") as f:

@@ -72,7 +72,8 @@ terraform output api_log_group
 - **VPC endpoints (default on):** S3 gateway (all VPC route tables) + interface endpoints for Bedrock, Transcribe, Secrets Manager, CloudWatch Logs, ECR, STS, monitoring.
 - **No-egress mode (default on — Stage B):** Tasks have no public IP; SGs allow HTTPS to VPC endpoints + S3 prefix list, DNS/Postgres in-VPC, and UI→API via Cloud Map (`http://api.rre-dev.local:8000`). Rollback: set `enable_no_egress_networking = false`.
 - RDS PostgreSQL is private; credentials in Secrets Manager (`rre-dev/database`).
-- **Audio diarization in AWS** still needs Hugging Face egress until P1-1 Transcribe — expect `diarization_ready=false` under Stage B. Paste/upload + Bedrock analysis is the supported path.
+- **API auth:** Shared `API_KEY` in Secrets Manager (`rre-dev/api-key`) is injected into API + UI tasks. UI sends `X-API-Key` on backend calls.
+- **HTTPS (optional):** Set `acm_certificate_arn` to an ACM cert in this region to enable ALB `:443` and HTTP→HTTPS redirect. Default remains HTTP-only on the ALB DNS name (no cert without a domain you control).
 - See [aws-deployment.md](../../doc/planning/aws-deployment.md) for the full network model.
 
 ## Pause / resume (avoid Fargate + RDS compute charges)
