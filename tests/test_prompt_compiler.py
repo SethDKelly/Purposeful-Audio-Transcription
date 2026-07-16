@@ -65,10 +65,27 @@ def test_prompt_compiler_metadata() -> None:
     assert compiled.module_id == "bias_epistemic_quality"
     assert compiled.module_version == "1.0.0"
     assert compiled.compiler_version == COMPILER_VERSION
-    assert compiled.shared_instructions_version == "1.0.0"
+    assert compiled.shared_instructions_version == "1.1.0"
     assert compiled.output_schema_id == "module_output_v1"
     assert compiled.confidence_ceiling == Confidence.HIGH
     assert len(compiled.prompt_template_hash) == 64
+
+
+def test_prompt_compiler_asks_for_json_only() -> None:
+    registry = ModuleRegistry()
+    compiler = PromptCompiler()
+    module = registry.get("relationship_conversation_analysis")
+    compiled = compiler.compile_for_transcript(module, _sample_bundle())
+    user_message = compiled.messages[1]["content"]
+    system_message = compiled.messages[0]["content"]
+    assert "then a markdown report" not in user_message.lower()
+    assert "after the JSON block" not in system_message
+    assert "raw_markdown_report" in user_message
+    assert "only one JSON object" in user_message
+    assert compiled.cache_system_text
+    assert "Evidence Index" in compiled.cache_user_prefix
+    assert "Analyze the conversation" in compiled.cache_user_suffix
+    assert "empty" in compiled.cache_user_suffix.lower()
 
 
 def test_prompt_compiler_module_outputs_path() -> None:

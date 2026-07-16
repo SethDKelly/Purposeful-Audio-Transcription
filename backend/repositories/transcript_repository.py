@@ -1,10 +1,19 @@
 import uuid
 from datetime import UTC, datetime
 
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from backend.core.exceptions import TranscriptNotFoundError
-from backend.db.models import EvidenceQuoteRow, SpeakerRow, TranscriptRow, TurnRow
+from backend.db.models import (
+    EvidenceQuoteRow,
+    ModuleRunRow,
+    SpeakerRow,
+    SynthesisReportRow,
+    TranscriptRow,
+    TurnRow,
+    WorkflowRunRow,
+)
 from backend.domain.enums import SourceType
 from backend.domain.transcript import (
     EvidenceQuote,
@@ -148,6 +157,47 @@ class TranscriptRepository:
             )
             for speaker in sorted(row.speakers, key=lambda s: s.label)
         ]
+
+    def delete_cascade(self, session: Session, transcript_id: str) -> None:
+        """Delete transcript and all dependent runs/reports/quotes/turns/speakers."""
+        row = session.get(TranscriptRow, transcript_id)
+        if row is None:
+            raise TranscriptNotFoundError(f"Transcript not found: {transcript_id}")
+
+        run_ids = list(
+            session.scalars(
+                select(WorkflowRunRow.id).where(WorkflowRunRow.transcript_id == transcript_id)
+            ).all()
+        )
+        if run_ids:
+            session.execute(
+                delete(SynthesisReportRow).where(
+                    SynthesisReportRow.workflow_run_id.in_(run_ids)
+                )
+            )
+            session.execute(
+                delete(ModuleRunRow).where(ModuleRunRow.workflow_run_id.in_(run_ids))
+            )
+            session.execute(delete(WorkflowRunRow).where(WorkflowRunRow.id.in_(run_ids)))
+
+        session.execute(
+            delete(ModuleRunRow).where(ModuleRunRow.transcript_id == transcript_id)
+        )
+        session.execute(
+            delete(EvidenceQuoteRow).where(EvidenceQuoteRow.transcript_id == transcript_id)
+        )
+        session.execute(delete(TurnRow).where(TurnRow.transcript_id == transcript_id))
+        session.execute(delete(SpeakerRow).where(SpeakerRow.transcript_id == transcript_id))
+        session.execute(delete(TranscriptRow).where(TranscriptRow.id == transcript_id))
+        session.flush()
+
+    def list_ids_created_before(
+        self, session: Session, cutoff: datetime
+    ) -> list[str]:
+        rows = session.scalars(
+            select(TranscriptRow.id).where(TranscriptRow.created_at < cutoff)
+        ).all()
+        return list(rows)
 
 
 def new_transcript_id() -> str:

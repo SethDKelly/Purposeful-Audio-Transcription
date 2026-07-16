@@ -9,7 +9,7 @@ from backend.core.workflow_registry import WorkflowRegistry
 def test_workflow_registry_loads_all_workflows() -> None:
     registry = WorkflowRegistry()
     workflows = registry.list_workflows()
-    assert len(workflows) == 5
+    assert len(workflows) == 7
     ids = {workflow.config.id for workflow in workflows}
     assert ids == {
         "quick_review",
@@ -17,6 +17,8 @@ def test_workflow_registry_loads_all_workflows() -> None:
         "conflict_coaching",
         "mediation_brief",
         "clinical_exploration",
+        "full_multidisciplinary",
+        "research_oriented",
     }
 
 

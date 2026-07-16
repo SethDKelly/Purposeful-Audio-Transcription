@@ -1,9 +1,9 @@
-"""Resolve the active LLM provider from settings."""
+"""Resolve the active LLM provider (Bedrock only)."""
 
 from __future__ import annotations
 
+from backend.services.bedrock_provider import BedrockProvider
 from backend.services.llm_provider import LLMProvider
-from config.settings import settings
 
 _provider: LLMProvider | None = None
 
@@ -12,15 +12,7 @@ def get_llm_provider() -> LLMProvider:
     global _provider
     if _provider is not None:
         return _provider
-
-    if settings.llm_provider == "bedrock":
-        from backend.services.bedrock_provider import BedrockProvider
-
-        _provider = BedrockProvider()
-    else:
-        from backend.services.ollama_provider import OllamaProvider
-
-        _provider = OllamaProvider()
+    _provider = BedrockProvider()
     return _provider
 
 

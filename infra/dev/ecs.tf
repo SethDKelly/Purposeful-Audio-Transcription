@@ -35,6 +35,12 @@ resource "aws_ecs_task_definition" "api" {
       { name = "BEDROCK_MODEL_ID", value = var.bedrock_model_id },
       { name = "UPLOADS_BUCKET", value = aws_s3_bucket.uploads.bucket },
       { name = "TRANSCRIPTION_PROVIDER", value = var.transcription_provider },
+      { name = "TRANSCRIBE_TIMEOUT_SECONDS", value = "3600" },
+      { name = "WORKFLOW_MODULE_CONCURRENCY", value = "3" },
+      { name = "BEDROCK_PROMPT_CACHE", value = "true" },
+      { name = "BEDROCK_PROMPT_CACHE_TTL", value = "1h" },
+      { name = "BEDROCK_MAX_TOKENS", value = "8192" },
+      { name = "MODULE_RUN_MAX_RETRIES", value = "1" },
       { name = "DIARIZATION_ENABLED", value = var.diarization_enabled ? "true" : "false" },
       { name = "ALEMBIC_AUTO_UPGRADE", value = "true" },
       { name = "TEMP_DIR", value = "/tmp/rre" },
@@ -60,8 +66,8 @@ resource "aws_ecs_task_definition" "api" {
       command     = ["CMD-SHELL", "curl -f http://127.0.0.1:8000/api/live || exit 1"]
       interval    = 30
       timeout     = 5
-      retries     = 3
-      startPeriod = 180
+      retries     = 8
+      startPeriod = 300
     }
   }])
 }
@@ -104,8 +110,8 @@ resource "aws_ecs_task_definition" "ui" {
       command     = ["CMD-SHELL", "curl -f http://127.0.0.1:8501/_stcore/health || exit 1"]
       interval    = 30
       timeout     = 5
-      retries     = 5
-      startPeriod = 180
+      retries     = 8
+      startPeriod = 300
     }
   }])
 }
@@ -136,9 +142,12 @@ resource "aws_ecs_service" "api" {
     container_port   = 8000
   }
 
-  deployment_minimum_healthy_percent = 100
+  # desired_count=1: min 100% blocks deploys when the sole task is ALB-unhealthy
+  # (common while Bedrock Converse holds a worker during burn-in).
+  deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 200
-  health_check_grace_period_seconds  = 300
+  # Allow Alembic + multi-worker bind before ALB marks the sole target unhealthy.
+  health_check_grace_period_seconds = 420
 
   deployment_circuit_breaker {
     enable   = true
@@ -171,9 +180,9 @@ resource "aws_ecs_service" "ui" {
     container_port   = 8501
   }
 
-  deployment_minimum_healthy_percent = 100
+  deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 200
-  health_check_grace_period_seconds  = 300
+  health_check_grace_period_seconds  = 420
 
   deployment_circuit_breaker {
     enable   = true

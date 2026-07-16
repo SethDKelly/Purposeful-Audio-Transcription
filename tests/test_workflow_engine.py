@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
 from fastapi.testclient import TestClient
 
 from backend.core.module_registry import ModuleRegistry
@@ -29,6 +28,13 @@ def _module_llm_response(module_id: str) -> str:
         )
     payload["module_id"] = module_id
     payload["module_version"] = module.config.version
+    ceiling = module.config.confidence_ceiling.value
+    for finding in payload.get("findings", []):
+        conf = finding.get("confidence")
+        if conf not in {"observed", "insufficient_evidence"} and conf != ceiling:
+            # Keep fixtures valid across modules with lower ceilings (e.g. trauma = low).
+            if conf in {"high", "moderate", "low", "exploratory"}:
+                finding["confidence"] = ceiling
     return f"```json\n{json.dumps(payload)}\n```"
 
 
@@ -112,7 +118,7 @@ def test_workflow_engine_full_mvp_runs_synthesis_last() -> None:
 def test_workflow_engine_fails_when_module_fails() -> None:
     mock_llm = MagicMock()
     bad_payload = json.loads((FIXTURES / "sample_module_output.json").read_text(encoding="utf-8"))
-    bad_payload["findings"][2]["alternative_explanations"] = []
+    bad_payload["findings"][0]["evidence_quote_ids"] = ["Q999"]
     mock_llm.chat.return_value = f"```json\n{json.dumps(bad_payload)}\n```"
     engine = _build_engine(mock_llm)
     transcripts = TranscriptService()
@@ -143,7 +149,7 @@ def test_workflows_api(monkeypatch) -> None:
     client = TestClient(app)
     list_response = client.get("/api/workflows")
     assert list_response.status_code == 200
-    assert len(list_response.json()["workflows"]) == 5
+    assert len(list_response.json()["workflows"]) == 7
 
     transcript_response = client.post(
         "/api/transcripts",
@@ -166,3 +172,94 @@ def test_workflows_api(monkeypatch) -> None:
     get_response = client.get(f"/api/workflow-runs/{payload['id']}")
     assert get_response.status_code == 200
     assert get_response.json()["workflow_id"] == "quick_review"
+
+
+def test_workflow_parallel_wave_bounded_concurrency(monkeypatch) -> None:
+    """Transcript modules before meta may run concurrently (cap = concurrency)."""
+    import threading
+    import time
+    import uuid
+    from datetime import datetime, timezone
+
+    from backend.domain.finding import ModuleRun
+
+    active = 0
+    max_active = 0
+    lock = threading.Lock()
+
+    def fake_run(module_id, transcript_id, model=None, workflow_run_id=None):
+        nonlocal active, max_active
+        with lock:
+            active += 1
+            max_active = max(max_active, active)
+        time.sleep(0.08)
+        with lock:
+            active -= 1
+        return ModuleRun(
+            id=str(uuid.uuid4()),
+            module_id=module_id,
+            transcript_id=transcript_id,
+            workflow_run_id=workflow_run_id,
+            status=ModuleRunStatus.COMPLETED.value,
+            parsed_output={
+                "module_id": module_id,
+                "executive_summary": f"summary for {module_id}",
+                "findings": [],
+            },
+            created_at=datetime.now(timezone.utc),
+        )
+
+    def fake_synthesis(
+        module_id,
+        transcript_id,
+        prior_outputs,
+        model=None,
+        workflow_run_id=None,
+    ):
+        assert len(prior_outputs) == 4
+        ids = [item.get("module_id") for item in prior_outputs]
+        assert ids == [
+            "relationship_conversation_analysis",
+            "nvc_analysis",
+            "systems_analysis",
+            "bias_epistemic_quality",
+        ]
+        return ModuleRun(
+            id=str(uuid.uuid4()),
+            module_id=module_id,
+            transcript_id=transcript_id,
+            workflow_run_id=workflow_run_id,
+            status=ModuleRunStatus.COMPLETED.value,
+            parsed_output={
+                "module_id": module_id,
+                "executive_summary": "synthesis",
+                "findings": [],
+            },
+            created_at=datetime.now(timezone.utc),
+        )
+
+    mock_runner = MagicMock()
+    mock_runner.run.side_effect = fake_run
+    mock_runner.run_synthesis.side_effect = fake_synthesis
+    mock_runner.list_by_workflow_run.return_value = []
+
+    engine = WorkflowEngine(
+        workflows=WorkflowRegistry(),
+        runner=mock_runner,
+        transcripts=TranscriptService(),
+    )
+    monkeypatch.setattr(engine, "_module_concurrency", lambda: 3)
+
+    transcripts = TranscriptService()
+    bundle = _ingest_golden(transcripts)
+    workflow_run = engine.run(
+        workflow_id="full_mvp",
+        transcript_id=bundle.transcript.id,
+        model="test-model",
+    )
+
+    assert workflow_run.status == WorkflowRunStatus.COMPLETED.value
+    assert mock_runner.run.call_count == 4
+    assert mock_runner.run_synthesis.call_count == 1
+    assert max_active >= 2
+    assert max_active <= 3

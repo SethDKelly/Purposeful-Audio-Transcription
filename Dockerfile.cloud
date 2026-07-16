@@ -23,11 +23,15 @@ ENV API_HOST=0.0.0.0 \
     LLM_PROVIDER=bedrock \
     TRANSCRIPTION_PROVIDER=transcribe \
     DIARIZATION_ENABLED=false \
-    ALEMBIC_AUTO_UPGRADE=true
+    ALEMBIC_AUTO_UPGRADE=true \
+    UVICORN_WORKERS=2
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+# Looser than default so brief Bedrock load spikes don't flip the Docker HEALTHCHECK.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
     CMD curl -f "http://127.0.0.1:8000/api/live" || exit 1
 
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Shell form so UVICORN_WORKERS is expandable. Multiple workers keep /api/live
+# responsive while another worker handles long Bedrock Converse calls.
+CMD ["sh", "-c", "exec uvicorn backend.main:app --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS:-2}"]

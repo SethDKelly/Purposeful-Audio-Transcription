@@ -35,11 +35,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
-
       - name: Install dependencies
-        run: pip install -e ".[dev,local]"
+        run: pip install -e ".[dev]"
+
+      - name: Validate config + YAML
+        run: |
+          python scripts/validate_yaml.py
+          python scripts/validate_config.py
 
       - name: Run tests
         run: pytest tests/ -q
@@ -127,14 +129,25 @@ jobs:
           docker tag "$ECR_REGISTRY/rre-dev-ui:${IMAGE_TAG}" "$ECR_REGISTRY/rre-dev-ui:latest"
           docker push "$ECR_REGISTRY/rre-dev-ui:latest"
 
+      # desired_count=1 + ALB: overlapping replace leaves old targets draining while new
+      # tasks boot. Clear first so terraform brings up a single fresh revision.
+      - name: Clear ECS tasks before apply
+        env:
+          ECS_CLEAR_MAX_ATTEMPTS: "40"
+          ECS_CLEAR_SLEEP_SECS: "15"
+        run: |
+          set -euo pipefail
+          python3 scripts/ecs-clear-before-deploy.py rre-dev-cluster rre-dev-api rre-dev-ui
+
       - name: Terraform apply
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform apply -input=false -auto-approve -var="image_tag=${IMAGE_TAG}"
 
       - name: Wait for ECS services stable
         env:
-          ECS_WAIT_MAX_ATTEMPTS: "60"
+          ECS_WAIT_MAX_ATTEMPTS: "80"
           ECS_WAIT_SLEEP_SECS: "30"
+          ECS_STEADY_POLLS: "3"
         run: |
           set -euo pipefail
           python3 scripts/wait-ecs-stable.py rre-dev-cluster rre-dev-api rre-dev-ui

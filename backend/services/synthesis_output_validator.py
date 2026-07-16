@@ -31,6 +31,10 @@ class SynthesisOutputValidator:
             + report.moderate_confidence_findings
             + report.exploratory_hypotheses
         )
+        if report.source_module_run_ids and not all_findings:
+            result.errors.append(
+                "synthesis must include at least one finding when source module runs exist"
+            )
         for finding in all_findings:
             for quote_id in finding.evidence_quote_ids:
                 if quote_id not in allowed_quote_ids:

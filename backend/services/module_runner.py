@@ -34,8 +34,21 @@ _REPAIR_PROMPT = (
     "Your previous response failed validation. Return only a corrected JSON object "
     "matching module_output_v1. Fix these issues:\n\n{issues}\n\n"
     "Use only the provided evidence quote IDs. Include alternative_explanations "
-    "for inferred findings. Do not exceed the module confidence ceiling."
+    "for inferred findings. Do not exceed the module confidence ceiling. "
+    "Do not emit markdown outside the JSON object."
 )
+
+
+def compact_module_output_for_handoff(output: dict[str, Any]) -> dict[str, Any]:
+    """Reduce token weight for meta-synthesis / prior-output handoffs.
+
+    Keep structured fields Bedrock needs for convergence; drop duplicate prose
+    already available to the UI via each module run's stored parsed_output.
+    """
+    compact = dict(output)
+    compact["raw_markdown_report"] = ""
+    return compact
+
 
 
 class ModuleRunner:
@@ -181,7 +194,22 @@ class ModuleRunner:
                     self._update_status(run, status)
 
                     try:
-                        raw_output = self._llm.chat(resolved_model, messages, json_mode=True)
+                        if (
+                            attempt == 0
+                            and getattr(self._llm, "name", None) == "bedrock"
+                            and hasattr(self._llm, "chat_cached")
+                            and settings.bedrock_prompt_cache
+                            and compiled.cache_user_prefix
+                        ):
+                            raw_output = self._llm.chat_cached(
+                                resolved_model,
+                                compiled,
+                                json_mode=True,
+                            )
+                        else:
+                            raw_output = self._llm.chat(
+                                resolved_model, messages, json_mode=True
+                            )
                     except LLMError as exc:
                         return self._fail_run(
                             run,
@@ -270,9 +298,8 @@ class ModuleRunner:
         )
         if not resolved:
             raise ModuleRunError(
-                "No LLM model specified. Pass model in the request, set model_id or "
-                "ollama_model in the module YAML, or configure DEFAULT_OLLAMA_MODEL / "
-                "BEDROCK_MODEL_ID."
+                "No LLM model specified. Pass model in the request, set model_id in the "
+                "module YAML, or configure BEDROCK_MODEL_ID."
             )
         return resolved
 
@@ -303,6 +330,10 @@ class ModuleRunner:
         output: ModuleRunOutput,
         safety_flags: list[str],
     ) -> ModuleRun:
+        # Cap stored markdown so UI/synthesis stay lean even if the model sprawls.
+        markdown = (output.raw_markdown_report or "").strip()
+        if len(markdown) > 1200:
+            output.raw_markdown_report = markdown[:1200].rstrip() + "..."
         run.status = ModuleRunStatus.COMPLETED.value
         run.parsed_output = output.model_dump(mode="json")
         run.validation_errors = None

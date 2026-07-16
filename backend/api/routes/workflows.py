@@ -9,6 +9,7 @@ from backend.api.schemas import (
     synthesis_report_to_response,
     workflow_run_to_response,
 )
+from backend.core.exceptions import WorkflowSyncLimitError
 from backend.core.workflow_registry import workflow_registry
 from backend.services.synthesis_engine import synthesis_engine
 from backend.services.workflow_engine import workflow_engine
@@ -16,6 +17,30 @@ from backend.services.workflow_job_service import workflow_job_service
 from config.settings import settings
 
 router = APIRouter(prefix="/api", tags=["workflows"])
+
+
+def _resolve_background(
+    *,
+    request_background: bool | None,
+    workflow_default_background: bool,
+    module_count: int,
+) -> bool:
+    if request_background is not None:
+        use_background = request_background
+    elif workflow_default_background:
+        use_background = True
+    else:
+        use_background = settings.workflow_background_default
+
+    limit = settings.workflow_sync_module_limit
+    if limit > 0 and module_count > limit and not use_background:
+        if request_background is False:
+            raise WorkflowSyncLimitError(
+                f"Workflow has {module_count} modules; synchronous runs are limited to "
+                f"{limit}. Pass background=true or raise WORKFLOW_SYNC_MODULE_LIMIT."
+            )
+        use_background = True
+    return use_background
 
 
 @router.get("/workflows", response_model=WorkflowsResponse)
@@ -32,6 +57,8 @@ def list_workflows() -> WorkflowsResponse:
             modules=workflow.module_sequence,
             meta_synthesis=workflow.config.meta_synthesis,
             enabled=workflow.config.enabled,
+            default_background=workflow.config.default_background,
+            module_count=len(workflow.module_sequence),
         )
         for workflow in workflow_registry.list_workflows()
     ]
@@ -40,10 +67,12 @@ def list_workflows() -> WorkflowsResponse:
 
 @router.post("/workflows/{workflow_id}/run", response_model=WorkflowRunResponse)
 def run_workflow(workflow_id: str, request: RunWorkflowRequest) -> WorkflowRunResponse:
-    use_background = (
-        request.background
-        if request.background is not None
-        else settings.workflow_background_default
+    workflow = workflow_registry.get(workflow_id)
+    module_count = len(workflow.module_sequence)
+    use_background = _resolve_background(
+        request_background=request.background,
+        workflow_default_background=workflow.config.default_background,
+        module_count=module_count,
     )
     if use_background:
         workflow_run = workflow_job_service.start_background_run(

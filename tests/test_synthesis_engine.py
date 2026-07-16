@@ -54,6 +54,81 @@ def _run_quick_review_workflow(mock_llm):
     return workflow_run, engine
 
 
+def test_synthesis_parser_prefers_module_findings_over_empty_buckets() -> None:
+    """Regression: empty confidence-bucket keys must not discard module findings."""
+    parser = SynthesisParser()
+    from backend.services.synthesis_preprocessor import SynthesisPreprocessor
+
+    payload = {
+        "module_id": "meta_synthesis",
+        "module_version": "1.0.0",
+        "executive_summary": "Integrated repair-oriented summary.",
+        "findings": [
+            {
+                "id": "F001",
+                "type": "observation",
+                "title": "Repair completed",
+                "summary": "Partners closed the loop.",
+                "confidence": "moderate",
+                "evidence_quote_ids": ["Q001"],
+                "alternative_explanations": ["tone unavailable"],
+            }
+        ],
+        "high_confidence_findings": [],
+        "moderate_confidence_findings": [],
+        "convergence": [],
+        "divergence": [],
+        "recommendations": ["Stay curious"],
+        "limitations": [],
+    }
+    report = parser.parse_meta_module_output(
+        payload,
+        workflow_run_id="wf-1",
+        synthesis_id="syn-1",
+        module_run_id="meta-run-1",
+        preprocessed=SynthesisPreprocessor().process([]),
+    )
+    assert len(report.moderate_confidence_findings) == 1
+    assert report.moderate_confidence_findings[0].title == "Repair completed"
+
+
+def test_synthesis_report_response_includes_findings_rollup() -> None:
+    from backend.api.schemas import synthesis_report_to_response
+    from backend.domain.enums import Confidence, FindingType
+    from backend.domain.finding import Finding
+    from backend.domain.synthesis import SynthesisReport
+
+    report = SynthesisReport(
+        id="syn-1",
+        workflow_run_id="wf-1",
+        executive_summary="Summary",
+        high_confidence_findings=[
+            Finding(
+                id="F1",
+                module_run_id="m1",
+                type=FindingType.OBSERVATION,
+                title="High",
+                summary="High summary",
+                confidence=Confidence.HIGH,
+            )
+        ],
+        moderate_confidence_findings=[
+            Finding(
+                id="F2",
+                module_run_id="m1",
+                type=FindingType.OBSERVATION,
+                title="Moderate",
+                summary="Moderate summary",
+                confidence=Confidence.MODERATE,
+            )
+        ],
+        source_module_run_ids=["m1"],
+    )
+    response = synthesis_report_to_response(report)
+    assert len(response.findings) == 2
+    assert [item.id for item in response.findings] == ["F1", "F2"]
+
+
 def test_synthesis_parser_accepts_synthesis_output_shape() -> None:
     payload = json.loads(
         (FIXTURES / "sample_synthesis_report.json").read_text(encoding="utf-8")

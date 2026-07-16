@@ -1,63 +1,32 @@
 # Getting started
 
-Quick path from clone to your first workflow report.
+Operator path from a paused stack to your first workflow report on **AWS**.
 
 ## What you need
 
 | Requirement | Notes |
 |-------------|-------|
-| Python 3.11+ | `python --version` |
-| [ffmpeg](https://ffmpeg.org/download.html) | On `PATH` for audio |
-| [Ollama](https://ollama.com/) | Running locally |
-| Chat model | e.g. `ollama pull llama3.2` |
-| Speaker diarization | Optional: `pip install -e ".[local]"` + `HF_TOKEN` — see [model-setup.md](model-setup.md) |
+| Access to this GitHub repo | Deploy / Pause workflows via OIDC |
+| AWS account `521018312783` | Region `us-east-2` |
+| Bedrock model access | Claude (see [model-setup.md](model-setup.md)) |
 
-## Install
+No local Whisper, Ollama, ffmpeg, or Hugging Face token is required for product use.
 
-```powershell
-git clone https://github.com/SethDKelly/Purposeful-Audio-Transcription.git
-cd Purposeful-Audio-Transcription
-git checkout v0.5.1   # or use main
+## Deploy
 
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -e ".[dev,local]"
+1. In GitHub Actions, run **Deploy to AWS dev** (`workflow_dispatch`), or push a runtime/infra change to `main`.
+2. Wait for ECS services healthy (workflow summary includes ALB URL tips).
+3. Open the Streamlit UI via the ALB (see [aws-operations.md](../developer/aws-operations.md)).
 
-copy .env.example .env
-```
-
-Edit `.env` and set at minimum:
-
-```env
-DEFAULT_OLLAMA_MODEL=llama3.2
-```
-
-## Verify
-
-```powershell
-.venv\Scripts\python scripts\check_prerequisites.py
-.venv\Scripts\pytest tests/ -q
-```
-
-## Run
-
-```powershell
-.\scripts\run_dev.ps1
-```
-
-| Service | URL |
-|---------|-----|
-| Streamlit UI | http://localhost:8501 |
-| API | http://127.0.0.1:8000 |
-| API docs | http://127.0.0.1:8000/docs |
+Docs-only pushes do **not** auto-deploy. When finished, run **Pause AWS dev**.
 
 ## First workflow (5 minutes)
 
-1. Open the UI and confirm the sidebar shows **Ollama**, **ffmpeg**, and optionally **Diarization** as connected.
-2. **Ingest** — paste a short two-speaker transcript or upload `tests/fixtures/golden_transcript.txt`.
-3. **Prepare** — optionally rename speakers; click through to keep quote IDs.
-4. **Analyze** — choose **Quick Review** and your Ollama model; click **Run workflow**.
-5. **Report** — review findings, open the **Explore** tab, export `.md` or `.pdf`.
+1. Open the UI; sidebar should show API healthy with Bedrock / Transcribe / database available.
+2. **Ingest** — paste a short two-speaker transcript or upload audio (Transcribe) / text.
+3. **Prepare** — optionally rename speakers; keep quote IDs.
+4. **Analyze** — choose **Quick Review** and the Bedrock model; prefer background for long suites.
+5. **Report** — review findings, open **Explore**, export `.md` or `.pdf`.
 
 ## Choose a workflow
 
@@ -68,11 +37,14 @@ DEFAULT_OLLAMA_MODEL=llama3.2
 | `conflict_coaching` | Needs, coaching tone | ~2–4 min |
 | `mediation_brief` | Positions, interests, agreements | ~3–6 min |
 | `clinical_exploration` | Deeper exploratory lenses | ~8–15 min |
+| `research_oriented` | Pattern study | ~6–15 min |
+| `full_multidisciplinary` | All transcript modules | ~15–45 min (background) |
 
 See [user-guide.md](user-guide.md) for details.
 
 ## Next steps
 
 - [User guide](user-guide.md) — exploration, exports, safety notes
-- [Model setup](model-setup.md) — stronger models for synthesis
-- [Deployment](deployment.md) — backup, API key, PostgreSQL
+- [Model setup](model-setup.md) — Bedrock + Transcribe
+- [Deployment](deployment.md) — AWS ops pointers
+- [AWS architecture](../planning/aws-deployment.md)

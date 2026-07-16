@@ -25,6 +25,18 @@ _JSON_FENCE_WRAPPER = re.compile(
 
 logger = logging.getLogger(__name__)
 
+# Bedrock often omits alternatives on inferred findings; fill so validation can pass.
+_INFERRED_CONFIDENCES = {
+    Confidence.HIGH,
+    Confidence.MODERATE,
+    Confidence.LOW,
+    Confidence.EXPLORATORY,
+}
+_DEFAULT_ALTERNATIVE = (
+    "Other readings of the same evidence remain plausible; "
+    "this finding is inferred rather than directly observed."
+)
+
 
 class OutputParseError(ValueError):
     pass
@@ -197,6 +209,11 @@ def _normalize_finding(
 ) -> Finding:
     finding_type = _coerce_enum(FindingType, finding.type, "finding type")
     confidence = _coerce_enum(Confidence, finding.confidence, "confidence")
+    alternatives = [
+        item.strip() for item in finding.alternative_explanations if item.strip()
+    ]
+    if confidence in _INFERRED_CONFIDENCES and not alternatives:
+        alternatives = [_DEFAULT_ALTERNATIVE]
     return Finding(
         id=finding.id or f"F{index:03d}",
         module_run_id=module_run_id,
@@ -205,9 +222,7 @@ def _normalize_finding(
         summary=finding.summary.strip(),
         confidence=confidence,
         evidence_quote_ids=list(finding.evidence_quote_ids),
-        alternative_explanations=[
-            item.strip() for item in finding.alternative_explanations if item.strip()
-        ],
+        alternative_explanations=alternatives,
         limitations=[item.strip() for item in finding.limitations if item.strip()],
         construct_ids=list(finding.construct_ids),
     )

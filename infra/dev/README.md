@@ -77,15 +77,17 @@ terraform output api_log_group
 
 ## Pause / resume (avoid Fargate + RDS compute charges)
 
-**Standing practice:** After **v0.5.1 lands on `main`**, pause first, then whenever the stack sits idle (between coding sessions, overnight). Resume only when you need AWS again.
+**Standing practice:** After **v0.6.0 lands on `main`**, pause first, then whenever the stack sits idle (between coding sessions, overnight). Resume only when you need AWS again.
 
 **Pause** — GitHub Actions → **Pause AWS dev** → Run workflow (requires workflow on default branch for Manual Dispatch; path-filter push on `phase-m0-docs` also works).
 
 This sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Terraform state stays in sync.
 
-**Resume** — **Deploy to AWS dev** (`workflow_dispatch`) or push under runtime/infra paths (docs-only does not deploy). The deploy workflow starts RDS if stopped, then scales ECS.
+**Resume** — **Deploy to AWS dev** (`workflow_dispatch`) or push under runtime/infra paths (docs-only does not deploy). The deploy workflow starts RDS if stopped, **clears any lingering ECS tasks**, then scales ECS with the new image.
 
-**Task size (P1-2d):** Slim API defaults — `api_cpu=1024`, `api_memory=2048` (was 1024/4096). Tried 512/2048; ALB `/api/live` timed out during cutover. UI remains `256` / `512`. Apply on next Terraform deploy.
+**Task size (P1-2d):** Slim API defaults — `api_cpu=1024`, `api_memory=2048` (was 1024/4096). Tried 512/2048; ALB `/api/live` timed out during cutover. UI remains `256` / `512`.
+
+**API serving (burn-in resilience):** Cloud image runs **2 uvicorn workers** so `/api/live` stays responsive during Bedrock Converse. ALB unhealthy_threshold is **10** (was 5). Deploy clears tasks to desired 0 before apply (clean slate for single-task Fargate + ALB).
 
 **Costs while paused:** ALB (~$16/mo), ECR image storage, Secrets Manager, RDS storage (no compute while stopped). RDS auto-restarts after ~7 days if not resumed.
 

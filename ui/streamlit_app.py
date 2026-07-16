@@ -1,6 +1,6 @@
 """Streamlit UI for Purposeful Audio Transcription / RRE."""
 
-import json
+import time
 
 import httpx
 import streamlit as st
@@ -9,13 +9,16 @@ from config.settings import settings
 from ui.api_client import (
     API_BASE,
     create_transcript,
+    delete_transcript,
     fetch_health,
     fetch_modules,
-    fetch_ollama_models,
+    fetch_llm_models,
     fetch_workflows,
+    get_workflow_run,
     get_workflow_synthesis,
     module_display_name,
     module_name_map,
+    record_audit_event,
     run_workflow,
     transcribe_audio,
     update_transcript_speakers,
@@ -35,7 +38,7 @@ from ui.components.report_exports import (
     build_workflow_report_markdown,
     build_workflow_report_pdf,
 )
-from ui.components.safety_disclaimer import render_safety_disclaimer
+from ui.components.safety_disclaimer import render_privacy_note, render_safety_disclaimer
 from ui.components.synthesis_panel import render_synthesis_panel
 
 ALLOWED_EXTENSIONS = sorted(settings.allowed_extensions)
@@ -51,8 +54,8 @@ def _cached_health() -> dict | None:
 
 
 @st.cache_data(ttl=30, show_spinner=False)
-def _cached_ollama_models() -> list[str]:
-    return fetch_ollama_models()
+def _cached_llm_models() -> list[str]:
+    return fetch_llm_models()
 
 
 @st.cache_data(ttl=30, show_spinner=False)
@@ -77,6 +80,8 @@ def _apply_transcript_bundle(bundle: dict, *, source_name: str = "transcript") -
     }
     st.session_state.workflow_run = None
     st.session_state.synthesis_report = None
+    st.session_state.speaker_names_editor_open = False
+    st.session_state.pop("speaker_names_flash", None)
 
 
 def render_sidebar() -> None:
@@ -89,32 +94,16 @@ def render_sidebar() -> None:
 
     st.sidebar.metric("API", health.get("status", "unknown").title())
     st.sidebar.markdown(
-        f"- **ffmpeg:** {_status_indicator(health.get('ffmpeg_available', False))}"
+        f"- **LLM ({health.get('llm_provider', 'bedrock')}):** "
+        f"{_status_indicator(health.get('llm_available', False))}"
     )
     st.sidebar.markdown(
-        f"- **Ollama:** {_status_indicator(health.get('ollama_available', False))}"
+        f"- **ASR ({health.get('transcription_provider', 'transcribe')}):** "
+        f"{_status_indicator(health.get('transcription_available', False))}"
     )
     st.sidebar.markdown(
-        f"- **Whisper:** {_status_indicator(health.get('whisper_ready', False))}"
-        f" (`{health.get('whisper_device', 'cpu')}`"
-        + (
-            f", {health.get('whisper_compute_type')}"
-            if health.get("whisper_compute_type")
-            else ""
-        )
-        + ")"
+        f"- **Database:** {_status_indicator(health.get('database_available', False))}"
     )
-    diarization_ready = health.get("diarization_ready", False)
-    st.sidebar.markdown(
-        f"- **Diarization:** {_status_indicator(diarization_ready)}"
-        f" (`{health.get('diarization_device', 'cpu')}`)"
-    )
-    cuda_ok = health.get("cuda_available", False)
-    st.sidebar.markdown(f"- **CUDA:** {_status_indicator(cuda_ok)}")
-    if not cuda_ok:
-        st.sidebar.caption(
-            "CPU torch build or no NVIDIA GPU — see model-setup for CUDA install."
-        )
 
     workflows = _cached_workflows()
     st.sidebar.divider()
@@ -126,6 +115,21 @@ def render_sidebar() -> None:
         st.sidebar.caption("No workflows configured")
 
 
+def _format_workflow_status(status: str | None) -> str:
+    """Human-readable workflow run status for UI copy."""
+    raw = (status or "unknown").strip()
+    labels = {
+        "running_modules": "running workflows",
+        "synthesizing": "synthesizing",
+        "completed": "completed",
+        "failed": "failed",
+        "cancelled": "cancelled",
+        "created": "created",
+        "preprocessing": "preprocessing",
+    }
+    return labels.get(raw, raw.replace("_", " "))
+
+
 def _render_workflow_progress(
     workflow_run: dict,
     module_names: dict[str, str],
@@ -135,8 +139,8 @@ def _render_workflow_progress(
         status = module_run.get("status", "unknown")
         module_id = module_run.get("module_id", "module")
         label = module_display_name(module_id, module_names)
-        icon = "✅" if status == "completed" else "❌" if status == "failed" else "⏳"
-        st.markdown(f"{icon} **{label}** — {status}")
+        icon = {"completed": "[ok]", "failed": "[fail]"}.get(status, "[...]")
+        st.markdown(f"{icon} **{label}** - {status}")
 
 
 def _render_report_dashboard(
@@ -148,7 +152,7 @@ def _render_report_dashboard(
     *,
     module_names: dict[str, str] | None = None,
     transcript_id: str | None = None,
-    ollama_models: list[str] | None = None,
+    llm_models: list[str] | None = None,
     default_model: str | None = None,
 ) -> None:
     render_safety_disclaimer()
@@ -156,7 +160,7 @@ def _render_report_dashboard(
 
     if workflow_run.get("status") != "completed":
         st.warning(
-            f"Workflow status: {workflow_run.get('status')}. "
+            f"Workflow status: {_format_workflow_status(workflow_run.get('status'))}. "
             f"{workflow_run.get('error_log') or ''}"
         )
         _render_workflow_progress(workflow_run, names)
@@ -171,6 +175,25 @@ def _render_report_dashboard(
     with overview_tab:
         if synthesis:
             st.markdown(synthesis.get("executive_summary", ""))
+            finding_count = len(synthesis.get("findings") or [])
+            if finding_count == 0:
+                finding_count = (
+                    len(synthesis.get("high_confidence_findings") or [])
+                    + len(synthesis.get("moderate_confidence_findings") or [])
+                    + len(synthesis.get("exploratory_hypotheses") or [])
+                )
+            step_count = len(synthesis.get("interventions") or [])
+            finding_label = "finding" if finding_count == 1 else "findings"
+            step_label = "next step" if step_count == 1 else "next steps"
+            st.caption(
+                f"{finding_count} integrated {finding_label} | "
+                f"{step_count} suggested {step_label}"
+            )
+            if finding_count == 0:
+                st.error(
+                    "Synthesis completed without findings. Open the Synthesis tab "
+                    "and module reports to investigate."
+                )
             if synthesis.get("interventions"):
                 st.markdown("#### Suggested next steps")
                 for item in synthesis["interventions"][:3]:
@@ -199,7 +222,7 @@ def _render_report_dashboard(
             workflow_run,
             transcript_id=transcript_id,
             quotes_by_id=quotes_by_id,
-            ollama_models=ollama_models or [],
+            llm_models=llm_models or [],
             default_model=default_model,
         )
 
@@ -255,45 +278,77 @@ def _render_report_dashboard(
     )
 
     col_md, col_json, col_pdf = st.columns(3)
-    col_md.download_button(
+    transcript_id = st.session_state.transcript_meta.get("transcript_id")
+    run_id = workflow_run.get("id")
+    if col_md.download_button(
         "Download workflow report (.md)",
         data=export_md,
         file_name=f"{base_name}_workflow_report.md",
         mime="text/markdown",
-    )
-    col_json.download_button(
+    ):
+        record_audit_event(
+            "transcript.export",
+            transcript_id=transcript_id,
+            workflow_run_id=run_id,
+            export_format="md",
+        )
+    if col_json.download_button(
         "Download workflow report (.json)",
         data=export_json,
         file_name=f"{base_name}_workflow_report.json",
         mime="application/json",
-    )
-    col_pdf.download_button(
+    ):
+        record_audit_event(
+            "transcript.export",
+            transcript_id=transcript_id,
+            workflow_run_id=run_id,
+            export_format="json",
+        )
+    if col_pdf.download_button(
         "Download workflow report (.pdf)",
         data=export_pdf,
         file_name=f"{base_name}_workflow_report.pdf",
         mime="application/pdf",
-    )
+    ):
+        record_audit_event(
+            "transcript.export",
+            transcript_id=transcript_id,
+            workflow_run_id=run_id,
+            export_format="pdf",
+        )
 
     col_coach, col_mediation = st.columns(2)
-    col_coach.download_button(
+    if col_coach.download_button(
         "Download coach summary (.md)",
         data=coach_summary,
         file_name=f"{base_name}_coach_summary.md",
         mime="text/markdown",
-    )
+    ):
+        record_audit_event(
+            "transcript.export",
+            transcript_id=transcript_id,
+            workflow_run_id=run_id,
+            export_format="coach_md",
+        )
     if show_mediation_brief and mediation_brief:
-        col_mediation.download_button(
+        if col_mediation.download_button(
             "Download mediation brief (.md)",
             data=mediation_brief,
             file_name=f"{base_name}_mediation_brief.md",
             mime="text/markdown",
-        )
+        ):
+            record_audit_event(
+                "transcript.export",
+                transcript_id=transcript_id,
+                workflow_run_id=run_id,
+                export_format="mediation_md",
+            )
 
 
 def main() -> None:
     st.set_page_config(
         page_title="Relationship Reasoning Engine",
-        page_icon="🎙️",
+        page_icon="???",
         layout="wide",
     )
 
@@ -302,9 +357,10 @@ def main() -> None:
 
     render_sidebar()
     render_safety_disclaimer()
+    render_privacy_note()
 
     workflows = _cached_workflows()
-    ollama_models = _cached_ollama_models()
+    llm_models = _cached_llm_models()
     module_names = module_name_map(_cached_modules())
     workflow_options = {workflow["name"]: workflow for workflow in workflows}
 
@@ -319,7 +375,7 @@ def main() -> None:
             st.session_state[key] = default
 
     # --- Step 1: Ingest ---
-    st.subheader("Step 1 · Ingest")
+    st.subheader("Step 1 - Ingest")
     input_tab_audio, input_tab_text = st.tabs(["Audio", "Paste or upload text"])
 
     uploaded = None
@@ -387,13 +443,10 @@ def main() -> None:
             try:
                 if num_speakers is not None:
                     status.write(
-                        f"Running Whisper + diarization (hint: {num_speakers} speakers). "
-                        "First run can take several minutes on CPU."
+                        f"Running Amazon Transcribe (hint: {num_speakers} speakers)."
                     )
                 else:
-                    status.write(
-                        "Running Whisper + diarization. First run can take several minutes on CPU."
-                    )
+                    status.write("Running Amazon Transcribe.")
                 result = transcribe_audio(
                     uploaded.getvalue(),
                     uploaded.name,
@@ -426,28 +479,26 @@ def main() -> None:
                     skip_reason = result.get("diarization_skip_reason")
                     if skip_reason:
                         status.write(
-                            "Speaker diarization skipped — transcript uses a single speaker label."
+                            "Speaker labels unavailable - transcript uses a single speaker label."
                         )
                         status.write(skip_reason)
                     else:
                         status.write(
-                            "Speaker diarization skipped — transcript uses a single speaker label. "
-                            "Install pyannote extras and set HF_TOKEN in `.env` to enable."
+                            "Speaker labels unavailable - transcript uses a single speaker label."
                         )
                 status.update(label="Transcription complete", state="complete")
             except httpx.TimeoutException:
                 status.update(label="Timed out", state="error")
                 st.error(
-                    "Transcription timed out. Speaker diarization on CPU can take a long time "
-                    "for longer audio — try a shorter clip, wait for a retry (models stay loaded), "
-                    "or set Expected speakers to speed clustering."
+                    "Transcription timed out. Amazon Transcribe can take several minutes "
+                    "for longer audio - try a shorter clip or try again."
                 )
             except (RuntimeError, httpx.HTTPError) as exc:
                 status.update(label="Failed", state="error")
                 st.error(str(exc))
 
     # --- Step 2: Prepare ---
-    st.subheader("Step 2 · Prepare")
+    st.subheader("Step 2 - Prepare")
     if not st.session_state.transcript and not st.session_state.transcript_meta:
         st.info("Ingest a transcript to continue.")
     else:
@@ -456,7 +507,7 @@ def main() -> None:
         if meta.get("language"):
             cols[0].metric("Language", meta["language"])
         if meta.get("transcript_id"):
-            cols[1].metric("Transcript ID", meta["transcript_id"][:8] + "…")
+            cols[1].metric("Transcript ID", meta["transcript_id"][:8] + "?")
         if meta.get("filename"):
             cols[2].metric("Source", meta["filename"])
         if meta.get("speaker_count"):
@@ -475,16 +526,28 @@ def main() -> None:
 
         bundle = st.session_state.transcript_bundle
         if bundle and bundle.get("speakers"):
-            with st.expander("Edit speaker display names", expanded=False):
-                speaker_updates = []
-                for speaker in bundle["speakers"]:
-                    display_name = st.text_input(
-                        f"Display name for {speaker['label']}",
-                        value=speaker.get("display_name") or speaker["label"],
-                        key=f"speaker_{speaker['id']}",
-                    )
-                    speaker_updates.append({"id": speaker["id"], "display_name": display_name})
-                if st.button("Save speaker names"):
+            if "speaker_names_editor_open" not in st.session_state:
+                st.session_state.speaker_names_editor_open = False
+            flash = st.session_state.pop("speaker_names_flash", None)
+            if flash:
+                st.success(flash)
+            with st.expander(
+                "Edit speaker display names",
+                expanded=st.session_state.speaker_names_editor_open,
+            ):
+                with st.form("speaker_display_names_form"):
+                    st.caption("Edit all names below, then save once.")
+                    speaker_updates = []
+                    for speaker in bundle["speakers"]:
+                        display_name = st.text_input(
+                            f"Display name for {speaker['label']}",
+                            value=speaker.get("display_name") or speaker["label"],
+                        )
+                        speaker_updates.append(
+                            {"id": speaker["id"], "display_name": display_name}
+                        )
+                    saved = st.form_submit_button("Save speaker names", type="primary")
+                if saved:
                     try:
                         updated = update_transcript_speakers(
                             bundle["transcript"]["id"],
@@ -492,8 +555,11 @@ def main() -> None:
                         )
                         st.session_state.transcript_bundle = updated
                         st.session_state.transcript_meta["speakers"] = updated["speakers"]
-                        st.success("Speaker names updated.")
+                        st.session_state.speaker_names_editor_open = False
+                        st.session_state.speaker_names_flash = "Speaker names updated."
+                        st.rerun()
                     except (RuntimeError, httpx.HTTPError) as exc:
+                        st.session_state.speaker_names_editor_open = True
                         st.error(str(exc))
 
         st.session_state.transcript = st.text_area(
@@ -502,14 +568,31 @@ def main() -> None:
             height=220,
             label_visibility="collapsed",
         )
+        transcript_id = meta.get("transcript_id")
+        if transcript_id and st.button(
+            "Delete transcript and related runs",
+            type="secondary",
+            help="Cascades to workflow runs, module runs, and synthesis reports.",
+        ):
+            try:
+                delete_transcript(transcript_id)
+                st.session_state.transcript = ""
+                st.session_state.transcript_meta = {}
+                st.session_state.transcript_bundle = None
+                st.session_state.workflow_run = None
+                st.session_state.synthesis_report = None
+                st.success("Transcript deleted.")
+                st.rerun()
+            except (RuntimeError, httpx.HTTPError) as exc:
+                st.error(str(exc))
 
     # --- Step 3: Analyze ---
-    st.subheader("Step 3 · Analyze")
+    st.subheader("Step 3 - Analyze")
 
     if not st.session_state.transcript:
         st.info("Prepare a transcript first.")
-    elif not ollama_models:
-        st.warning("No Ollama models available.")
+    elif not llm_models:
+        st.warning("No LLM models available.")
     elif not workflows:
         st.warning("No workflows configured.")
     else:
@@ -531,16 +614,37 @@ def main() -> None:
                 module_display_name(module_id, module_names)
                 for module_id in workflow.get("modules", [])
             )
-            + f" · Est. {workflow.get('estimated_runtime', 'n/a')}"
+            + f" - Est. {workflow.get('estimated_runtime', 'n/a')}"
         )
 
-        default_model = settings.default_ollama_model or ollama_models[0]
+        module_count = len(workflow.get("modules", []))
+        sync_limit = settings.workflow_sync_module_limit
+        default_bg = bool(workflow.get("default_background"))
+        long_suite = sync_limit > 0 and module_count > sync_limit
+        if long_suite or default_bg:
+            st.warning(
+                f"This workflow has {module_count} modules"
+                + (
+                    f" (sync limit {sync_limit})"
+                    if long_suite
+                    else ""
+                )
+                + ". Prefer background execution and keep this tab open while it runs."
+            )
+
+        run_in_background = st.checkbox(
+            "Run in background (poll until complete)",
+            value=default_bg or long_suite,
+            key=f"workflow_bg_{workflow['id']}",
+        )
+
+        default_model = settings.default_llm_model or llm_models[0]
         model_index = (
-            ollama_models.index(default_model)
-            if default_model in ollama_models
+            llm_models.index(default_model)
+            if default_model in llm_models
             else 0
         )
-        selected_model = st.selectbox("Ollama model", options=ollama_models, index=model_index)
+        selected_model = st.selectbox("LLM model", options=llm_models, index=model_index)
 
         transcript_id = st.session_state.transcript_meta.get("transcript_id")
         bundle_text = (st.session_state.transcript_bundle or {}).get("transcript", {}).get(
@@ -557,12 +661,37 @@ def main() -> None:
                 try:
                     for module_id in workflow.get("modules", []):
                         label = module_display_name(module_id, module_names)
-                        st.write(f"Running {label}...")
+                        st.write(f"Queued {label}...")
                     result = run_workflow(
                         transcript_id=transcript_id,
                         workflow_id=workflow["id"],
                         model=selected_model,
+                        background=run_in_background,
                     )
+                    terminal = {"completed", "failed", "cancelled"}
+                    if run_in_background and result.get("status") not in terminal:
+                        run_id = result["id"]
+                        status.write("Background job started; polling for completion...")
+                        last_line: str | None = None
+                        # 120 * 30s ? 60 minutes (long suites + parallel Bedrock still need headroom).
+                        for _ in range(120):
+                            time.sleep(30)
+                            result = get_workflow_run(run_id)
+                            done = sum(
+                                1
+                                for mr in result.get("module_runs", [])
+                                if mr.get("status") in {"completed", "failed"}
+                            )
+                            total = max(module_count, 1)
+                            line = (
+                                f"Status: {_format_workflow_status(result.get('status'))} "
+                                f"- modules done {done}/{total}"
+                            )
+                            if line != last_line:
+                                status.write(line)
+                                last_line = line
+                            if result.get("status") in terminal:
+                                break
                     st.session_state.workflow_run = result
                     st.session_state.synthesis_report = None
                     if result.get("status") == "completed":
@@ -570,8 +699,11 @@ def main() -> None:
                             st.session_state.synthesis_report = get_workflow_synthesis(
                                 result["id"]
                             )
-                        except RuntimeError:
-                            pass
+                        except RuntimeError as exc:
+                            st.warning(
+                                "Workflow finished, but the synthesis report could not be "
+                                f"built: {exc}"
+                            )
                         status.update(label="Workflow complete", state="complete")
                     else:
                         status.update(label="Workflow failed", state="error")
@@ -581,7 +713,7 @@ def main() -> None:
                     st.error(str(exc))
 
     # --- Step 4: Report ---
-    st.subheader("Step 4 · Report")
+    st.subheader("Step 4 - Report")
     workflow_run = st.session_state.workflow_run
     if workflow_run:
         quotes = st.session_state.transcript_meta.get("evidence_quotes", [])
@@ -603,8 +735,8 @@ def main() -> None:
             workflow_name,
             module_names=module_names,
             transcript_id=st.session_state.transcript_meta.get("transcript_id"),
-            ollama_models=ollama_models,
-            default_model=settings.default_ollama_model or (ollama_models[0] if ollama_models else None),
+            llm_models=llm_models,
+            default_model=settings.default_llm_model or (llm_models[0] if llm_models else None),
         )
     else:
         st.info("Run a workflow to explore the evidence-linked report dashboard.")

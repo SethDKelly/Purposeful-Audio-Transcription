@@ -1,177 +1,53 @@
-# Model setup
+# Model setup — Bedrock & Transcribe
 
-Local models for the Relationship Reasoning Engine: **Whisper** (transcription) and **Ollama** (LLM).
+AWS-only inference for the Relationship Reasoning Engine.
 
-| Environment | LLM | ASR |
-|-------------|-----|-----|
-| **Local** | Ollama — this page | Whisper + optional pyannote (`TRANSCRIPTION_PROVIDER=whisper`, install `.[local]`) |
-| **AWS** | Bedrock | Amazon Transcribe (`TRANSCRIPTION_PROVIDER=transcribe`, `Dockerfile.cloud`) |
+| Service | Role |
+|---------|------|
+| **Amazon Bedrock** | Module / synthesis LLM (`LLM_PROVIDER=bedrock`) |
+| **Amazon Transcribe** | Audio → labeled turns (`TRANSCRIPTION_PROVIDER=transcribe`) |
 
-Install:
+Historical local stacks (Ollama, Whisper, pyannote) are **removed** from the product. Do not configure them.
 
-```bash
-# Local full stack (Whisper + diarization)
-pip install -e ".[dev,local]"
+## Bedrock
 
-# Cloud / slim API deps only (no torch)
-pip install -e ".[dev]"
-```
+ECS sets `LLM_PROVIDER=bedrock` and `BEDROCK_MODEL_ID` (see `infra/dev/ecs.tf`). Operators need model access in the account/region (`us-east-2`).
 
----
+Resolution order (first non-empty wins):
 
-## Whisper (transcription)
+| Layer | Location |
+|-------|----------|
+| Request | API / UI `model` field |
+| Module | `model_id` / legacy `ollama_model` alias in module YAML |
+| Environment | `BEDROCK_MODEL_ID` / `DEFAULT_OLLAMA_MODEL` (legacy alias if still present in settings) |
 
-Configure in `.env` (see `.env.example`):
+Evaluation notes: [../planning/llm-evaluation-bedrock.md](../planning/llm-evaluation-bedrock.md).
 
-| Variable | Default | Notes |
-|----------|---------|-------|
-| `WHISPER_MODEL` | `base` | `tiny`/`base` faster; `small`/`medium` more accurate |
-| `WHISPER_DEVICE` | `auto` | `auto` picks CUDA if available, else CPU |
-| `WHISPER_COMPUTE_TYPE` | `int8` | On CUDA, `int8` is automatically promoted to `float16` |
-| `TRANSCRIPTION_MODE` | `sliced` | `sliced` = diarize then Whisper per speaker interval; `overlap` = full-file Whisper + alignment |
-| `WHISPER_MIN_SLICE_DURATION` | `0.5` | Skip diarization intervals shorter than this before Whisper (seconds) |
-| `WHISPER_BATCH_SIZE` | `8` | CUDA batched Whisper slice count (ignored on CPU) |
-| `WHISPER_MAX_SLICES` | `200` | Cap diarization slices per upload |
+UI model list: `GET /api/models`.
 
-## GPU / accelerator setup
+## Amazon Transcribe
 
-Whisper and pyannote diarization share the same device preference order: **CUDA → MPS (Mac) → CPU**.
+Requires `UPLOADS_BUCKET` and IAM for StartTranscriptionJob / S3. Speaker labels become Person A / B turns after ingest.
 
-| Variable | Default | Notes |
-|----------|---------|-------|
-| `WHISPER_DEVICE` | `auto` | `auto` / `cuda` / `cpu` (MPS falls back to CPU for Whisper) |
-| `DIARIZATION_DEVICE` | `auto` | `auto` / `cuda` / `mps` / `cpu` |
+| Variable | Notes |
+|----------|-------|
+| `TRANSCRIPTION_PROVIDER` | `transcribe` |
+| `UPLOADS_BUCKET` | Temp audio + job output (lifecycle on `temp/`) |
+| `TRANSCRIBE_LANGUAGE` | Optional, e.g. `en-US` |
 
-The Streamlit sidebar and `GET /api/health` report `cuda_available`, `whisper_device`, and `diarization_device` so you can confirm acceleration is active.
-
-### CPU PyTorch (default from pip)
-
-`pip install -e ".[dev]"` installs a **CPU-only** torch wheel (`+cpu`) by default. On that build, `torch.cuda.is_available()` is always false even if you have an NVIDIA GPU.
-
-### CUDA PyTorch (NVIDIA GPU)
-
-1. Install a CUDA-capable NVIDIA driver.
-2. Reinstall torch/torchaudio with a CUDA build that matches your driver (example for CUDA 12.x — check [pytorch.org](https://pytorch.org/get-started/locally/) for current commands):
-
-```powershell
-pip uninstall -y torch torchaudio
-pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124
-```
-
-3. Verify:
-
-```powershell
-.venv\Scripts\python -c "import torch; print(torch.cuda.is_available(), torch.version.cuda)"
-```
-
-4. Restart the API. Health should show `cuda_available: true` and Whisper/diarization devices as `cuda`.
-
-Keep `WHISPER_DEVICE=auto` and `DIARIZATION_DEVICE=auto` unless you need to force CPU.
-
-### Apple Silicon (MPS)
-
-Diarization can use `mps` when `DIARIZATION_DEVICE=auto` on Mac. Whisper (faster-whisper) stays on CPU unless you set CUDA (not applicable on Apple Silicon).
-
-## Speaker diarization
-
-Audio uploads are split into **Person A / Person B** turns using local [pyannote.audio](https://github.com/pyannote/pyannote-audio) speaker diarization (installed with the application).
-
-1. Dependencies are included in the standard install (`pip install -e ".[dev]"`).
-   For GPU acceleration, follow **CUDA PyTorch** above after install.
-2. Accept the model terms on Hugging Face (logged in as the same account as `HF_TOKEN`):
-   - [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1)
-   - [pyannote/segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
-3. Add your token to `.env`:
-   ```env
-   HF_TOKEN=your_huggingface_token
-   DIARIZATION_ENABLED=true
-   ```
-
-| Variable | Default | Notes |
-|----------|---------|-------|
-| `DIARIZATION_ENABLED` | `true` | Set `false` to skip diarization |
-| `DIARIZATION_MODEL` | `pyannote/speaker-diarization-3.1` | Hugging Face pipeline id |
-| `DIARIZATION_DEVICE` | `auto` | Same preference order as Whisper (CUDA → MPS → CPU) |
-| `DIARIZATION_SPEAKER_PREFIX` | `Person` | Labels become Person A, Person B, … |
-| `DIARIZATION_MIN_SPEAKERS` | _(empty)_ | Default min speakers when no per-upload hint |
-| `DIARIZATION_MAX_SPEAKERS` | _(empty)_ | Default max speakers when no per-upload hint |
-| `DIARIZATION_MIN_DURATION_ON` | `0.3` | Drop or absorb speaker turns shorter than this (seconds); `0` disables |
-| `DIARIZATION_MIN_DURATION_OFF` | `0.2` | Merge same-speaker intervals when the gap is shorter than this (seconds); `0` disables |
-| `HF_TOKEN` | _(empty)_ | Required for gated pyannote models |
-
-On Windows, pyannote may warn that **torchcodec** is unavailable. The app decodes audio with **ffmpeg/ffprobe** (same tools used for transcription) before running diarization. Ensure both are on `PATH`.
-
-If diarization is unavailable, transcription still works with a single **Speaker 1** label. The sidebar shows **Diarization: Connected** when ready.
-
-Restart the API after changing these settings.
-
-## Ollama (analysis)
-
-
-### Prerequisites
-
-1. Install and start Ollama.
-2. Pull at least one chat model, for example:
-   ```powershell
-   ollama pull llama3.2
-   ```
-3. Copy `.env.example` to `.env` and set a default model if you want one globally.
-
-### Configuration layers
-
-Model resolution follows this order (first non-empty value wins):
-
-| Layer | Location | Example |
-|-------|----------|---------|
-| Request | API body `model` field | `"llama3.2"` |
-| Module | `ollama_model` in `config/modules/*.yaml` | `ollama_model: llama3.2` |
-| Environment | `DEFAULT_OLLAMA_MODEL` in `.env` | `DEFAULT_OLLAMA_MODEL=llama3.2` |
-| Thinking | `OLLAMA_THINK` in `.env` | `OLLAMA_THINK=false` (recommended) |
-| JSON mode | `OLLAMA_MODULE_JSON_FORMAT` | `true` — use Ollama `format=json` for module/workflow runs |
-| Token limit | `OLLAMA_NUM_PREDICT` | `8192` — raise if module JSON is truncated |
-
-Legacy single-purpose analysis has been removed. Use module YAML for configuration.
-
-### Gemma 4 and thinking models
-
-Some Ollama models (notably **Gemma 4**) enable built-in **thinking** by default. On long module prompts, thinking can consume the token budget and leave `message.content` empty while reasoning appears in `message.thinking`. Quick Review and other JSON workflows then fail with an empty response.
-
-RRE passes `think=false` to Ollama by default (`OLLAMA_THINK=false`). Leave this off for structured analysis. Set `OLLAMA_THINK=true` only if you explicitly want thinking mode and accept the risk of empty content on long prompts.
-
-## Recommended workflow
-
-1. Set `DEFAULT_OLLAMA_MODEL` in `.env` for day-to-day use.
-2. Override only modules that need a heavier or more structured model (often `meta_synthesis`).
-3. Run workflows via `POST /api/workflows/{workflow_id}/run` or the Streamlit UI.
-4. Stream a single module via `POST /api/modules/{module_id}/stream` when needed.
-
-Available workflows: `quick_review`, `full_mvp`, `conflict_coaching`, `mediation_brief`, `clinical_exploration`. See [user-guide.md](user-guide.md).
-
-## Per-module overrides
-
-Each module YAML may set `ollama_model`. Use this when a module benefits from a different model size or style:
-
-```yaml
-id: meta_synthesis
-ollama_model: llama3.1:8b
-```
-
-Leave `ollama_model: null` to inherit `DEFAULT_OLLAMA_MODEL`.
-
-## Verify setup
-
-```powershell
-.venv\Scripts\python scripts\check_prerequisites.py
-```
-
-The Streamlit UI lists available Ollama models from `GET /api/models/ollama`.
+Evaluation notes: [../planning/asr-evaluation-transcribe.md](../planning/asr-evaluation-transcribe.md).
 
 ## Long transcripts
 
-Evidence quotes are summarized in prompts when a transcript exceeds `EVIDENCE_PROMPT_MAX_QUOTES` (default `120`). The full quote index is still stored and returned by the transcript API. Tune with:
+Evidence quotes are summarized in prompts when a transcript exceeds `EVIDENCE_PROMPT_MAX_QUOTES` (default `120`):
 
 ```env
 EVIDENCE_PROMPT_MAX_QUOTES=120
 EVIDENCE_PROMPT_HEAD_QUOTES=80
 EVIDENCE_PROMPT_TAIL_QUOTES=40
 ```
+
+## Related
+
+- [getting-started.md](getting-started.md) · [deployment.md](deployment.md)
+- [../developer/aws-operations.md](../developer/aws-operations.md)

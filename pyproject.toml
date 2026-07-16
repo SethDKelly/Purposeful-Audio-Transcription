@@ -1,14 +1,13 @@
 [project]
 name = "purposeful-audio-transcription"
-version = "0.5.1"
-description = "Local audio transcription with Whisper and transcript analysis via Ollama"
+version = "0.6.0"
+description = "Relationship Reasoning Engine — AWS Bedrock + Transcribe transcript analysis"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
     "python-multipart>=0.0.12",
-    "ollama>=0.4",
     "boto3>=1.35",
     "pydantic-settings>=2.6",
     "httpx>=0.28",
@@ -20,23 +19,32 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Streamlit UI (Dockerfile.ui / local UI). Kept out of cloud API image.
 ui = [
     "streamlit>=1.40",
-]
-# Local / full API image — Whisper + pyannote (not used on AWS after P1-2).
-local = [
-    "faster-whisper>=1.1",
-    "pyannote.audio>=3.1",
-    "torch>=2.0",
-    "torchaudio>=2.0",
 ]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
     "httpx>=0.28",
     "streamlit>=1.40",
+    "pre-commit>=4.0",
+    "ruff>=0.11",
 ]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["backend", "config", "ui", "tests", "scripts"]
+
+[tool.ruff.lint]
+# Start strict on crash/unused-import class; widen select once churn is absorbed.
+select = ["E9", "F401"]
+ignore = []
+
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B011"]
+"scripts/**" = ["E402"]
 
 [build-system]
 requires = ["hatchling"]

@@ -1,8 +1,12 @@
 """Orchestrate multi-module analysis workflows."""
 
+from __future__ import annotations
+
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from backend.core.exceptions import WorkflowRunError
 from backend.core.log_context import log_context_extra, workflow_run_id_var
 from backend.core.module_registry import module_registry
 from backend.core.workflow_registry import WorkflowDefinition, workflow_registry
@@ -11,8 +15,13 @@ from backend.domain.enums import ModuleRunStatus, WorkflowRunStatus
 from backend.domain.finding import ModuleRun
 from backend.domain.workflow import WorkflowRun
 from backend.repositories.workflow_run_repository import WorkflowRunRepository, utc_now
-from backend.services.module_runner import ModuleRunner, module_runner
+from backend.services.module_runner import (
+    ModuleRunner,
+    compact_module_output_for_handoff,
+    module_runner,
+)
 from backend.services.transcript_service import TranscriptService, transcript_service
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +105,12 @@ class WorkflowEngine:
         with get_session() as session:
             return self._repository.list_incomplete(session)
 
+    def _module_concurrency(self) -> int:
+        # SQLite write contention makes parallel module runs unsafe in pytest/local DB.
+        if settings.is_sqlite:
+            return 1
+        return max(1, int(settings.workflow_module_concurrency or 1))
+
     def _execute(
         self,
         workflow: WorkflowDefinition,
@@ -112,7 +127,7 @@ class WorkflowEngine:
             if module_run.status == ModuleRunStatus.COMPLETED.value
         }
         prior_outputs = [
-            module_run.parsed_output
+            compact_module_output_for_handoff(module_run.parsed_output)
             for module_run in existing_module_runs
             if module_run.parsed_output
             and module_run.status == ModuleRunStatus.COMPLETED.value
@@ -135,6 +150,24 @@ class WorkflowEngine:
         self._persist(workflow_run)
 
         try:
+            pending_transcript: list[str] = []
+
+            def flush_transcript_wave() -> WorkflowRun | None:
+                nonlocal pending_transcript
+                if not pending_transcript:
+                    return None
+                wave = pending_transcript
+                pending_transcript = []
+                return self._run_transcript_wave(
+                    workflow_run=workflow_run,
+                    transcript_id=transcript_id,
+                    module_ids=wave,
+                    model=model,
+                    module_runs=module_runs,
+                    prior_outputs=prior_outputs,
+                    started=started,
+                )
+
             for module_id in workflow.module_sequence:
                 if module_id in completed_module_ids:
                     logger.info(
@@ -152,6 +185,9 @@ class WorkflowEngine:
 
                 module = self._modules.get(module_id)
                 if module.config.input_type == "module_outputs":
+                    failed = flush_transcript_wave()
+                    if failed is not None:
+                        return failed
                     workflow_run.status = WorkflowRunStatus.SYNTHESIZING.value
                     self._persist(workflow_run)
                     module_run = self._runner.run_synthesis(
@@ -161,25 +197,24 @@ class WorkflowEngine:
                         model=model,
                         workflow_run_id=workflow_run.id,
                     )
+                    module_runs.append(module_run)
+                    if module_run.status != ModuleRunStatus.COMPLETED.value:
+                        return self._fail_workflow(
+                            workflow_run,
+                            module_run,
+                            f"Module {module_id} failed",
+                            started,
+                        )
+                    if module_run.parsed_output:
+                        prior_outputs.append(
+                            compact_module_output_for_handoff(module_run.parsed_output)
+                        )
                 else:
-                    module_run = self._runner.run(
-                        module_id=module_id,
-                        transcript_id=transcript_id,
-                        model=model,
-                        workflow_run_id=workflow_run.id,
-                    )
+                    pending_transcript.append(module_id)
 
-                module_runs.append(module_run)
-                if module_run.status != ModuleRunStatus.COMPLETED.value:
-                    return self._fail_workflow(
-                        workflow_run,
-                        module_run,
-                        f"Module {module_id} failed",
-                        started,
-                    )
-
-                if module_run.parsed_output:
-                    prior_outputs.append(module_run.parsed_output)
+            failed = flush_transcript_wave()
+            if failed is not None:
+                return failed
 
             return self._complete_workflow(workflow_run, module_runs, started)
         except WorkflowRunError:
@@ -202,6 +237,120 @@ class WorkflowEngine:
             raise WorkflowRunError(f"Workflow failed: {exc}") from exc
         finally:
             workflow_run_id_var.reset(workflow_token)
+
+    def _run_transcript_wave(
+        self,
+        *,
+        workflow_run: WorkflowRun,
+        transcript_id: str,
+        module_ids: list[str],
+        model: str | None,
+        module_runs: list[ModuleRun],
+        prior_outputs: list[dict],
+        started: float,
+    ) -> WorkflowRun | None:
+        """Run independent transcript modules with bounded parallelism.
+
+        Returns a failed WorkflowRun if any module fails; otherwise None after
+        appending results in YAML order to module_runs / prior_outputs.
+        """
+        if not module_ids:
+            return None
+
+        concurrency = min(self._module_concurrency(), len(module_ids))
+        logger.info(
+            "Workflow run %s running transcript wave size=%s concurrency=%s modules=%s",
+            workflow_run.id,
+            len(module_ids),
+            concurrency,
+            module_ids,
+            extra={
+                "event": "workflow.wave.started",
+                "run_id": workflow_run.id,
+                "workflow_id": workflow_run.workflow_id,
+                "module_count": len(module_ids),
+                "concurrency": concurrency,
+            },
+        )
+
+        results: dict[str, ModuleRun] = {}
+        if concurrency == 1:
+            for module_id in module_ids:
+                module_run = self._runner.run(
+                    module_id=module_id,
+                    transcript_id=transcript_id,
+                    model=model,
+                    workflow_run_id=workflow_run.id,
+                )
+                results[module_id] = module_run
+                if module_run.status != ModuleRunStatus.COMPLETED.value:
+                    module_runs.append(module_run)
+                    return self._fail_workflow(
+                        workflow_run,
+                        module_run,
+                        f"Module {module_id} failed",
+                        started,
+                    )
+        else:
+            with ThreadPoolExecutor(
+                max_workers=concurrency,
+                thread_name_prefix="workflow-module",
+            ) as pool:
+                futures = {
+                    pool.submit(
+                        self._runner.run,
+                        module_id,
+                        transcript_id,
+                        model,
+                        workflow_run.id,
+                    ): module_id
+                    for module_id in module_ids
+                }
+                first_failure: ModuleRun | None = None
+                for future in as_completed(futures):
+                    module_id = futures[future]
+                    try:
+                        module_run = future.result()
+                    except Exception as exc:  # noqa: BLE001
+                        logger.exception(
+                            "Parallel module %s raised for workflow run %s",
+                            module_id,
+                            workflow_run.id,
+                        )
+                        workflow_run.status = WorkflowRunStatus.FAILED.value
+                        workflow_run.completed_at = utc_now()
+                        workflow_run.error_log = f"Module {module_id} failed: {exc}"
+                        self._persist(workflow_run)
+                        for pending in futures:
+                            pending.cancel()
+                        raise WorkflowRunError(workflow_run.error_log) from exc
+                    results[module_id] = module_run
+                    if (
+                        module_run.status != ModuleRunStatus.COMPLETED.value
+                        and first_failure is None
+                    ):
+                        first_failure = module_run
+
+                if first_failure is not None:
+                    # Preserve YAML order for any completed siblings already stored.
+                    for module_id in module_ids:
+                        if module_id in results:
+                            module_runs.append(results[module_id])
+                    return self._fail_workflow(
+                        workflow_run,
+                        first_failure,
+                        f"Module {first_failure.module_id} failed",
+                        started,
+                    )
+
+        for module_id in module_ids:
+            module_run = results[module_id]
+            module_runs.append(module_run)
+            if module_run.parsed_output:
+                prior_outputs.append(
+                    compact_module_output_for_handoff(module_run.parsed_output)
+                )
+        return None
 
     def _complete_workflow(
         self,

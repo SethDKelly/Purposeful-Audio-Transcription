@@ -3,7 +3,7 @@ from pathlib import Path
 
 from backend.core.exceptions import AnalysisError
 from backend.core.workflow_registry import workflow_registry
-from backend.services.audio_transcription_service import AudioTranscriptionResult
+from backend.services.transcript_types import AudioTranscriptionResult
 from backend.services.transcription_factory import get_transcription_provider
 from backend.services.transcript_service import transcript_service
 from backend.services.workflow_engine import build_workflow_analysis_text, workflow_engine
@@ -27,7 +27,7 @@ class Orchestrator:
         if not transcript_result.text.strip():
             raise AnalysisError("Transcription produced empty text")
 
-        bundle = transcript_service.ingest_from_whisper(
+        bundle = transcript_service.ingest_from_audio(
             raw_text=transcript_result.text,
             language=transcript_result.language,
         )

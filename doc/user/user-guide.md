@@ -10,7 +10,7 @@ Ingest → Prepare → Analyze → Report
 
 ### 1. Ingest
 
-**Audio tab** — upload `.mp3`, `.wav`, `.m4a`, etc. If you know how many people spoke, choose **Expected speakers** (2, 3, 4, or a custom count) before transcribing; otherwise leave **Auto-detect**. Click **Transcribe audio** to run Whisper. When diarization is enabled (see [model-setup.md](model-setup.md)), the app labels turns as **Person A**, **Person B**, etc. Otherwise you get a single-speaker transcript you can edit manually in Step 2.
+**Audio tab** — upload `.mp3`, `.wav`, `.m4a`, etc. If you know how many people spoke, choose **Expected speakers** before uploading; Amazon Transcribe labels turns as **Person A**, **Person B**, etc. Otherwise paste text in the text tab.
 
 **Paste / upload tab** — paste labeled dialogue or upload a `.txt` file. Preferred format:
 
@@ -28,9 +28,9 @@ Each turn receives a stable **evidence quote ID** (`Q001`, `Q002`, …) used in 
 
 ### 3. Analyze
 
-Select a **workflow** and **Ollama model**, then **Run workflow**.
+Select a **workflow** and **LLM model** (Bedrock), then **Run workflow**.
 
-Workflows run modules sequentially. Long workflows can be queued in the background via the API (`"background": true`); the UI runs synchronously by default.
+Workflows run modules sequentially. Long workflows default to background in the UI when the workflow sets `default_background`, or when module count exceeds `WORKFLOW_SYNC_MODULE_LIMIT`. You can also pass `"background": true` on the API.
 
 ### 4. Report
 
@@ -44,17 +44,21 @@ Report tabs:
 | **Synthesis** | Cross-module convergence and divergence |
 | **Explore** | Interactive drill-down and follow-up questions |
 
-## Workflows (v0.3.0)
+## Workflows
 
-| ID | Modules | Synthesis |
-|----|---------|-----------|
-| `quick_review` | Relationship, NVC, Bias | No |
-| `full_mvp` | Relationship, NVC, Systems, Bias | Yes (meta-synthesis) |
-| `conflict_coaching` | Relationship, NVC, Needs & Values, Bias | No |
-| `mediation_brief` | Relationship, Mediation, NVC, Bias | No |
-| `clinical_exploration` | Formulation, Cognitive, Attachment, Narrative, Bias | Yes |
+| ID | Modules | Synthesis | Notes |
+|----|---------|-----------|-------|
+| `quick_review` | Relationship, NVC, Bias | No | Fast iteration |
+| `full_mvp` | Relationship, NVC, Systems, Bias | Yes | Integrated report |
+| `conflict_coaching` | Relationship, NVC, Needs & Values, Bias | No | Coaching framing |
+| `mediation_brief` | Relationship, Mediation, NVC, Bias | No | Mediation framing |
+| `clinical_exploration` | Formulation, Cognitive, Attachment, Narrative, Bias | Yes | Exploratory (non-diagnostic) |
+| `research_oriented` | Relationship, Cognitive, Narrative, Bias, Systems | Yes | Pattern study; default background |
+| `full_multidisciplinary` | All 12 transcript modules | Yes | Long suite; default background |
 
-Pick **Quick Review** for iteration; **Full MVP** for an integrated report; role-specific workflows for coaching or mediation framing.
+Long suites default to background execution in the UI/API. Synchronous runs are capped by `WORKFLOW_SYNC_MODULE_LIMIT` (default 6).
+
+Pick **Quick Review** for iteration; **Full MVP** for an integrated report; **Full Multidisciplinary** when you want every lens; role-specific workflows for coaching or mediation framing.
 
 ## Understanding findings
 
@@ -74,7 +78,7 @@ Without re-running a workflow you can:
 - **Cross-module** — agreement and tension between modules
 - **Compare sessions** — compare multiple runs on the same transcript
 - **Knowledge graph** — constructs and relationships (when modules return them)
-- **Ask a question** — scoped follow-up to Ollama using stored findings
+- **Ask a question** — scoped follow-up via Bedrock using stored findings
 
 Scope a question to one finding or the entire run.
 

@@ -2,7 +2,8 @@
 
 # Output Schema Instructions
 
-Respond with a single JSON object matching `module_output_v1`, then a human-readable markdown report.
+Respond with a single JSON object matching `module_output_v1` only.
+Put any human-readable report inside `raw_markdown_report` — do not emit markdown outside the JSON.
 
 ## Required JSON Shape
 
@@ -20,7 +21,7 @@ Respond with a single JSON object matching `module_output_v1`, then a human-read
       "summary": "Clear explanation grounded in evidence",
       "confidence": "moderate",
       "evidence_quote_ids": ["Q001"],
-      "alternative_explanations": ["Optional alternative if inferred"],
+      "alternative_explanations": ["Required when confidence is inferred"],
       "limitations": ["Optional limitation"],
       "construct_ids": []
     }
@@ -58,12 +59,11 @@ Use one of: observation, interaction_cycle, emotion, need, value, belief, narrat
 
 1. `module_id` and `module_version` must match the module you are running.
 2. Every finding must include at least one `evidence_quote_ids` entry unless it is a pure methodological limitation.
-3. Inferred findings (confidence other than observed) should include `alternative_explanations` when plausible alternatives exist.
+3. Inferred findings (confidence high, moderate, low, or exploratory) **must** include at least one non-empty `alternative_explanations` entry.
 4. Confidence values must not exceed the module confidence ceiling.
 5. Only use quote IDs that appear in the provided evidence index.
-6. Keep `raw_markdown_report` as a readable summary for humans; it may expand on the JSON findings.
+6. Put the real analysis in structured fields (`findings`, `constructs`, `relationships`, `recommendations`). Prefer `raw_markdown_report` as `""`; if used, keep it under ~150 words. Do not duplicate the full finding list as markdown.
 
 ## Response Format
 
 Return **only** a single JSON object (no markdown fences, no prose outside JSON).
-Put the human-readable report inside `raw_markdown_report`.

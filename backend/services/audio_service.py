@@ -1,81 +1,13 @@
 import logging
-import shutil
-import subprocess
 import uuid
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 
-from config.settings import settings
 from backend.core.exceptions import AudioValidationError
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
-
-
-def check_ffmpeg_available() -> bool:
-    return shutil.which("ffmpeg") is not None
-
-
-def check_ffprobe_available() -> bool:
-    return shutil.which("ffprobe") is not None
-
-
-def load_waveform_for_diarization(audio_path: Path) -> dict:
-    """Decode audio via ffmpeg for pyannote when torchcodec is unavailable."""
-    import json
-
-    import torch
-
-    if not check_ffmpeg_available() or not check_ffprobe_available():
-        raise RuntimeError("ffmpeg and ffprobe are required for speaker diarization")
-
-    probe = subprocess.run(
-        [
-            "ffprobe",
-            "-v",
-            "error",
-            "-select_streams",
-            "a:0",
-            "-show_entries",
-            "stream=sample_rate,channels",
-            "-of",
-            "json",
-            str(audio_path),
-        ],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    stream = json.loads(probe.stdout)["streams"][0]
-    sample_rate = int(stream["sample_rate"])
-    channels = int(stream.get("channels", 1))
-
-    decode = subprocess.run(
-        [
-            "ffmpeg",
-            "-nostdin",
-            "-v",
-            "error",
-            "-i",
-            str(audio_path),
-            "-f",
-            "f32le",
-            "-acodec",
-            "pcm_f32le",
-            "-ac",
-            str(channels),
-            "pipe:1",
-        ],
-        capture_output=True,
-        check=True,
-    )
-    if not decode.stdout:
-        raise RuntimeError(f"No audio decoded from {audio_path.name}")
-
-    waveform = torch.frombuffer(bytearray(decode.stdout), dtype=torch.float32).reshape(
-        channels, -1
-    )
-    return {"waveform": waveform, "sample_rate": sample_rate}
 
 
 def validate_audio_file(filename: str, size_bytes: int) -> None:

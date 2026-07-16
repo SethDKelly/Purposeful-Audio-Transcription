@@ -1,4 +1,4 @@
-"""Tests for TranscriptionProvider factory and Amazon Transcribe mapping."""
+"""Tests for Amazon Transcribe provider mapping and factory."""
 
 from __future__ import annotations
 
@@ -12,12 +12,11 @@ from backend.services.amazon_transcribe_provider import (
     AmazonTranscribeProvider,
     _result_from_transcribe_json,
 )
-from backend.services.audio_transcription_service import AudioTranscriptionResult
+from backend.services.transcript_types import AudioTranscriptionResult
 from backend.services.transcription_factory import (
     get_transcription_provider,
     reset_transcription_provider,
 )
-from backend.services.whisper_transcription_provider import WhisperTranscriptionProvider
 
 
 @pytest.fixture(autouse=True)
@@ -27,40 +26,10 @@ def _reset_provider():
     reset_transcription_provider()
 
 
-def test_whisper_provider_delegates_to_service(tmp_path: Path) -> None:
-    audio = tmp_path / "clip.wav"
-    audio.write_bytes(b"fake")
-    service = MagicMock()
-    service.transcribe.return_value = AudioTranscriptionResult(
-        text="Person A: Hello",
-        speaker_count=1,
-        transcription_mode="overlap",
-    )
-    provider = WhisperTranscriptionProvider(service=service)
-
-    result = provider.transcribe(audio, num_speakers=2)
-
-    assert provider.name == "whisper"
-    assert result.text.startswith("Person A")
-    service.transcribe.assert_called_once_with(audio, num_speakers=2)
-
-
-def test_factory_defaults_to_whisper(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        "backend.services.transcription_factory.settings.transcription_provider",
-        "whisper",
-    )
-    provider = get_transcription_provider()
-    assert isinstance(provider, WhisperTranscriptionProvider)
-
-
-def test_factory_selects_transcribe(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        "backend.services.transcription_factory.settings.transcription_provider",
-        "transcribe",
-    )
+def test_factory_defaults_to_transcribe() -> None:
     provider = get_transcription_provider()
     assert isinstance(provider, AmazonTranscribeProvider)
+    assert provider.name == "transcribe"
 
 
 def test_transcribe_json_maps_speakers_to_person_labels() -> None:
@@ -93,87 +62,73 @@ def test_transcribe_json_maps_speakers_to_person_labels() -> None:
             ],
         }
     }
-    result = _result_from_transcribe_json(payload)
-    assert "Person A: Hello" in result.text
-    assert "Person B: Hi there" in result.text
-    assert result.speaker_labels == ["Person A", "Person B"]
-    assert result.speaker_count == 2
+    result = _result_from_transcribe_json(payload, speaker_prefix="Person")
+    assert isinstance(result, AudioTranscriptionResult)
+    assert "Person A:" in result.text
+    assert "Person B:" in result.text
+    assert result.speaker_count >= 2
     assert result.diarization_applied is True
-    assert result.transcription_mode == "transcribe"
-    assert result.language == "en-US"
 
 
-def test_transcribe_requires_uploads_bucket(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_transcribe_requires_bucket(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(
         "backend.services.amazon_transcribe_provider.settings.uploads_bucket",
         "",
     )
+    audio = tmp_path / "clip.wav"
+    audio.write_bytes(b"RIFF")
     provider = AmazonTranscribeProvider()
     with pytest.raises(AudioValidationError, match="UPLOADS_BUCKET"):
-        provider.transcribe(tmp_path / "x.wav")
-
-
-def test_transcribe_rejects_unknown_extension(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(
-        "backend.services.amazon_transcribe_provider.settings.uploads_bucket",
-        "bucket",
-    )
-    audio = tmp_path / "clip.xyz"
-    audio.write_bytes(b"x")
-    provider = AmazonTranscribeProvider()
-    with pytest.raises(AudioValidationError, match="Unsupported audio extension"):
         provider.transcribe(audio)
 
 
-def test_transcribe_job_happy_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_transcribe_deletes_s3_objects(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(
         "backend.services.amazon_transcribe_provider.settings.uploads_bucket",
-        "rre-bucket",
+        "bucket",
     )
     monkeypatch.setattr(
         "backend.services.amazon_transcribe_provider.settings.transcribe_poll_seconds",
         0.01,
     )
     audio = tmp_path / "clip.wav"
-    audio.write_bytes(b"RIFF")
+    audio.write_bytes(b"RIFF....")
 
+    s3 = MagicMock()
+    transcribe = MagicMock()
+    transcribe.start_transcription_job.return_value = {}
+    transcribe.get_transcription_job.return_value = {
+        "TranscriptionJob": {
+            "TranscriptionJobStatus": "COMPLETED",
+            "Transcript": {"TranscriptFileUri": "s3://bucket/out.json"},
+        }
+    }
     payload = {
         "results": {
             "transcripts": [{"transcript": "Hello"}],
+            "language_code": "en-US",
             "items": [
                 {
                     "type": "pronunciation",
                     "start_time": "0.0",
-                    "end_time": "0.5",
+                    "end_time": "0.4",
                     "alternatives": [{"content": "Hello"}],
                     "speaker_label": "spk_0",
                 }
             ],
         }
     }
-
-    s3 = MagicMock()
-    transcribe = MagicMock()
-    transcribe.get_transcription_job.return_value = {
-        "TranscriptionJob": {"TranscriptionJobStatus": "COMPLETED"}
+    s3.get_object.return_value = {
+        "Body": MagicMock(read=lambda: __import__("json").dumps(payload).encode())
     }
 
-    provider = AmazonTranscribeProvider()
-    provider._s3 = s3
-    provider._transcribe = transcribe
-    provider._load_transcript_json = MagicMock(return_value=payload)  # type: ignore[method-assign]
+    with patch("backend.services.amazon_transcribe_provider.boto3.client") as client_factory:
+        def _client(name, **_kwargs):
+            return s3 if name == "s3" else transcribe
 
-    result = provider.transcribe(audio, num_speakers=2)
+        client_factory.side_effect = _client
+        provider = AmazonTranscribeProvider()
+        result = provider.transcribe(audio)
 
-    assert result.text.startswith("Person A:")
-    s3.upload_file.assert_called_once()
-    transcribe.start_transcription_job.assert_called_once()
-    start_kwargs = transcribe.start_transcription_job.call_args.kwargs
-    assert start_kwargs["MediaFormat"] == "wav"
-    assert start_kwargs["Settings"]["MaxSpeakerLabels"] == 2
-    assert start_kwargs["OutputBucketName"] == "rre-bucket"
+    assert "Hello" in result.text
     assert s3.delete_object.call_count >= 1

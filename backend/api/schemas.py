@@ -5,17 +5,11 @@ from backend.domain.enums import SourceType
 
 class HealthResponse(BaseModel):
     status: str
-    ffmpeg_available: bool
-    ollama_available: bool
-    llm_provider: str = "ollama"
+    llm_provider: str = "bedrock"
     llm_available: bool = False
+    transcription_provider: str = "transcribe"
+    transcription_available: bool = False
     database_available: bool = False
-    whisper_ready: bool
-    diarization_ready: bool = False
-    cuda_available: bool = False
-    whisper_device: str = "cpu"
-    diarization_device: str = "cpu"
-    whisper_compute_type: str | None = None
 
 
 class TranscriptSegmentSchema(BaseModel):
@@ -33,11 +27,15 @@ class TranscribeResponse(BaseModel):
     speaker_labels: list[str] = Field(default_factory=list)
     diarization_applied: bool = False
     diarization_skip_reason: str | None = None
-    transcription_mode: str = "overlap"
+    transcription_mode: str = "transcribe"
 
 
-class OllamaModelsResponse(BaseModel):
+class ModelsResponse(BaseModel):
     models: list[str] = Field(default_factory=list)
+
+
+# Backward-compatible alias for older clients
+OllamaModelsResponse = ModelsResponse
 
 
 class ErrorResponse(BaseModel):
@@ -129,6 +127,8 @@ class WorkflowSchema(BaseModel):
     modules: list[str] = Field(default_factory=list)
     meta_synthesis: bool
     enabled: bool
+    default_background: bool = False
+    module_count: int = 0
 
 
 class WorkflowsResponse(BaseModel):
@@ -181,6 +181,8 @@ class SynthesisReportResponse(BaseModel):
         default_factory=list
     )
     exploratory_hypotheses: list[SynthesisFindingResponse] = Field(default_factory=list)
+    # Flat rollup for clients that expect a single findings list.
+    findings: list[SynthesisFindingResponse] = Field(default_factory=list)
     convergence: list[str] = Field(default_factory=list)
     divergence: list[str] = Field(default_factory=list)
     integrated_model: list[str] = Field(default_factory=list)
@@ -209,13 +211,17 @@ def synthesis_report_to_response(report) -> SynthesisReportResponse:
             for finding in findings
         ]
 
+    high = finding_rows(report.high_confidence_findings)
+    moderate = finding_rows(report.moderate_confidence_findings)
+    exploratory = finding_rows(report.exploratory_hypotheses)
     return SynthesisReportResponse(
         id=report.id,
         workflow_run_id=report.workflow_run_id,
         executive_summary=report.executive_summary,
-        high_confidence_findings=finding_rows(report.high_confidence_findings),
-        moderate_confidence_findings=finding_rows(report.moderate_confidence_findings),
-        exploratory_hypotheses=finding_rows(report.exploratory_hypotheses),
+        high_confidence_findings=high,
+        moderate_confidence_findings=moderate,
+        exploratory_hypotheses=exploratory,
+        findings=[*high, *moderate, *exploratory],
         convergence=report.convergence,
         divergence=report.divergence,
         integrated_model=report.integrated_model,

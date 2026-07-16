@@ -4,10 +4,10 @@ Record of shipped capabilities for the **Relationship Reasoning Engine (RRE)** t
 
 | | |
 |---|---|
-| **Current branch** | `main` @ **v0.5.1** |
-| **Baseline release** | **v0.5.1** — AWS cloud cutover ([releases/v0.5.1.md](../releases/v0.5.1.md)) |
-| **In progress toward** | **v0.6.0** — Tier 2 trust (P1-3) + full workflows (P1-4) |
-| **Tests** | 174+ passing (CI) |
+| **Current branch** | `main` @ **v0.6.0** |
+| **Baseline release** | **v0.6.0** — trust + workflows + AWS-only ([releases/v0.6.0.md](../releases/v0.6.0.md)) |
+| **Next** | **v0.7.0** — multi-file stitch, ontology, cases ([implementing.md](implementing.md)) |
+| **Tests** | ~150 passing locally / CI |
 | **AWS account** | `521018312783`, `us-east-2` |
 | **Architecture detail** | [aws-deployment.md](aws-deployment.md) |
 
@@ -188,15 +188,40 @@ Original build goal: analyze a transcript with a representative module subset an
 
 ---
 
+## Tier 2 — Trust, workflows, AWS-only prune (P1-3, P1-4, P1-7)
+
+| # | Task | Status |
+|---|------|--------|
+| P1-3 | Cascade DELETE, log redaction, retention, audit, privacy copy | ✓ |
+| P1-4a–e | `full_multidisciplinary`, `research_oriented`, background defaults, sync limit, mocked tests | ✓ |
+| P1-7 | Remove Ollama/Whisper/pyannote/`.[local]`/fat Dockerfile; Bedrock + Transcribe only; docs AWS-primary | ✓ |
+| P1-4f | Live AWS burn-in for long suites | **In progress** (2026-07-14+) — research_oriented completed on Bedrock; full_multidisciplinary running / affirm |
+| P1-5d–f | Pre-commit + config validation; multi-worker uvicorn + ALB health; synthesis `findings` rollup | ✓ on branch (merge with burn-in closeout) |
+
+### Bedrock reliability (shipped on Tier 2 branch)
+
+| Area | Delivered |
+|------|-----------|
+| JSON-only framework prompts | No “markdown after JSON” dual instruction |
+| Bedrock `outputConfig` structured JSON | With prompt fallback if schema rejected |
+| Default alternatives for inferred findings | Parser fill so moderate confidence validates |
+| Compact meta handoff | Strip `raw_markdown_report` from prior module payloads |
+| Synthesis API | Flat `findings` rollup + empty-report validation |
+| API health under load | 2 uvicorn workers; ALB unhealthy_threshold 10; deploy min_healthy 0 |
+
+---
+
 ## Vision gaps closed (since v0.3.0)
 
 | Vision item | Was | Now |
 |-------------|-----|-----|
-| Segment speakers from audio | Single-speaker Whisper only | Local: pyannote + sliced Whisper; AWS: Transcribe speaker labels |
+| Segment speakers from audio | Single-speaker Whisper only | Amazon Transcribe speaker labels |
 | Reproducible deployment | Manual venv + host deps | Docker images + ECS Fargate + GitHub Actions |
 | Structured logging in cloud | Ad hoc logs | JSON logs + CloudWatch + correlation IDs |
-| LLM on AWS | Ollama-only coupling | `LLMProvider` + Bedrock adapter |
-| ASR on AWS (no HF) | Whisper/pyannote in fat image | `TranscriptionProvider` + Transcribe + slim image (code) |
+| LLM on AWS | Ollama coupling | Bedrock only (local Ollama removed) |
+| ASR on AWS (no HF) | Whisper/pyannote in fat image | Transcribe + slim `Dockerfile.cloud` |
+| Dual local/cloud product paths | Hybrid defaults | **AWS-only** product (edit → pytest → Deploy) |
+| Long-suite workflows | Quick Review / Full MVP only | + Full Multidisciplinary + Research-oriented |
 
 ---
 
@@ -208,7 +233,8 @@ Original build goal: analyze a transcript with a representative module subset an
 | **v0.3.0** | Post-MVP — 13 modules, 5 workflows, exploration, PostgreSQL |
 | **v0.4.x** | Diarization, sliced transcription, timeline smoothing, Ollama JSON fixes |
 | **v0.5.0** (ops) | AWS substrate — folded into v0.5.1 |
-| **v0.5.1** | **Canonical** — Transcribe + slim image + Stage B + main deploy/pause |
+| **v0.5.1** | AWS cloud cutover — Transcribe + slim image + Stage B + main deploy/pause |
+| **v0.6.0** | **Canonical** — trust + full/research workflows + AWS-only prune + component UAT |
 
 ---
 
@@ -218,13 +244,11 @@ Original build goal: analyze a transcript with a representative module subset an
 |----------|-----------|
 | AWS over native Windows | ML stack fragility on Windows; backbone account exists |
 | Bedrock over Ollama (AWS) | Native AWS, VPC endpoints, no self-hosted LLM ops |
-| Transcribe over Whisper (AWS target) | Removes GPU/HF burden in cloud |
-| Ollama retained locally | Fast prompt/module iteration without AWS cost |
+| Transcribe over Whisper (AWS) | Removes GPU/HF burden in cloud |
+| AWS-only product (no local LLM/ASR runtime) | Cost control + one path; pytest uses mocks/SQLite |
 | `rre-dev-*` IAM prefix | Isolation from MinneAnalytics |
-| Hybrid profiles | Full local Docker + slim cloud via env |
 | App infra in RRE repo | aws-backbone is IAM/OIDC only |
 | Docs-only pushes skip deploy | Path filters on `deploy-dev.yml` keep Pause quiet |
-| Diarization before full-suite workflow | Multi-speaker turns required for module quality |
-| pyannote over Whisper-only diarization | Whisper does not identify speakers |
-| Graceful diarization fallback | Users without `HF_TOKEN` still get transcription |
 | Streamlit before React | Faster iteration; APIs exploration-ready |
+| Structured Bedrock JSON + repair loop | Claude often drifts; constrained output + coerce layer |
+| Multi-worker API under Converse | Protect `/api/live` during burn-in |

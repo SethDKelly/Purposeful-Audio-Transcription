@@ -52,10 +52,26 @@ def test_module_runner_completes_with_valid_output() -> None:
     mock_llm.chat.assert_called_once()
 
 
+def test_compact_module_output_for_handoff_strips_markdown() -> None:
+    from backend.services.module_runner import compact_module_output_for_handoff
+
+    compact = compact_module_output_for_handoff(
+        {
+            "module_id": "nvc_analysis",
+            "executive_summary": "summary",
+            "findings": [{"id": "F001"}],
+            "raw_markdown_report": "## Long prose report " * 50,
+        }
+    )
+    assert compact["executive_summary"] == "summary"
+    assert compact["findings"] == [{"id": "F001"}]
+    assert compact["raw_markdown_report"] == ""
+
+
 def test_module_runner_retries_then_succeeds() -> None:
     mock_llm = MagicMock()
     bad_payload = json.loads((FIXTURES / "sample_module_output.json").read_text(encoding="utf-8"))
-    bad_payload["findings"][2]["alternative_explanations"] = []
+    bad_payload["findings"][0]["evidence_quote_ids"] = ["Q999"]
     mock_llm.chat.side_effect = [
         f"```json\n{json.dumps(bad_payload)}\n```",
         _valid_llm_response(),
@@ -80,7 +96,7 @@ def test_module_runner_retries_then_succeeds() -> None:
 def test_module_runner_fails_after_retries() -> None:
     mock_llm = MagicMock()
     bad_payload = json.loads((FIXTURES / "sample_module_output.json").read_text(encoding="utf-8"))
-    bad_payload["findings"][2]["alternative_explanations"] = []
+    bad_payload["findings"][0]["evidence_quote_ids"] = ["Q999"]
     mock_llm.chat.return_value = f"```json\n{json.dumps(bad_payload)}\n```"
     runner = _build_runner(mock_llm)
 
@@ -97,7 +113,8 @@ def test_module_runner_fails_after_retries() -> None:
 
     assert run.status == ModuleRunStatus.FAILED.value
     assert run.validation_errors
-    assert mock_llm.chat.call_count == 3
+    # module_run_max_retries=1 → initial attempt + one repair = 2 Converse calls
+    assert mock_llm.chat.call_count == 2
 
 
 def test_module_runner_rejects_meta_synthesis_direct_run() -> None:

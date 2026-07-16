@@ -43,7 +43,7 @@ Whisper remains the local path (`TRANSCRIPTION_PROVIDER=whisper`).
 | Transcribe | `amazon_transcribe_provider.py` — S3 upload, job, S3 output JSON, labeled turns |
 | Routes | `/api/transcribe` + orchestrator via `get_transcription_provider()` |
 
-Settings: `TRANSCRIPTION_PROVIDER`, `UPLOADS_BUCKET`, `TRANSCRIBE_LANGUAGE` (default `en-US`), poll/timeout.
+Settings: `TRANSCRIPTION_PROVIDER`, `UPLOADS_BUCKET`, `TRANSCRIBE_LANGUAGE` (default `en-US`), `TRANSCRIBE_POLL_SECONDS` (default 5), `TRANSCRIBE_TIMEOUT_SECONDS` (default **3600**). Async submit/poll UI is backlog.
 
 ---
 
@@ -67,7 +67,7 @@ Settings: `TRANSCRIPTION_PROVIDER`, `UPLOADS_BUCKET`, `TRANSCRIBE_LANGUAGE` (def
 ### Ops / security
 
 - [x] Task role includes Transcribe + S3 (iam.tf)
-- [x] Temp audio + transcript JSON deleted in `finally` (app); S3 lifecycle also set
+- [x] Temp audio + transcript JSON deleted in `finally` (app); S3 lifecycle **1 day** on `temp/` (P1-3a)
 - [ ] No transcript body in CloudWatch (P1-3c)
 - [x] VPC endpoint smoke: Transcribe job with Stage B tasks (slim deploy burn-in)
 

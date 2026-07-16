@@ -1,0 +1,19 @@
+id: research_oriented
+name: "Research-Oriented Analysis"
+version: "1.0.0"
+enabled: true
+description: >
+  Pattern-study lens across relationship, cognitive, narrative, bias,
+  and systems modules — without clinical-heavy specialization.
+estimated_runtime: "6-15 min"
+recommended_model: null
+output_tone: analytical
+default_background: true
+modules:
+  - relationship_conversation_analysis
+  - cognitive_analysis
+  - narrative_identity_analysis
+  - bias_epistemic_quality
+  - systems_analysis
+  - meta_synthesis
+meta_synthesis: true

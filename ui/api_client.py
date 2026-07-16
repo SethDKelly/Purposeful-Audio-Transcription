@@ -5,10 +5,11 @@ import httpx
 from config.settings import settings
 
 API_BASE = settings.api_base_url
-# Whisper + CPU diarization on long audio can exceed 10 minutes on first model load.
-TRANSCRIBE_TIMEOUT = 1800.0
+# Amazon Transcribe jobs can take several minutes on longer audio.
+# Keep above backend TRANSCRIBE_TIMEOUT_SECONDS (default 3600).
+TRANSCRIBE_TIMEOUT = 3900.0
 PROCESS_TIMEOUT = 1200.0
-WORKFLOW_TIMEOUT = 1800.0
+WORKFLOW_TIMEOUT = 3600.0
 
 
 def _raise_for_status(response: httpx.Response) -> None:
@@ -31,9 +32,9 @@ def fetch_health() -> dict | None:
     return None
 
 
-def fetch_ollama_models() -> list[str]:
+def fetch_llm_models() -> list[str]:
     try:
-        response = httpx.get(f"{API_BASE}/api/models/ollama", timeout=5.0)
+        response = httpx.get(f"{API_BASE}/api/models", timeout=5.0)
         if response.status_code == 200:
             return response.json().get("models", [])
     except httpx.HTTPError:
@@ -127,6 +128,32 @@ def update_transcript_speakers(transcript_id: str, speakers: list[dict]) -> dict
     return response.json()
 
 
+def delete_transcript(transcript_id: str) -> None:
+    response = httpx.delete(f"{API_BASE}/api/transcripts/{transcript_id}", timeout=30.0)
+    _raise_for_status(response)
+
+
+def record_audit_event(
+    event: str,
+    *,
+    transcript_id: str | None = None,
+    workflow_run_id: str | None = None,
+    export_format: str | None = None,
+) -> None:
+    payload = {
+        "event": event,
+        "transcript_id": transcript_id,
+        "workflow_run_id": workflow_run_id,
+        "export_format": export_format,
+    }
+    try:
+        response = httpx.post(f"{API_BASE}/api/audit/events", json=payload, timeout=5.0)
+        if response.status_code >= 400:
+            return
+    except httpx.HTTPError:
+        return
+
+
 def process_audio(
     file_bytes: bytes,
     filename: str,
@@ -146,8 +173,16 @@ def process_audio(
     return response.json()
 
 
-def run_workflow(transcript_id: str, workflow_id: str, model: str | None = None) -> dict:
-    payload = {"transcript_id": transcript_id, "model": model}
+def run_workflow(
+    transcript_id: str,
+    workflow_id: str,
+    model: str | None = None,
+    *,
+    background: bool | None = None,
+) -> dict:
+    payload: dict[str, object] = {"transcript_id": transcript_id, "model": model}
+    if background is not None:
+        payload["background"] = background
     response = httpx.post(
         f"{API_BASE}/api/workflows/{workflow_id}/run",
         json=payload,

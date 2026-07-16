@@ -1,5 +1,4 @@
 import re
-import uuid
 from dataclasses import dataclass
 
 from backend.core.exceptions import TranscriptValidationError

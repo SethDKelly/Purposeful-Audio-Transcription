@@ -204,14 +204,30 @@ class SynthesisParser:
 
 
 def _is_synthesis_output_shape(data: dict[str, Any]) -> bool:
+    """Detect dedicated synthesis payloads vs module_output_v1.
+
+    Meta-synthesis normally returns module_output_v1 (`findings`). Prefer that path
+    whenever `findings` is populated and confidence buckets are empty — otherwise
+    an accidental empty `high_confidence_findings: []` key would drop all results.
+    """
+    bucket_count = sum(
+        len(data.get(key) or [])
+        for key in (
+            "high_confidence_findings",
+            "moderate_confidence_findings",
+            "exploratory_hypotheses",
+        )
+    )
+    if bucket_count > 0:
+        return True
+    if data.get("findings"):
+        return False
     return any(
         key in data
         for key in (
             "high_confidence_findings",
             "moderate_confidence_findings",
             "exploratory_hypotheses",
-            "convergence",
-            "divergence",
         )
     )
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse
 
-from backend.api.schemas import PurposesResponse, PurposeSchema, StreamModuleRequest
+from backend.api.schemas import PurposesResponse, PurposeSchema
 from backend.core.module_registry import module_registry
 
 router = APIRouter(prefix="/api", tags=["purposes"])
@@ -25,7 +25,7 @@ def list_purposes() -> JSONResponse:
             id=module.config.id,
             name=module.config.name,
             description=module.config.description,
-            default_model=module.config.ollama_model,
+            default_model=module.config.resolved_model_id,
         )
         for module in module_registry.list_modules()
     ]

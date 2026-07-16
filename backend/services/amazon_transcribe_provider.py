@@ -12,9 +12,8 @@ import boto3
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 
-from backend.core.exceptions import AudioValidationError, WhisperError
-from backend.services.transcript_types import TranscriptSegment
-from backend.services.audio_transcription_service import AudioTranscriptionResult
+from backend.core.exceptions import AudioValidationError, TranscriptionError
+from backend.services.transcript_types import AudioTranscriptionResult, TranscriptSegment
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -105,11 +104,11 @@ class AmazonTranscribeProvider:
             self._wait_for_job(job_name)
             payload = self._load_transcript_json(bucket, out_key)
             return _result_from_transcribe_json(
-                payload, speaker_prefix=settings.diarization_speaker_prefix
+                payload, speaker_prefix=settings.speaker_prefix
             )
         except (ClientError, BotoCoreError) as exc:
             logger.exception("Amazon Transcribe failed for %s", audio_path.name)
-            raise WhisperError(f"Amazon Transcribe failed: {exc}") from exc
+            raise TranscriptionError(f"Amazon Transcribe failed: {exc}") from exc
         finally:
             for cleanup_key in (key, out_key):
                 try:
@@ -133,9 +132,9 @@ class AmazonTranscribeProvider:
                 return
             if status == "FAILED":
                 reason = job.get("FailureReason") or "unknown"
-                raise WhisperError(f"Amazon Transcribe job failed: {reason}")
+                raise TranscriptionError(f"Amazon Transcribe job failed: {reason}")
             time.sleep(poll)
-        raise WhisperError(
+        raise TranscriptionError(
             f"Amazon Transcribe job timed out after {settings.transcribe_timeout_seconds}s"
         )
 
@@ -237,7 +236,7 @@ def _result_from_transcribe_json(
             labeled_text = f"Person A: {labeled_text}"
 
     if not labeled_text.strip():
-        raise WhisperError("Amazon Transcribe returned an empty transcript")
+        raise TranscriptionError("Amazon Transcribe returned an empty transcript")
 
     duration = segments[-1].end if segments else None
     return AudioTranscriptionResult(

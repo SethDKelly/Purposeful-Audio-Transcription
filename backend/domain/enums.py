@@ -81,4 +81,3 @@ CONFIDENCE_RANK: dict[Confidence, int] = {
     Confidence.HIGH: 5,
     Confidence.OBSERVED: 6,
 }
-
