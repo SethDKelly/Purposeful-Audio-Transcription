@@ -33,9 +33,13 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
 
         provided = request.headers.get("X-API-Key")
         if provided != settings.api_key:
+            payload: dict[str, object] = {"detail": "Invalid or missing API key"}
+            request_id = request_id_var.get()
+            if request_id:
+                payload["request_id"] = request_id
             return JSONResponse(
                 status_code=401,
-                content={"detail": "Invalid or missing API key"},
+                content=payload,
             )
 
         return await call_next(request)
@@ -50,6 +54,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         call_next: RequestResponseEndpoint,
     ) -> Response:
         request_id = request.headers.get("X-Request-ID") or str(uuid4())
+        request.state.request_id = request_id
         token = request_id_var.set(request_id)
         try:
             response = await call_next(request)
