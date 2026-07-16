@@ -42,9 +42,11 @@ jobs:
           terraform apply -input=false -auto-approve \
             -var="api_desired_count=0" \
             -var="ui_desired_count=0" \
+            -var="worker_desired_count=0" \
             -var="image_tag=latest" \
             -target=aws_ecs_service.api \
-            -target=aws_ecs_service.ui
+            -target=aws_ecs_service.ui \
+            -target=aws_ecs_service.worker
 
       - name: Stop RDS instance
         run: |
@@ -57,7 +59,7 @@ jobs:
         run: |
           {
             echo "## RRE dev paused"
-            echo "- ECS \`rre-dev-api\` and \`rre-dev-ui\`: desired count 0"
+            echo "- ECS \`rre-dev-api\`, \`rre-dev-ui\`, and \`rre-dev-worker\`: desired count 0"
             echo "- RDS \`rre-dev-postgres\`: stop requested"
             echo ""
             echo "**Still incurring charges:** ALB (~\$16/mo), ECR storage, Secrets Manager, minimal RDS storage while stopped."

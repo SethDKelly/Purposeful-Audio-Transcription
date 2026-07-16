@@ -165,6 +165,8 @@ class WorkflowRunResponse(BaseModel):
     completed_at: str | None = None
     error_log: str | None = None
     telemetry_summary: dict | None = None
+    cancel_requested: bool = False
+    attempt_count: int = 0
     module_runs: list[WorkflowRunModuleSummary] = Field(default_factory=list)
 
 
@@ -270,6 +272,8 @@ def workflow_run_to_response(
         else None,
         error_log=workflow_run.error_log,
         telemetry_summary=getattr(workflow_run, "telemetry_summary", None),
+        cancel_requested=bool(getattr(workflow_run, "cancel_requested", False)),
+        attempt_count=int(getattr(workflow_run, "attempt_count", 0) or 0),
         module_runs=summaries,
     )
 

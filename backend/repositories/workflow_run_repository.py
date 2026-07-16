@@ -26,15 +26,18 @@ class WorkflowRunRepository:
         workflow_id: str,
         transcript_id: str,
         model_used: str | None = None,
+        status: str | None = None,
     ) -> WorkflowRun:
         now = utc_now()
         run = WorkflowRun(
             id=new_workflow_run_id(),
             workflow_id=workflow_id,
             transcript_id=transcript_id,
-            status=WorkflowRunStatus.CREATED.value,
+            status=status or WorkflowRunStatus.CREATED.value,
             model_used=model_used,
             started_at=now,
+            cancel_requested=False,
+            attempt_count=0,
         )
         session.add(_to_row(run))
         session.flush()
@@ -59,6 +62,28 @@ class WorkflowRunRepository:
             select(WorkflowRunRow).where(WorkflowRunRow.status.in_(_INCOMPLETE_STATUSES))
         ).all()
         return [_from_row(row) for row in rows]
+
+    def list_queued(self, session: Session) -> list[WorkflowRun]:
+        """Runs waiting for a worker (CREATED, not cancelled)."""
+        rows = session.scalars(
+            select(WorkflowRunRow)
+            .where(WorkflowRunRow.status == WorkflowRunStatus.CREATED.value)
+            .where(WorkflowRunRow.cancel_requested.is_(False))
+            .order_by(WorkflowRunRow.started_at.asc())
+        ).all()
+        return [_from_row(row) for row in rows]
+
+    def claim_queued(self, session: Session, run_id: str) -> WorkflowRun | None:
+        """Atomically claim a CREATED run for execution. Returns None if already claimed."""
+        row = session.get(WorkflowRunRow, run_id)
+        if row is None:
+            return None
+        if row.status != WorkflowRunStatus.CREATED.value or row.cancel_requested:
+            return None
+        row.status = WorkflowRunStatus.RUNNING_MODULES.value
+        row.attempt_count = int(row.attempt_count or 0) + 1
+        session.flush()
+        return _from_row(row)
 
     def list_by_transcript_id(
         self,
@@ -95,6 +120,8 @@ def _to_row(run: WorkflowRun) -> WorkflowRunRow:
         telemetry_summary=(
             json.dumps(run.telemetry_summary) if run.telemetry_summary else None
         ),
+        cancel_requested=run.cancel_requested,
+        attempt_count=run.attempt_count,
     )
 
 
@@ -106,6 +133,8 @@ def _update_row(row: WorkflowRunRow, run: WorkflowRun) -> None:
     row.telemetry_summary = (
         json.dumps(run.telemetry_summary) if run.telemetry_summary else None
     )
+    row.cancel_requested = run.cancel_requested
+    row.attempt_count = run.attempt_count
 
 
 def _from_row(row: WorkflowRunRow) -> WorkflowRun:
@@ -121,4 +150,6 @@ def _from_row(row: WorkflowRunRow) -> WorkflowRun:
         telemetry_summary=(
             json.loads(row.telemetry_summary) if row.telemetry_summary else None
         ),
+        cancel_requested=bool(row.cancel_requested),
+        attempt_count=int(row.attempt_count or 0),
     )

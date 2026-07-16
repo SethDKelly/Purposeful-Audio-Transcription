@@ -96,6 +96,13 @@ def get_workflow_run(run_id: str) -> WorkflowRunResponse:
     return workflow_run_to_response(workflow_run, module_runs)
 
 
+@router.post("/workflow-runs/{run_id}/cancel", response_model=WorkflowRunResponse)
+def cancel_workflow_run(run_id: str) -> WorkflowRunResponse:
+    workflow_run = workflow_engine.request_cancel(run_id)
+    _, module_runs = workflow_engine.get_with_module_runs(run_id)
+    return workflow_run_to_response(workflow_run, module_runs)
+
+
 @router.get("/workflow-runs/{run_id}/synthesis", response_model=SynthesisReportResponse)
 def get_workflow_synthesis(run_id: str) -> SynthesisReportResponse:
     report = synthesis_engine.get_report(run_id)
