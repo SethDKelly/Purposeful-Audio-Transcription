@@ -37,6 +37,7 @@ from ui.components.module_tabs import render_module_tabs
 from ui.components.report_exports import (
     build_coach_summary_markdown,
     build_mediation_brief_markdown,
+    build_report_package_zip,
     build_workflow_report_json,
     build_workflow_report_markdown,
     build_workflow_report_pdf,
@@ -205,7 +206,12 @@ def _render_report_dashboard(
             st.caption("Run a workflow with synthesis to see an integrated overview.")
 
     with modules_tab:
-        render_module_tabs(workflow_run.get("module_runs", []), quotes_by_id)
+        render_module_tabs(
+            workflow_run.get("module_runs", []),
+            quotes_by_id,
+            workflow_run_id=workflow_run.get("id"),
+            transcript_id=st.session_state.transcript_meta.get("transcript_id"),
+        )
 
     with evidence_tab:
         modules_using = index_modules_by_quote(workflow_run.get("module_runs", []))
@@ -280,6 +286,19 @@ def _render_report_dashboard(
         if show_mediation_brief
         else None
     )
+    quotes_by_id = {
+        quote.get("quote_id"): quote
+        for quote in (st.session_state.transcript_bundle or {}).get("evidence_quotes", [])
+        if quote.get("quote_id")
+    }
+    package_zip = build_report_package_zip(
+        workflow_run,
+        synthesis,
+        workflow_name=workflow_name,
+        transcript_meta=st.session_state.transcript_meta,
+        quotes_by_id=quotes_by_id,
+        redact=redact_exports,
+    )
 
     col_md, col_json, col_pdf = st.columns(3)
     transcript_id = st.session_state.transcript_meta.get("transcript_id")
@@ -319,6 +338,19 @@ def _render_report_dashboard(
             transcript_id=transcript_id,
             workflow_run_id=run_id,
             export_format="pdf",
+        )
+    if st.download_button(
+        "Download report package (.zip)",
+        data=package_zip,
+        file_name=f"{base_name}_report_package.zip",
+        mime="application/zip",
+        help="Manifest + report + evidence appendix + findings index",
+    ):
+        record_audit_event(
+            "transcript.export",
+            transcript_id=transcript_id,
+            workflow_run_id=run_id,
+            export_format="package_zip",
         )
 
     col_coach, col_mediation = st.columns(2)

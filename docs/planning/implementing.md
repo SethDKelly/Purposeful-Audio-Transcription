@@ -50,8 +50,8 @@ security → transcript quality → ontology → structured persistence
 [x] v0.9 Priority 2 — Case dashboard
 [x] v0.9 Priority 3 — Longitudinal comparison
 [x] v0.9 Priority 4 — Longitudinal synthesis module
-[ ] v0.9 Priority 5 — Report package export
-[ ] v0.9 Priority 6 — User feedback / analyst review loop
+[x] v0.9 Priority 5 — Report package export
+[x] v0.9 Priority 6 — User feedback / analyst review loop
 [ ] Release v0.9.0 · Deploy once · Pause · then v1.0
 ```
 
@@ -87,8 +87,8 @@ Multiple transcripts over time; longitudinal reasoning and feedback loops.
 | P2 Case dashboard | **Done** | Streamlit Cases expander: create/assign/list sessions |
 | P3 Longitudinal comparison | **Done** | `POST /api/exploration/compare-transcripts` + UI |
 | P4 Longitudinal synthesis | **Done** | `longitudinal_synthesis` module + case handoff API |
-| P5 Report package export | Pending | |
-| P6 Feedback loop | Pending | |
+| P5 Report package export | **Done** | ZIP: manifest + report + evidence appendix + findings index |
+| P6 Feedback loop | **Done** | `finding_feedback` + API + finding-card UI |
 
 ---
 
