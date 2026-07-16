@@ -85,6 +85,15 @@ Without re-running a workflow you can:
 
 Scope a question to one finding or the entire run.
 
+## Cases & longitudinal
+
+Use the **Cases & longitudinal** expander to:
+
+- Create a case and assign transcripts with optional session labels/dates
+- Compare earliest vs latest sessions in a case
+- Run **longitudinal synthesis** across sessions
+- Open a session transcript for analysis/report
+
 ## Exports
 
 From the report dashboard:
@@ -94,6 +103,9 @@ From the report dashboard:
 | Workflow report | `.md`, `.json`, `.pdf` |
 | Coach summary | `.md` |
 | Mediation brief | `.md` (mediation workflows) |
+| Report package | `.zip` (manifest + report + evidence appendix + findings index) |
+
+On finding cards, mark **helpful / unhelpful / unsure** (optional note) to capture analyst feedback.
 
 Enable **Redact speaker labels** before export when sharing outside your trusted environment.
 

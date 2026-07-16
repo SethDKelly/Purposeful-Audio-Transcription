@@ -19,13 +19,14 @@ ALL_MODULE_IDS = {
     "narrative_identity_analysis",
     "bias_epistemic_quality",
     "meta_synthesis",
+    "longitudinal_synthesis",
 }
 
 
 def test_module_registry_loads_all_modules() -> None:
     registry = ModuleRegistry()
     modules = registry.list_modules()
-    assert len(modules) == 13
+    assert len(modules) == 14
     ids = {module.config.id for module in modules}
     assert ids == ALL_MODULE_IDS
 

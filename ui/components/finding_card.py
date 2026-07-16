@@ -1,5 +1,6 @@
 import streamlit as st
 
+from ui.api_client import submit_finding_feedback
 from ui.components.confidence_badge import render_confidence_badge
 
 
@@ -9,9 +10,13 @@ def render_finding_card(
     module_id: str | None = None,
     quotes_by_id: dict[str, dict] | None = None,
     key_prefix: str = "finding",
+    workflow_run_id: str | None = None,
+    transcript_id: str | None = None,
 ) -> None:
     quotes_by_id = quotes_by_id or {}
     title = finding.get("title", "Finding")
+    finding_id = finding.get("id") or title
+    finding_key = f"{module_id}:{finding_id}" if module_id else str(finding_id)
     with st.container(border=True):
         st.markdown(f"#### {title}")
         if module_id:
@@ -39,6 +44,31 @@ def render_finding_card(
             st.markdown("**Alternative explanations**")
             for item in alternatives:
                 st.markdown(f"- {item}")
+
+        if workflow_run_id:
+            with st.expander("Analyst feedback", expanded=False):
+                rating = st.radio(
+                    "Was this finding helpful?",
+                    options=["helpful", "unhelpful", "unsure"],
+                    horizontal=True,
+                    key=f"{key_prefix}_{finding_key}_rating",
+                )
+                note = st.text_input(
+                    "Optional note",
+                    key=f"{key_prefix}_{finding_key}_note",
+                )
+                if st.button("Save feedback", key=f"{key_prefix}_{finding_key}_save"):
+                    try:
+                        submit_finding_feedback(
+                            workflow_run_id,
+                            finding_key,
+                            rating=rating,
+                            note=note.strip() or None,
+                            transcript_id=transcript_id,
+                        )
+                        st.success("Feedback saved.")
+                    except RuntimeError as exc:
+                        st.error(str(exc))
 
         limitations = finding.get("limitations", [])
         if limitations:

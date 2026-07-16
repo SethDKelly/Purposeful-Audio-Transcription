@@ -149,6 +149,8 @@ Supporting plans: [../architecture/ontology_v1.md](../architecture/ontology_v1.m
 
 ## v0.8 — Structured Persistence and Graph Reasoning
 
+**Status:** **Released** as [v0.8.0](../releases/v0.8.0.md) (July 2026).
+
 **Strategic goal:** Promote findings, constructs, evidence, confidence, and relationships from JSON blobs into first-class persistent objects.
 
 Plan detail: [../architecture/structured_persistence_plan.md](../architecture/structured_persistence_plan.md)
@@ -167,6 +169,8 @@ Plan detail: [../architecture/structured_persistence_plan.md](../architecture/st
 
 ## v0.9 — Cases and Longitudinal Analysis
 
+**Status:** **Released** as [v0.9.0](../releases/v0.9.0.md) (July 2026).
+
 **Strategic goal:** Multiple transcripts over time; longitudinal reasoning (high product differentiation after graph persistence).
 
 | Priority | Focus |
@@ -181,6 +185,8 @@ Plan detail: [../architecture/structured_persistence_plan.md](../architecture/st
 ---
 
 ## v1.0 — Workflow Hardening and External Readiness
+
+**Status:** **Active** — tracker [implementing.md](implementing.md).
 
 **Strategic goal:** Reliable enough for external users, longer workflows, custom suites, production-like operation.
 

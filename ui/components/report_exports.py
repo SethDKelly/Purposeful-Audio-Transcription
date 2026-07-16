@@ -318,3 +318,100 @@ def build_workflow_report_pdf(
         pdf.multi_cell(width, 5, clean)
 
     return bytes(pdf.output())
+
+
+def build_evidence_appendix_markdown(
+    workflow_run: dict[str, Any],
+    *,
+    quotes_by_id: dict[str, dict[str, Any]] | None = None,
+    redact: bool = False,
+) -> str:
+    quotes_by_id = quotes_by_id or {}
+    lines = ["# Evidence appendix", "", _DISCLAIMER, ""]
+    seen: set[str] = set()
+    for _, parsed in _parsed_module_runs(workflow_run):
+        for finding in parsed.get("findings", []):
+            for quote_id in finding.get("evidence_quote_ids", []):
+                if quote_id in seen:
+                    continue
+                seen.add(quote_id)
+                quote = quotes_by_id.get(quote_id, {})
+                text = quote.get("text", "(quote text unavailable)")
+                speaker = quote.get("speaker") or quote.get("speaker_label") or "Speaker"
+                lines.append(f"## {quote_id}")
+                lines.append(f"- Speaker: {speaker}")
+                lines.append(f"- Text: {text}")
+                lines.append("")
+    content = "\n".join(lines).rstrip() + "\n"
+    return apply_export_redaction(content) if redact else content
+
+
+def build_report_package_zip(
+    workflow_run: dict[str, Any],
+    synthesis: dict[str, Any] | None,
+    *,
+    workflow_name: str | None = None,
+    transcript_meta: dict[str, Any] | None = None,
+    quotes_by_id: dict[str, dict[str, Any]] | None = None,
+    redact: bool = False,
+) -> bytes:
+    """Manifest + report + evidence appendix package (v0.9 P5)."""
+    import io
+    import zipfile
+    from datetime import UTC, datetime
+
+    report_md = build_workflow_report_markdown(
+        workflow_run,
+        synthesis,
+        workflow_name=workflow_name,
+        redact=redact,
+    )
+    appendix = build_evidence_appendix_markdown(
+        workflow_run,
+        quotes_by_id=quotes_by_id,
+        redact=redact,
+    )
+    report_json = build_workflow_report_json(
+        workflow_run,
+        synthesis,
+        transcript_meta=transcript_meta,
+        redact=redact,
+    )
+    findings: list[dict[str, Any]] = []
+    for module_id, parsed in _parsed_module_runs(workflow_run):
+        for finding in parsed.get("findings", []):
+            findings.append(
+                {
+                    "module_id": module_id,
+                    "id": finding.get("id"),
+                    "title": finding.get("title"),
+                    "confidence": finding.get("confidence"),
+                    "evidence_quote_ids": finding.get("evidence_quote_ids", []),
+                }
+            )
+    manifest = {
+        "package_version": "1.0",
+        "generated_at": datetime.now(UTC).isoformat(),
+        "workflow_run_id": workflow_run.get("id"),
+        "workflow_id": workflow_run.get("workflow_id"),
+        "workflow_name": workflow_name,
+        "transcript_id": (transcript_meta or {}).get("transcript_id"),
+        "redacted": redact,
+        "files": [
+            "manifest.json",
+            "report.md",
+            "report.json",
+            "evidence_appendix.md",
+            "findings_index.json",
+        ],
+        "finding_count": len(findings),
+        "disclaimer": _DISCLAIMER,
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("manifest.json", json.dumps(manifest, indent=2))
+        archive.writestr("report.md", report_md)
+        archive.writestr("report.json", report_json)
+        archive.writestr("evidence_appendix.md", appendix)
+        archive.writestr("findings_index.json", json.dumps(findings, indent=2))
+    return buffer.getvalue()

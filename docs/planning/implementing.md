@@ -1,20 +1,20 @@
 # Implementing — Active Priorities
 
-Material work in flight for the **Relationship Reasoning Engine (RRE)** after **v0.8.0**.
+Material work in flight for the **Relationship Reasoning Engine (RRE)** after **v0.9.0**.
 
 | | |
 |---|---|
-| **Status** | **v0.9 pending** — Cases + longitudinal analysis |
+| **Status** | **v1.0 in progress** — Workflow hardening + external readiness |
 | **Canonical roadmap** | [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md) |
 | **Deferred ideas** | [future_considerations.md](future_considerations.md) |
-| **Completed** | [completed.md](completed.md) · [../releases/v0.8.0.md](../releases/v0.8.0.md) |
-| **Branch** | `main` @ **v0.8.0** |
+| **Completed** | [completed.md](completed.md) · [../releases/v0.9.0.md](../releases/v0.9.0.md) |
+| **Branch** | `v1.0/workflow-hardening` |
 | **Strategy** | **AWS only** — Bedrock + Transcribe + ECS + RDS (`521018312783`, `us-east-2`) |
 | **Cost control** | **Pause AWS when idle** — [../developer/aws-operations.md](../developer/aws-operations.md) |
 | **Deploy policy** | Deploy on **minor-version completion** (tag `vX.Y.Z` or manual), not every main push |
 | **Architecture** | [aws-deployment.md](aws-deployment.md) |
 
-**Scope rule:** Follow the roadmap sequence. Do **not** add analysis modules for breadth. Prefer structure, trust, and evidence quality.
+**Scope rule:** Follow the roadmap sequence. Do **not** add analysis modules for breadth. Prefer durable execution, safety, and evidence quality.
 
 **North star:**
 
@@ -37,57 +37,59 @@ security → transcript quality → ontology → structured persistence
 | **v0.6.0** | Trust controls + full/research workflows + AWS-only | **Released** |
 | **v0.7.0** | Secure UAT + transcript prep + ontology foundation | **Released** |
 | **v0.8.0** | Normalized findings/constructs/relationships + graph | **Released** |
-| **v0.9** | Cases + longitudinal + feedback | **Active** |
-| **v1.0** | Workers + DAG + custom workflows + safety mode | Pending |
+| **v0.9.0** | Cases + longitudinal + feedback | **Released** |
+| **v1.0** | Workers + DAG + custom workflows + safety mode | **Active** |
 
 ---
 
 ## Immediate next steps
 
 ```text
-[x] Release v0.8.0 · Deploy once · Pause AWS when idle
-[ ] v0.9 Priority 1 — Case data model
-[ ] v0.9 Priority 2 — Case dashboard
-[ ] v0.9 Priority 3 — Longitudinal comparison
-[ ] v0.9 Priority 4 — Longitudinal synthesis module
-[ ] v0.9 Priority 5 — Report package export
-[ ] v0.9 Priority 6 — User feedback / analyst review loop
-[ ] Release v0.9.0 · Deploy once · Pause · then v1.0
+[x] Release v0.9.0 · Deploy once · Pause AWS when idle
+[ ] v1.0 Priority 1 — Dedicated worker service
+[ ] v1.0 Priority 2 — Workflow DAG engine
+[ ] v1.0 Priority 3 — Custom workflow builder
+[ ] v1.0 Priority 4 — Long transcript strategy
+[ ] v1.0 Priority 5 — Safety-aware report mode
+[ ] v1.0 Priority 6 — Production-grade API and documentation
+[ ] Release v1.0.0 · Deploy once · Pause
 ```
 
 **Standing ops:** Pause when idle. Deploy only on minor-version completion.
 
 ---
 
-## v0.8 — Complete (summary)
+## v0.9 — Complete (summary)
 
-Detail: [../releases/v0.8.0.md](../releases/v0.8.0.md) · plan: [../architecture/structured_persistence_plan.md](../architecture/structured_persistence_plan.md).
+Detail: [../releases/v0.9.0.md](../releases/v0.9.0.md). Roadmap: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md#v09--cases-and-longitudinal-analysis).
 
 | Priority | Status |
 |----------|--------|
-| P1 Normalized findings | Done |
-| P2 Normalized constructs | Done |
-| P3 Construct relationships | Done |
-| P4 Graph merge / dedup | Done |
-| P5 Convergence scoring | Done |
-| P6 Table-first exploration UI | Done |
-| P7 Synthesis over structured objects | Done |
+| P1 Case data model | Done |
+| P2 Case dashboard | Done |
+| P3 Longitudinal comparison | Done |
+| P4 Longitudinal synthesis | Done |
+| P5 Report package export | Done |
+| P6 Feedback loop | Done |
 
 ---
 
-## v0.9 — Active work
+## v1.0 — Active work
 
-Roadmap: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md#v09--cases-and-longitudinal-analysis).
+Roadmap: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md#v10--workflow-hardening-and-external-readiness).
 
-Multiple transcripts over time; longitudinal reasoning and feedback loops.
+Plan detail: [../architecture/workflow_dag_plan.md](../architecture/workflow_dag_plan.md) · [../product/safety_aware_report_mode.md](../product/safety_aware_report_mode.md).
 
----
+Reliable enough for external users, longer workflows, custom suites, production-like operation.
 
-## Later releases (summary only)
-
-| Release | Priorities | Plan docs |
-|---------|------------|-----------|
-| **v1.0** | Worker → DAG → custom builder → long transcript → safety mode | [../architecture/workflow_dag_plan.md](../architecture/workflow_dag_plan.md), [../product/safety_aware_report_mode.md](../product/safety_aware_report_mode.md) |
+| Priority | Status | Notes |
+|----------|--------|-------|
+| P1 Dedicated worker | Pending | Jobs survive API; cancel; timeout; retries |
+| P2 Workflow DAG | Pending | Dependencies, parallel groups, synthesis gates |
+| P3 Custom workflow builder | Pending | User-defined module suites |
+| P4 Long transcript strategy | Pending | Chunk-aware; no silent head/tail-only |
+| P5 Safety-aware report mode | Pending | [../product/safety_aware_report_mode.md](../product/safety_aware_report_mode.md) |
+| P6 Production API/docs | Pending | External-readiness polish |
 
 ---
 
@@ -103,6 +105,7 @@ Multiple transcripts over time; longitudinal reasoning and feedback loops.
 | **AWS-only product** | No Whisper/Ollama runtime |
 | **docs/ folder** | Renamed from `doc/` in v0.7.0 |
 | **Normalized app tables (not a graph DB)** | v0.8 persistence choice |
+| **Cases optional on transcripts** | Delete case unlinks; does not delete transcripts |
 
 ---
 
