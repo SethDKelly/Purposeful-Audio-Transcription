@@ -1,6 +1,6 @@
 # Transcript Preparation Workspace (v0.7 Priority 2)
 
-Product note for reviewing and approving transcripts before analysis. Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). UI today: Streamlit prepare/analyze steps in `ui/streamlit_app.py`.
+**Status:** Shipped in **v0.7.0** (edit + exclude + ready gate; split/merge deferred). Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). UI: Streamlit prepare/analyze steps in `ui/streamlit_app.py`.
 
 ## Problem
 

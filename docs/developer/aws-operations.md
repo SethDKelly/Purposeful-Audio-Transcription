@@ -141,7 +141,7 @@ Expect: `research_oriented` (6 modules) then `full_multidisciplinary` (13). Scri
 | Action | How |
 |--------|-----|
 | **Pause** | GitHub Actions → **Pause AWS dev** → Run workflow (`workflow_dispatch` works once `pause-dev.yml` is on `main`) |
-| **Resume** | Actions → **Deploy to AWS dev** (`workflow_dispatch`), or push changes under runtime/infra paths (not docs-only) |
+| **Resume** | Actions → **Deploy to AWS dev** (`workflow_dispatch`), or push a `v*.*.*` tag |
 
 Pause sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Full steps, residual costs (ALB, ECR, Secrets Manager, RDS storage), and CLI equivalents: [infra/dev/README.md](../../infra/dev/README.md).
 

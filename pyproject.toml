@@ -1,6 +1,6 @@
 [project]
 name = "purposeful-audio-transcription"
-version = "0.6.0"
+version = "0.7.0"
 description = "Relationship Reasoning Engine — AWS Bedrock + Transcribe transcript analysis"
 readme = "README.md"
 requires-python = ">=3.11"

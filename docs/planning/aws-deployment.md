@@ -240,7 +240,7 @@ Enable via `LOG_JSON=true` (already in settings).
 | Bind context vars in workflow/module routes | API routes |
 | ERROR logs with exception info | `module_runner`, `workflow_engine`, `output_parser` |
 | Terraform: log groups + retention (14–30 days dev) | `infra/dev/` |
-| Runbook: Logs Insights queries | [doc/developer/aws-operations.md](../developer/aws-operations.md) |
+| Runbook: Logs Insights queries | [docs/developer/aws-operations.md](../developer/aws-operations.md) |
 
 ### Example Logs Insights queries
 
@@ -263,21 +263,24 @@ fields @timestamp, module_id, module_run_id
 Pattern matches aws-backbone [github-actions.md](https://github.com/SethDKelly/aws-backbone/blob/main/docs/github-actions.md) and MinneAnalytics example.
 
 ```yaml
-# .github/workflows/deploy-dev.yml (skeleton)
+# .github/workflows/deploy-dev.yml (current)
 name: Deploy to AWS dev
 
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - "**/*.md"
-      - "doc/**"
   workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
 
 permissions:
   id-token: write
   contents: read
+```
 
+Ordinary pushes to `main` do **not** deploy. Use a version tag or **workflow_dispatch**.
+
+```yaml
+# remainder of workflow (test → ECR → terraform → smoke) unchanged in spirit
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -343,7 +346,7 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 | ECS Fargate vs EC2 GPU for interim Whisper | Fargate only if Transcribe is fast-follow | After Transcribe spike |
 | Single vs split ECS services (API + UI) | Split recommended (independent scale/restart) | Infra PR |
 | Bedrock model default | Claude 3.5 Sonnet vs Llama 3.1 70B | After JSON spike |
-| Public ALB vs VPN-only | Today: public HTTP ALB, optional API key unused. Target: ACM HTTPS + API key (+ IP allowlist/VPN) — [backlog HTTPS/TLS](backlog.md) | Before external sensitive UAT |
+| Public ALB vs VPN-only | Today: shared API key (Secrets Manager); optional ACM HTTPS when cert set. Target: domain + TLS for external UAT | Before broad external UAT |
 | NAT gateway | Required if tasks need outbound non-AWS; avoid for no-egress goal | Network design |
 | Slim cloud image cutover | After Bedrock only vs after Transcribe too | After P1-1 spike |
 | `Dockerfile.cloud` naming | Separate file vs multi-stage `target` | Infra PR |
@@ -352,7 +355,9 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 
 ## 12. Related documents
 
-- [implementing.md](implementing.md) — active priorities (critical → significant → materially important)
+- [implementing.md](implementing.md) — active priorities
+- [../developer/aws-operations.md](../developer/aws-operations.md) — deploy / pause / Logs Insights
+- [../releases/v0.7.0.md](../releases/v0.7.0.md) — current release notes
 - [aws-backbone architecture](https://github.com/SethDKelly/aws-backbone/blob/main/docs/architecture.md)
 - [aws-backbone GitHub Actions guide](https://github.com/SethDKelly/aws-backbone/blob/main/docs/github-actions.md)
-- [../user/deployment.md](../user/deployment.md) — legacy local deployment
+- [../user/deployment.md](../user/deployment.md) — operator deployment pointers

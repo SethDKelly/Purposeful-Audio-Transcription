@@ -14,19 +14,21 @@ No local Whisper, Ollama, ffmpeg, or Hugging Face token is required for product 
 
 ## Deploy
 
-1. In GitHub Actions, run **Deploy to AWS dev** (`workflow_dispatch`), or push a runtime/infra change to `main`.
+1. In GitHub Actions, run **Deploy to AWS dev** (`workflow_dispatch`), or push a version tag such as `v0.7.0`.
 2. Wait for ECS services healthy (workflow summary includes ALB URL tips).
 3. Open the Streamlit UI via the ALB (see [aws-operations.md](../developer/aws-operations.md)).
 
-Docs-only pushes do **not** auto-deploy. When finished, run **Pause AWS dev**.
+Ordinary commits to `main` do **not** auto-deploy. When finished, run **Pause AWS dev**.
 
 ## First workflow (5 minutes)
 
 1. Open the UI; sidebar should show API healthy with Bedrock / Transcribe / database available.
 2. **Ingest** — paste a short two-speaker transcript or upload audio (Transcribe) / text.
-3. **Prepare** — optionally rename speakers; keep quote IDs.
+3. **Prepare** — rename speakers if needed; edit or exclude turns; click **Ready to Analyze** (or skip review intentionally).
 4. **Analyze** — choose **Quick Review** and the Bedrock model; prefer background for long suites.
 5. **Report** — review findings, open **Explore**, export `.md` or `.pdf`.
+
+Workflows require a transcript marked ready for analysis.
 
 ## Choose a workflow
 
@@ -44,7 +46,7 @@ See [user-guide.md](user-guide.md) for details.
 
 ## Next steps
 
-- [User guide](user-guide.md) — exploration, exports, safety notes
+- [User guide](user-guide.md) — preparation, exploration, exports, safety notes
 - [Model setup](model-setup.md) — Bedrock + Transcribe
 - [Deployment](deployment.md) — AWS ops pointers
 - [AWS architecture](../planning/aws-deployment.md)

@@ -65,7 +65,7 @@ A local-first application that uploads audio from the user's machine, transcribe
 
 ```
 Purposeful-Audio-Transcription/
-├── doc/
+├── docs/
 │   └── implementation-plan.md     # This document
 ├── pyproject.toml
 ├── .env.example

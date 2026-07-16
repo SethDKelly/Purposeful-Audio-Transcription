@@ -8,13 +8,13 @@ repos:
     hooks:
       - id: check-yaml
         name: check-yaml (generic)
-        exclude: ^(doc/|infra/.*\.tf\.vars\.example$)
+        exclude: ^(docs/|infra/.*\.tf\.vars\.example$)
       - id: check-added-large-files
         args: ["--maxkb=1000"]
       - id: trailing-whitespace
-        exclude: ^(doc/|.*\.md$)
+        exclude: ^(docs/|.*\.md$)
       - id: end-of-file-fixer
-        exclude: ^(doc/)
+        exclude: ^(docs/)
       - id: check-merge-conflict
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

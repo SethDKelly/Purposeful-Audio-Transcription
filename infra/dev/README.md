@@ -18,7 +18,7 @@ Terraform for the **dev** environment in account `521018312783` (`us-east-2`).
 
 ## Deploy via GitHub Actions
 
-**Push to `main`** deploys only when runtime/infra paths change (`backend/`, `ui/`, `infra/dev/`, Dockerfiles, selected scripts). Docs-only commits do not wake ECS/RDS.
+**Push of a `v*.*.*` tag** or manual **Deploy to AWS dev** wakes ECS/RDS. Ordinary commits to `main` do not auto-deploy.
 
 Manual: Actions → **Deploy to AWS dev** → Run workflow.
 
@@ -74,17 +74,17 @@ terraform output api_log_group
 - RDS PostgreSQL is private; credentials in Secrets Manager (`rre-dev/database`).
 - **API auth:** Shared `API_KEY` in Secrets Manager (`rre-dev/api-key`) is injected into API + UI tasks. UI sends `X-API-Key` on backend calls.
 - **HTTPS (optional):** Set `acm_certificate_arn` to an ACM cert in this region to enable ALB `:443` and HTTP→HTTPS redirect. Default remains HTTP-only on the ALB DNS name (no cert without a domain you control).
-- See [aws-deployment.md](../../doc/planning/aws-deployment.md) for the full network model.
+- See [aws-deployment.md](../../docs/planning/aws-deployment.md) for the full network model.
 
 ## Pause / resume (avoid Fargate + RDS compute charges)
 
-**Standing practice:** After **v0.6.0 lands on `main`**, pause first, then whenever the stack sits idle (between coding sessions, overnight). Resume only when you need AWS again.
+**Standing practice:** After each minor-version deploy, pause when the stack sits idle (between coding sessions, overnight). Resume only when you need AWS again.
 
-**Pause** — GitHub Actions → **Pause AWS dev** → Run workflow (requires workflow on default branch for Manual Dispatch; path-filter push on `phase-m0-docs` also works).
+**Pause** — GitHub Actions → **Pause AWS dev** → Run workflow.
 
 This sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Terraform state stays in sync.
 
-**Resume** — **Deploy to AWS dev** (`workflow_dispatch`) or push under runtime/infra paths (docs-only does not deploy). The deploy workflow starts RDS if stopped, **clears any lingering ECS tasks**, then scales ECS with the new image.
+**Resume** — **Deploy to AWS dev** (`workflow_dispatch`) or push a `v*.*.*` tag. The deploy workflow starts RDS if stopped, **clears any lingering ECS tasks**, then scales ECS with the new image.
 
 **Task size (P1-2d):** Slim API defaults — `api_cpu=1024`, `api_memory=2048` (was 1024/4096). Tried 512/2048; ALB `/api/live` timed out during cutover. UI remains `256` / `512`.
 
