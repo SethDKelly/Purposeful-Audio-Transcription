@@ -18,6 +18,11 @@ required_constructs:
   - protest_behavior
   - withdrawal_pattern
   - repair_opportunity
+expected_constructs:
+  - repair_attempt
+  - escalation_point
+  - threat_cue
+  - emotion
 output_schema: module_output_v1
 recommended_companions:
   - gottman_analysis

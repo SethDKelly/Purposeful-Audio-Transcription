@@ -274,6 +274,13 @@ def _coerce_enum(enum_cls, value, label: str):
                 "related_to": RelationshipType.CO_OCCURS_WITH,
                 "related": RelationshipType.CO_OCCURS_WITH,
                 "links": RelationshipType.CO_OCCURS_WITH,
+                "maintain": RelationshipType.MAINTAINS,
+                "maintains": RelationshipType.MAINTAINS,
+                "repair": RelationshipType.REPAIRS,
+                "repairs": RelationshipType.REPAIRS,
+                "evidence_for": RelationshipType.EVIDENCE_FOR,
+                "evidence_against": RelationshipType.EVIDENCE_AGAINST,
+                "source_of_uncertainty_for": RelationshipType.SOURCE_OF_UNCERTAINTY_FOR,
             }
             if text in aliases:
                 return aliases[text]

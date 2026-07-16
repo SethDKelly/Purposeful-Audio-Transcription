@@ -1,0 +1,75 @@
+version: 1
+description: Canonical relationship vocabulary linking constructs and findings.
+
+relationships:
+  - id: supports
+    label: Supports
+    description: Evidence or construct supports another claim or construct.
+    aliases:
+      - reinforce
+      - reinforces
+
+  - id: contradicts
+    label: Contradicts
+    description: Direct conflict between constructs or findings.
+
+  - id: contributes_to
+    label: Contributes To
+    description: Causal or contributory link between constructs.
+    aliases:
+      - leads_to
+      - causes
+
+  - id: escalates
+    label: Escalates
+    description: Increases intensity or defensiveness in the pattern.
+    aliases:
+      - triggers
+
+  - id: deescalates
+    label: De-escalates
+    description: Decreases intensity or defensiveness in the pattern.
+
+  - id: protects
+    label: Protects
+    description: Protective function for safety, identity, or connection.
+
+  - id: threatens
+    label: Threatens
+    description: Threatens safety, connection, or a valued outcome.
+
+  - id: maintains
+    label: Maintains
+    description: Maintains an existing interaction or family pattern.
+
+  - id: repairs
+    label: Repairs
+    description: Link representing repair of rupture or misattunement.
+
+  - id: co_occurs_with
+    label: Co-occurs With
+    description: Co-occurrence without strong causal claim.
+    aliases:
+      - related_to
+      - related
+      - links
+
+  - id: alternative_to
+    label: Alternative To
+    description: Competing construct or finding explaining the same evidence.
+
+  - id: evidence_for
+    label: Evidence For
+    description: Quote or evidence supports a claim or construct.
+
+  - id: evidence_against
+    label: Evidence Against
+    description: Quote or evidence weakens a claim or construct.
+
+  - id: intervention_for
+    label: Intervention For
+    description: Intervention or leverage point targets a construct.
+
+  - id: source_of_uncertainty_for
+    label: Source of Uncertainty For
+    description: Factor that limits confidence in another claim.

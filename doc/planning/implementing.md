@@ -48,7 +48,7 @@ security → transcript quality → ontology → structured persistence
 ```text
 [ ] v0.7 Priority 1 — Secure external UAT readiness (HTTPS, API key UI, safe errors, request IDs, privacy/deletion/redaction)
 [ ] v0.7 Priority 2 — Transcript preparation workspace
-[ ] v0.7 Priority 3 — Ontology vocabulary v1
+[x] v0.7 Priority 3 — Ontology vocabulary v1
 [ ] v0.7 Priority 4 — Module construct expectations
 [ ] v0.7 Priority 5 — Golden fixtures + evaluation foundation (GT001/GT002 landed; expand to 5–10)
 [ ] v0.7 Priority 6 — Cost / latency / module telemetry
@@ -87,7 +87,7 @@ Detail and acceptance criteria: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.m
 
 | # | Task | Status | Links |
 |---|------|--------|-------|
-| V07-3a–d | Config ontology + construct/relationship types + module references | Pending | [../architecture/ontology_v1.md](../architecture/ontology_v1.md) |
+| V07-3a–d | Config ontology + construct/relationship types + module references | Done | [../architecture/ontology_v1.md](../architecture/ontology_v1.md), `config/ontology/` |
 
 ### Priority 4 — Module Construct Expectations
 

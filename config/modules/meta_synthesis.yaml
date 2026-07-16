@@ -17,6 +17,11 @@ required_constructs:
   - convergence
   - divergence
   - integrated_model
+expected_constructs:
+  - alternative_explanation
+  - uncertainty
+  - narrative
+  - interpretation
 output_schema: module_output_v1
 recommended_companions: []
 inference_depth: high

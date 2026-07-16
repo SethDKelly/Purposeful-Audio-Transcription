@@ -14,7 +14,9 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from backend.core.module_registry import ModuleRegistry
+from backend.core.ontology_registry import OntologyRegistry
 from backend.core.workflow_registry import WorkflowRegistry
+from backend.domain.enums import RelationshipType
 from config.settings import settings
 
 
@@ -22,9 +24,15 @@ def validate() -> list[str]:
     errors: list[str] = []
 
     try:
+        ontology = OntologyRegistry(ontology_dir=settings.ontology_dir)
+    except Exception as exc:  # noqa: BLE001
+        return [f"ontology registry failed to load: {exc}"]
+
+    try:
         modules = ModuleRegistry(
             modules_dir=settings.modules_dir,
             prompts_dir=settings.prompts_dir,
+            ontology=ontology,
         )
     except Exception as exc:  # noqa: BLE001 — surface load failures as script errors
         return [f"module registry failed to load: {exc}"]
@@ -45,6 +53,14 @@ def validate() -> list[str]:
         errors.append("no modules loaded from config/modules")
     if not workflows.list_workflows(enabled_only=False):
         errors.append("no workflows loaded from config/workflows")
+
+    enum_relationships = {item.value for item in RelationshipType}
+    missing_relationships = sorted(enum_relationships - ontology.relationship_ids)
+    if missing_relationships:
+        errors.append(
+            "RelationshipType enum values missing from ontology: "
+            + ", ".join(missing_relationships)
+        )
 
     for module in modules_by_id.values():
         prompt_path = settings.prompts_dir / module.config.prompt_file
@@ -109,9 +125,19 @@ def main() -> int:
         for error in errors:
             print(f"  - {error}", file=sys.stderr)
         return 1
-    module_count = len(ModuleRegistry().list_modules(enabled_only=False))
+    ontology = OntologyRegistry(ontology_dir=settings.ontology_dir)
+    module_count = len(
+        ModuleRegistry(
+            modules_dir=settings.modules_dir,
+            prompts_dir=settings.prompts_dir,
+        ).list_modules(enabled_only=False)
+    )
     workflow_count = len(WorkflowRegistry().list_workflows(enabled_only=False))
-    print(f"Config OK ({module_count} modules, {workflow_count} workflows)")
+    print(
+        f"Config OK ({module_count} modules, {workflow_count} workflows, "
+        f"{len(ontology.construct_ids)} constructs, "
+        f"{len(ontology.relationship_ids)} relationships)"
+    )
     return 0
 
 

@@ -7,6 +7,7 @@ import yaml
 from pydantic import BaseModel, Field, ValidationError
 
 from backend.core.exceptions import ModuleNotFoundError
+from backend.core.ontology_registry import OntologyRegistry
 from backend.domain.enums import AnalyticalLevel, Confidence
 from config.settings import settings
 
@@ -23,6 +24,7 @@ class ModuleConfig(BaseModel):
     primary_question: str
     secondary_questions: list[str] = Field(default_factory=list)
     required_constructs: list[str] = Field(default_factory=list)
+    expected_constructs: list[str] = Field(default_factory=list)
     output_schema: str = "module_output_v1"
     recommended_companions: list[str] = Field(default_factory=list)
     dependencies: list[str] = Field(default_factory=list)
@@ -49,9 +51,11 @@ class ModuleRegistry:
         self,
         modules_dir: Path | None = None,
         prompts_dir: Path | None = None,
+        ontology: OntologyRegistry | None = None,
     ) -> None:
         self._modules_dir = modules_dir or settings.modules_dir
         self._prompts_dir = prompts_dir or settings.prompts_dir
+        self._ontology = ontology or OntologyRegistry()
         self._modules = self._load()
 
     def _load_prompt_file(self, filename: str) -> str:
@@ -79,8 +83,18 @@ class ModuleRegistry:
         loaded: dict[str, AnalysisModule] = {}
         for path in sorted(self._modules_dir.glob("*.yaml")):
             module = self._load_module_file(path)
+            self._validate_ontology_references(module)
             loaded[module.config.id] = module
         return loaded
+
+    def _validate_ontology_references(self, module: AnalysisModule) -> None:
+        for field_name in ("expected_constructs", "required_constructs"):
+            unknown = self._ontology.unknown_constructs(getattr(module.config, field_name))
+            if unknown:
+                raise ValueError(
+                    f"Module {module.config.id}: unknown {field_name} "
+                    f"not in ontology: {', '.join(sorted(unknown))}"
+                )
 
     def reload(self) -> None:
         self._modules = self._load()
