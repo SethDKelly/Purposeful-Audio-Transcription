@@ -2,27 +2,28 @@
 
 High-level map of the RRE codebase. Deep design specs live in [../design/](../design/). Runtime is **AWS only**.
 
-**Current release:** **v0.8.0**. Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Next: cases / longitudinal (v0.9) in [../planning/implementing.md](../planning/implementing.md).
+**Current release:** **v0.9.0**. Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Next: workflow hardening (v1.0) in [../planning/implementing.md](../planning/implementing.md).
 
 ## System diagram
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
 │  Streamlit UI (ECS)                                          │
-│  Ingest · Prepare (Ready) · Analyze · Report · Explore       │
+│  Ingest · Prepare · Cases · Analyze · Report · Explore       │
 └──────────────────────────┬──────────────────────────────────┘
                            │ HTTP + optional X-API-Key
 ┌──────────────────────────▼──────────────────────────────────┐
 │  FastAPI (ECS)                                               │
-│  /transcripts · /workflows · /modules · /transcribe          │
+│  /transcripts · /cases · /workflows · /modules · /transcribe │
 │  Generic errors + request_id · /api/live + /api/health       │
 └──────────────────────────┬──────────────────────────────────┘
                            │
      ┌─────────────────────┼─────────────────────┐
      ▼                     ▼                     ▼
  TranscriptService   WorkflowEngine      ExplorationService
- EvidenceIndex       ModuleRunner        SynthesisEngine
- OntologyRegistry    PromptCompiler      WorkflowJobService
+ CaseService         ModuleRunner        SynthesisEngine
+ EvidenceIndex       PromptCompiler      LongitudinalSynthesis
+ OntologyRegistry    WorkflowJobService  FindingFeedback
      ┌─────────────────┴─────────────────┐
      ▼                                     ▼
  AmazonTranscribeProvider              BedrockProvider
@@ -37,6 +38,7 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 |---------|------|
 | `AmazonTranscribeProvider` | Audio → S3 → Transcribe job → labeled turns |
 | `TranscriptService` | Parse, ingest, prepare (edit/exclude/ready), store quotes |
+| `CaseService` | Cases CRUD; assign transcripts with session label/date |
 | `EvidenceIndexService` | Assign `Q001…` quote IDs; rebuild after turn edits |
 | `OntologyRegistry` | Canonical construct/relationship vocabulary + aliases |
 | `BedrockProvider` | LLM chat; records token/cache usage for telemetry |
@@ -48,8 +50,9 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 | `GraphMergeService` | Cross-module construct deduplication |
 | `ConvergenceScoringService` | Deterministic construct convergence scores |
 | `StructuredGraphService` | Normalized inventory + synthesis handoff |
+| `LongitudinalSynthesisService` | Cross-session synthesis for a case |
 | `SynthesisEngine` | Cross-module report (structured inventory when available) |
-| `ExplorationService` | Drill-down, compare, follow-up Q&A (DB-preferring) |
+| `ExplorationService` | Drill-down, compare runs/transcripts, follow-up Q&A |
 
 ## Domain layer
 
@@ -59,9 +62,10 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 
 - **RDS PostgreSQL** on AWS
 - **SQLite** in pytest only
-- **Alembic** migrations in `alembic/versions/` (through `007_construct_relationships`)
+- **Alembic** migrations in `alembic/versions/` (through `009_finding_feedback`)
 - **Normalized tables:** `findings`, `constructs`, `construct_relationships` (+ evidence/source junctions). Raw `module_runs.parsed_output` kept for audit.
-- Repositories: `FindingRepository`, `ConstructRepository`, `ConstructRelationshipRepository`
+- **Cases / feedback:** `cases`; transcript `case_id` / session fields; `finding_feedback`
+- Repositories: `FindingRepository`, `ConstructRepository`, `ConstructRelationshipRepository`, `CaseRepository`, `FindingFeedbackRepository`
 
 ## Configuration
 

@@ -4,7 +4,7 @@
 
 | | |
 |--|--|
-| **Canonical release** | [v0.8.0](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v0.8.0) |
+| **Canonical release** | [v0.9.0](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v0.9.0) |
 | **Runtime** | AWS only (account `521018312783`, `us-east-2`) |
 | **Active work** | [docs/planning/implementing.md](docs/planning/implementing.md) · [docs/planning/roadmap_v0.7_to_v1.0.md](docs/planning/roadmap_v0.7_to_v1.0.md) |
 
@@ -39,20 +39,23 @@ Tests use SQLite. There is **no** supported local Whisper/Ollama server — inte
 | **Planning** | [docs/planning/](docs/planning/) — completed / implementing / backlog |
 | **Index** | [docs/README.md](docs/README.md) |
 
-## Capabilities (v0.8.0)
+## Capabilities (v0.9.0)
 
-- 13 analysis modules · 7 workflows · meta-synthesis over **structured inventory**
+- 14 analysis modules · 7 workflows · meta-synthesis over **structured inventory**
+- **Cases** — group transcripts by case; session labels/dates; longitudinal compare + synthesis
 - Normalized persistence: findings, constructs, relationships (Alembic `005`–`007`)
 - Graph merge + deterministic convergence scores on canonical constructs
 - Table-first structured inventory explorer + knowledge graph
+- Finding feedback (helpful / unhelpful / unsure) on report cards
+- Report package ZIP (manifest + report + evidence appendix + findings index)
 - Transcript preparation workspace (edit turns, exclude, Ready to Analyze)
 - Ontology vocabulary v1 (`config/ontology/`) + `expected_constructs` soft coverage warnings
 - Evidence quote IDs (`Q001…`) on findings; golden transcript fixtures (GT001/GT002)
 - Per-module / workflow telemetry (latency, tokens, estimated cost)
 - **LLM:** Amazon Bedrock · **ASR:** Amazon Transcribe (speaker labels)
 - Stage B VPC (no public task IPs); shared API key auth; optional HTTPS via ACM
-- Streamlit report + Explore tab
-- Exports: Markdown, JSON, PDF, coach summary, mediation brief
+- Streamlit report + Explore tab + Cases expander
+- Exports: Markdown, JSON, PDF, coach summary, mediation brief, report package ZIP
 - RDS PostgreSQL, background jobs
 
 ## Deploy policy

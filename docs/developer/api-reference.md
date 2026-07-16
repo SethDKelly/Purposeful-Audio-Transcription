@@ -85,6 +85,7 @@ Module run responses may include:
 | `GET` | `/api/workflow-runs/{id}/exploration/knowledge-graph` | Constructs graph (normalized when present) |
 | `POST` | `/api/workflow-runs/{id}/exploration/ask` | Follow-up Q&A |
 | `POST` | `/api/exploration/compare` | Compare run IDs |
+| `POST` | `/api/exploration/compare-transcripts` | Longitudinal compare for a case (`case_id`) |
 
 ### Ask body
 
@@ -95,6 +96,27 @@ Module run responses may include:
   "finding_key": "relationship_conversation_analysis:F001"
 }
 ```
+
+## Cases
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/cases` | Create case (`title`, optional `notes`) |
+| `GET` | `/api/cases` | List cases |
+| `GET` | `/api/cases/{id}` | Case detail + assigned transcripts |
+| `PATCH` | `/api/cases/{id}` | Update title/notes |
+| `DELETE` | `/api/cases/{id}` | Delete case (unlinks transcripts; does not delete them) |
+| `PATCH` | `/api/transcripts/{id}/case` | Assign/unassign case; set `session_label` / `session_date` |
+| `POST` | `/api/cases/{id}/longitudinal-synthesis` | Run `longitudinal_synthesis` over case sessions |
+
+## Finding feedback
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/workflow-runs/{id}/findings/{finding_key}/feedback` | Submit rating (`helpful` / `unhelpful` / `unsure`) + optional note |
+| `GET` | `/api/workflow-runs/{id}/feedback` | List feedback for a run |
+
+`finding_key` may include colons (e.g. `module_id:F001`); use the path as-is.
 
 ## Audio
 

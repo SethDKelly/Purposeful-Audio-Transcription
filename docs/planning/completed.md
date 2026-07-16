@@ -4,14 +4,27 @@ Record of shipped capabilities for the **Relationship Reasoning Engine (RRE)** t
 
 | | |
 |---|---|
-| **Current branch** | `main` @ **v0.8.0** |
-| **Baseline release** | **v0.8.0** — structured persistence + graph ([releases/v0.8.0.md](../releases/v0.8.0.md)) |
-| **Next** | **v0.9** — cases + longitudinal ([implementing.md](implementing.md)) |
+| **Current branch** | `main` @ **v0.9.0** |
+| **Baseline release** | **v0.9.0** — cases + longitudinal ([releases/v0.9.0.md](../releases/v0.9.0.md)) |
+| **Next** | **v1.0** — workflow hardening ([implementing.md](implementing.md)) |
 | **Deferred** | [future_considerations.md](future_considerations.md) |
 | **Tests** | ~220+ passing locally / CI |
 | **AWS account** | `521018312783`, `us-east-2` |
 | **Architecture detail** | [aws-deployment.md](aws-deployment.md) |
 | **Docs root** | `docs/` (renamed from `doc/` in v0.7.0) |
+
+---
+
+## v0.9.0 — Cases + longitudinal (July 2026)
+
+| Area | Delivered |
+|------|-----------|
+| Cases | `cases` + transcript session fields; CRUD/assign API; Streamlit dashboard |
+| Longitudinal | Compare earliest vs latest sessions; `longitudinal_synthesis` module |
+| Report package | ZIP: manifest + report + evidence appendix + findings index |
+| Finding feedback | Ratings + notes on findings; API + finding-card UI |
+| Migrations | Alembic `008`–`009` |
+| Module library | **14 modules** (adds longitudinal synthesis) |
 
 ---
 

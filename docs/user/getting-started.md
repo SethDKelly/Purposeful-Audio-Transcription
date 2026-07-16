@@ -14,7 +14,7 @@ No local Whisper, Ollama, ffmpeg, or Hugging Face token is required for product 
 
 ## Deploy
 
-1. In GitHub Actions, run **Deploy to AWS dev** (`workflow_dispatch`), or push a version tag such as `v0.8.0`.
+1. In GitHub Actions, run **Deploy to AWS dev** (`workflow_dispatch`), or push a version tag such as `v0.9.0`.
 2. Wait for ECS services healthy (workflow summary includes ALB URL tips).
 3. Open the Streamlit UI via the ALB (see [aws-operations.md](../developer/aws-operations.md)).
 

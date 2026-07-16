@@ -1,6 +1,6 @@
 # Documentation index
 
-**Relationship Reasoning Engine (RRE)** — AWS-only (Bedrock + Transcribe + ECS + RDS). Canonical release **v0.8.0** on `main`.
+**Relationship Reasoning Engine (RRE)** — AWS-only (Bedrock + Transcribe + ECS + RDS). Canonical release **v0.9.0** on `main`.
 
 | Audience | Start here |
 |----------|------------|
@@ -58,7 +58,7 @@ Stable product/technical design (not a task tracker):
 | Document | Description |
 |----------|-------------|
 | [planning/README.md](planning/README.md) | Planning index |
-| [planning/implementing.md](planning/implementing.md) | Active priorities (**v0.8** after v0.7.0) |
+| [planning/implementing.md](planning/implementing.md) | Active priorities (**v1.0** after v0.9.0) |
 | [planning/roadmap_v0.7_to_v1.0.md](planning/roadmap_v0.7_to_v1.0.md) | Phased roadmap + acceptance criteria |
 | [planning/future_considerations.md](planning/future_considerations.md) | Deferred / later backlog |
 | [planning/completed.md](planning/completed.md) | Shipped capabilities |
@@ -86,7 +86,9 @@ Stable product/technical design (not a task tracker):
 
 | Document | Description |
 |----------|-------------|
-| [releases/v0.7.0.md](releases/v0.7.0.md) | **Canonical** — trust UAT, transcript prep, ontology, telemetry |
+| [releases/v0.9.0.md](releases/v0.9.0.md) | **Canonical** — cases, longitudinal, feedback, report package |
+| [releases/v0.8.0.md](releases/v0.8.0.md) | Structured persistence + graph |
+| [releases/v0.7.0.md](releases/v0.7.0.md) | Trust UAT, transcript prep, ontology, telemetry |
 | [releases/v0.6.0.md](releases/v0.6.0.md) | Trust + workflows + AWS-only |
 | [releases/v0.5.1.md](releases/v0.5.1.md) | AWS cloud cutover |
 | [releases/v0.3.0.md](releases/v0.3.0.md) | Post-MVP release |
