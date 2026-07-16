@@ -112,3 +112,41 @@ class SynthesisReportRow(Base):
     report_json: Mapped[str] = mapped_column(Text)
     safety_flags: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class FindingRow(Base):
+    """Normalized finding row (v0.8). Raw JSON remains on module_runs for audit."""
+
+    __tablename__ = "findings"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    source_id: Mapped[str] = mapped_column(String(64))
+    module_run_id: Mapped[str] = mapped_column(ForeignKey("module_runs.id"), index=True)
+    workflow_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    module_id: Mapped[str] = mapped_column(String(128))
+    module_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    type: Mapped[str] = mapped_column(String(64))
+    title: Mapped[str] = mapped_column(String(512))
+    summary: Mapped[str] = mapped_column(Text)
+    confidence: Mapped[str] = mapped_column(String(32))
+    limitations_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    construct_ids_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class FindingEvidenceQuoteRow(Base):
+    __tablename__ = "finding_evidence_quotes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    finding_id: Mapped[str] = mapped_column(ForeignKey("findings.id"), index=True)
+    quote_id: Mapped[str] = mapped_column(String(16))
+    position: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class FindingAlternativeExplanationRow(Base):
+    __tablename__ = "finding_alternative_explanations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    finding_id: Mapped[str] = mapped_column(ForeignKey("findings.id"), index=True)
+    text: Mapped[str] = mapped_column(Text)
+    position: Mapped[int] = mapped_column(Integer, default=0)

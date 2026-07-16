@@ -7,6 +7,9 @@ from sqlalchemy.orm import Session
 from backend.core.exceptions import TranscriptNotFoundError, TranscriptValidationError
 from backend.db.models import (
     EvidenceQuoteRow,
+    FindingAlternativeExplanationRow,
+    FindingEvidenceQuoteRow,
+    FindingRow,
     ModuleRunRow,
     SpeakerRow,
     SynthesisReportRow,
@@ -277,6 +280,38 @@ class TranscriptRepository:
                 select(WorkflowRunRow.id).where(WorkflowRunRow.transcript_id == transcript_id)
             ).all()
         )
+        module_run_ids = list(
+            session.scalars(
+                select(ModuleRunRow.id).where(ModuleRunRow.transcript_id == transcript_id)
+            ).all()
+        )
+        if run_ids:
+            workflow_module_ids = list(
+                session.scalars(
+                    select(ModuleRunRow.id).where(ModuleRunRow.workflow_run_id.in_(run_ids))
+                ).all()
+            )
+            module_run_ids = list({*module_run_ids, *workflow_module_ids})
+
+        if module_run_ids:
+            finding_ids = list(
+                session.scalars(
+                    select(FindingRow.id).where(FindingRow.module_run_id.in_(module_run_ids))
+                ).all()
+            )
+            if finding_ids:
+                session.execute(
+                    delete(FindingEvidenceQuoteRow).where(
+                        FindingEvidenceQuoteRow.finding_id.in_(finding_ids)
+                    )
+                )
+                session.execute(
+                    delete(FindingAlternativeExplanationRow).where(
+                        FindingAlternativeExplanationRow.finding_id.in_(finding_ids)
+                    )
+                )
+                session.execute(delete(FindingRow).where(FindingRow.id.in_(finding_ids)))
+
         if run_ids:
             session.execute(
                 delete(SynthesisReportRow).where(

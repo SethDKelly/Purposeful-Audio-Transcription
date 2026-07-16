@@ -10,6 +10,7 @@ from backend.core.exceptions import ExplorationError, FindingNotFoundError, LLME
 from backend.db.base import get_session
 from backend.domain.enums import WorkflowRunStatus
 from backend.domain.finding import ModuleRun
+from backend.repositories.finding_repository import FindingRepository
 from backend.repositories.workflow_run_repository import WorkflowRunRepository
 from backend.services.llm_factory import get_llm_provider
 from backend.services.llm_provider import LLMProvider
@@ -60,14 +61,33 @@ class ExplorationService:
         synthesis: SynthesisEngine | None = None,
         llm: LLMProvider | None = None,
         workflow_runs: WorkflowRunRepository | None = None,
+        findings: FindingRepository | None = None,
     ) -> None:
         self._workflows = workflows or workflow_engine
         self._transcripts = transcripts or transcript_service
         self._synthesis = synthesis or synthesis_engine
         self._llm = llm or get_llm_provider()
         self._workflow_runs = workflow_runs or WorkflowRunRepository()
+        self._findings = findings or FindingRepository()
 
     def list_findings(self, workflow_run_id: str) -> list[dict]:
+        with get_session() as session:
+            persisted = self._findings.list_by_workflow_run_id(session, workflow_run_id)
+        if persisted:
+            return [
+                {
+                    "finding_key": item["finding_key"],
+                    "module_id": item["module_id"],
+                    "module_run_id": item["module_run_id"],
+                    "id": item["id"],
+                    "type": item["type"],
+                    "title": item["title"],
+                    "summary": item["summary"],
+                    "confidence": item["confidence"],
+                    "evidence_quote_ids": item["evidence_quote_ids"],
+                }
+                for item in persisted
+            ]
         _, module_runs = self._workflows.get_with_module_runs(workflow_run_id)
         return [_indexed_to_dict(item) for item in _index_findings(module_runs)]
 

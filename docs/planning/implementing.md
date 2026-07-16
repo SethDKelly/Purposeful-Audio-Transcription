@@ -4,11 +4,11 @@ Material work in flight for the **Relationship Reasoning Engine (RRE)** after **
 
 | | |
 |---|---|
-| **Status** | **v0.8 pending** — Structured persistence + graph reasoning |
+| **Status** | **v0.8 in progress** — Structured persistence + graph reasoning |
 | **Canonical roadmap** | [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md) |
 | **Deferred ideas** | [future_considerations.md](future_considerations.md) |
 | **Completed** | [completed.md](completed.md) · [../releases/v0.7.0.md](../releases/v0.7.0.md) |
-| **Branch** | `main` @ **v0.7.0** |
+| **Branch** | `v0.8/structured-persistence` |
 | **Strategy** | **AWS only** — Bedrock + Transcribe + ECS + RDS (`521018312783`, `us-east-2`) |
 | **Cost control** | **Pause AWS when idle** — [../developer/aws-operations.md](../developer/aws-operations.md) |
 | **Deploy policy** | Deploy on **minor-version completion** (tag `vX.Y.Z` or manual), not every main push |
@@ -46,7 +46,7 @@ security → transcript quality → ontology → structured persistence
 
 ```text
 [x] Release v0.7.0 · Deploy once · Pause AWS when idle
-[ ] v0.8 Priority 1 — Normalized findings persistence
+[x] v0.8 Priority 1 — Normalized findings persistence
 [ ] v0.8 Priority 2 — Normalized constructs persistence
 [ ] v0.8 Priority 3 — Construct relationship persistence
 [ ] v0.8 Priority 4 — Graph merge / deduplication
@@ -80,6 +80,16 @@ Detail: [../releases/v0.7.0.md](../releases/v0.7.0.md) · acceptance: [roadmap_v
 Plan: [../architecture/structured_persistence_plan.md](../architecture/structured_persistence_plan.md).
 
 Promote findings, constructs, evidence, confidence, and relationships from JSON blobs into first-class persistent objects; enable table-first graph exploration and structured synthesis.
+
+| Priority | Status | Notes |
+|----------|--------|-------|
+| P1 Findings | **Done** | `findings` + evidence/alternatives tables; write on module complete; exploration prefers DB |
+| P2 Constructs | Pending | |
+| P3 Relationships | Pending | |
+| P4 Merge / dedup | Pending | |
+| P5 Convergence scoring | Pending | |
+| P6 Exploration UI | Pending | |
+| P7 Structured synthesis | Pending | |
 
 ---
 

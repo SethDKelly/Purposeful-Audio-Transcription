@@ -20,6 +20,7 @@ from backend.db.base import get_session
 from backend.domain.enums import ModuleRunStatus, SourceType
 from backend.domain.finding import ModuleRun
 from backend.domain.telemetry import ModuleRunTelemetry, estimate_cost_usd
+from backend.repositories.finding_repository import FindingRepository
 from backend.repositories.module_run_repository import ModuleRunRepository, utc_now
 from backend.schemas.module_output_v1 import ModuleRunOutput
 from backend.services.module_output_validator import ModuleOutputValidator, module_output_validator
@@ -64,6 +65,7 @@ class ModuleRunner:
         safety: SafetyValidator | None = None,
         llm: LLMProvider | None = None,
         repository: ModuleRunRepository | None = None,
+        findings: FindingRepository | None = None,
     ) -> None:
         self._registry = registry
         self._compiler = compiler or prompt_compiler
@@ -73,6 +75,7 @@ class ModuleRunner:
         self._safety = safety or safety_validator
         self._llm = llm or get_llm_provider()
         self._repository = repository or ModuleRunRepository()
+        self._findings = findings or FindingRepository()
 
     def run(
         self,
@@ -410,7 +413,7 @@ class ModuleRunner:
         run.safety_flags = safety_flags or None
         run.telemetry = telemetry
         run.completed_at = utc_now()
-        self._persist_run(run)
+        self._persist_completed(run, output)
         if telemetry:
             logger.info(
                 "Module run %s telemetry",
@@ -515,6 +518,16 @@ class ModuleRunner:
     def _persist_run(self, run: ModuleRun) -> None:
         with get_session() as session:
             self._repository.save(session, run)
+
+    def _persist_completed(self, run: ModuleRun, output: ModuleRunOutput) -> None:
+        with get_session() as session:
+            self._repository.save(session, run)
+            self._findings.replace_for_module_run(
+                session,
+                run,
+                output.findings,
+                module_version=output.module_version,
+            )
 
 
 def collect_quote_ids(outputs: list[dict[str, Any]]) -> set[str]:
