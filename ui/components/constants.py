@@ -19,3 +19,10 @@ PRIVACY_NOTE = (
     "(VPC, RDS, S3). Inference uses Amazon Bedrock and Transcribe — no "
     "off-account model APIs."
 )
+
+RETENTION_NOTE = (
+    "Retention: Transcripts and related analysis may be purged automatically "
+    "when retention days are configured on the API. You can delete a transcript "
+    "(and cascaded runs/reports) anytime from the Prepare step. Uploaded audio "
+    "temps are removed after transcription."
+)
