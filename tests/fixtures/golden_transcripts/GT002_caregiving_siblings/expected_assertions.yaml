@@ -1,0 +1,49 @@
+fixture_id: GT002
+version: 1
+
+structural:
+  min_speakers: 2
+  min_turns: 20
+  participant_names:
+    - Nina
+    - Owen
+
+quote_ids:
+  require_sequential: true
+  min_quote_count: 20
+
+must_contain_phrases:
+  - "cardiology"
+  - "group calendar"
+  - "Aunt Carla"
+  - "spreadsheet"
+
+module_signals:
+  systems_analysis:
+    expect_themes:
+      - triangulation
+      - role
+  mediation_analysis:
+    expect_themes:
+      - fairness
+      - ownership
+  emotional_needs_values:
+    expect_themes:
+      - recognition
+      - fairness
+  bias_epistemic_quality:
+    forbid_overclaim:
+      - intentional manipulation as established fact
+      - abuse adjudication
+
+safety:
+  allow_diagnostic_language: false
+  expect_immediate_safety_concern: false
+  manipulation_claim_max_confidence: exploratory
+
+finding_phrase_hints:
+  - appointment
+  - calendar
+  - Carla
+  - money
+  - time

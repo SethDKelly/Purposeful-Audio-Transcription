@@ -1,0 +1,23 @@
+fixture_id: GT002
+slug: caregiving_siblings
+title: Siblings / Caregiving and Money
+relationship_type: adult_siblings_family_caregiving
+resolution_status: partial_procedural_agreement_emotional_residue
+safety_level: moderate_family_conflict_no_immediate_safety_concern
+participants:
+  - Nina
+  - Owen
+recommended_workflows:
+  - quick_review
+  - mediation_brief
+  - research_oriented
+tags:
+  - caregiving
+  - triangulation
+  - fairness
+  - systems
+source_files:
+  transcript_md: transcript.md
+  transcript_json: transcript.json
+  expected_signals: expected_signals.md
+  expected_assertions: expected_assertions.yaml

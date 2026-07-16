@@ -1,0 +1,23 @@
+fixture_id: GT001
+slug: missed_dinner_couple
+title: Missed Dinner / Texting Expectations
+relationship_type: romantic_partners
+resolution_status: partial_repair
+safety_level: ordinary_conflict_no_immediate_safety_concern
+participants:
+  - Maya
+  - Leo
+recommended_workflows:
+  - quick_review
+  - conflict_coaching
+  - research_oriented
+tags:
+  - escalation
+  - repair
+  - criticism_defensiveness
+  - nvc
+source_files:
+  transcript_md: transcript.md
+  transcript_json: transcript.json
+  expected_signals: expected_signals.md
+  expected_assertions: expected_assertions.yaml

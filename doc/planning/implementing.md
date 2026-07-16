@@ -50,7 +50,7 @@ security → transcript quality → ontology → structured persistence
 [ ] v0.7 Priority 2 — Transcript preparation workspace
 [ ] v0.7 Priority 3 — Ontology vocabulary v1
 [ ] v0.7 Priority 4 — Module construct expectations
-[ ] v0.7 Priority 5 — Golden fixtures + evaluation foundation
+[ ] v0.7 Priority 5 — Golden fixtures + evaluation foundation (GT001/GT002 landed; expand to 5–10)
 [ ] v0.7 Priority 6 — Cost / latency / module telemetry
 [ ] Release v0.7.0 · Pause AWS when idle · then v0.8
 ```
@@ -99,7 +99,7 @@ Detail and acceptance criteria: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.m
 
 | # | Task | Status | Links |
 |---|------|--------|-------|
-| V07-5a–c | 5–10 fixtures, automated checks, manual rubric | Pending | [../evaluation/golden_fixture_evaluation_plan.md](../evaluation/golden_fixture_evaluation_plan.md) |
+| V07-5a–c | 5–10 fixtures, automated checks, manual rubric | **In progress** — GT001/GT002 under `tests/fixtures/golden_transcripts/` with metadata + assertions; see [golden_transcript_fixtures.md](golden_transcript_fixtures.md) | [../evaluation/golden_fixture_evaluation_plan.md](../evaluation/golden_fixture_evaluation_plan.md) |
 
 ### Priority 6 — Cost, Latency & Module Telemetry
 
