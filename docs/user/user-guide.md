@@ -76,10 +76,11 @@ Each finding includes:
 
 Without re-running a workflow you can:
 
+- **Structured inventory** — table-first view of constructs, relationships, and findings (filter by type, confidence, module); includes convergence scores when available
 - **Why this finding?** — evidence chain and related findings in other modules
 - **Cross-module** — agreement and tension between modules
 - **Compare sessions** — compare multiple runs on the same transcript
-- **Knowledge graph** — constructs and relationships (when modules return them)
+- **Knowledge graph** — constructs and relationships from normalized storage when present
 - **Ask a question** — scoped follow-up via Bedrock using stored findings
 
 Scope a question to one finding or the entire run.

@@ -2,7 +2,7 @@
 
 High-level map of the RRE codebase. Deep design specs live in [../design/](../design/). Runtime is **AWS only**.
 
-**Current release:** **v0.7.0**. Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Next: [../architecture/structured_persistence_plan.md](structured_persistence_plan.md) (v0.8).
+**Current release:** **v0.8.0**. Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Next: cases / longitudinal (v0.9) in [../planning/implementing.md](../planning/implementing.md).
 
 ## System diagram
 
@@ -42,21 +42,26 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 | `BedrockProvider` | LLM chat; records token/cache usage for telemetry |
 | `ModuleRegistry` / `WorkflowRegistry` | YAML definitions; ontology validation on load |
 | `PromptCompiler` | Build messages from framework + module + evidence |
-| `ModuleRunner` | Run → parse JSON → validate → soft coverage warnings → retry |
+| `ModuleRunner` | Run → parse JSON → validate → soft coverage warnings → retry → persist normalized rows |
 | `ModuleOutputValidator` | Hard schema/evidence rules + soft `expected_constructs` coverage |
-| `WorkflowEngine` / `WorkflowJobService` | Parallel transcript modules + background runs |
-| `SynthesisEngine` | Cross-module report |
-| `ExplorationService` | Drill-down, compare, follow-up Q&A |
+| `WorkflowEngine` / `WorkflowJobService` | Parallel transcript modules; merge/score before synthesis |
+| `GraphMergeService` | Cross-module construct deduplication |
+| `ConvergenceScoringService` | Deterministic construct convergence scores |
+| `StructuredGraphService` | Normalized inventory + synthesis handoff |
+| `SynthesisEngine` | Cross-module report (structured inventory when available) |
+| `ExplorationService` | Drill-down, compare, follow-up Q&A (DB-preferring) |
 
 ## Domain layer
 
-`backend/domain/` — Pydantic models: `Transcript`, `Finding`, `ModuleRun` (with `validation_warnings`, `telemetry`), `WorkflowRun` (with `telemetry_summary`), `SynthesisReport`, etc.
+`backend/domain/` — Pydantic models: `Transcript`, `Finding`, `Construct`, `ConstructRelationship`, `ModuleRun` (with `validation_warnings`, `telemetry`), `WorkflowRun` (with `telemetry_summary`), `SynthesisReport`, etc.
 
 ## Persistence
 
 - **RDS PostgreSQL** on AWS
 - **SQLite** in pytest only
-- **Alembic** migrations in `alembic/versions/` (through `004_run_telemetry`)
+- **Alembic** migrations in `alembic/versions/` (through `007_construct_relationships`)
+- **Normalized tables:** `findings`, `constructs`, `construct_relationships` (+ evidence/source junctions). Raw `module_runs.parsed_output` kept for audit.
+- Repositories: `FindingRepository`, `ConstructRepository`, `ConstructRelationshipRepository`
 
 ## Configuration
 

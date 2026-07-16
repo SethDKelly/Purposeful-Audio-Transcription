@@ -4,14 +4,27 @@ Record of shipped capabilities for the **Relationship Reasoning Engine (RRE)** t
 
 | | |
 |---|---|
-| **Current branch** | `main` @ **v0.7.0** |
-| **Baseline release** | **v0.7.0** — trust UAT + transcript prep + ontology + telemetry ([releases/v0.7.0.md](../releases/v0.7.0.md)) |
-| **Next** | **v0.8** — structured persistence + graph ([implementing.md](implementing.md), [structured_persistence_plan.md](../architecture/structured_persistence_plan.md)) |
+| **Current branch** | `main` @ **v0.8.0** |
+| **Baseline release** | **v0.8.0** — structured persistence + graph ([releases/v0.8.0.md](../releases/v0.8.0.md)) |
+| **Next** | **v0.9** — cases + longitudinal ([implementing.md](implementing.md)) |
 | **Deferred** | [future_considerations.md](future_considerations.md) |
-| **Tests** | ~210+ passing locally / CI |
+| **Tests** | ~220+ passing locally / CI |
 | **AWS account** | `521018312783`, `us-east-2` |
 | **Architecture detail** | [aws-deployment.md](aws-deployment.md) |
 | **Docs root** | `docs/` (renamed from `doc/` in v0.7.0) |
+
+---
+
+## v0.8.0 — Structured persistence + graph (July 2026)
+
+| Area | Delivered |
+|------|-----------|
+| Findings persistence | Normalized tables + write on module complete; exploration prefers DB |
+| Constructs / relationships | Ontology-validated persistence; knowledge graph from DB |
+| Merge + convergence | Cross-module dedup; strong/moderate/weak/contested scores |
+| Exploration UI | Structured inventory tables + `GET …/structured-graph` |
+| Synthesis | Meta-synthesis primary input = structured inventory |
+| Migrations | Alembic `005`–`007` |
 
 ---
 

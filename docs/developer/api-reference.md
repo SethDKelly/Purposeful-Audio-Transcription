@@ -78,10 +78,11 @@ Module run responses may include:
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/workflow-runs/{id}/exploration/findings` | Indexed findings |
+| `GET` | `/api/workflow-runs/{id}/structured-graph` | Normalized findings / constructs / relationships inventory |
+| `GET` | `/api/workflow-runs/{id}/exploration/findings` | Indexed findings (DB preferred, JSON fallback) |
 | `GET` | `/api/workflow-runs/{id}/exploration/findings/{key}` | Drill-down (`module_id:F001`) |
 | `GET` | `/api/workflow-runs/{id}/exploration/cross-module` | Agreement / tension |
-| `GET` | `/api/workflow-runs/{id}/exploration/knowledge-graph` | Constructs graph |
+| `GET` | `/api/workflow-runs/{id}/exploration/knowledge-graph` | Constructs graph (normalized when present) |
 | `POST` | `/api/workflow-runs/{id}/exploration/ask` | Follow-up Q&A |
 | `POST` | `/api/exploration/compare` | Compare run IDs |
 
