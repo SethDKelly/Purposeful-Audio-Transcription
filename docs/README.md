@@ -1,6 +1,6 @@
 # Documentation index
 
-**Relationship Reasoning Engine (RRE)** — AWS-only (Bedrock + Transcribe + ECS + RDS). Canonical release **v0.7.0** on `main`.
+**Relationship Reasoning Engine (RRE)** — AWS-only (Bedrock + Transcribe + ECS + RDS). Canonical release **v0.8.0** on `main`.
 
 | Audience | Start here |
 |----------|------------|

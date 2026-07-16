@@ -1,47 +1,43 @@
-# Structured Persistence Plan (v0.8)
+# Structured Persistence Plan (v0.8) — **Shipped in v0.8.0**
 
-Normalize findings, constructs, evidence, and relationships out of module JSON blobs into queryable product objects. Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Design anchors: [../design/05_data_model_and_schemas.md](../design/05_data_model_and_schemas.md), [../design/03_domain_model.md](../design/03_domain_model.md).
+Normalize findings, constructs, evidence, and relationships out of module JSON blobs into queryable product objects. Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Release notes: [../releases/v0.8.0.md](../releases/v0.8.0.md).
 
-## Priority 1 — Findings
+## Priority 1 — Findings — Done
 
-Suggested entities: `findings`, `finding_evidence_quotes`, `finding_alternative_explanations`, `finding_module_sources`.
+Entities: `findings`, `finding_evidence_quotes`, `finding_alternative_explanations`.
 
-Fields (minimum): ID, workflow_run_id, module_run_id, source module ID/version, text, construct/category type, confidence, evidence quote IDs, alternative explanations, limitations, created_at.
+**Acceptance met:** Findings queryable without parsing raw JSON; links to module runs + quotes retained; exploration prefers DB with JSON fallback.
 
-**Acceptance:** Findings queryable without parsing raw JSON; links to module runs + quotes retained; reports use normalized data or safe JSON fallback.
-
-## Priority 2 — Constructs
+## Priority 2 — Constructs — Done
 
 Entities: `constructs`, `construct_evidence_quotes`, `construct_sources`.
 
-Fields: construct ID, ontology type, label, description, confidence, source module IDs, evidence quote IDs, optional canonical value.
+**Acceptance met:** Types validated against [ontology_v1.md](ontology_v1.md); unknown types stored with warnings; evidence traceability preserved.
 
-**Acceptance:** Types validated against [ontology_v1.md](ontology_v1.md); evidence traceability preserved.
+## Priority 3 — Relationships — Done
 
-## Priority 3 — Relationships
+Entity: `construct_relationships` (+ optional evidence quotes table).
 
-Entity: `construct_relationships` — source ID, relationship type, target ID, confidence, evidence quote IDs, source module ID.
+**Acceptance met:** Queryable; ontology-validated types; dangling links stored with warnings.
 
-**Acceptance:** Queryable; ontology-validated types; invalid links rejected or stored with warnings.
+## Priority 4 — Merge / deduplication — Done
 
-## Priority 4 — Merge / deduplication
+`GraphMergeService` similarity pass; absorbed constructs keep `merged_into_id`; sources preserved on canonical rows.
 
-Similarity pass across modules; merge near-duplicates; preserve sources; merged confidence from evidence + convergence; track contributing modules.
+## Priority 5 — Convergence scoring — Done
 
-## Priority 5 — Convergence scoring
+`ConvergenceScoringService` writes `convergence_score` + rationale JSON (`strong` / `moderate` / `weak` / `contested`).
 
-Deterministic inputs: supporting module count, evidence quality, confidence ratings, contradictions, ontology confidence ceilings. UI explains strong vs weak ratings without relying only on model prose.
+## Priority 6 — Exploration UI — Done
 
-## Priority 6 — Exploration UI
+`GET /api/workflow-runs/{id}/structured-graph` + Streamlit **Structured inventory** tab (filters by type/confidence/module).
 
-Table-first explorer: constructs, relationships, findings, quotes, modules, confidence, convergence. Filters by type/confidence/module/quote.
+## Priority 7 — Synthesis over structured objects — Done
 
-## Priority 7 — Synthesis over structured objects
-
-Meta-synthesis prompt primary input = structured inventory; narrative still LLM-written; cites normalized IDs; separates robust vs exploratory.
+Meta-synthesis handoff prefers `structured_inventory`; merge/score before synthesis; prompt cites finding/construct IDs.
 
 ## Implementation notes
 
-- Alembic migrations under `alembic/versions/`.
-- Keep raw module JSON for audit/replay during transition.
-- TODO: exact ORM table names when implementing — align with existing SQLAlchemy models.
+- Alembic: `005_normalized_findings`, `006_normalized_constructs`, `007_construct_relationships`.
+- Raw module JSON kept on `module_runs.parsed_output` for audit/replay.
+- ORM: `backend/db/models.py` (`FindingRow`, `ConstructRow`, `ConstructRelationshipRow`, …).

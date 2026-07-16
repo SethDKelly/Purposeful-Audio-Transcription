@@ -9,10 +9,12 @@ from backend.api.schemas import (
     ExplorationFindingsResponse,
     FindingDrilldownResponse,
     KnowledgeGraphResponse,
+    StructuredGraphResponse,
     TranscriptWorkflowRunsResponse,
     TranscriptWorkflowRunSummary,
 )
 from backend.services.exploration_service import exploration_service
+from backend.services.structured_graph_service import structured_graph_service
 
 router = APIRouter(prefix="/api", tags=["exploration"])
 
@@ -48,6 +50,14 @@ def get_cross_module_alignment(run_id: str) -> CrossModuleAlignmentResponse:
 )
 def get_knowledge_graph(run_id: str) -> KnowledgeGraphResponse:
     return KnowledgeGraphResponse(**exploration_service.get_knowledge_graph(run_id))
+
+
+@router.get(
+    "/workflow-runs/{run_id}/structured-graph",
+    response_model=StructuredGraphResponse,
+)
+def get_structured_graph(run_id: str) -> StructuredGraphResponse:
+    return StructuredGraphResponse(**structured_graph_service.inventory(run_id))
 
 
 @router.post(

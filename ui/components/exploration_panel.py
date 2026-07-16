@@ -7,6 +7,7 @@ from ui.api_client import (
     fetch_exploration_findings,
     fetch_finding_drilldown,
     fetch_knowledge_graph,
+    fetch_structured_graph,
     fetch_transcript_workflow_runs,
 )
 
@@ -29,6 +30,7 @@ def render_exploration_panel(
         return
 
     (
+        inventory_tab,
         drilldown_tab,
         cross_module_tab,
         compare_tab,
@@ -36,6 +38,7 @@ def render_exploration_panel(
         ask_tab,
     ) = st.tabs(
         [
+            "Structured inventory",
             "Why this finding?",
             "Cross-module",
             "Compare sessions",
@@ -43,6 +46,9 @@ def render_exploration_panel(
             "Ask a question",
         ]
     )
+
+    with inventory_tab:
+        _render_structured_inventory(run_id)
 
     with drilldown_tab:
         _render_finding_drilldown(run_id, quotes_by_id)
@@ -58,6 +64,111 @@ def render_exploration_panel(
 
     with ask_tab:
         _render_ask_question(run_id, llm_models, default_model)
+
+
+def _render_structured_inventory(run_id: str) -> None:
+    try:
+        inventory = fetch_structured_graph(run_id)
+    except RuntimeError as exc:
+        st.error(str(exc))
+        return
+
+    counts = inventory.get("counts", {})
+    st.caption(
+        f"{counts.get('findings', 0)} findings · "
+        f"{counts.get('constructs', 0)} constructs · "
+        f"{counts.get('relationships', 0)} relationships"
+    )
+
+    findings = inventory.get("findings", [])
+    constructs = inventory.get("constructs", [])
+    relationships = inventory.get("relationships", [])
+
+    type_filter = st.multiselect(
+        "Filter constructs by ontology type",
+        options=sorted({c.get("ontology_type", "") for c in constructs if c.get("ontology_type")}),
+    )
+    confidence_filter = st.multiselect(
+        "Filter by confidence",
+        options=sorted(
+            {
+                *(f.get("confidence") for f in findings if f.get("confidence")),
+                *(c.get("confidence") for c in constructs if c.get("confidence")),
+            }
+        ),
+    )
+    module_filter = st.multiselect(
+        "Filter by module",
+        options=sorted(
+            {
+                *(f.get("module_id") for f in findings if f.get("module_id")),
+                *(c.get("module_id") for c in constructs if c.get("module_id")),
+            }
+        ),
+    )
+
+    def _pass_filters(row: dict, *, type_key: str | None = None) -> bool:
+        if type_filter and type_key and row.get(type_key) not in type_filter:
+            return False
+        if confidence_filter and row.get("confidence") not in confidence_filter:
+            return False
+        if module_filter and row.get("module_id") not in module_filter:
+            return False
+        return True
+
+    st.subheader("Constructs")
+    construct_rows = [
+        {
+            "label": c.get("label"),
+            "type": c.get("ontology_type"),
+            "confidence": c.get("confidence"),
+            "convergence": c.get("convergence_score"),
+            "module": c.get("module_id"),
+            "quotes": ", ".join(c.get("evidence_quote_ids") or []),
+            "sources": len(c.get("sources") or []),
+        }
+        for c in constructs
+        if _pass_filters(c, type_key="ontology_type")
+    ]
+    if construct_rows:
+        st.dataframe(construct_rows, use_container_width=True, hide_index=True)
+    else:
+        st.caption("No constructs match the current filters.")
+
+    st.subheader("Relationships")
+    relationship_rows = [
+        {
+            "source": r.get("source_construct_id"),
+            "type": r.get("relationship_type"),
+            "target": r.get("target_construct_id"),
+            "confidence": r.get("confidence"),
+            "module": r.get("module_id"),
+            "warning": r.get("link_warning") or r.get("ontology_warning") or "",
+        }
+        for r in relationships
+        if _pass_filters(r)
+    ]
+    if relationship_rows:
+        st.dataframe(relationship_rows, use_container_width=True, hide_index=True)
+    else:
+        st.caption("No relationships match the current filters.")
+
+    st.subheader("Findings")
+    finding_rows = [
+        {
+            "title": f.get("title"),
+            "type": f.get("type"),
+            "confidence": f.get("confidence"),
+            "module": f.get("module_id"),
+            "quotes": ", ".join(f.get("evidence_quote_ids") or []),
+        }
+        for f in findings
+        if _pass_filters(f)
+    ]
+    if finding_rows:
+        st.dataframe(finding_rows, use_container_width=True, hide_index=True)
+    else:
+        st.caption("No findings match the current filters.")
 
 
 def _render_finding_drilldown(run_id: str, quotes_by_id: dict[str, dict]) -> None:

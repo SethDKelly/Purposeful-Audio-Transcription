@@ -20,7 +20,10 @@ from backend.db.base import get_session
 from backend.domain.enums import ModuleRunStatus, SourceType
 from backend.domain.finding import ModuleRun
 from backend.domain.telemetry import ModuleRunTelemetry, estimate_cost_usd
+from backend.repositories.construct_repository import ConstructRepository
+from backend.repositories.finding_repository import FindingRepository
 from backend.repositories.module_run_repository import ModuleRunRepository, utc_now
+from backend.repositories.relationship_repository import ConstructRelationshipRepository
 from backend.schemas.module_output_v1 import ModuleRunOutput
 from backend.services.module_output_validator import ModuleOutputValidator, module_output_validator
 from backend.services.llm_factory import get_llm_provider
@@ -28,6 +31,10 @@ from backend.services.llm_provider import LLMProvider
 from backend.services.output_parser import OutputParseError, OutputParser, output_parser
 from backend.services.prompt_compiler import CompiledPrompt
 from backend.services.safety_validator import SafetyValidator, safety_validator
+from backend.services.structured_graph_service import (
+    StructuredGraphService,
+    structured_graph_service,
+)
 from backend.services.transcript_service import TranscriptService, transcript_service
 
 logger = logging.getLogger(__name__)
@@ -64,6 +71,10 @@ class ModuleRunner:
         safety: SafetyValidator | None = None,
         llm: LLMProvider | None = None,
         repository: ModuleRunRepository | None = None,
+        findings: FindingRepository | None = None,
+        constructs: ConstructRepository | None = None,
+        relationships: ConstructRelationshipRepository | None = None,
+        structured_graph: StructuredGraphService | None = None,
     ) -> None:
         self._registry = registry
         self._compiler = compiler or prompt_compiler
@@ -73,6 +84,10 @@ class ModuleRunner:
         self._safety = safety or safety_validator
         self._llm = llm or get_llm_provider()
         self._repository = repository or ModuleRunRepository()
+        self._findings = findings or FindingRepository()
+        self._constructs = constructs or ConstructRepository()
+        self._relationships = relationships or ConstructRelationshipRepository()
+        self._structured_graph = structured_graph or structured_graph_service
 
     def run(
         self,
@@ -113,10 +128,29 @@ class ModuleRunner:
 
         bundle = self._transcripts.get(transcript_id)
         resolved_model = self._resolve_model(module, model)
-        outputs_text = json.dumps(prior_outputs, indent=2)
+        handoff: dict[str, Any] = {
+            "module_outputs": prior_outputs,
+        }
+        if workflow_run_id:
+            structured = self._structured_graph.synthesis_handoff(workflow_run_id)
+            if structured.get("findings") or structured.get("robust_constructs"):
+                handoff = {
+                    "structured_inventory": structured,
+                    "module_outputs": prior_outputs,
+                }
+        outputs_text = json.dumps(handoff, indent=2)
         compiled = self._compiler.compile_for_module_outputs(module, outputs_text)
         valid_quote_ids = {quote.quote_id for quote in bundle.evidence_quotes}
         valid_quote_ids |= collect_quote_ids(prior_outputs)
+        if "structured_inventory" in handoff:
+            for finding in handoff["structured_inventory"].get("findings", []):
+                valid_quote_ids.update(finding.get("evidence_quote_ids", []))
+            for construct in handoff["structured_inventory"].get("robust_constructs", []):
+                valid_quote_ids.update(construct.get("evidence_quote_ids", []))
+            for construct in handoff["structured_inventory"].get(
+                "exploratory_constructs", []
+            ):
+                valid_quote_ids.update(construct.get("evidence_quote_ids", []))
 
         return self._execute(
             module=module,
@@ -410,7 +444,7 @@ class ModuleRunner:
         run.safety_flags = safety_flags or None
         run.telemetry = telemetry
         run.completed_at = utc_now()
-        self._persist_run(run)
+        self._persist_completed(run, output)
         if telemetry:
             logger.info(
                 "Module run %s telemetry",
@@ -515,6 +549,20 @@ class ModuleRunner:
     def _persist_run(self, run: ModuleRun) -> None:
         with get_session() as session:
             self._repository.save(session, run)
+
+    def _persist_completed(self, run: ModuleRun, output: ModuleRunOutput) -> None:
+        with get_session() as session:
+            self._repository.save(session, run)
+            self._findings.replace_for_module_run(
+                session,
+                run,
+                output.findings,
+                module_version=output.module_version,
+            )
+            self._constructs.replace_for_module_run(session, run, output.constructs)
+            self._relationships.replace_for_module_run(
+                session, run, output.relationships
+            )
 
 
 def collect_quote_ids(outputs: list[dict[str, Any]]) -> set[str]:

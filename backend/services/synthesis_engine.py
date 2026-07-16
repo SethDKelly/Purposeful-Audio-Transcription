@@ -78,7 +78,9 @@ class SynthesisEngine:
 
         validation = self._validator.validate(
             report,
-            self._preprocessor.process(completed_runs).allowed_quote_ids,
+            self._preprocessor.process(
+                completed_runs, workflow_run_id=workflow_run_id
+            ).allowed_quote_ids,
         )
         if not validation.is_valid:
             raise SynthesisError(
@@ -96,7 +98,9 @@ class SynthesisEngine:
         workflow_run_id: str,
         module_runs: list[ModuleRun],
     ) -> SynthesisReport:
-        preprocessed = self._preprocessor.process(module_runs)
+        preprocessed = self._preprocessor.process(
+            module_runs, workflow_run_id=workflow_run_id
+        )
         synthesis_id = new_synthesis_report_id()
         meta_run = _find_meta_synthesis_run(module_runs)
 

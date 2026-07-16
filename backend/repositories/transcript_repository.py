@@ -6,7 +6,15 @@ from sqlalchemy.orm import Session
 
 from backend.core.exceptions import TranscriptNotFoundError, TranscriptValidationError
 from backend.db.models import (
+    ConstructEvidenceQuoteRow,
+    ConstructRelationshipEvidenceQuoteRow,
+    ConstructRelationshipRow,
+    ConstructRow,
+    ConstructSourceRow,
     EvidenceQuoteRow,
+    FindingAlternativeExplanationRow,
+    FindingEvidenceQuoteRow,
+    FindingRow,
     ModuleRunRow,
     SpeakerRow,
     SynthesisReportRow,
@@ -277,6 +285,79 @@ class TranscriptRepository:
                 select(WorkflowRunRow.id).where(WorkflowRunRow.transcript_id == transcript_id)
             ).all()
         )
+        module_run_ids = list(
+            session.scalars(
+                select(ModuleRunRow.id).where(ModuleRunRow.transcript_id == transcript_id)
+            ).all()
+        )
+        if run_ids:
+            workflow_module_ids = list(
+                session.scalars(
+                    select(ModuleRunRow.id).where(ModuleRunRow.workflow_run_id.in_(run_ids))
+                ).all()
+            )
+            module_run_ids = list({*module_run_ids, *workflow_module_ids})
+
+        if module_run_ids:
+            finding_ids = list(
+                session.scalars(
+                    select(FindingRow.id).where(FindingRow.module_run_id.in_(module_run_ids))
+                ).all()
+            )
+            if finding_ids:
+                session.execute(
+                    delete(FindingEvidenceQuoteRow).where(
+                        FindingEvidenceQuoteRow.finding_id.in_(finding_ids)
+                    )
+                )
+                session.execute(
+                    delete(FindingAlternativeExplanationRow).where(
+                        FindingAlternativeExplanationRow.finding_id.in_(finding_ids)
+                    )
+                )
+                session.execute(delete(FindingRow).where(FindingRow.id.in_(finding_ids)))
+
+            rel_ids = list(
+                session.scalars(
+                    select(ConstructRelationshipRow.id).where(
+                        ConstructRelationshipRow.module_run_id.in_(module_run_ids)
+                    )
+                ).all()
+            )
+            if rel_ids:
+                session.execute(
+                    delete(ConstructRelationshipEvidenceQuoteRow).where(
+                        ConstructRelationshipEvidenceQuoteRow.relationship_id.in_(rel_ids)
+                    )
+                )
+                session.execute(
+                    delete(ConstructRelationshipRow).where(
+                        ConstructRelationshipRow.id.in_(rel_ids)
+                    )
+                )
+
+            construct_ids = list(
+                session.scalars(
+                    select(ConstructRow.id).where(
+                        ConstructRow.module_run_id.in_(module_run_ids)
+                    )
+                ).all()
+            )
+            if construct_ids:
+                session.execute(
+                    delete(ConstructEvidenceQuoteRow).where(
+                        ConstructEvidenceQuoteRow.construct_id.in_(construct_ids)
+                    )
+                )
+                session.execute(
+                    delete(ConstructSourceRow).where(
+                        ConstructSourceRow.construct_id.in_(construct_ids)
+                    )
+                )
+                session.execute(
+                    delete(ConstructRow).where(ConstructRow.id.in_(construct_ids))
+                )
+
         if run_ids:
             session.execute(
                 delete(SynthesisReportRow).where(

@@ -1,14 +1,14 @@
 # Implementing — Active Priorities
 
-Material work in flight for the **Relationship Reasoning Engine (RRE)** after **v0.7.0**.
+Material work in flight for the **Relationship Reasoning Engine (RRE)** after **v0.8.0**.
 
 | | |
 |---|---|
-| **Status** | **v0.8 pending** — Structured persistence + graph reasoning |
+| **Status** | **v0.9 pending** — Cases + longitudinal analysis |
 | **Canonical roadmap** | [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md) |
 | **Deferred ideas** | [future_considerations.md](future_considerations.md) |
-| **Completed** | [completed.md](completed.md) · [../releases/v0.7.0.md](../releases/v0.7.0.md) |
-| **Branch** | `main` @ **v0.7.0** |
+| **Completed** | [completed.md](completed.md) · [../releases/v0.8.0.md](../releases/v0.8.0.md) |
+| **Branch** | `main` @ **v0.8.0** |
 | **Strategy** | **AWS only** — Bedrock + Transcribe + ECS + RDS (`521018312783`, `us-east-2`) |
 | **Cost control** | **Pause AWS when idle** — [../developer/aws-operations.md](../developer/aws-operations.md) |
 | **Deploy policy** | Deploy on **minor-version completion** (tag `vX.Y.Z` or manual), not every main push |
@@ -36,8 +36,8 @@ security → transcript quality → ontology → structured persistence
 |---------|--------|--------|
 | **v0.6.0** | Trust controls + full/research workflows + AWS-only | **Released** |
 | **v0.7.0** | Secure UAT + transcript prep + ontology foundation | **Released** |
-| **v0.8** | Normalized findings/constructs/relationships + graph | **Active** |
-| **v0.9** | Cases + longitudinal + feedback | Pending |
+| **v0.8.0** | Normalized findings/constructs/relationships + graph | **Released** |
+| **v0.9** | Cases + longitudinal + feedback | **Active** |
 | **v1.0** | Workers + DAG + custom workflows + safety mode | Pending |
 
 ---
@@ -45,41 +45,41 @@ security → transcript quality → ontology → structured persistence
 ## Immediate next steps
 
 ```text
-[x] Release v0.7.0 · Deploy once · Pause AWS when idle
-[ ] v0.8 Priority 1 — Normalized findings persistence
-[ ] v0.8 Priority 2 — Normalized constructs persistence
-[ ] v0.8 Priority 3 — Construct relationship persistence
-[ ] v0.8 Priority 4 — Graph merge / deduplication
-[ ] v0.8 Priority 5 — Deterministic convergence and confidence scoring
-[ ] v0.8 Priority 6 — Graph exploration UI (table-first)
-[ ] v0.8 Priority 7 — Synthesis over structured objects
-[ ] Release v0.8.0 · Deploy once · Pause · then v0.9
+[x] Release v0.8.0 · Deploy once · Pause AWS when idle
+[ ] v0.9 Priority 1 — Case data model
+[ ] v0.9 Priority 2 — Case dashboard
+[ ] v0.9 Priority 3 — Longitudinal comparison
+[ ] v0.9 Priority 4 — Longitudinal synthesis module
+[ ] v0.9 Priority 5 — Report package export
+[ ] v0.9 Priority 6 — User feedback / analyst review loop
+[ ] Release v0.9.0 · Deploy once · Pause · then v1.0
 ```
 
 **Standing ops:** Pause when idle. Deploy only on minor-version completion.
 
 ---
 
-## v0.7 — Complete (summary)
+## v0.8 — Complete (summary)
 
-Detail: [../releases/v0.7.0.md](../releases/v0.7.0.md) · acceptance: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md#v07--trust-transcript-preparation-and-ontology-foundation).
+Detail: [../releases/v0.8.0.md](../releases/v0.8.0.md) · plan: [../architecture/structured_persistence_plan.md](../architecture/structured_persistence_plan.md).
 
 | Priority | Status |
 |----------|--------|
-| P1 Secure external UAT | Done |
-| P2 Transcript preparation workspace | Done |
-| P3 Ontology vocabulary v1 | Done |
-| P4 Module construct expectations | Done |
-| P5 Golden fixtures + evaluation foundation | Done (GT001/GT002; expand count later) |
-| P6 Cost / latency / module telemetry | Done |
+| P1 Normalized findings | Done |
+| P2 Normalized constructs | Done |
+| P3 Construct relationships | Done |
+| P4 Graph merge / dedup | Done |
+| P5 Convergence scoring | Done |
+| P6 Table-first exploration UI | Done |
+| P7 Synthesis over structured objects | Done |
 
 ---
 
-## v0.8 — Active work
+## v0.9 — Active work
 
-Plan: [../architecture/structured_persistence_plan.md](../architecture/structured_persistence_plan.md).
+Roadmap: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md#v09--cases-and-longitudinal-analysis).
 
-Promote findings, constructs, evidence, confidence, and relationships from JSON blobs into first-class persistent objects; enable table-first graph exploration and structured synthesis.
+Multiple transcripts over time; longitudinal reasoning and feedback loops.
 
 ---
 
@@ -87,7 +87,6 @@ Promote findings, constructs, evidence, confidence, and relationships from JSON 
 
 | Release | Priorities | Plan docs |
 |---------|------------|-----------|
-| **v0.9** | Case model → dashboard → longitudinal → export → feedback | roadmap §v0.9 |
 | **v1.0** | Worker → DAG → custom builder → long transcript → safety mode | [../architecture/workflow_dag_plan.md](../architecture/workflow_dag_plan.md), [../product/safety_aware_report_mode.md](../product/safety_aware_report_mode.md) |
 
 ---
@@ -98,11 +97,12 @@ Promote findings, constructs, evidence, confidence, and relationships from JSON 
 |----------|-----------|
 | **Breadth pause** | Enough modules; structure and trust next |
 | **Deploy on minor versions only** | Cost control; pause between releases |
-| **Table-first graph UI** | v0.8 explorer before fancy viz |
+| **Table-first graph UI** | Shipped in v0.8 before fancy viz |
 | **Transcript stitch deferred** | Prep workspace first; multi-file stitch later |
 | **Pause AWS when idle** | Cost control |
 | **AWS-only product** | No Whisper/Ollama runtime |
 | **docs/ folder** | Renamed from `doc/` in v0.7.0 |
+| **Normalized app tables (not a graph DB)** | v0.8 persistence choice |
 
 ---
 
@@ -112,7 +112,7 @@ Promote findings, constructs, evidence, confidence, and relationships from JSON 
 - Multi-user SaaS / billing / RBAC beyond API key (+ HTTPS optional)
 - Production AWS account until v1.0 docs readiness
 - Runtime Hugging Face downloads
-- Graph database backend (normalized app tables are in-scope for v0.8)
+- Graph database backend (normalized app tables shipped in v0.8)
 - Reintroducing local Whisper/Ollama
 
 ---

@@ -442,20 +442,38 @@ class KnowledgeGraphNode(BaseModel):
     module_id: str
     confidence: str | None = None
     evidence_quote_ids: list[str] = Field(default_factory=list)
+    row_id: str | None = None
+    convergence_score: str | None = None
 
 
 class KnowledgeGraphEdge(BaseModel):
     source: str
     target: str
     relationship_type: str
-    module_id: str
+    module_id: str | None = None
     confidence: str | None = None
+    row_id: str | None = None
 
 
 class KnowledgeGraphResponse(BaseModel):
     workflow_run_id: str
     nodes: list[KnowledgeGraphNode] = Field(default_factory=list)
     edges: list[KnowledgeGraphEdge] = Field(default_factory=list)
+    source: str | None = None
+
+
+class StructuredGraphCounts(BaseModel):
+    findings: int = 0
+    constructs: int = 0
+    relationships: int = 0
+
+
+class StructuredGraphResponse(BaseModel):
+    workflow_run_id: str
+    findings: list[dict] = Field(default_factory=list)
+    constructs: list[dict] = Field(default_factory=list)
+    relationships: list[dict] = Field(default_factory=list)
+    counts: StructuredGraphCounts = Field(default_factory=StructuredGraphCounts)
 
 
 class CompareWorkflowRunsRequest(BaseModel):
