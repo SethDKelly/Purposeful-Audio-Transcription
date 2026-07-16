@@ -75,11 +75,12 @@ def validate() -> list[str]:
 
     for workflow in workflows.list_workflows(enabled_only=False):
         cfg = workflow.config
-        if not cfg.modules:
-            errors.append(f"workflow {cfg.id}: modules list is empty")
+        sequence = workflow.module_sequence
+        if not sequence:
+            errors.append(f"workflow {cfg.id}: modules/steps resolve to empty sequence")
             continue
 
-        for module_id in cfg.modules:
+        for module_id in sequence:
             if module_id not in modules_by_id:
                 errors.append(f"workflow {cfg.id}: unknown module_id {module_id}")
             elif module_id not in enabled_ids and cfg.enabled:
@@ -87,8 +88,16 @@ def validate() -> list[str]:
                     f"workflow {cfg.id}: references disabled module {module_id}"
                 )
 
-        last = cfg.modules[-1]
-        has_meta = "meta_synthesis" in cfg.modules
+        if cfg.steps:
+            try:
+                from backend.core.workflow_dag import expand_steps_to_waves
+
+                expand_steps_to_waves(cfg.steps)
+            except ValueError as exc:
+                errors.append(f"workflow {cfg.id}: invalid steps DAG ({exc})")
+
+        last = sequence[-1]
+        has_meta = "meta_synthesis" in sequence
         if cfg.meta_synthesis and not has_meta:
             errors.append(
                 f"workflow {cfg.id}: meta_synthesis=true but meta_synthesis not in modules"
@@ -102,13 +111,13 @@ def validate() -> list[str]:
                 f"workflow {cfg.id}: includes meta_synthesis but meta_synthesis flag is false"
             )
 
-        for index, module_id in enumerate(cfg.modules):
+        for index, module_id in enumerate(sequence):
             module = modules_by_id.get(module_id)
             if module is None:
                 continue
             if (
                 module.config.input_type == "module_outputs"
-                and index != len(cfg.modules) - 1
+                and index != len(sequence) - 1
             ):
                 errors.append(
                     f"workflow {cfg.id}: module_outputs module {module_id} "

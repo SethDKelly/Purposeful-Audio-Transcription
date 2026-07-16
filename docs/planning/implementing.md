@@ -46,11 +46,11 @@ security → transcript quality → ontology → structured persistence
 
 ```text
 [x] Release v0.9.0 · Deploy once · Pause AWS when idle
-[ ] v1.0 Priority 1 — Dedicated worker service
-[ ] v1.0 Priority 2 — Workflow DAG engine
-[ ] v1.0 Priority 3 — Custom workflow builder
-[ ] v1.0 Priority 4 — Long transcript strategy
-[ ] v1.0 Priority 5 — Safety-aware report mode
+[x] v1.0 Priority 1 — Dedicated worker service
+[x] v1.0 Priority 2 — Workflow DAG engine
+[x] v1.0 Priority 3 — Custom workflow builder
+[x] v1.0 Priority 4 — Long transcript strategy
+[x] v1.0 Priority 5 — Safety-aware report mode
 [ ] v1.0 Priority 6 — Production-grade API and documentation
 [ ] Release v1.0.0 · Deploy once · Pause
 ```
@@ -84,11 +84,11 @@ Reliable enough for external users, longer workflows, custom suites, production-
 
 | Priority | Status | Notes |
 |----------|--------|-------|
-| P1 Dedicated worker | Pending | Jobs survive API; cancel; timeout; retries |
-| P2 Workflow DAG | Pending | Dependencies, parallel groups, synthesis gates |
-| P3 Custom workflow builder | Pending | User-defined module suites |
-| P4 Long transcript strategy | Pending | Chunk-aware; no silent head/tail-only |
-| P5 Safety-aware report mode | Pending | [../product/safety_aware_report_mode.md](../product/safety_aware_report_mode.md) |
+| P1 Dedicated worker | **Done** | ECS worker + cancel/timeout/retries; `python -m backend.worker` |
+| P2 Workflow DAG | **Done** | `steps` / `depends_on` / parallel waves; `full_mvp` migrated |
+| P3 Custom workflow builder | **Done** | User-defined module suites |
+| P4 Long transcript strategy | **Done** | Chunk-aware; no silent head/tail-only |
+| P5 Safety-aware report mode | **Done** | [../product/safety_aware_report_mode.md](../product/safety_aware_report_mode.md) |
 | P6 Production API/docs | Pending | External-readiness polish |
 
 ---

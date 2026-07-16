@@ -1,6 +1,6 @@
-# Workflow DAG Plan (v1.0)
+# Workflow DAG Plan (v1.0) — **Shipped in v1.0**
 
-Replace or extend linear workflow execution with explicit DAG support. Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Current engine: `backend/services/workflow_engine.py`, [../design/08_workflow_engine.md](../design/08_workflow_engine.md).
+Replace or extend linear workflow execution with explicit DAG support. Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Engine: `backend/services/workflow_engine.py`, DAG helpers: `backend/core/workflow_dag.py`.
 
 ## Goals
 
@@ -36,19 +36,16 @@ steps:
     module: meta_synthesis
 ```
 
+Linear `modules:` lists remain supported. When `steps` are present, the engine executes topological waves; `modules` may still be listed for API clients.
+
 ## Related v1.0 work
 
 | Priority | Note |
 |----------|------|
-| Dedicated worker | Jobs must outlive API request lifecycle before heavy DAGs |
+| Dedicated worker | Jobs outlive API request lifecycle |
 | Custom workflow builder | Consumes module metadata + DAG validation |
 | Bounded parallel modules (v0.6) | Precursor; DAG makes dependencies explicit |
 
 ## Acceptance
 
-Dependencies explicit; parallelizable modules concurrent; UI shows step-level progress; invalid graphs rejected at validation time (`validate_config` extension).
-
-## TODO
-
-- Migration path for existing linear `config/workflows/*.yaml`
-- How meta-synthesis “barrier” maps to `depends_on`
+Dependencies explicit; parallelizable modules concurrent; invalid graphs rejected at validation time (`validate_config` + registry load).
