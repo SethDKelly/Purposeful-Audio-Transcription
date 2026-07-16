@@ -327,6 +327,15 @@ def fetch_knowledge_graph(run_id: str) -> dict:
     return response.json()
 
 
+def fetch_structured_graph(run_id: str) -> dict:
+    response = _get(
+        f"/api/workflow-runs/{run_id}/structured-graph",
+        timeout=30.0,
+    )
+    _raise_for_status(response)
+    return response.json()
+
+
 def fetch_transcript_workflow_runs(transcript_id: str) -> list[dict]:
     response = _get(
         f"/api/transcripts/{transcript_id}/workflow-runs",

@@ -462,6 +462,20 @@ class KnowledgeGraphResponse(BaseModel):
     source: str | None = None
 
 
+class StructuredGraphCounts(BaseModel):
+    findings: int = 0
+    constructs: int = 0
+    relationships: int = 0
+
+
+class StructuredGraphResponse(BaseModel):
+    workflow_run_id: str
+    findings: list[dict] = Field(default_factory=list)
+    constructs: list[dict] = Field(default_factory=list)
+    relationships: list[dict] = Field(default_factory=list)
+    counts: StructuredGraphCounts = Field(default_factory=StructuredGraphCounts)
+
+
 class CompareWorkflowRunsRequest(BaseModel):
     workflow_run_ids: list[str] = Field(min_length=2)
 

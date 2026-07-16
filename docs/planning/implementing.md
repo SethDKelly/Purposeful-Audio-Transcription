@@ -51,7 +51,7 @@ security → transcript quality → ontology → structured persistence
 [x] v0.8 Priority 3 — Construct relationship persistence
 [x] v0.8 Priority 4 — Graph merge / deduplication
 [x] v0.8 Priority 5 — Deterministic convergence and confidence scoring
-[ ] v0.8 Priority 6 — Graph exploration UI (table-first)
+[x] v0.8 Priority 6 — Graph exploration UI (table-first)
 [ ] v0.8 Priority 7 — Synthesis over structured objects
 [ ] Release v0.8.0 · Deploy once · Pause · then v0.9
 ```
@@ -88,7 +88,7 @@ Promote findings, constructs, evidence, confidence, and relationships from JSON 
 | P3 Relationships | **Done** | `construct_relationships`; ontology + dangling-link warnings; graph edges from DB |
 | P4 Merge / dedup | **Done** | Similarity merge across modules; preserve sources; mark absorbed constructs |
 | P5 Convergence scoring | **Done** | Deterministic strong/moderate/weak/contested with rationale JSON |
-| P6 Exploration UI | Pending | |
+| P6 Exploration UI | **Done** | `GET …/structured-graph` + Streamlit table-first inventory tab |
 | P7 Structured synthesis | Pending | |
 
 ---
