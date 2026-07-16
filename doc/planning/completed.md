@@ -6,7 +6,8 @@ Record of shipped capabilities for the **Relationship Reasoning Engine (RRE)** t
 |---|---|
 | **Current branch** | `main` @ **v0.6.0** |
 | **Baseline release** | **v0.6.0** — trust + workflows + AWS-only ([releases/v0.6.0.md](../releases/v0.6.0.md)) |
-| **Next** | **v0.7.0** — multi-file stitch, ontology, cases ([implementing.md](implementing.md)) |
+| **Next** | **v0.7** — secure UAT + transcript prep + ontology ([implementing.md](implementing.md), [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md)) |
+| **Deferred** | [future_considerations.md](future_considerations.md) |
 | **Tests** | ~150 passing locally / CI |
 | **AWS account** | `521018312783`, `us-east-2` |
 | **Architecture detail** | [aws-deployment.md](aws-deployment.md) |

@@ -6,7 +6,7 @@
 |--|--|
 | **Canonical release** | [v0.6.0](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v0.6.0) |
 | **Runtime** | AWS only (account `521018312783`, `us-east-2`) |
-| **Active work** | [doc/planning/implementing.md](doc/planning/implementing.md) |
+| **Active work** | [doc/planning/implementing.md](doc/planning/implementing.md) · [doc/planning/roadmap_v0.7_to_v1.0.md](doc/planning/roadmap_v0.7_to_v1.0.md) |
 
 ## Quick start (operators)
 

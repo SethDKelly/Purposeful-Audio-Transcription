@@ -7,7 +7,7 @@
 | **Operators / users** | [user/getting-started.md](user/getting-started.md) → [user/user-guide.md](user/user-guide.md) |
 | **Developers** | [developer/development.md](developer/development.md) → [developer/architecture.md](developer/architecture.md) |
 | **AWS ops** | [developer/aws-operations.md](developer/aws-operations.md) · [planning/aws-deployment.md](planning/aws-deployment.md) · [../infra/dev/README.md](../infra/dev/README.md) |
-| **Active plan** | [planning/implementing.md](planning/implementing.md) |
+| **Active plan** | [planning/implementing.md](planning/implementing.md) · [planning/roadmap_v0.7_to_v1.0.md](planning/roadmap_v0.7_to_v1.0.md) |
 
 ---
 
@@ -53,19 +53,32 @@ Stable product/technical design (not a task tracker):
 
 ## Planning
 
-Canonical task tracking is three documents. Everything else is architecture, evaluation notes, or history.
+Canonical task tracking follows the v0.7→v1.0 roadmap. Everything else is architecture, evaluation notes, or history.
 
 | Document | Description |
 |----------|-------------|
 | [planning/README.md](planning/README.md) | Planning index |
+| [planning/implementing.md](planning/implementing.md) | Active priorities (**v0.7**) |
+| [planning/roadmap_v0.7_to_v1.0.md](planning/roadmap_v0.7_to_v1.0.md) | Phased roadmap + acceptance criteria |
+| [planning/future_considerations.md](planning/future_considerations.md) | Deferred / later backlog |
 | [planning/completed.md](planning/completed.md) | Shipped capabilities |
-| [planning/implementing.md](planning/implementing.md) | Active priorities (Tier 1 → 3) |
-| [planning/backlog.md](planning/backlog.md) | Future / deferred |
+| [planning/backlog.md](planning/backlog.md) | Backlog index → future considerations |
 | [planning/aws-deployment.md](planning/aws-deployment.md) | AWS architecture and backbone integration |
 | [planning/llm-evaluation-bedrock.md](planning/llm-evaluation-bedrock.md) | Bedrock LLM decision (AWS-1b) |
 | [planning/asr-evaluation-transcribe.md](planning/asr-evaluation-transcribe.md) | Whisper vs Transcribe (AWS-1c) |
 | [planning/log-redaction.md](planning/log-redaction.md) | CloudWatch redaction design (P1-3c) |
 | [planning/archived/](planning/archived/) | Superseded planning docs |
+
+## Architecture / product / evaluation (v0.7–v1.0 plans)
+
+| Document | Description |
+|----------|-------------|
+| [architecture/ontology_v1.md](architecture/ontology_v1.md) | Ontology vocabulary v1 |
+| [architecture/structured_persistence_plan.md](architecture/structured_persistence_plan.md) | v0.8 persistence |
+| [architecture/workflow_dag_plan.md](architecture/workflow_dag_plan.md) | v1.0 DAG workflows |
+| [product/transcript_preparation_workspace.md](product/transcript_preparation_workspace.md) | v0.7 transcript prep |
+| [product/safety_aware_report_mode.md](product/safety_aware_report_mode.md) | v1.0 safety-aware reports |
+| [evaluation/golden_fixture_evaluation_plan.md](evaluation/golden_fixture_evaluation_plan.md) | v0.7 golden fixtures |
 
 ## Releases
 

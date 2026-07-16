@@ -2,6 +2,8 @@
 
 High-level map of the RRE codebase. Deep design specs live in [../design/](../design/). Runtime is **AWS only**.
 
+**Roadmap (v0.7→v1.0):** evolve into a structured relationship reasoning engine — [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Near-term plans: [../architecture/ontology_v1.md](../architecture/ontology_v1.md), [structured_persistence_plan.md](structured_persistence_plan.md), [workflow_dag_plan.md](workflow_dag_plan.md).
+
 ## System diagram
 
 ```text
