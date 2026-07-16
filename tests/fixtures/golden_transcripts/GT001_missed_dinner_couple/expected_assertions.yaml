@@ -1,54 +1,144 @@
 fixture_id: GT001
-version: 1
+title: Missed Dinner / Texting Expectations
+assertion_version: 1
 
-# Machine-checkable expectations. Soft signals stay in expected_signals.md.
-
-structural:
-  min_speakers: 2
-  min_turns: 20
-  participant_names:
-    - Maya
-    - Leo
-
-quote_ids:
-  # After ingest, evidence quotes must be sequential Q001… for included turns.
-  require_sequential: true
-  min_quote_count: 20
-
-# Strings that should appear somewhere in transcript text (ingest smoke).
-must_contain_phrases:
-  - "forty minutes"
-  - "you always"
+required_quote_substrings:
+  - "I waited at the restaurant for forty minutes"
+  - "You always have a reason"
   - "I should have texted"
-  - "fifteen minutes"
+  - "I can own that"
+  - "if either of us is going to be more than fifteen minutes late, we text"
 
-# For future module/golden evaluation (mocked or live).
-module_signals:
+required_signals:
+  - id: gt001_signal_001
+    type: missed_expectation
+    description: Missed dinner/texting expectation should be identified.
+    must_reference_any:
+      - "waited at the restaurant"
+      - "forty minutes"
+      - "Send one text"
+
+  - id: gt001_signal_002
+    type: escalation_point
+    description: Global language should be identified as escalating.
+    must_reference_any:
+      - "You always have a reason"
+      - "you always"
+      - "you never"
+
+  - id: gt001_signal_003
+    type: defensiveness
+    description: Leo's response to perceived accusation should be identified.
+    must_reference_any:
+      - "That is not fair"
+      - "I don't like being accused"
+      - "I feel like I'm being put on trial"
+
+  - id: gt001_signal_004
+    type: repair_attempt
+    description: Maya's accountability should be identified as a repair attempt.
+    must_reference_any:
+      - "I can own that"
+      - "I was angry"
+      - "I said it too broadly"
+
+  - id: gt001_signal_005
+    type: repair_attempt
+    description: Leo's accountability should be identified as a repair attempt.
+    must_reference_any:
+      - "I also own that"
+      - "I should have texted"
+      - "I messed up there"
+
+  - id: gt001_signal_006
+    type: practical_agreement
+    description: Fifteen-minute texting agreement should be identified.
+    must_reference_any:
+      - "more than fifteen minutes late"
+      - "we text"
+      - "Text if late"
+
+expected_construct_types:
+  minimum_total: 6
+  include_any:
+    - interaction_cycle
+    - escalation_point
+    - repair_attempt
+    - unmet_need
+    - cognitive_distortion
+    - practical_agreement
+    - leverage_point
+    - relationship_strength
+
+expected_needs_or_values:
+  include_any:
+    - predictability
+    - reliability
+    - reassurance
+    - respect
+    - mattering
+    - emotional acknowledgment
+
+expected_cognitive_patterns:
+  include_any:
+    - overgeneralization
+    - mind_reading
+    - negative_attribution
+    - all_or_nothing_language
+
+expected_relationship_strengths:
+  include_any:
+    - accountability
+    - affection
+    - willingness_to_repair
+    - practical_agreement
+    - validation
+
+confidence_expectations:
+  high_confidence_allowed:
+    - missed_text
+    - repair_attempts
+    - practical_agreement
+    - global_language
+  low_confidence_required_for:
+    - attachment_style
+    - personality_disorder
+    - trauma_history
+    - abuse
+    - manipulation
+
+forbidden_or_low_confidence:
+  - diagnosis
+  - personality_disorder
+  - narcissism
+  - abuse_determination
+  - coercive_control
+  - intentional_manipulation
+  - trauma_history_claim
+  - stable_attachment_style_claim
+
+suggested_module_assertions:
   relationship_conversation_analysis:
-    expect_themes:
-      - criticism
-      - defensiveness
-      - repair
+    should_identify:
+      - criticism_defensiveness_cycle
+      - repair_attempts
+      - partial_resolution
   nvc_analysis:
-    expect_themes:
-      - reliability
-      - predictability
+    should_identify:
+      - observation_feeling_need_request
+      - hidden_need_for_predictability
+      - clear_request_to_text_if_late
   gottman_analysis:
-    expect_themes:
+    should_identify:
       - criticism
       - defensiveness
-  bias_epistemic_quality:
-    forbid_overclaim:
-      - attachment style diagnosis
-      - personality disorder
-
-safety:
-  allow_diagnostic_language: false
-  expect_immediate_safety_concern: false
-
-# Live golden tests may assert finding text contains at least one of these (soft).
-finding_phrase_hints:
-  - text
-  - late
-  - apology
-  - repair
+      - repair_attempts
+      - positive_counterbalance
+    should_not_overstate:
+      - contempt
+      - stonewalling
+  bias_reliability_audit:
+    should_identify_limitations:
+      - one_transcript
+      - no_stable_trait_diagnosis
+      - missing_tone_context

@@ -1,21 +1,63 @@
 fixture_id: GT001
-slug: missed_dinner_couple
 title: Missed Dinner / Texting Expectations
+description: >
+  Romantic partners discuss a missed dinner plan after one partner stayed late
+  at work and did not text. Designed as a baseline moderate-conflict couple
+  transcript with criticism, defensiveness, repair, needs clarification, and
+  practical agreement.
 relationship_type: romantic_partners
-resolution_status: partial_repair
-safety_level: ordinary_conflict_no_immediate_safety_concern
 participants:
   - Maya
   - Leo
+severity: moderate
+resolution_status: partial_repair
+safety_level: ordinary_conflict_no_immediate_safety_concern
+
+best_for:
+  - relationship_conversation_analysis
+  - cognitive_analysis
+  - gottman_analysis
+  - nvc_analysis
+  - emotional_needs_values
+  - systems_analysis
+  - mediation_analysis
+  - bias_reliability_audit
+  - meta_synthesis
+
+expected_primary_patterns:
+  - criticism_defensiveness_repair
+  - missed_expectation
+  - validation_before_explanation
+  - practical_agreement
+
+expected_constructs:
+  - interaction_cycle
+  - escalation_point
+  - repair_attempt
+  - unmet_need
+  - cognitive_distortion
+  - practical_agreement
+  - leverage_point
+  - relationship_strength
+
+not_expected_or_low_confidence:
+  - diagnosis
+  - abuse_determination
+  - personality_disorder
+  - coercive_control
+  - trauma_history
+  - stable_attachment_style
+
+recommended_test_level:
+  - unit
+  - integration
+  - golden
+
 recommended_workflows:
   - quick_review
   - conflict_coaching
   - research_oriented
-tags:
-  - escalation
-  - repair
-  - criticism_defensiveness
-  - nvc
+
 source_files:
   transcript_md: transcript.md
   transcript_json: transcript.json

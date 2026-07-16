@@ -99,7 +99,7 @@ Detail and acceptance criteria: [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.m
 
 | # | Task | Status | Links |
 |---|------|--------|-------|
-| V07-5a–c | 5–10 fixtures, automated checks, manual rubric | **In progress** — GT001/GT002 under `tests/fixtures/golden_transcripts/` with metadata + assertions; see [golden_transcript_fixtures.md](golden_transcript_fixtures.md) | [../evaluation/golden_fixture_evaluation_plan.md](../evaluation/golden_fixture_evaluation_plan.md) |
+| V07-5a–c | 5–10 fixtures, automated checks, manual rubric | **In progress** — GT001/GT002 with signal-based `expected_assertions.yaml`, split pytest suite (`test_golden_*`), evaluation helpers; see [golden_transcript_fixtures.md](golden_transcript_fixtures.md) | [../evaluation/golden_fixture_evaluation_plan.md](../evaluation/golden_fixture_evaluation_plan.md) |
 
 ### Priority 6 — Cost, Latency & Module Telemetry
 

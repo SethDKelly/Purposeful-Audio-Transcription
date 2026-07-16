@@ -58,5 +58,7 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = [
     "integration: hits live AWS / external services (not default CI)",
-    "golden: golden transcript evaluation (mocked by default; live when RUN_GOLDEN_LIVE=1)",
+    "golden: golden transcript evaluation (mocked by default; live when RUN_LIVE_GOLDEN_TESTS=1)",
+    "live_model: tests that call a real LLM provider",
+    "slow: tests that may take longer than typical unit tests",
 ]
