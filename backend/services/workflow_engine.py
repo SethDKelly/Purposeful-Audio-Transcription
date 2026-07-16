@@ -27,6 +27,7 @@ from backend.services.module_runner import (
     module_runner,
 )
 from backend.services.transcript_service import TranscriptService, transcript_service
+from backend.services.safety_risk_scanner import SKIP_IN_SAFETY_MODE
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,7 @@ class WorkflowEngine:
         model: str | None = None,
         *,
         queued: bool = False,
+        safety_mode: bool = False,
     ) -> WorkflowRun:
         self._workflows.get(workflow_id)
         self._transcripts.ensure_ready_for_analysis(transcript_id)
@@ -73,6 +75,7 @@ class WorkflowEngine:
                     if queued
                     else WorkflowRunStatus.RUNNING_MODULES.value
                 ),
+                safety_mode=safety_mode,
             )
             if not queued:
                 workflow_run.status = WorkflowRunStatus.RUNNING_MODULES.value
@@ -104,6 +107,7 @@ class WorkflowEngine:
         model: str | None = None,
         *,
         run_id: str | None = None,
+        safety_mode: bool | None = None,
     ) -> WorkflowRun:
         workflow = self._workflows.get(workflow_id)
         self._transcripts.ensure_ready_for_analysis(transcript_id)
@@ -116,11 +120,21 @@ class WorkflowEngine:
                 raise WorkflowRunError("Workflow run does not match transcript_id")
             existing_module_runs = self._runner.list_by_workflow_run(run_id)
             resolved_model = model or workflow_run.model_used
+            resolved_safety = (
+                workflow_run.safety_mode if safety_mode is None else safety_mode
+            )
         else:
-            workflow_run = self.create_run(workflow_id, transcript_id, model=model)
+            resolved_safety = bool(safety_mode)
+            workflow_run = self.create_run(
+                workflow_id,
+                transcript_id,
+                model=model,
+                safety_mode=resolved_safety,
+            )
             existing_module_runs = []
             resolved_model = model
 
+        workflow_run.safety_mode = resolved_safety
         return self._execute(
             workflow,
             workflow_run,
@@ -228,7 +242,14 @@ class WorkflowEngine:
 
             for wave in waves:
                 self._check_abort(workflow_run, started)
-                pending = [m for m in wave.module_ids if m not in completed_module_ids]
+                pending = [
+                    m
+                    for m in wave.module_ids
+                    if m not in completed_module_ids
+                    and not (
+                        workflow_run.safety_mode and m in SKIP_IN_SAFETY_MODE
+                    )
+                ]
                 if not pending:
                     continue
                 if wave.is_synthesis or any(
@@ -252,6 +273,7 @@ class WorkflowEngine:
                             prior_outputs=prior_outputs,
                             model=model,
                             workflow_run_id=workflow_run.id,
+                            safety_mode=workflow_run.safety_mode,
                         )
                         module_runs.append(module_run)
                         if module_run.status != ModuleRunStatus.COMPLETED.value:
@@ -337,6 +359,20 @@ class WorkflowEngine:
 
         for module_id in workflow.module_sequence:
             self._check_abort(workflow_run, started)
+            if workflow_run.safety_mode and module_id in SKIP_IN_SAFETY_MODE:
+                logger.info(
+                    "Skipping module %s for safety_mode on workflow run %s",
+                    module_id,
+                    workflow_run.id,
+                    extra={
+                        "event": "workflow.module.skipped",
+                        "run_id": workflow_run.id,
+                        "workflow_id": workflow.config.id,
+                        "module_id": module_id,
+                        "reason": "safety_mode",
+                    },
+                )
+                continue
             if module_id in completed_module_ids:
                 logger.info(
                     "Skipping completed module %s for workflow run %s",
@@ -371,6 +407,7 @@ class WorkflowEngine:
                     prior_outputs=prior_outputs,
                     model=model,
                     workflow_run_id=workflow_run.id,
+                    safety_mode=workflow_run.safety_mode,
                 )
                 module_runs.append(module_run)
                 if module_run.status != ModuleRunStatus.COMPLETED.value:

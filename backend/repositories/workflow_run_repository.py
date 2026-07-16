@@ -27,6 +27,7 @@ class WorkflowRunRepository:
         transcript_id: str,
         model_used: str | None = None,
         status: str | None = None,
+        safety_mode: bool = False,
     ) -> WorkflowRun:
         now = utc_now()
         run = WorkflowRun(
@@ -38,6 +39,7 @@ class WorkflowRunRepository:
             started_at=now,
             cancel_requested=False,
             attempt_count=0,
+            safety_mode=safety_mode,
         )
         session.add(_to_row(run))
         session.flush()
@@ -122,6 +124,7 @@ def _to_row(run: WorkflowRun) -> WorkflowRunRow:
         ),
         cancel_requested=run.cancel_requested,
         attempt_count=run.attempt_count,
+        safety_mode=run.safety_mode,
     )
 
 
@@ -135,6 +138,7 @@ def _update_row(row: WorkflowRunRow, run: WorkflowRun) -> None:
     )
     row.cancel_requested = run.cancel_requested
     row.attempt_count = run.attempt_count
+    row.safety_mode = run.safety_mode
 
 
 def _from_row(row: WorkflowRunRow) -> WorkflowRun:
@@ -152,4 +156,5 @@ def _from_row(row: WorkflowRunRow) -> WorkflowRun:
         ),
         cancel_requested=bool(row.cancel_requested),
         attempt_count=int(row.attempt_count or 0),
+        safety_mode=bool(row.safety_mode),
     )

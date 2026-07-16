@@ -33,12 +33,14 @@ class WorkflowJobService:
         workflow_id: str,
         transcript_id: str,
         model: str | None = None,
+        safety_mode: bool = False,
     ) -> WorkflowRun:
         workflow_run = self._engine.create_run(
             workflow_id=workflow_id,
             transcript_id=transcript_id,
             model=model,
             queued=True,
+            safety_mode=safety_mode,
         )
         if self.worker_mode:
             logger.info(

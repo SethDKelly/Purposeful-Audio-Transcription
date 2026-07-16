@@ -116,9 +116,10 @@ def test_select_quotes_for_prompt_returns_all_when_under_limit(
     speaker_id = str(uuid.uuid4())
     quotes = [_make_quote(index, speaker_id) for index in range(1, 6)]
 
-    selected, note = evidence_service.select_quotes_for_prompt(quotes, max_quotes=10)
+    selected, note, strategy = evidence_service.select_quotes_for_prompt(quotes, max_quotes=10)
     assert len(selected) == 5
     assert note is None
+    assert strategy == "full"
 
 
 def test_select_quotes_for_prompt_summarizes_long_transcripts(
@@ -127,14 +128,17 @@ def test_select_quotes_for_prompt_summarizes_long_transcripts(
     speaker_id = str(uuid.uuid4())
     quotes = [_make_quote(index, speaker_id) for index in range(1, 151)]
 
-    selected, note = evidence_service.select_quotes_for_prompt(
+    selected, note, strategy = evidence_service.select_quotes_for_prompt(
         quotes,
         max_quotes=120,
         head_quotes=80,
         tail_quotes=40,
+        strategy="head_tail",
     )
     assert len(selected) == 120
     assert note is not None
+    assert strategy == "head_tail"
+    assert "strategy=head_tail" in note
     assert "30 of 150" in note
     assert selected[0].quote_id == "Q001"
     assert selected[-1].quote_id == "Q150"
@@ -167,3 +171,21 @@ def test_format_for_prompt_includes_omission_note(
     assert "[Q150]" in formatted
     assert "evidence quotes omitted" in formatted
     assert "[Q081]" not in formatted
+
+
+def test_select_quotes_balanced_sample_includes_middle(
+    evidence_service: EvidenceIndexService,
+) -> None:
+    speaker_id = str(uuid.uuid4())
+    quotes = [_make_quote(index, speaker_id) for index in range(1, 151)]
+
+    selected, note, strategy = evidence_service.select_quotes_for_prompt(
+        quotes,
+        max_quotes=120,
+    )
+    assert strategy == "balanced_sample"
+    assert note is not None
+    assert "strategy=balanced_sample" in note
+    assert len(selected) == 120
+    middle_ids = {quote.quote_id for quote in selected if 81 <= quote.quote_index <= 110}
+    assert middle_ids, "balanced_sample should include middle-region quotes"

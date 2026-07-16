@@ -72,6 +72,8 @@ class PromptCompiler:
         self,
         module: AnalysisModule,
         module_outputs: str,
+        *,
+        safety_mode: bool = False,
     ) -> CompiledPrompt:
         if module.config.input_type != "module_outputs":
             raise ValueError(
@@ -79,7 +81,7 @@ class PromptCompiler:
             )
 
         user_prefix = self._build_module_outputs_user_prefix(module_outputs)
-        user_suffix = self._build_module_outputs_user_task(module)
+        user_suffix = self._build_module_outputs_user_task(module, safety_mode=safety_mode)
         return self._compile(module, user_prefix=user_prefix, user_suffix=user_suffix)
 
     def _compile(
@@ -190,12 +192,19 @@ class PromptCompiler:
             f"{module_outputs.strip()}"
         )
 
-    def _build_module_outputs_user_task(self, module: AnalysisModule) -> str:
-        return (
+    def _build_module_outputs_user_task(
+        self, module: AnalysisModule, *, safety_mode: bool = False
+    ) -> str:
+        sections = [
             f"Synthesize the prior module outputs using the **{module.config.name}** module.\n\n"
             "Return only one JSON object matching module_output_v1. "
             "Prefer structured synthesis fields; keep `raw_markdown_report` brief or empty."
-        )
+        ]
+        if safety_mode:
+            from backend.services.safety_risk_scanner import SAFETY_SYNTHESIS_FRAMING
+
+            sections.append(SAFETY_SYNTHESIS_FRAMING)
+        return "\n\n".join(sections)
 
 
 def _read_version(text: str) -> str:

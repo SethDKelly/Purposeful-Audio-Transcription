@@ -61,6 +61,7 @@ class WorkflowRegistry:
     def __init__(self, workflows_dir: Path | None = None) -> None:
         self._workflows_dir = workflows_dir or settings.workflows_dir
         self._workflows = self._load()
+        self._ephemeral: dict[str, WorkflowDefinition] = {}
 
     def _load_file(self, path: Path) -> WorkflowDefinition:
         raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -82,6 +83,13 @@ class WorkflowRegistry:
 
     def reload(self) -> None:
         self._workflows = self._load()
+        self._ephemeral.clear()
+
+    def register_ephemeral(self, definition: WorkflowDefinition) -> None:
+        self._ephemeral[definition.config.id] = definition
+
+    def unregister_ephemeral(self, workflow_id: str) -> None:
+        self._ephemeral.pop(workflow_id, None)
 
     def list_workflows(self, enabled_only: bool = True) -> list[WorkflowDefinition]:
         workflows = list(self._workflows.values())
@@ -90,7 +98,7 @@ class WorkflowRegistry:
         return sorted(workflows, key=lambda workflow: workflow.config.name.lower())
 
     def get(self, workflow_id: str) -> WorkflowDefinition:
-        workflow = self._workflows.get(workflow_id)
+        workflow = self._ephemeral.get(workflow_id) or self._workflows.get(workflow_id)
         if workflow is None:
             raise WorkflowNotFoundError(f"Unknown workflow: {workflow_id}")
         if not workflow.config.enabled:

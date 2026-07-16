@@ -24,3 +24,4 @@ class WorkflowRun(BaseModel):
     telemetry_summary: dict | None = None
     cancel_requested: bool = False
     attempt_count: int = 0
+    safety_mode: bool = False

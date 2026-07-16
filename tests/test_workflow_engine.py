@@ -215,6 +215,7 @@ def test_workflow_parallel_wave_bounded_concurrency(monkeypatch) -> None:
         prior_outputs,
         model=None,
         workflow_run_id=None,
+        safety_mode=False,
     ):
         assert len(prior_outputs) == 4
         ids = [item.get("module_id") for item in prior_outputs]

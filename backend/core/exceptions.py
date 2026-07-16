@@ -81,6 +81,11 @@ class ModuleRunError(AppError):
         super().__init__(message, status_code=400)
 
 
+class CustomWorkflowValidationError(AppError):
+    def __init__(self, message: str):
+        super().__init__(message, status_code=400)
+
+
 class WorkflowNotFoundError(AppError):
     def __init__(self, message: str):
         super().__init__(message, status_code=404)
