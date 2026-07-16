@@ -12,7 +12,16 @@ output "alb_dns_name" {
 }
 
 output "alb_url" {
-  value = "http://${aws_lb.main.dns_name}"
+  value = "${local.alb_scheme}://${aws_lb.main.dns_name}"
+}
+
+output "https_enabled" {
+  value = local.https_enabled
+}
+
+output "api_key_secret_arn" {
+  description = "Secrets Manager ARN for UI/API shared API_KEY (smoke may read api_key)."
+  value       = aws_secretsmanager_secret.api_key.arn
 }
 
 output "ecr_api_repository_url" {

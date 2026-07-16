@@ -31,6 +31,7 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
       ]
       Resource = [
         aws_secretsmanager_secret.database.arn,
+        aws_secretsmanager_secret.api_key.arn,
       ]
     }]
   })

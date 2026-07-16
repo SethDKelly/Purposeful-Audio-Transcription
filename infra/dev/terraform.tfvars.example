@@ -10,6 +10,8 @@
 # ui_cpu     = 256
 # ui_memory  = 1024
 
+# acm_certificate_arn = "arn:aws:acm:us-east-2:ACCOUNT:certificate/..."  # enables HTTPS + HTTP redirect
+
 # Stage B (default): no public IPs; VPC endpoints required.
 # Rollback to Stage A if ECR pulls fail:
 # enable_no_egress_networking = false
