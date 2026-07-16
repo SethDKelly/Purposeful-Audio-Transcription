@@ -16,6 +16,10 @@ from backend.domain.enums import ModuleRunStatus, WorkflowRunStatus
 from backend.domain.finding import ModuleRun
 from backend.domain.workflow import WorkflowRun
 from backend.repositories.workflow_run_repository import WorkflowRunRepository, utc_now
+from backend.services.convergence_scoring_service import (
+    ConvergenceScoringService,
+    convergence_scoring_service,
+)
 from backend.services.graph_merge_service import GraphMergeService, graph_merge_service
 from backend.services.module_runner import (
     ModuleRunner,
@@ -37,6 +41,7 @@ class WorkflowEngine:
         transcripts: TranscriptService | None = None,
         repository: WorkflowRunRepository | None = None,
         graph_merge: GraphMergeService | None = None,
+        convergence: ConvergenceScoringService | None = None,
     ) -> None:
         self._workflows = workflows
         self._modules = modules
@@ -44,6 +49,7 @@ class WorkflowEngine:
         self._transcripts = transcripts or transcript_service
         self._repository = repository or WorkflowRunRepository()
         self._graph_merge = graph_merge or graph_merge_service
+        self._convergence = convergence or convergence_scoring_service
 
     def create_run(
         self,
@@ -374,6 +380,7 @@ class WorkflowEngine:
             workflow_run.telemetry_summary = aggregate_workflow_telemetry(module_telem)
         with get_session() as session:
             self._graph_merge.merge_workflow_constructs_in_session(session, workflow_run.id)
+            self._convergence.score_workflow_constructs_in_session(session, workflow_run.id)
         self._persist(workflow_run)
         duration_ms = int((time.monotonic() - started) * 1000)
         logger.info(
