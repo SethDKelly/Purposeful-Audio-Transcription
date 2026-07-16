@@ -1,6 +1,6 @@
 # Ontology v1 — Canonical Vocabulary
 
-Implementation plan for **v0.7 Priority 3**. Complements conceptual design in [../design/04_knowledge_ontology.md](../design/04_knowledge_ontology.md). Active tracker: [../planning/implementing.md](../planning/implementing.md).
+**Status:** Shipped in **v0.7.0**. Complements conceptual design in [../design/04_knowledge_ontology.md](../design/04_knowledge_ontology.md). Active tracker: [../planning/implementing.md](../planning/implementing.md) (v0.8).
 
 ## Placement
 

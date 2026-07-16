@@ -33,21 +33,24 @@ pre-commit run --all-files
 ```text
 backend/
   api/routes/       # FastAPI routers
-  core/             # Registries, exceptions, middleware
+  core/             # Registries, ontology, middleware
   domain/           # Pydantic domain models
   db/               # SQLAlchemy, Alembic helpers
   repositories/     # Persistence
   services/         # Business logic (Bedrock, Transcribe, workflows)
   schemas/          # JSON output schemas
 config/
-  modules/          # Module YAML
+  modules/          # Module YAML (+ expected_constructs)
+  ontology/         # Construct/relationship vocabulary
   workflows/        # Workflow YAML
   prompts/          # Markdown prompts
   framework/        # Shared compiler fragments
 ui/                 # Streamlit (ECS UI image)
-infra/dev/          # Terraform for AWS that
+infra/dev/          # Terraform for AWS
+docs/               # Product and developer documentation
 tests/
   fixtures/
+    golden_transcripts/
 Dockerfile.cloud    # API image
 Dockerfile.ui       # UI image
 ```
@@ -56,16 +59,18 @@ Dockerfile.ui       # UI image
 
 ```powershell
 pytest tests/ -q
+# Golden fixtures (mocked):
+pytest -m "golden and not live_model" -q
 ```
 
 `tests/conftest.py` forces an isolated **SQLite** DB per session (`ALEMBIC_AUTO_UPGRADE=false`). Most LLM/ASR calls are mocked.
 
 ### Test patterns
 
-- **Unit** — parsers, validators, exploration logic
+- **Unit** — parsers, validators, ontology, exploration logic
 - **Integration** — API via `TestClient` with mocked Bedrock / Transcribe
+- **Golden** — `tests/fixtures/golden_transcripts/` signal-based regression
 - **Fixtures** — `tests/fixtures/golden_transcript.txt`, `sample_module_output.json`
-
 ## Database
 
 | Context | Engine |

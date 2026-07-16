@@ -55,5 +55,5 @@ RUN_LIVE_GOLDEN_TESTS=1 pytest -m "golden and live_model"
 ## Related
 
 - Loader and evaluation helpers: `tests/helpers/golden_transcripts.py`
-- Planning note: `doc/planning/golden_transcript_fixtures.md`
-- Evaluation plan: `doc/evaluation/golden_fixture_evaluation_plan.md`
+- Planning note: `docs/planning/golden_transcript_fixtures.md`
+- Evaluation plan: `docs/evaluation/golden_fixture_evaluation_plan.md`

@@ -48,7 +48,7 @@ Forward plan after merging **v0.3.0** (phases H–L) to `main`.
 
 ### Documentation (resolved in M0)
 
-Documentation is organized under [doc/README.md](../../README.md) with **user**, **developer**, **design**, and **planning** sections. Live plan: [../implementing.md](../implementing.md) · [../completed.md](../completed.md).
+Documentation is organized under [docs/README.md](../../README.md) with **user**, **developer**, **design**, and **planning** sections. Live plan: [../implementing.md](../implementing.md) · [../completed.md](../completed.md).
 
 ---
 
@@ -73,7 +73,7 @@ O–U See implementation_plan P2 + backlog.md
 **Goal:** Single source of truth for v0.3.0 after merge.
 
 - [x] Reorganize docs: `user/`, `developer/`, `design/`, `planning/`
-- [x] [doc/README.md](../README.md) documentation index
+- [x] [docs/README.md](../README.md) documentation index
 - [x] User guides: [getting-started](../user/getting-started.md), [user-guide](../user/user-guide.md), [deployment](../user/deployment.md), [model-setup](../user/model-setup.md)
 - [x] Developer guides: [architecture](../developer/architecture.md), [development](../developer/development.md), [api-reference](../developer/api-reference.md), [contributing](../developer/contributing.md)
 - [x] Update planning docs to v0.3.0 baseline
@@ -399,7 +399,7 @@ Unchanged from original MVP boundaries unless requirements shift:
 [x] /api/transcribe speaker metadata + health diarization_ready
 [x] Streamlit speaker count + fallback messaging
 [x] tests: alignment unit tests + mocked integration
-[x] doc/user/model-setup.md + user-guide.md + deployment.md updates
+[x] docs/user/model-setup.md + user-guide.md + deployment.md updates
 ```
 
 ---
@@ -570,7 +570,7 @@ Audio
 
 ### U2 — Air-gapped operator docs
 
-- `doc/user/air-gapped-deployment.md`: staged models (Ollama, Whisper, pyannote), internal registry, HF license acceptance on connected staging machine only
+- `docs/user/air-gapped-deployment.md`: staged models (Ollama, Whisper, pyannote), internal registry, HF license acceptance on connected staging machine only
 - Checklist: disable outbound DNS/HTTP, verify with `check_prerequisites.py` + dry-run transcribe
 - Clarify diarization without runtime HF (pre-baked pipeline in image/volume)
 

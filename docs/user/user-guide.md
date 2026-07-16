@@ -22,9 +22,11 @@ Person B: I hear that. I should have checked in first.
 ### 2. Prepare
 
 - Edit **speaker display names** (stored with the transcript).
-- Review the transcript text. If you edit after preparation, re-prepare or accept that quote IDs may not match edited text.
+- Review turns: edit text, **exclude** turns that should not enter analysis.
+- Optionally rebuild the **evidence index** so quote IDs (`Q001…`) match the approved turns.
+- Click **Ready to Analyze** (or intentionally skip review). Analysis is gated until ready.
 
-Each turn receives a stable **evidence quote ID** (`Q001`, `Q002`, …) used in all findings.
+Each included turn receives a stable **evidence quote ID** used in all findings.
 
 ### 3. Analyze
 
@@ -106,13 +108,15 @@ For serious safety concerns, consult qualified professionals.
 
 ## Tips
 
-- Start with short transcripts until you trust your model choice.
-- Set `DEFAULT_OLLAMA_MODEL` in `.env`; use a larger model for `meta_synthesis` if JSON quality is weak.
-- Re-run the same transcript with different workflows to compare lenses.
-- Back up `data/rre.db` before upgrades — see [deployment.md](deployment.md).
+- Start with short transcripts until you trust your Bedrock model choice.
+- Mark transcripts **Ready to Analyze** after review so quote IDs stay stable.
+- Prefer background for long suites (`research_oriented`, `full_multidisciplinary`).
+- Soft construct-coverage warnings on module runs mean the model under-populated expected constructs — not a hard failure.
+- Pause AWS when idle; deploy only for minor-version releases.
 
 ## Related
 
 - [getting-started.md](getting-started.md)
 - [model-setup.md](model-setup.md)
 - [deployment.md](deployment.md)
+- [../product/transcript_preparation_workspace.md](../product/transcript_preparation_workspace.md)

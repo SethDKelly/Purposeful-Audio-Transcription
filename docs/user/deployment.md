@@ -13,7 +13,7 @@ The Relationship Reasoning Engine runs on **AWS ECS** (API + UI), **RDS PostgreS
 
 | Item | Value |
 |------|-------|
-| App baseline | v0.6.0+ on `main` |
+| App baseline | **v0.7.0** on `main` |
 | Runtime | `Dockerfile.cloud` (API) · `Dockerfile.ui` (Streamlit) |
 | LLM | Bedrock (`LLM_PROVIDER=bedrock`) |
 | ASR | Amazon Transcribe (`TRANSCRIPTION_PROVIDER=transcribe`) |
@@ -22,10 +22,10 @@ The Relationship Reasoning Engine runs on **AWS ECS** (API + UI), **RDS PostgreS
 
 ## Operator checklist
 
-- [ ] Deploy when needed; **Pause** when idle
-- [ ] Confirm `/api/health` → Bedrock + Transcribe + database available
-- [ ] Trial Quick Review on a short transcript
-- [ ] Restrict IAM / ALB access for sensitive dialogue
+- [ ] Deploy for minor-version releases (tag or manual); **Pause** when idle
+- [ ] Confirm `/api/live` then `/api/health` → Bedrock + Transcribe + database available
+- [ ] Prepare transcript → Ready to Analyze → trial Quick Review
+- [ ] Restrict IAM / ALB access for sensitive dialogue (API key required when configured)
 - [ ] Prefer Insights by `module_run_id` (log redaction on)
 
 ## Runtime configuration (ECS)
@@ -42,7 +42,8 @@ Set in Terraform / task definitions (see `infra/dev/`). Common variables:
 | `LOG_JSON` / `LOG_REDACT` | Structured, scrubbed CloudWatch logs |
 | `TRANSCRIPT_RETENTION_DAYS` | Optional startup purge |
 | `WORKFLOW_SYNC_MODULE_LIMIT` | Default `6` — longer suites background |
-| `API_KEY` | Optional `X-API-Key` |
+| `API_KEY` | Shared `X-API-Key` (Secrets Manager on ECS) |
+| `ACM_CERTIFICATE_ARN` | Optional — enables ALB HTTPS when set in Terraform |
 
 Developer `.env` / SQLite are for **pytest and tooling only**, not a supported local server.
 

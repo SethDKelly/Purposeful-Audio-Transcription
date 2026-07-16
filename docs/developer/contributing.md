@@ -84,14 +84,14 @@ Add integration test with mocked LLM in `tests/test_workflow_engine.py` or simil
 ## Testing requirements
 
 - New behavior needs tests (unit or API integration)
-- Mock Ollama in tests unless explicitly testing live LLM
+- Mock Bedrock in tests unless explicitly testing live LLM (`@pytest.mark.live_model`)
 - Do not reduce coverage of safety validator or output parser
 
 ## Documentation
 
-- User-facing changes → `doc/user/`
-- Developer / API changes → `doc/developer/`
-- Planning / phases → `doc/planning/`
+- User-facing changes → `docs/user/`
+- Developer / API changes → `docs/developer/`
+- Planning / phases → `docs/planning/`
 - Update [../README.md](../README.md) index when adding major surfaces
 
 ## Code review checklist

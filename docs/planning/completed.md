@@ -4,13 +4,29 @@ Record of shipped capabilities for the **Relationship Reasoning Engine (RRE)** t
 
 | | |
 |---|---|
-| **Current branch** | `main` @ **v0.6.0** |
-| **Baseline release** | **v0.6.0** — trust + workflows + AWS-only ([releases/v0.6.0.md](../releases/v0.6.0.md)) |
-| **Next** | **v0.7** — secure UAT + transcript prep + ontology ([implementing.md](implementing.md), [roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md)) |
+| **Current branch** | `main` @ **v0.7.0** |
+| **Baseline release** | **v0.7.0** — trust UAT + transcript prep + ontology + telemetry ([releases/v0.7.0.md](../releases/v0.7.0.md)) |
+| **Next** | **v0.8** — structured persistence + graph ([implementing.md](implementing.md), [structured_persistence_plan.md](../architecture/structured_persistence_plan.md)) |
 | **Deferred** | [future_considerations.md](future_considerations.md) |
-| **Tests** | ~150 passing locally / CI |
+| **Tests** | ~210+ passing locally / CI |
 | **AWS account** | `521018312783`, `us-east-2` |
 | **Architecture detail** | [aws-deployment.md](aws-deployment.md) |
+| **Docs root** | `docs/` (renamed from `doc/` in v0.7.0) |
+
+---
+
+## v0.7.0 — Trust, prep, ontology (July 2026)
+
+| Area | Delivered |
+|------|-----------|
+| Secure UAT | Shared API key (UI+API), generic errors + `request_id`, privacy captions, export redaction default-on, optional ACM HTTPS Terraform |
+| Transcript preparation | Edit/exclude turns, evidence rebuild, `analysis_ready` gate, Streamlit prepare UX |
+| Ontology vocabulary v1 | `config/ontology/`, `OntologyRegistry`, aliases, module validation |
+| Construct expectations | `expected_constructs` on modules; soft coverage warnings on runs |
+| Golden evaluation | GT001/GT002 fixtures, signal assertions, golden pytest suite, manual rubric |
+| Telemetry | Module latency/tokens/cost; workflow `telemetry_summary` |
+| Deploy policy | Tag `v*.*.*` or manual deploy only; pause when idle |
+| Docs | `docs/` rename; architecture/API/user guides updated |
 
 ---
 
@@ -58,7 +74,7 @@ Original build goal: analyze a transcript with a representative module subset an
 | Doc layout | `user/`, `developer/`, `design/`, `planning/` |
 | User guides | Getting started, user guide, deployment, model setup |
 | Developer guides | Architecture, development, API reference, contributing, aws-operations |
-| Index | [doc/README.md](../README.md) |
+| Index | [docs/README.md](../README.md) |
 | Legacy redirects | Stub paths for moved documents |
 
 ---
@@ -235,7 +251,8 @@ Original build goal: analyze a transcript with a representative module subset an
 | **v0.4.x** | Diarization, sliced transcription, timeline smoothing, Ollama JSON fixes |
 | **v0.5.0** (ops) | AWS substrate — folded into v0.5.1 |
 | **v0.5.1** | AWS cloud cutover — Transcribe + slim image + Stage B + main deploy/pause |
-| **v0.6.0** | **Canonical** — trust + full/research workflows + AWS-only prune + component UAT |
+| **v0.6.0** | Trust + full/research workflows + AWS-only prune + component UAT |
+| **v0.7.0** | **Canonical** — secure UAT, transcript prep, ontology, golden fixtures, telemetry |
 
 ---
 
@@ -249,7 +266,7 @@ Original build goal: analyze a transcript with a representative module subset an
 | AWS-only product (no local LLM/ASR runtime) | Cost control + one path; pytest uses mocks/SQLite |
 | `rre-dev-*` IAM prefix | Isolation from MinneAnalytics |
 | App infra in RRE repo | aws-backbone is IAM/OIDC only |
-| Docs-only pushes skip deploy | Path filters on `deploy-dev.yml` keep Pause quiet |
+| Docs-only pushes skip deploy | Superseded in v0.7 — deploy on **tag / manual only** |
 | Streamlit before React | Faster iteration; APIs exploration-ready |
 | Structured Bedrock JSON + repair loop | Claude often drifts; constrained output + coerce layer |
 | Multi-worker API under Converse | Protect `/api/live` during burn-in |

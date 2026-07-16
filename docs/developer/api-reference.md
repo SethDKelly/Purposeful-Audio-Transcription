@@ -1,15 +1,17 @@
 # API reference
 
-Base URL: `http://127.0.0.1:8000` (default). Interactive docs: `/docs`.
+Base URL: ALB DNS (AWS) or `http://127.0.0.1:8000` (local tooling). Interactive OpenAPI: `/docs`.
 
-When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected routes. Public: `/`, `/api/health`, `/docs`, `/openapi.json`.
+When `API_KEY` is set, send header `X-API-Key: <value>` on protected routes. Public: `/`, `/api/live`, `/api/health`, `/docs`, `/openapi.json`.
+
+Errors return a generic message plus `request_id` (also echoed as `X-Request-ID`).
 
 ## Health and models
 
 | Method | Path | Description |
 |--------|------|-------------|
+| `GET` | `/api/live` | Liveness (ECS/ALB) — prefer this for probes |
 | `GET` | `/api/health` | Bedrock, Transcribe, database status |
-| `GET` | `/api/live` | Liveness (ECS/ALB) |
 | `GET` | `/api/models` | List configured Bedrock model IDs |
 | `GET` | `/api/models/ollama` | Deprecated alias of `/api/models` |
 
@@ -20,18 +22,36 @@ When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected r
 | `POST` | `/api/transcripts` | Ingest transcript JSON body |
 | `POST` | `/api/transcripts/upload` | Upload `.txt` file |
 | `GET` | `/api/transcripts/{id}` | Full bundle (speakers, turns, quotes) |
+| `DELETE` | `/api/transcripts/{id}` | Cascade delete transcript + runs |
 | `PATCH` | `/api/transcripts/{id}/speakers` | Update display names |
-| `GET` | `/api/transcripts/{id}/workflow-runs` | Completed runs for transcript |
+| `PATCH` | `/api/transcripts/{id}/turns` | Edit/exclude turns for analysis |
+| `POST` | `/api/transcripts/{id}/evidence/rebuild` | Regenerate quote IDs from current turns |
+| `POST` | `/api/transcripts/{id}/ready` | Mark `analysis_ready` (or `skip_review`) |
+| `GET` | `/api/transcripts/{id}/workflow-runs` | Runs for transcript |
+
+Workflows require `analysis_ready` unless `AUTO_MARK_TRANSCRIPT_READY` is set (pytest only).
+
+### Ready body
+
+```json
+{ "skip_review": false }
+```
 
 ## Modules
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/modules` | List modules |
+| `GET` | `/api/modules` | List modules (includes `expected_constructs`) |
 | `POST` | `/api/modules/{id}/run` | Run single module |
-| `GET` | `/api/module-runs/{id}` | Module run status |
+| `GET` | `/api/module-runs/{id}` | Module run status + telemetry / warnings |
 | `POST` | `/api/modules/{id}/stream` | Stream raw LLM output |
 | `GET` | `/api/purposes` | Deprecated alias for modules |
+
+Module run responses may include:
+
+- `validation_warnings` — soft construct coverage (does not fail the run)
+- `telemetry` — latency, tokens, estimated cost, finding/construct counts
+- `parsed_output.construct_coverage` — expected / found / missing / rate
 
 ## Workflows
 
@@ -39,7 +59,7 @@ When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected r
 |--------|------|-------------|
 | `GET` | `/api/workflows` | List workflows |
 | `POST` | `/api/workflows/{id}/run` | Run workflow (`background` optional) |
-| `GET` | `/api/workflow-runs/{id}` | Run status + module runs |
+| `GET` | `/api/workflow-runs/{id}` | Run status + module runs + `telemetry_summary` |
 | `GET` | `/api/workflow-runs/{id}/synthesis` | Synthesis report |
 
 ### Run workflow body
@@ -47,7 +67,7 @@ When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected r
 ```json
 {
   "transcript_id": "uuid",
-  "model": "llama3.2",
+  "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
   "background": false
 }
 ```
@@ -70,7 +90,7 @@ When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected r
 ```json
 {
   "question": "Why was repair identified?",
-  "model": "llama3.2",
+  "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
   "finding_key": "relationship_conversation_analysis:F001"
 }
 ```
@@ -84,27 +104,33 @@ When `API_KEY` is set in `.env`, send header `X-API-Key: <value>` on protected r
 
 Optional form field `num_speakers` (1–10) hints diarization when the speaker count is known. Omit for auto-detect.
 
-`TranscribeResponse` includes `speaker_count`, `speaker_labels`, and `diarization_applied` when diarization runs.
-
 ## Examples
 
 ```powershell
-# Health
-curl http://127.0.0.1:8000/api/health
+# Liveness
+curl http://<alb>/api/live
 
-# Ingest
-curl -X POST http://127.0.0.1:8000/api/transcripts `
+# Ingest (with API key when configured)
+curl -X POST http://<alb>/api/transcripts `
   -H "Content-Type: application/json" `
+  -H "X-API-Key: $env:API_KEY" `
   -d '{"raw_text":"Person A: Hi\nPerson B: Hello","source_type":"paste"}'
 
-# Run quick_review
-curl -X POST http://127.0.0.1:8000/api/workflows/quick_review/run `
+# Mark ready
+curl -X POST http://<alb>/api/transcripts/<id>/ready `
   -H "Content-Type: application/json" `
-  -d '{"transcript_id":"<id>","model":"llama3.2"}'
+  -H "X-API-Key: $env:API_KEY" `
+  -d '{"skip_review": true}'
+
+# Run quick_review
+curl -X POST http://<alb>/api/workflows/quick_review/run `
+  -H "Content-Type: application/json" `
+  -H "X-API-Key: $env:API_KEY" `
+  -d '{"transcript_id":"<id>"}'
 ```
 
 ## Schemas
 
-Response models in `backend/api/schemas.py`. Module output schema: `backend/schemas/module_output_v1.py`.
+Response models in `backend/api/schemas.py`. Module output schema: `backend/schemas/module_output_v1.py`. Ontology: `config/ontology/`.
 
-See also [../design/05_data_model_and_schemas.md](../design/05_data_model_and_schemas.md).
+See also [../design/05_data_model_and_schemas.md](../design/05_data_model_and_schemas.md) · [../architecture/ontology_v1.md](../architecture/ontology_v1.md).
