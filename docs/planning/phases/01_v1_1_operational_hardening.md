@@ -134,14 +134,14 @@ Even with separate containers, deployment may still behave like an all-or-nothin
 
 - [x] Add max jobs claimed per polling cycle.
 - [x] Add max in-flight jobs per worker.
-- [ ] Add queue depth metrics.
-- [ ] Add oldest queued job age metric.
-- [ ] Add stale job recovery.
+- [x] Add queue depth metrics.
+- [x] Add oldest queued job age metric.
+- [x] Add stale job recovery.
 - [x] Add retry exhaustion state.
-- [ ] Add failed-job review endpoint or admin view.
-- [ ] Add worker health endpoint.
-- [ ] Add CloudWatch alarms for queue age, failure rate, and worker health.
-- [ ] Add rate-limit-aware throttling for model/provider calls.
+- [x] Add failed-job review endpoint or admin view.
+- [x] Add worker health endpoint.
+- [x] Add CloudWatch alarms for queue age, failure rate, and worker health.
+- [x] Add rate-limit-aware throttling for model/provider calls.
 
 ## Acceptance Criteria
 

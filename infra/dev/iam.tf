@@ -240,6 +240,20 @@ data "aws_iam_policy_document" "ecs_task_worker" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    sid    = "CloudWatchQueueMetrics"
+    effect = "Allow"
+    actions = [
+      "cloudwatch:PutMetricData",
+    ]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "cloudwatch:namespace"
+      values   = ["RRE/Dev"]
+    }
+  }
 }
 
 resource "aws_iam_role_policy" "ecs_task_worker" {

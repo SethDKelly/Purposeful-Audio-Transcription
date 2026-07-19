@@ -206,3 +206,47 @@ def test_poll_respects_max_in_flight(monkeypatch) -> None:
     time.sleep(0.4)
     assert jobs.in_flight_count == 0
     jobs.shutdown()
+
+
+def test_queue_stats_and_failed_endpoint(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "workflow_worker_enabled", True)
+    client = TestClient(app)
+    stats = client.get("/api/queue/stats")
+    assert stats.status_code == 200
+    body = stats.json()
+    assert "queue_depth" in body
+    assert "oldest_queued_age_seconds" in body
+    failed = client.get("/api/queue/failed")
+    assert failed.status_code == 200
+    assert "runs" in failed.json()
+
+
+def test_recover_stale_requeues(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "workflow_job_stale_seconds", 1)
+    monkeypatch.setattr(settings, "workflow_job_max_attempts", 3)
+    mock_llm = MagicMock()
+    engine = _build_engine(mock_llm)
+    jobs = WorkflowJobService(engine=engine, max_workers=1)
+    bundle = _ingest_golden(TranscriptService())
+    TranscriptService().mark_ready(bundle.transcript.id)
+    run = engine.create_run(
+        "quick_review",
+        bundle.transcript.id,
+        model="test-model",
+        queued=True,
+    )
+    claimed = engine.claim_queued(run.id)
+    assert claimed is not None
+    from datetime import UTC, datetime, timedelta
+
+    from backend.db.base import get_session
+
+    with get_session() as session:
+        current = engine._repository.get(session, run.id)
+        current.started_at = datetime.now(UTC) - timedelta(seconds=30)
+        engine._repository.save(session, current)
+
+    recovered = jobs.recover_stale(exclude_run_ids=set())
+    assert recovered == 1
+    assert engine.get(run.id).status == WorkflowRunStatus.CREATED.value
+    jobs.shutdown()

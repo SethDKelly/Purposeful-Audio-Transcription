@@ -159,6 +159,14 @@ class WorkflowEngine:
         with get_session() as session:
             return self._repository.list_queued(session)
 
+    def list_failed(self, *, limit: int = 50) -> list[WorkflowRun]:
+        with get_session() as session:
+            return self._repository.list_failed(session, limit=limit)
+
+    def queue_stats(self) -> dict[str, object]:
+        with get_session() as session:
+            return self._repository.queue_stats(session)
+
     def claim_queued(self, run_id: str) -> WorkflowRun | None:
         with get_session() as session:
             return self._repository.claim_queued(session, run_id)

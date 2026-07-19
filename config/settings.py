@@ -65,12 +65,19 @@ class Settings(BaseSettings):
     workflow_worker_max_claim_per_poll: int = 1
     # Max concurrent workflow jobs on a single worker process.
     workflow_worker_max_in_flight: int = 2
+    # Local HTTP health port for ECS container checks (worker process only).
+    workflow_worker_health_port: int = 8080
     # Wall-clock timeout for a single workflow job attempt (0 = disabled).
     workflow_job_timeout_seconds: float = 7200.0
     # Requeue failed attempts up to this count (includes the first try).
     workflow_job_max_attempts: int = 2
+    # Requeue/fail RUNNING jobs abandoned after worker crash (seconds since claim).
+    workflow_job_stale_seconds: float = 7800.0
     # One repair attempt (2 Converse calls total) after structured-output hardening.
     module_run_max_retries: int = 1
+    # Bedrock ThrottlingException / TooManyRequests backoff.
+    bedrock_throttle_max_retries: int = 5
+    bedrock_throttle_base_seconds: float = 2.0
     evidence_prompt_max_quotes: int = 120
     evidence_prompt_head_quotes: int = 80
     evidence_prompt_tail_quotes: int = 40

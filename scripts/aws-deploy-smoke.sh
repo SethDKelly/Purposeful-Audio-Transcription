@@ -133,6 +133,22 @@ if "quick_review" not in ids:
     sys.exit(1)
 print(f"Workflows OK: {len(workflows)} listed (includes quick_review)")
 PY
+
+  wait_http_auth "/api/queue/stats" "API queue stats"
+  python3 - <<'PY'
+import json, sys
+with open("/tmp/rre-smoke-body.json", encoding="utf-8") as f:
+    body = json.load(f)
+if "queue_depth" not in body:
+    print("queue stats missing queue_depth", file=sys.stderr)
+    sys.exit(1)
+print(
+    "Queue stats OK:",
+    f"depth={body.get('queue_depth')}",
+    f"running={body.get('running_count')}",
+    f"oldest_age={body.get('oldest_queued_age_seconds')}",
+)
+PY
 fi
 
 if [ "$need_ui" = "1" ]; then

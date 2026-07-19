@@ -197,6 +197,21 @@ class WorkflowRunResponse(BaseModel):
     module_runs: list[WorkflowRunModuleSummary] = Field(default_factory=list)
 
 
+class WorkflowRunsResponse(BaseModel):
+    runs: list[WorkflowRunResponse] = Field(default_factory=list)
+
+
+class QueueStatsResponse(BaseModel):
+    queue_depth: int = 0
+    oldest_queued_run_id: str | None = None
+    oldest_queued_age_seconds: float | None = None
+    running_count: int = 0
+    incomplete_count: int = 0
+    worker_in_flight: int = 0
+    worker_max_in_flight: int = 0
+    worker_mode: bool = False
+
+
 class SynthesisFindingResponse(BaseModel):
     id: str
     module_run_id: str

@@ -31,6 +31,7 @@ class WorkflowJobService:
             thread_name_prefix="workflow-job",
         )
         self._in_flight: set[Future] = set()
+        self._active_run_ids: set[str] = set()
 
     def _prune_in_flight(self) -> None:
         done = {fut for fut in self._in_flight if fut.done()}
@@ -41,8 +42,28 @@ class WorkflowJobService:
         self._prune_in_flight()
         return len(self._in_flight)
 
-    def _submit_tracked(self, fn, *args) -> Future:  # noqa: ANN001
-        fut = self._executor.submit(fn, *args)
+    @property
+    def active_run_ids(self) -> set[str]:
+        return set(self._active_run_ids)
+
+    def _submit_tracked(
+        self,
+        fn,
+        *args,
+        track_run_id: str | None = None,
+        **kwargs,
+    ) -> Future:  # noqa: ANN001
+        if track_run_id:
+            self._active_run_ids.add(track_run_id)
+
+        def _wrapped():
+            try:
+                return fn(*args, **kwargs)
+            finally:
+                if track_run_id:
+                    self._active_run_ids.discard(track_run_id)
+
+        fut = self._executor.submit(_wrapped)
         self._in_flight.add(fut)
         fut.add_done_callback(lambda f: self._in_flight.discard(f))
         return fut
@@ -104,7 +125,14 @@ class WorkflowJobService:
                 "mode": "inline",
             },
         )
-        return self._submit_tracked(self._execute_job, run_id, workflow_id, transcript_id, model)
+        return self._submit_tracked(
+            self._execute_job,
+            run_id,
+            workflow_id,
+            transcript_id,
+            model,
+            track_run_id=run_id,
+        )
 
     def _execute_job(
         self,
@@ -225,8 +253,75 @@ class WorkflowJobService:
                 claimed.workflow_id,
                 claimed.transcript_id,
                 claimed.model_used,
+                track_run_id=claimed.id,
             )
         return started
+
+    def queue_stats(self) -> dict[str, object]:
+        stats = dict(self._engine.queue_stats())
+        stats["worker_in_flight"] = self.in_flight_count
+        stats["worker_max_in_flight"] = max(1, int(settings.workflow_worker_max_in_flight or 1))
+        stats["worker_mode"] = self.worker_mode
+        return stats
+
+    def list_failed(self, *, limit: int = 50) -> list[WorkflowRun]:
+        return self._engine.list_failed(limit=limit)
+
+    def recover_stale(self, *, exclude_run_ids: set[str] | None = None) -> int:
+        """Requeue or fail RUNNING jobs abandoned after a worker crash."""
+        stale_after = float(settings.workflow_job_stale_seconds or 0)
+        if stale_after <= 0:
+            return 0
+        exclude = exclude_run_ids if exclude_run_ids is not None else self.active_run_ids
+        max_attempts = max(1, int(settings.workflow_job_max_attempts or 1))
+        recovered = 0
+        now = utc_now()
+        for run in self._engine.list_incomplete():
+            if run.id in exclude:
+                continue
+            if run.status == WorkflowRunStatus.CREATED.value:
+                continue
+            started = run.started_at
+            if started.tzinfo is None:
+                from datetime import UTC
+
+                started = started.replace(tzinfo=UTC)
+            age = (now - started).total_seconds()
+            if age < stale_after:
+                continue
+            with get_session() as session:
+                current = self._engine._repository.get(session, run.id)
+                if current.status == WorkflowRunStatus.CREATED.value:
+                    continue
+                if current.attempt_count < max_attempts:
+                    current.status = WorkflowRunStatus.CREATED.value
+                    current.completed_at = None
+                    current.error_log = (
+                        f"Requeued after stale recovery (age={int(age)}s, "
+                        f"attempt {current.attempt_count}/{max_attempts})"
+                    )
+                    self._engine._repository.save(session, current)
+                    logger.warning(
+                        "Stale run %s requeued (age=%ss)",
+                        run.id,
+                        int(age),
+                        extra={"event": "workflow.run.stale_requeued", "run_id": run.id},
+                    )
+                else:
+                    current.status = WorkflowRunStatus.FAILED.value
+                    current.completed_at = utc_now()
+                    current.error_log = (
+                        f"Stale recovery exhausted retries after {int(age)}s "
+                        f"({max_attempts} attempt(s))"
+                    )
+                    self._engine._repository.save(session, current)
+                    logger.warning(
+                        "Stale run %s failed after exhausted retries",
+                        run.id,
+                        extra={"event": "workflow.run.stale_failed", "run_id": run.id},
+                    )
+            recovered += 1
+        return recovered
 
     def _run_claimed(
         self,
@@ -269,6 +364,7 @@ class WorkflowJobService:
                     workflow_run.transcript_id,
                     workflow_run.model_used,
                     run_id=workflow_run.id,
+                    track_run_id=workflow_run.id,
                 )
         if incomplete:
             logger.info(

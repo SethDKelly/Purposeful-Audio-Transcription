@@ -244,6 +244,10 @@ resource "aws_ecs_task_definition" "worker" {
       { name = "WORKFLOW_WORKER_POLL_SECONDS", value = "2" },
       { name = "WORKFLOW_WORKER_MAX_CLAIM_PER_POLL", value = "1" },
       { name = "WORKFLOW_WORKER_MAX_IN_FLIGHT", value = "2" },
+      { name = "WORKFLOW_WORKER_HEALTH_PORT", value = "8080" },
+      { name = "WORKFLOW_JOB_STALE_SECONDS", value = "7800" },
+      { name = "BEDROCK_THROTTLE_MAX_RETRIES", value = "5" },
+      { name = "BEDROCK_THROTTLE_BASE_SECONDS", value = "2" },
       { name = "DIARIZATION_ENABLED", value = var.diarization_enabled ? "true" : "false" },
       { name = "ALEMBIC_AUTO_UPGRADE", value = "false" },
       { name = "TEMP_DIR", value = "/tmp/rre" },
@@ -265,6 +269,14 @@ resource "aws_ecs_task_definition" "worker" {
         awslogs-region        = var.aws_region
         awslogs-stream-prefix = "worker"
       }
+    }
+
+    healthCheck = {
+      command     = ["CMD-SHELL", "curl -f http://127.0.0.1:8080/health || exit 1"]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 60
     }
   }])
 }

@@ -19,6 +19,7 @@ from backend.api.routes import (
     modules,
     process,
     purposes,
+    queue,
     transcribe,
     transcripts,
     workflows,
@@ -159,6 +160,7 @@ app.add_middleware(APIKeyMiddleware)
 app.add_middleware(RequestContextMiddleware)
 
 app.include_router(health.router)
+app.include_router(queue.router)
 app.include_router(models.router)
 app.include_router(transcribe.router)
 app.include_router(purposes.router)

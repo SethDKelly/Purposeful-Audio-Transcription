@@ -75,6 +75,46 @@ class WorkflowRunRepository:
         ).all()
         return [_from_row(row) for row in rows]
 
+    def list_failed(
+        self,
+        session: Session,
+        *,
+        limit: int = 50,
+    ) -> list[WorkflowRun]:
+        rows = session.scalars(
+            select(WorkflowRunRow)
+            .where(WorkflowRunRow.status == WorkflowRunStatus.FAILED.value)
+            .order_by(WorkflowRunRow.completed_at.desc())
+            .limit(max(1, min(limit, 200)))
+        ).all()
+        return [_from_row(row) for row in rows]
+
+    def queue_stats(self, session: Session) -> dict[str, object]:
+        queued = self.list_queued(session)
+        now = utc_now()
+        oldest_age: float | None = None
+        oldest_id: str | None = None
+        if queued:
+            oldest = queued[0]
+            started = oldest.started_at
+            if started.tzinfo is None:
+                started = started.replace(tzinfo=UTC)
+            oldest_age = max(0.0, (now - started).total_seconds())
+            oldest_id = oldest.id
+        incomplete = self.list_incomplete(session)
+        running = [
+            r
+            for r in incomplete
+            if r.status != WorkflowRunStatus.CREATED.value
+        ]
+        return {
+            "queue_depth": len(queued),
+            "oldest_queued_run_id": oldest_id,
+            "oldest_queued_age_seconds": oldest_age,
+            "running_count": len(running),
+            "incomplete_count": len(incomplete),
+        }
+
     def claim_queued(self, session: Session, run_id: str) -> WorkflowRun | None:
         """Atomically claim a CREATED run for execution. Returns None if already claimed."""
         row = session.get(WorkflowRunRow, run_id)
@@ -84,6 +124,7 @@ class WorkflowRunRepository:
             return None
         row.status = WorkflowRunStatus.RUNNING_MODULES.value
         row.attempt_count = int(row.attempt_count or 0) + 1
+        row.started_at = utc_now()
         session.flush()
         return _from_row(row)
 
@@ -131,6 +172,7 @@ def _to_row(run: WorkflowRun) -> WorkflowRunRow:
 def _update_row(row: WorkflowRunRow, run: WorkflowRun) -> None:
     row.status = run.status
     row.model_used = run.model_used
+    row.started_at = run.started_at
     row.completed_at = run.completed_at
     row.error_log = run.error_log
     row.telemetry_summary = (
