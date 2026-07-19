@@ -2,7 +2,7 @@
 
 High-level map of the RRE codebase. Deep design specs live in [../design/](../design/). Runtime is **AWS only**.
 
-**Current release:** **v1.0.0**. Roadmap complete through v1.0: [../archived/planning/phases.md](../archived/planning/phases.md). Next: [../planning/deferred_backlog.md](../planning/deferred_backlog.md).
+**Current release:** **v1.0.0**. Completed history: [../archived/planning/phases.md](../archived/planning/phases.md). Active: [../planning/phases/](../planning/phases/) (v1.1 operational hardening).
 
 ## System diagram
 

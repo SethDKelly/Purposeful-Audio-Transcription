@@ -54,6 +54,9 @@ jobs:
       - name: Guard against committed Python caches
         run: python scripts/check_no_pycache.py
 
+      - name: Guard UI/API boundary
+        run: python scripts/check_ui_api_boundary.py
+
       - name: Run tests
         run: python -m pytest tests/ -q
 

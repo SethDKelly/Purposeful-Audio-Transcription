@@ -161,13 +161,13 @@ Prepare for React by making Streamlit behave like an external API client.
 
 ## Implementation Tasks
 
-- [ ] Audit Streamlit imports.
-- [ ] Remove direct imports from `backend.services`, `backend.repositories`, `backend.db`, and workflow internals where feasible.
-- [ ] Create or strengthen a UI API client layer.
-- [ ] Ensure Streamlit uses `BACKEND_API_URL`.
-- [ ] Ensure UI does not need DB credentials.
-- [ ] Ensure UI does not directly call Bedrock/Transcribe.
-- [ ] Document UI/API boundary.
+- [x] Audit Streamlit imports.
+- [x] Remove direct imports from `backend.services`, `backend.repositories`, `backend.db`, and workflow internals where feasible.
+- [x] Create or strengthen a UI API client layer.
+- [x] Ensure Streamlit uses `BACKEND_API_URL`.
+- [x] Ensure UI does not need DB credentials.
+- [x] Ensure UI does not directly call Bedrock/Transcribe.
+- [x] Document UI/API boundary.
 
 ## Acceptance Criteria
 

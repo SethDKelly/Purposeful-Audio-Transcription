@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,7 +39,15 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     api_host: str = "127.0.0.1"
     api_port: int = 8000
-    rre_api_base_url: str = ""
+    # Preferred env: RRE_API_BASE_URL. BACKEND_API_URL accepted for React-readiness docs.
+    rre_api_base_url: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "RRE_API_BASE_URL",
+            "BACKEND_API_URL",
+            "rre_api_base_url",
+        ),
+    )
     streamlit_port: int = 8501
     prompts_dir: Path = Path("./config/prompts")
     modules_dir: Path = Path("./config/modules")

@@ -12,6 +12,9 @@ Errors return a generic message plus `request_id` (also echoed as `X-Request-ID`
 |--------|------|-------------|
 | `GET` | `/api/live` | Liveness (ECS/ALB) — prefer this for probes |
 | `GET` | `/api/health` | Bedrock, Transcribe, database status |
+| `GET` | `/api/queue/stats` | Queue depth, oldest age, running counts |
+| `GET` | `/api/queue/failed` | Recent failed workflow runs |
+| `POST` | `/api/queue/recover-stale` | Requeue/fail abandoned RUNNING jobs |
 | `GET` | `/api/models` | List configured Bedrock model IDs |
 | `GET` | `/api/models/ollama` | Deprecated alias of `/api/models` |
 
