@@ -42,10 +42,13 @@ Deploy CI also runs `validate_yaml` + `validate_config` before full pytest.
 
 ## Branch naming
 
+Cut from `pre-production`:
+
 ```text
-phase-m-feature-name
+feature/short-description
 fix/short-description
 docs/topic
+phase-m-feature-name
 ```
 
 ## Commits
