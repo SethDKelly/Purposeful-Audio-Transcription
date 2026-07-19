@@ -41,7 +41,7 @@ deploy cutover scaffolding.
 
 - [x] Document React-primary cutover (Streamlit `/admin`)
 - [x] `rre-dev-web` ECS/ECR already provisioned (`web_desired_count` default 0)
-- [ ] Ops: push web image, set `web_desired_count=1`, flip ALB default (manual)
+- [ ] Ops: push web image, set `web_desired_count=1`, flip ALB default _(moved to [10](10_v2_1_cutover_auth_and_graph_depth.md) Workstream A)_
 
 ## Exit for this band
 

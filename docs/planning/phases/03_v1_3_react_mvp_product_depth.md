@@ -127,7 +127,7 @@ Finding card
 
 - [x] turn-by-turn editing
 - [x] speaker relabeling
-- [ ] split turn _(deferred — merge-up shipped)_
+- [ ] split turn _(deferred → scheduled in [10](10_v2_1_cutover_auth_and_graph_depth.md) Workstream C)_
 - [x] merge turns
 - [x] delete irrelevant turn _(via exclude)_
 - [x] mark section excluded from analysis

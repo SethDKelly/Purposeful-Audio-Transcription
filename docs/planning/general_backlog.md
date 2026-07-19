@@ -4,7 +4,7 @@ General application ideas with **no implementation priority**. Capture here so i
 
 **Contrast:** [deferred_backlog.md](deferred_backlog.md) holds items that *were* phased and still have priority when dependencies clear. This file is for speculative, out-of-focus, or nice-to-have concepts.
 
-Historical phases: [../archived/planning/phases.md](../archived/planning/phases.md).
+Historical phases: [../archived/planning/phases.md](../archived/planning/phases.md) (1–54). Active band: [phases/10](phases/10_v2_1_cutover_auth_and_graph_depth.md).
 
 ---
 
@@ -43,8 +43,8 @@ Historical phases: [../archived/planning/phases.md](../archived/planning/phases.
 
 | Idea | Notes |
 |------|-------|
-| Multi-user SaaS / billing / RBAC / multi-tenant admin | Out of scope unless requirements change. |
-| Complex permissions beyond API key + optional HTTPS | Near-term security needs already covered. |
+| Multi-user SaaS / billing / RBAC / multi-tenant admin | Full SaaS still unprioritized. **Auth/RBAC plan** shipped in v1.4; **Cognito MVP** scheduled in [phases/10](phases/10_v2_1_cutover_auth_and_graph_depth.md). |
+| Complex permissions beyond API key + optional HTTPS | Near-term UAT covered by API key; product auth path is v2.1 (above). |
 | Public template marketplace / extensive plugin system | After durable workflow + module metadata — still unprioritized. |
 
 ---

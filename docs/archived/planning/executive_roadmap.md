@@ -1,14 +1,15 @@
 # Executive Roadmap — Relationship Reasoning Engine
 
-Historical executive view of the RRE program through **v1.0.0** (July 2026). Detailed phase records: [phases.md](phases.md). Active planning lives under [`../../planning/`](../../planning/) (`deferred_backlog` · `general_backlog`).
+Historical executive view of the RRE program. Detailed phase records: [phases.md](phases.md). Active planning: [`../../planning/`](../../planning/).
 
 | | |
 |---|---|
 | **Product** | Relationship Reasoning Engine (RRE) |
 | **Baseline release** | **v1.0.0** on `main` |
+| **Post-v1.0 bands** | v1.1–v1.4 + v2.0 foundation **complete** (Phases **50–54**) |
 | **Runtime** | AWS only — Bedrock + Transcribe + ECS + RDS (`521018312783`, `us-east-2`) |
-| **Phase log** | [phases.md](phases.md) (Phases **1–49** complete) |
-| **Next phase number** | **50** (v1.1 operational hardening — active plan in [`../../planning/phases/`](../../planning/phases/)) |
+| **Phase log** | [phases.md](phases.md) (Phases **1–54** complete) |
+| **Next phase number** | **55** (v2.1 cutover / auth / graph — [phases/10](../../planning/phases/10_v2_1_cutover_auth_and_graph_depth.md)) |
 | **Active plan** | [phases/](../../planning/phases/) · [deferred_backlog](../../planning/deferred_backlog.md) · [general_backlog](../../planning/general_backlog.md) |
 
 ---
@@ -19,10 +20,11 @@ The program evolved a paste-and-prompt prototype into a durable, evidence-linked
 
 1. **Evidence-first analysis** — Quote IDs, structured module JSON, confidence ceilings, and safety validation so claims stay inspectable.
 2. **Replaceable prompts, durable structure** — Schemas, ontology, workflows, and normalized findings/constructs/relationships outlive any single prompt wording.
-3. **Trustworthy handling of sensitive dialogue** — API key, optional HTTPS, generic errors + request IDs, log redaction, retention/privacy framing, export redaction.
+3. **Trustworthy handling of sensitive dialogue** — API key, optional HTTPS, generic errors + request IDs, log redaction, retention/privacy framing, export redaction; SafetyEvent audit trail (v2 foundation).
 4. **AWS-native operations** — One product path (no local Whisper/Ollama runtime); deploy on minor-version tags; pause ECS/RDS when idle.
 5. **Structured relationship reasoning** — Ontology → persisted graph → case/longitudinal insight → hardened workflow execution.
 6. **External-ready execution** — Dedicated worker, DAG workflows, custom suites, honest long-transcript sampling, safety-aware report mode.
+7. **React product shell** — Primary UX in `frontend-react/` via `/api/v1`; Streamlit demoted to admin/eval (ALB cutover still ops).
 
 **North star (unchanged):**
 
@@ -42,7 +44,7 @@ Domain Model → Ontology → Module Definitions → Workflow Engine → Prompt 
 | **Evidence before polish** | Traceability and confidence beat visual chrome |
 | **AWS-only product** | Bedrock + Transcribe + ECS + RDS; pytest uses mocks/SQLite |
 | **Deploy on minor versions** | Tag `vX.Y.Z` or manual deploy; ordinary `main` pushes do not wake AWS |
-| **Pause when idle** | Scale ECS (API/UI/worker) to 0 and stop RDS between sessions |
+| **Pause when idle** | Scale ECS (API/UI/worker/web) to 0 and stop RDS between sessions |
 | **Table-first graph UI** | Ship queryable inventory before fancy visualization |
 | **Normalized app tables** | Not an external graph database |
 | **Defer deliberately** | Blocked or dependency-gated work goes to `deferred_backlog`; unprioritized ideas to `general_backlog` |
@@ -51,8 +53,8 @@ Domain Model → Ontology → Module Definitions → Workflow Engine → Prompt 
 
 ## Phase completion summary
 
-| Band | Phases | Theme | Culminating release |
-|------|--------|-------|---------------------|
+| Band | Phases | Theme | Culminating release / note |
+|------|--------|-------|----------------------------|
 | **Foundation** | 1–8 | MVP shell: ingest, registry, compiler, core modules, workflow, synthesis, Streamlit | **v0.2.0** |
 | **Expansion** | 9–13 | Full module library, workflows, exports, Postgres/jobs, exploration | **v0.3.0** |
 | **Audio & docs** | 14–16 | Doc layout; diarization/sliced ASR; local LLM reliability | **v0.4.x** |
@@ -61,16 +63,23 @@ Domain Model → Ontology → Module Definitions → Workflow Engine → Prompt 
 | **Structured graph** | 31–37 | Normalized findings/constructs/relationships, merge, convergence, inventory UI, structured synthesis | **v0.8.0** |
 | **Cases** | 38–43 | Case model/dashboard, longitudinal compare/synthesis, report package, finding feedback | **v0.9.0** |
 | **Hardening** | 44–49 | Worker, DAG, custom workflows, long-transcript strategy, safety mode, production docs | **v1.0.0** |
+| **Post-v1 ops** | 50 | v1.1 operational hardening (IAM, worker ops, Streamlit boundary, observability) | on `post-v1.0/backlog` |
+| **Eval + API** | 51 | v1.2 golden/safety harness, `/api/v1`, React readiness | on `post-v1.0/backlog` |
+| **React MVP** | 52 | v1.3 `frontend-react` vertical slice | on `post-v1.0/backlog` |
+| **Platform UI** | 53 | v1.4 graph/cases/modules/governance/Streamlit decision | on `post-v1.0/backlog` |
+| **v2 foundation** | 54 | Safety events, eval release gates, server report packages | on `post-v1.0/backlog` |
 
-**Status:** Phases **1–49** are **complete**. New planned work, once finished, continues at Phase **50** in [phases.md](phases.md).
+**Status:** Phases **1–54** are **complete**. Active next work: Phase **55** / [v2.1](../../planning/phases/10_v2_1_cutover_auth_and_graph_depth.md).
 
 ---
 
-## Guiding sequence (completed)
+## Guiding sequence
 
 ```text
 security → transcript quality → ontology → structured persistence
   → graph reasoning → cases → workflow hardening ✓
+  → ops harden → eval/API → React MVP → platform UI → v2 foundation ✓
+  → ALB cutover + auth + graph depth (next)
 ```
 
 ---
@@ -80,7 +89,9 @@ security → transcript quality → ontology → structured persistence
 | Need | Document |
 |------|----------|
 | Full phase detail | [phases.md](phases.md) |
-| Priority future work (was phased, deferred) | [../../planning/deferred_backlog.md](../../planning/deferred_backlog.md) |
+| Active execution band | [../../planning/phases/10_v2_1_cutover_auth_and_graph_depth.md](../../planning/phases/10_v2_1_cutover_auth_and_graph_depth.md) |
+| v2 vision | [../../planning/phases/05_v2_0_future_state_architecture.md](../../planning/phases/05_v2_0_future_state_architecture.md) |
+| Priority deferred work | [../../planning/deferred_backlog.md](../../planning/deferred_backlog.md) |
 | Unprioritized ideas | [../../planning/general_backlog.md](../../planning/general_backlog.md) |
 | Release notes | [../../releases/](../../releases/) |
 | Design package | [../../design/](../../design/) |

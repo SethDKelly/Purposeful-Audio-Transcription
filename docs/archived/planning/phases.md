@@ -398,6 +398,48 @@ API reference expansion, architecture/user guide refresh, version alignment (`1.
 
 ---
 
+## Phase 50 — v1.1 Operational hardening
+
+**Status:** Complete · **Band:** v1.1 · **Commits:** through `e2eb380` (Workstream G)
+
+Test/repo hygiene, deployment docs truth, selective component deploy, service IAM, worker queue guardrails, Streamlit API-client boundary, CloudWatch observability/smoke. Plan: [../../planning/phases/01_v1_1_operational_hardening.md](../../planning/phases/01_v1_1_operational_hardening.md).
+
+---
+
+## Phase 51 — v1.2 Evaluation, safety, API v1, React readiness
+
+**Status:** Complete · **Band:** v1.2 · **Commit:** `780b27a`
+
+Golden evaluation harness, safety red-team fixtures, forbidden-claim scoring, `/api/v1` surface + OpenAPI snapshot, React stack/migration plan, Streamlit constrained as API client. Plan: [../../planning/phases/02_v1_2_evaluation_safety_api_react_readiness.md](../../planning/phases/02_v1_2_evaluation_safety_api_react_readiness.md).
+
+---
+
+## Phase 52 — v1.3 React MVP and product depth
+
+**Status:** Complete · **Band:** v1.3 · **Commit:** `9597b28`
+
+`frontend-react/` Vite+React+TS vertical slice (ingest → prepare → analyze → evidence-linked report → cases/feedback), `/api/v1` expansions, long-transcript chunking design, React Dockerfile/CI. Plan: [../../planning/phases/03_v1_3_react_mvp_product_depth.md](../../planning/phases/03_v1_3_react_mvp_product_depth.md).
+
+---
+
+## Phase 53 — v1.4 Platform maturity and React expansion
+
+**Status:** Complete · **Band:** v1.4 · **Commits:** `097ec04`, `a4c0b63`
+
+React dashboard/graph/modules/settings, longitudinal compare/synthesis, module lifecycle UI + prompt sha256, auth/RBAC plan, Streamlit admin/eval decision, supply-chain (Dependabot + audits), data governance docs, ECR/ECS `rre-dev-web` at `desired_count=0`. Plan: [../../planning/phases/04_v1_4_platform_maturity_react_expansion.md](../../planning/phases/04_v1_4_platform_maturity_react_expansion.md).
+
+---
+
+## Phase 54 — v2.0 foundation (readiness slice)
+
+**Status:** Complete · **Band:** v2.0 foundation · **Commit:** `efe7818`
+
+`SafetyEvent` / `EvaluationRun` persistence, safety UX on Analyze/Report, CI eval release gates, server ZIP report packages, findings query on `/api/v1`, case pinned findings, Evaluations page. Plan: [../../planning/phases/09_v2_0_foundation_execution.md](../../planning/phases/09_v2_0_foundation_execution.md). Vision: [../../planning/phases/05_v2_0_future_state_architecture.md](../../planning/phases/05_v2_0_future_state_architecture.md).
+
+---
+
 ## Append rule
 
-When a new planned series completes, add **Phase 50**, **Phase 51**, … here with status, release tag (if any), and a short delivery summary. Update [executive_roadmap.md](executive_roadmap.md) completion bands accordingly.
+When a new planned series completes, add **Phase 55**, **Phase 56**, … here with status, release tag (if any), and a short delivery summary. Update [executive_roadmap.md](executive_roadmap.md) completion bands accordingly.
+
+**Next planned archive number:** **55** (v2.1 cutover / auth / graph depth — active: [../../planning/phases/10_v2_1_cutover_auth_and_graph_depth.md](../../planning/phases/10_v2_1_cutover_auth_and_graph_depth.md)).

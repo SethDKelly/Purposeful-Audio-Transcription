@@ -10,33 +10,25 @@ It consolidates the prior recommendations around fixing current v1 shortcomings,
 
 # Current State Assessment
 
-The current application appears to have implemented many core architectural foundations:
+Post-**v1.0.0**, the program completed **v1.1–v1.4** and a **v2.0 foundation** slice (archived Phases **50–54**).
 
-- UI/API/worker container split
-- DAG-style workflow execution
-- durable jobs
-- module registry
-- workflow registry
-- ontology registry
-- prompt compiler
-- module runner
-- structured findings
-- constructs and relationships
-- graph merge
-- convergence scoring
-- synthesis
-- golden transcript fixtures
-- transcript preparation workspace
-- safety-aware report mode
-- report packages
-- cases
-- telemetry
-- API key middleware
-- generic request-ID error handling
+In place today:
 
-This is a strong foundation.
+- UI/API/worker (+ provisioned React web) container split
+- DAG-style workflow execution and durable jobs
+- Module / workflow / ontology registries
+- Structured findings, constructs, relationships, graph merge, convergence
+- Golden + safety eval harnesses and CI release gates
+- `/api/v1` product API with OpenAPI snapshots
+- React product shell (`frontend-react/`) for core and expanded flows
+- Streamlit role: admin/eval (ALB still Streamlit-default until cutover)
+- SafetyEvent / EvaluationRun persistence; server report packages
+- Auth/RBAC **plan** (implementation outstanding)
+- Supply-chain + data-governance documentation
 
-The next phase should focus less on adding analytical breadth and more on making the system safer, more reliable, easier to evaluate, easier to deploy, ready for a production-grade React front end, and capable of deeper case and longitudinal workflows.
+**Active next band:** [10_v2_1_cutover_auth_and_graph_depth.md](10_v2_1_cutover_auth_and_graph_depth.md) — live React cutover, Cognito/auth MVP, deeper graph/case work, ops drills.
+
+Avoid expanding analytical module breadth; prefer cutover, auth, evidence/graph depth, and platform maturity.
 
 ---
 
@@ -192,22 +184,26 @@ Streamlit should gradually move from primary product UI to dev console, eval rev
 # Suggested Phase Order
 
 ```text
-v1.1 Operational hardening
+v1.1 Operational hardening          ✓ Phase 50
   ↓
-v1.2 Evaluation + API + React readiness
+v1.2 Evaluation + API + React readiness ✓ Phase 51
   ↓
-v1.3 React MVP + product depth
+v1.3 React MVP + product depth      ✓ Phase 52
   ↓
-v1.4 Platform maturity + React expansion
+v1.4 Platform maturity + React expansion ✓ Phase 53
   ↓
-v2.0 Product/platform architecture
+v2.0 Foundation (readiness slice)   ✓ Phase 54
+  ↓
+v2.1 Cutover + auth + graph depth   ← active (Phase 55 when done)
+  ↓
+v2.x Full platform maturity         (vision: 05)
 ```
 
 ---
 
 # Non-Goals for Immediate Next Work
 
-Do not prioritize adding many new analysis modules, rewriting backend architecture from scratch, replacing Streamlit before API contracts are ready, optimizing UI polish before report/evidence correctness, building multi-user collaboration before auth and data governance, or marketing/public launch before safety/eval maturity.
+Do not prioritize adding many new analysis modules, rewriting backend architecture from scratch, marketing/public launch before auth and safety maturity, or building multi-user collaboration before Cognito (v2.1).
 
 ---
 
@@ -216,10 +212,10 @@ Do not prioritize adding many new analysis modules, rewriting backend architectu
 | Need | Path |
 |------|------|
 | This overview | `docs/planning/phases/00_unified_roadmap_overview.md` |
-| Active phase work | `docs/planning/phases/01` … `05` |
+| Active phase work | `docs/planning/phases/10` (then `05` vision) |
 | Deferred (priority) | `docs/planning/deferred_backlog.md` |
 | Unprioritized ideas | `docs/planning/general_backlog.md` |
-| Completed Phases 1–49 | `docs/archived/planning/phases.md` |
+| Completed Phases 1–54 | `docs/archived/planning/phases.md` |
 | AWS architecture | `docs/developer/aws-deployment.md` |
 
-When v1.1 ships, append archived phases starting at **Phase 50**.
+When v2.1 ships, append archived **Phase 55**.

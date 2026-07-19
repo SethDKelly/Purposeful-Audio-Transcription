@@ -7,11 +7,13 @@ React will benefit the application, but it should be introduced after API contra
 Recommended strategy:
 
 ```text
-v1.1: Make Streamlit API-client-only
-v1.2: Stabilize API and prepare React
-v1.3: Build React MVP alongside Streamlit
-v1.4: Expand React and decide Streamlit's role
-v2.0: React is primary product UI
+v1.1: Make Streamlit API-client-only          ✓
+v1.2: Stabilize API and prepare React        ✓
+v1.3: Build React MVP alongside Streamlit    ✓
+v1.4: Expand React and decide Streamlit's role ✓
+v2.0 foundation: safety/evals/packages       ✓
+v2.1: React ALB primary + auth MVP           ← next
+v2.x: React primary at scale / optional Streamlit retire
 ```
 
 ---
