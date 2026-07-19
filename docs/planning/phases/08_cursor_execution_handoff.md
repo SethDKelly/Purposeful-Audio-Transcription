@@ -2,15 +2,18 @@
 
 ## Goal
 
-Execute the v1.1 → v2.0 roadmap in `docs/planning/phases/` without inventing a parallel doc tree.
+Execute the active band in `docs/planning/phases/` without inventing a parallel doc tree.
+
+**Current band:** [10_v2_1_cutover_auth_and_graph_depth.md](10_v2_1_cutover_auth_and_graph_depth.md)  
+**Archive:** Phases **1–54** in [../../archived/planning/phases.md](../../archived/planning/phases.md)
 
 ---
 
 ## Step 1 — Inspect repository
 
-Review `docs/planning/`, `docs/`, `backend/`, `ui/`, `config/`, `tests/`, `infra/`, `.github/workflows/`.
+Review `docs/planning/`, `docs/`, `backend/`, `frontend-react/`, `ui/`, `config/`, `tests/`, `infra/`, `.github/workflows/`.
 
-Mark recommendations as already shipped (v1.0), partial, or missing.
+Mark recommendations as already shipped, partial, or missing.
 
 ---
 
@@ -18,7 +21,7 @@ Mark recommendations as already shipped (v1.0), partial, or missing.
 
 | Role | Path |
 |------|------|
-| Active roadmap | `docs/planning/phases/` |
+| Active roadmap | `docs/planning/phases/` (start at `10`) |
 | Deferred (priority) | `docs/planning/deferred_backlog.md` |
 | General (no priority) | `docs/planning/general_backlog.md` |
 | Completed history | `docs/archived/planning/` |
@@ -27,6 +30,8 @@ Mark recommendations as already shipped (v1.0), partial, or missing.
 Do **not** recreate `implementing.md`, `future_considerations.md`, or root-level `roadmap_v1_*.md` duplicates.
 
 Reclassify uncovered items into deferred vs general; do not delete.
+
+When a band ships: append the next Phase number to `archived/planning/phases.md`, update `executive_roadmap.md`, retarget `deferred_backlog` / `README` pointers.
 
 ---
 
@@ -38,38 +43,36 @@ Use the checkboxes already in each phase file. When implementing, tick tasks and
 
 ## Step 4 — Preserve uncovered items
 
-Anything not covered by v1.1–v2.0 stays in:
+Anything not covered by the active band stays in:
 
 - [../deferred_backlog.md](../deferred_backlog.md) — still want it when unblocked
 - [../general_backlog.md](../general_backlog.md) — no schedule
 
 ---
 
-## Step 5 — Prioritize v1.1 first
+## Step 5 — Prioritize the active band
 
-Do not start React until v1.1 is largely done and v1.2 API/eval prerequisites are underway.
+v1.1–v1.4 and v2.0 foundation are **complete**. Do not reopen them unless fixing regressions.
 
-v1.1 start order:
+v2.1 start order:
 
-1. Test invocation + repo hygiene  
-2. Docs truth (API/UI/worker)  
-3. Selective deploy  
-4. Service-specific IAM  
-5. Worker queue/backpressure  
-6. Streamlit/API boundary  
-7. Observability / smoke  
+1. React ALB cutover (`rre-dev-web`)  
+2. Auth MVP (Cognito) per [../auth_rbac_plan.md](../auth_rbac_plan.md)  
+3. Graph/case depth (contradiction, case package, split-turn)  
+4. Ops drills (RDS restore, secret rotation)  
+5. Worker/module status UX  
 
 ---
 
 ## Step 6 — React rule
 
-React must not import backend services or touch DB/AWS directly. Clients talk HTTP to the API (eventually `/api/v1`). Stabilize contracts in v1.2 before React screens in v1.3.
+React must not import backend services or touch DB/AWS directly. Clients talk HTTP to `/api/v1`. Streamlit remains admin/eval only ([../streamlit_role_decision.md](../streamlit_role_decision.md)).
 
 ---
 
 ## Step 7 — Testing requirements
 
-Prefer: unit, integration, golden, safety fixtures, API contract tests, deploy smoke; Playwright once React exists.
+Prefer: unit, integration, golden, safety fixtures, API contract tests, eval release gates, deploy smoke, Playwright.
 
 Canonical local/CI command:
 
@@ -77,36 +80,36 @@ Canonical local/CI command:
 python -m pytest tests/ -q
 ```
 
-(Bare `pytest` works only when the venv `Scripts`/`bin` directory is on `PATH`.)
+Eval gates: `.github/workflows/eval-release-gates.yml`.
 
 ---
 
 ## Step 8 — Avoid scope creep
 
 ```text
-reliability → evaluation → safety → API stability → React MVP → case depth → platform maturity
+cutover → auth → graph/case depth → ops drills → full v2 platform
 ```
 
 No new analysis modules unless required to exercise the platform.
 
 ---
 
-## Step 9 — Suggested first PRs
+## Step 9 — Suggested next PRs
 
 | PR | Scope |
 |----|--------|
-| 1 | Planning alignment (this folder + backlog tags + aws-deployment paths) |
-| 2 | Test/repo hygiene (`python -m pytest`, cache guards, prompt source archives out of runtime) |
-| 3 | Selective deploy (`component=all\|api\|ui\|worker`) + worker in wait/smoke |
-| 4 | Service-specific IAM design/implementation |
-| 5 | Evaluation harness scaffold (v1.2) |
+| 1 | ALB/web cutover Terraform + deploy docs |
+| 2 | Cognito / JWT auth MVP |
+| 3 | Graph contradiction + case package export |
+| 4 | Split-turn prepare UX |
+| 5 | Documented RDS restore / secret-rotation drill results |
 
 ---
 
 ## Done definition for roadmap integration
 
-- `phases/` is the obvious active plan  
+- `phases/` is the obvious active plan (`10` current)  
 - deferred/general backlogs hold the rest  
-- v1.1 is the current implementation focus  
-- React is staged, not immediate  
-- AWS docs mention API + UI + worker  
+- archive phase numbers match shipped bands (next write: **55**)  
+- React is primary product path; Streamlit admin/eval  
+- AWS docs mention API + UI + worker (+ web when cut over)  

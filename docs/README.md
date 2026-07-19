@@ -7,7 +7,7 @@
 | **Operators / users** | [user/getting-started.md](user/getting-started.md) → [user/user-guide.md](user/user-guide.md) |
 | **Developers** | [developer/development.md](developer/development.md) → [developer/architecture.md](developer/architecture.md) |
 | **AWS ops** | [developer/aws-operations.md](developer/aws-operations.md) · [developer/aws-deployment.md](developer/aws-deployment.md) · [../infra/dev/README.md](../infra/dev/README.md) |
-| **Active plan** | [planning/phases/](planning/phases/) (**v1.1**) · [planning/deferred_backlog.md](planning/deferred_backlog.md) |
+| **Active plan** | [planning/phases/10](planning/phases/10_v2_1_cutover_auth_and_graph_depth.md) (**v2.1**) · [planning/deferred_backlog.md](planning/deferred_backlog.md) |
 
 > Documentation lives under **`docs/`** (renamed from `doc/` in v0.7.0).
 
@@ -60,10 +60,10 @@ Stable product/technical design (not a task tracker):
 | Document | Description |
 |----------|-------------|
 | [planning/README.md](planning/README.md) | Planning index |
-| [planning/phases/](planning/phases/) | **Active roadmap** (v1.1 → v2.0) |
+| [planning/phases/](planning/phases/) | **Active roadmap** (current: v2.1) |
 | [planning/deferred_backlog.md](planning/deferred_backlog.md) | Prioritized deferred / dependency-gated work |
 | [planning/general_backlog.md](planning/general_backlog.md) | Unprioritized ideas (no commitment) |
-| [archived/planning/](archived/planning/) | Completed Phases 1–49 + executive summary |
+| [archived/planning/](archived/planning/) | Completed Phases 1–54 + executive summary |
 
 ## Architecture / product / evaluation
 
