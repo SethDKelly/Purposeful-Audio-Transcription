@@ -10,10 +10,20 @@ export function AnalyzePage() {
   const navigate = useNavigate()
   const [runId, setRunId] = useState<string | null>(null)
   const workflowsQ = useQuery({ queryKey: ['workflows'], queryFn: api.listWorkflows })
+  const safetyQ = useQuery({
+    queryKey: ['safety', transcriptId],
+    queryFn: () => api.getSafetyAssessment(transcriptId),
+    enabled: Boolean(transcriptId),
+  })
   const [workflowId, setWorkflowId] = useState('quick_review')
+  const [safetyMode, setSafetyMode] = useState(false)
+
+  useEffect(() => {
+    if (safetyQ.data?.safety_mode_recommended) setSafetyMode(true)
+  }, [safetyQ.data?.safety_mode_recommended])
 
   const start = useMutation({
-    mutationFn: () => api.startWorkflow(workflowId, transcriptId, true),
+    mutationFn: () => api.startWorkflow(workflowId, transcriptId, true, safetyMode || undefined),
     onSuccess: (run) => setRunId(run.id),
   })
 
@@ -34,12 +44,27 @@ export function AnalyzePage() {
     }
   }, [statusQ.data?.status, runId, navigate])
 
+  const risk = safetyQ.data?.risk_level || 'none'
+
   return (
     <section className="card">
       <h1 style={{ marginTop: 0 }}>Run analysis</h1>
       <p className="muted">
         Transcript <code>{transcriptId}</code>
       </p>
+
+      {risk !== 'none' && (
+        <p style={{ color: 'var(--warn)' }}>
+          Safety scan: <strong>{risk}</strong>
+          {safetyQ.data?.matched_categories?.length
+            ? ` · ${safetyQ.data.matched_categories.join(', ')}`
+            : ''}
+          {safetyQ.data?.safety_mode_recommended
+            ? ' · safety mode recommended (skips exploratory modules)'
+            : ''}
+        </p>
+      )}
+
       <div className="field">
         <label htmlFor="wf">Workflow</label>
         <select
@@ -48,15 +73,31 @@ export function AnalyzePage() {
           onChange={(e) => setWorkflowId(e.target.value)}
           disabled={Boolean(runId)}
         >
-          {(workflowsQ.data?.workflows || [{ id: 'quick_review', name: 'Quick Review' }]).map((w) => (
-            <option key={w.id} value={w.id}>
-              {w.name}
-            </option>
-          ))}
+          {(workflowsQ.data?.workflows || [{ id: 'quick_review', name: 'Quick Review' }]).map(
+            (w) => (
+              <option key={w.id} value={w.id}>
+                {w.name}
+              </option>
+            ),
+          )}
         </select>
       </div>
+      <label style={{ display: 'block', marginBottom: '1rem' }}>
+        <input
+          type="checkbox"
+          checked={safetyMode}
+          disabled={Boolean(runId)}
+          onChange={(e) => setSafetyMode(e.target.checked)}
+        />{' '}
+        Safety-aware mode
+      </label>
       {!runId ? (
-        <button className="btn btn-primary" type="button" disabled={start.isPending} onClick={() => start.mutate()}>
+        <button
+          className="btn btn-primary"
+          type="button"
+          disabled={start.isPending}
+          onClick={() => start.mutate()}
+        >
           {start.isPending ? 'Starting…' : 'Start workflow'}
         </button>
       ) : (
@@ -66,6 +107,9 @@ export function AnalyzePage() {
           </p>
           <p>
             Status: <strong>{statusQ.data?.status || 'queued'}</strong>
+            {typeof statusQ.data?.attempt_count === 'number'
+              ? ` · attempt ${statusQ.data.attempt_count}`
+              : ''}
           </p>
           {statusQ.data?.error_log && (
             <p style={{ color: 'var(--danger)' }}>{statusQ.data.error_log}</p>

@@ -57,6 +57,12 @@ export function CasesPage() {
     mutationFn: () => api.runLongitudinal(selected!),
   })
 
+  const pinnedQ = useQuery({
+    queryKey: ['case-pinned', selected],
+    queryFn: () => api.listCasePinned(selected!),
+    enabled: Boolean(selected),
+  })
+
   return (
     <section className="layout-split">
       <div className="card">
@@ -214,6 +220,24 @@ export function CasesPage() {
                   {e.created_at}: {e.title || e.transcript_id} ({e.workflow_run_count} runs)
                 </li>
               ))}
+            </ul>
+            <h3>Pinned findings</h3>
+            <ul>
+              {(pinnedQ.data?.pinned_findings || []).map((p, i) => (
+                <li key={i}>
+                  <code>{String(p.finding_key || p.id)}</code>
+                  {p.workflow_run_id ? (
+                    <>
+                      {' '}
+                      ·{' '}
+                      <Link to={`/runs/${String(p.workflow_run_id)}/report`}>report</Link>
+                    </>
+                  ) : null}
+                </li>
+              ))}
+              {!pinnedQ.data?.pinned_findings?.length && (
+                <li className="muted">Pin findings from a report with feedback label pinned.</li>
+              )}
             </ul>
           </>
         )}

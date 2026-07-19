@@ -72,11 +72,41 @@ export const api = {
   rebuildEvidence: (id: string) =>
     request<TranscriptBundle>(`/api/v1/transcripts/${id}/evidence/rebuild`, { method: 'POST' }),
   listWorkflows: () => request<{ workflows: WorkflowSummary[] }>('/api/v1/workflows'),
-  startWorkflow: (workflow_id: string, transcript_id: string, background = true) =>
+  startWorkflow: (workflow_id: string, transcript_id: string, background = true, safety_mode?: boolean) =>
     request<WorkflowRun>('/api/v1/workflow-runs', {
       method: 'POST',
-      body: JSON.stringify({ workflow_id, transcript_id, background }),
+      body: JSON.stringify({ workflow_id, transcript_id, background, safety_mode }),
     }),
+  getSafetyAssessment: (transcriptId: string) =>
+    request<{
+      risk_level: string
+      matched_categories: string[]
+      safety_mode_recommended: boolean
+    }>(`/api/v1/transcripts/${transcriptId}/safety-assessment`),
+  listSafetyEvents: (transcriptId: string) =>
+    request<{ events: SafetyEvent[] }>(`/api/v1/transcripts/${transcriptId}/safety-events`),
+  listRunFindings: (runId: string) =>
+    request<{ findings: ExplorationFinding[] }>(`/api/v1/workflow-runs/${runId}/findings`),
+  downloadReportPackage: async (workflow_run_id: string, redact = false) => {
+    const API_BASE =
+      (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') || ''
+    const key = import.meta.env.VITE_API_KEY as string | undefined
+    const res = await fetch(`${API_BASE}/api/v1/exports`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(key ? { 'X-API-Key': key } : {}),
+      },
+      body: JSON.stringify({ workflow_run_id, format: 'package', redact }),
+    })
+    if (!res.ok) throw new Error(`Export failed (${res.status})`)
+    return res.blob()
+  },
+  listEvaluations: () => request<{ runs: EvaluationRunSummary[] }>('/api/v1/evaluations'),
+  listCasePinned: (caseId: string) =>
+    request<{ pinned_findings: Array<Record<string, unknown>> }>(
+      `/api/v1/cases/${caseId}/pinned-findings`,
+    ),
   getWorkflowStatus: (runId: string) =>
     request<WorkflowStatus>(`/api/v1/workflow-runs/${runId}/status`),
   getWorkflowRun: (runId: string) => request<WorkflowRun>(`/api/v1/workflow-runs/${runId}`),
@@ -178,6 +208,8 @@ export type WorkflowRun = {
   transcript_id: string
   status: string
   error_log?: string | null
+  safety_mode?: boolean
+  attempt_count?: number
 }
 
 export type WorkflowStatus = {
@@ -323,4 +355,29 @@ export type TranscriptRunSummary = {
   status: string
   created_at?: string | null
   completed_at?: string | null
+}
+
+export type SafetyEvent = {
+  id: string
+  event_type: string
+  risk_level: string
+  categories?: string[]
+  created_at?: string | null
+}
+
+export type ExplorationFinding = {
+  finding_key: string
+  module_id: string
+  title?: string
+  confidence?: string
+  evidence_quote_ids?: string[]
+}
+
+export type EvaluationRunSummary = {
+  id: string
+  kind: string
+  fixture_id?: string | null
+  module_id?: string | null
+  gate_passed: boolean
+  created_at?: string | null
 }

@@ -149,6 +149,8 @@ Streamlit, if retained, should be an internal admin/eval console, not the primar
 
 The application is ready to be called v2 when React owns the primary user journey, API contracts are stable and versioned, worker execution is durable and observable, evidence-linked findings are normalized and queryable, graph reasoning improves synthesis, golden and safety evals gate releases, case/longitudinal workflows are useful, safety-aware UX is mature, deployment and data governance are credible, module lifecycle is managed, and Streamlit has a resolved role.
 
+**Execution band:** [09_v2_0_foundation_execution.md](09_v2_0_foundation_execution.md) (first readiness slice).
+
 ---
 
 # v2 Non-Goals

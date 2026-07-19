@@ -4,6 +4,7 @@ import { AppShell } from './components/AppShell'
 import { AnalyzePage } from './pages/AnalyzePage'
 import { CasesPage } from './pages/CasesPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { EvaluationsPage } from './pages/EvaluationsPage'
 import { GraphPage } from './pages/GraphPage'
 import { IngestPage } from './pages/IngestPage'
 import { ModulesPage } from './pages/ModulesPage'
@@ -32,6 +33,7 @@ export default function App() {
             <Route path="graph" element={<GraphPage />} />
             <Route path="cases" element={<CasesPage />} />
             <Route path="modules" element={<ModulesPage />} />
+            <Route path="evaluations" element={<EvaluationsPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

@@ -14,7 +14,7 @@ Active planning for the **Relationship Reasoning Engine** after **v1.0.0**.
 Completed history (Phases **1–49**): [../archived/planning/](../archived/planning/).  
 When a roadmap band ships, append to [../archived/planning/phases.md](../archived/planning/phases.md) starting at **Phase 50**.
 
-**Current active band:** [phases/05_v2_0_future_state_architecture.md](phases/05_v2_0_future_state_architecture.md) (v1.1–v1.4 complete)
+**Current active band:** [phases/05_v2_0_future_state_architecture.md](phases/05_v2_0_future_state_architecture.md) (v2 foundation slice complete — see [09](phases/09_v2_0_foundation_execution.md); remaining: Cognito, ALB cutover, deeper graph)
 
 **Design anchors:** [../design/01_product_vision_and_scope.md](../design/01_product_vision_and_scope.md) · [../design/04_knowledge_ontology.md](../design/04_knowledge_ontology.md) · [../design/03_domain_model.md](../design/03_domain_model.md)
 

@@ -20,9 +20,12 @@ Do not add new end-user product workflows only in Streamlit.
 ## Deployment
 
 - Current ALB default target remains Streamlit (`rre-dev-ui`) until React web service is cut over.
-- React image: `frontend-react/Dockerfile` → planned ECR `rre-dev-web`.
-- Cutover runbook: deploy web → ALB default → React; route `/admin*` (or keep separate URL) to Streamlit; document DNS.
-- Terraform may provision web at `desired_count = 0` until the first cutover.
+- React image: `frontend-react/Dockerfile` → ECR `rre-dev-web` (Terraform repo + ECS at `web_desired_count` default 0).
+- Cutover checklist:
+  1. Build/push web image tagged with git SHA.
+  2. Set `web_desired_count = 1` and apply Terraform.
+  3. Point ALB default action at web `:80`; route `/admin*` to Streamlit.
+  4. Smoke React ingest→report and Streamlit eval reachability.
 
 ## Exit criteria met
 

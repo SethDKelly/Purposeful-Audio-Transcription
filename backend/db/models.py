@@ -269,3 +269,32 @@ class FindingFeedbackRow(Base):
     rating: Mapped[str] = mapped_column(String(32))
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class SafetyEventRow(Base):
+    """Auditable safety scan / mode events (v2.0)."""
+
+    __tablename__ = "safety_events"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    transcript_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    workflow_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    event_type: Mapped[str] = mapped_column(String(64))
+    risk_level: Mapped[str] = mapped_column(String(32))
+    categories_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    details_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class EvaluationRunRow(Base):
+    """Persisted evaluation / release-gate results (v2.0)."""
+
+    __tablename__ = "evaluation_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(32))
+    fixture_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    module_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    gate_passed: Mapped[bool] = mapped_column(Boolean, default=False)
+    summary_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)

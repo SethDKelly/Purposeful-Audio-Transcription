@@ -11,6 +11,7 @@ export function AppShell() {
         <NavLink to="/ingest">Ingest</NavLink>
         <NavLink to="/cases">Cases</NavLink>
         <NavLink to="/modules">Modules</NavLink>
+        <NavLink to="/evaluations">Evals</NavLink>
         <NavLink to="/settings">Settings</NavLink>
         <span className="muted" style={{ marginLeft: 'auto', fontSize: '0.85rem' }}>
           Primary UI · /api/v1

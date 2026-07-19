@@ -27,6 +27,8 @@ from backend.api.schemas import (
     CompareCaseTranscriptsResponse,
     CreateCaseRequest,
     CreateTranscriptRequest,
+    ExplorationFindingsResponse,
+    FindingDrilldownResponse,
     FindingFeedbackRequest,
     FindingFeedbackResponse,
     KnowledgeGraphResponse,
@@ -36,6 +38,7 @@ from backend.api.schemas import (
     StructuredGraphResponse,
     SynthesisReportResponse,
     TranscriptBundleResponse,
+    TranscriptSafetyAssessmentResponse,
     TranscriptWorkflowRunsResponse,
     UpdateCaseRequest,
     UpdateSpeakersRequest,
@@ -45,8 +48,15 @@ from backend.api.schemas import (
     synthesis_report_to_response,
 )
 from backend.core.module_registry import module_registry
+from backend.db.base import get_session
+from backend.repositories.finding_feedback_repository import FindingFeedbackRepository
+from backend.services.evaluation_run_service import evaluation_run_service
+from backend.services.report_package_service import build_v1_report_package_zip
+from backend.services.structured_graph_service import structured_graph_service
 from backend.services.synthesis_engine import synthesis_engine
+from backend.services.transcript_service import transcript_service
 from backend.services.workflow_engine import workflow_engine
+from backend.services.workflow_safety_service import workflow_safety_service
 
 router = APIRouter(prefix="/api/v1", tags=["v1"])
 
@@ -84,12 +94,19 @@ class ReportEvidenceV1Response(V1Envelope):
 class ExportV1Request(BaseModel):
     workflow_run_id: str
     format: str = "json"
+    redact: bool = False
 
 
 class ExportV1Response(V1Envelope):
     workflow_run_id: str
     format: str
     download_hint: str
+
+
+class OfflineEvalRequest(BaseModel):
+    fixture_id: str
+    module_id: str
+    module_output: dict
 
 
 class ModuleLifecycleItem(BaseModel):
@@ -244,14 +261,56 @@ def get_case_timeline(case_id: str) -> dict:
     }
 
 
-@router.post("/exports", response_model=ExportV1Response)
-def create_export(request: ExportV1Request) -> ExportV1Response:
-    # Client-side export remains primary; this endpoint documents the stable contract.
-    _ = workflow_engine.get(request.workflow_run_id)
+@router.post("/exports", response_model=None)
+def create_export(request: ExportV1Request):
+    run = workflow_engine.get(request.workflow_run_id)
+    if request.format in {"package", "zip"}:
+        report = synthesis_engine.get_report(request.workflow_run_id)
+        payload = synthesis_report_to_response(report).model_dump()
+        bundle = transcript_service.get(run.transcript_id)
+        speakers = {s.id: (s.display_name or s.label) for s in bundle.speakers}
+        structured = structured_graph_service.inventory(request.workflow_run_id)
+        lifecycle = [
+            {
+                "id": m.config.id,
+                "version": m.config.version,
+                "prompt_sha256": hashlib.sha256(m.module_prompt.encode("utf-8")).hexdigest(),
+            }
+            for m in module_registry.list_modules()
+        ]
+        zip_bytes = build_v1_report_package_zip(
+            workflow_run={
+                "id": run.id,
+                "workflow_id": run.workflow_id,
+                "transcript_id": run.transcript_id,
+                "safety_mode": bool(getattr(run, "safety_mode", False)),
+            },
+            synthesis=payload,
+            evidence_quotes=[
+                {
+                    "quote_id": q.quote_id,
+                    "text": q.text,
+                    "speaker_label": speakers.get(q.speaker_id, q.speaker_id),
+                }
+                for q in bundle.evidence_quotes
+            ],
+            structured=structured,
+            module_lifecycle=lifecycle,
+            redact=request.redact,
+        )
+        return Response(
+            content=zip_bytes,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": (
+                    f'attachment; filename="rre-report-package-{request.workflow_run_id}.zip"'
+                )
+            },
+        )
     return ExportV1Response(
         workflow_run_id=request.workflow_run_id,
         format=request.format,
-        download_hint=f"/api/workflow-runs/{request.workflow_run_id}/synthesis",
+        download_hint=f"/api/v1/reports/{request.workflow_run_id}",
     )
 
 
@@ -377,3 +436,90 @@ def compare_case_transcripts(
 )
 def list_transcript_workflow_runs(transcript_id: str) -> TranscriptWorkflowRunsResponse:
     return exploration_routes.list_transcript_workflow_runs(transcript_id)
+
+
+@router.get(
+    "/transcripts/{transcript_id}/safety-assessment",
+    response_model=TranscriptSafetyAssessmentResponse,
+)
+def get_transcript_safety_assessment(
+    transcript_id: str,
+) -> TranscriptSafetyAssessmentResponse:
+    return workflows_routes.get_transcript_safety_assessment(transcript_id)
+
+
+@router.get("/transcripts/{transcript_id}/safety-events")
+def list_transcript_safety_events(transcript_id: str) -> dict:
+    events = workflow_safety_service.list_events(transcript_id=transcript_id)
+    return {"schema_version": SCHEMA_VERSION, "transcript_id": transcript_id, "events": events}
+
+
+@router.get("/workflow-runs/{run_id}/safety-events")
+def list_run_safety_events(run_id: str) -> dict:
+    events = workflow_safety_service.list_events(workflow_run_id=run_id)
+    return {"schema_version": SCHEMA_VERSION, "workflow_run_id": run_id, "events": events}
+
+
+@router.get(
+    "/workflow-runs/{run_id}/findings",
+    response_model=ExplorationFindingsResponse,
+)
+def list_run_findings(run_id: str) -> ExplorationFindingsResponse:
+    return exploration_routes.list_exploration_findings(run_id)
+
+
+@router.get(
+    "/workflow-runs/{run_id}/findings/{finding_key:path}",
+    response_model=FindingDrilldownResponse,
+)
+def get_finding_drilldown(run_id: str, finding_key: str) -> FindingDrilldownResponse:
+    return exploration_routes.get_finding_drilldown(run_id, finding_key)
+
+
+@router.get("/evaluations")
+def list_evaluations(limit: int = 50) -> dict:
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "runs": evaluation_run_service.list_recent(limit=limit),
+    }
+
+
+@router.get("/evaluations/{run_id}")
+def get_evaluation(run_id: str) -> dict:
+    from fastapi import HTTPException
+
+    row = evaluation_run_service.get(run_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="Evaluation run not found")
+    return {"schema_version": SCHEMA_VERSION, **row}
+
+
+@router.post("/evaluations/runs")
+def create_evaluation_run(request: OfflineEvalRequest) -> dict:
+    row = evaluation_run_service.run_offline_fixture(
+        fixture_id=request.fixture_id,
+        module_id=request.module_id,
+        module_output=request.module_output,
+    )
+    return {"schema_version": SCHEMA_VERSION, **row}
+
+
+@router.get("/cases/{case_id}/pinned-findings")
+def list_case_pinned_findings(case_id: str) -> dict:
+    detail = cases_routes.get_case(case_id)
+    transcript_ids = {t.id for t in detail.transcripts}
+    pinned: list[dict] = []
+    with get_session() as session:
+        for tid in transcript_ids:
+            # Collect feedback via workflow runs on each transcript
+            runs = exploration_routes.list_transcript_workflow_runs(tid)
+            for run in runs.workflow_runs:
+                rows = FindingFeedbackRepository().list_for_workflow(session, run.id)
+                for row in rows:
+                    if row.get("rating") == "pinned":
+                        pinned.append({**row, "transcript_id": tid})
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "case_id": case_id,
+        "pinned_findings": pinned,
+    }

@@ -43,20 +43,11 @@ export function ReportPage() {
 
   const exportMut = useMutation({
     mutationFn: async () => {
-      await api.exportReport(runId, 'json')
-      const packagePayload = {
-        schema_version: '1',
-        report: reportQ.data,
-        structured: structuredQ.data || null,
-        evidence_quotes: transcriptQ.data?.evidence_quotes || [],
-      }
-      const blob = new Blob([JSON.stringify(packagePayload, null, 2)], {
-        type: 'application/json',
-      })
+      const blob = await api.downloadReportPackage(runId, false)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `rre-report-package-${runId}.json`
+      a.download = `rre-report-package-${runId}.zip`
       a.click()
       URL.revokeObjectURL(url)
     },
@@ -120,10 +111,22 @@ export function ReportPage() {
             Graph
           </Link>
           <button className="btn btn-primary" type="button" onClick={() => exportMut.mutate()}>
-            Export package
+            Export package ZIP
           </button>
         </div>
       </div>
+
+      {(runQ.data as { safety_mode?: boolean } | undefined)?.safety_mode && (
+        <p style={{ color: 'var(--warn)', marginTop: '0.75rem' }}>
+          Safety-aware report mode was active for this run — exploratory modules may have been
+          skipped; treat claims cautiously.
+        </p>
+      )}
+      {(reportQ.data?.safety_flags || []).length > 0 && (
+        <p style={{ color: 'var(--warn)' }}>
+          Safety flags: {reportQ.data?.safety_flags?.join(', ')}
+        </p>
+      )}
 
       <div style={{ display: 'flex', gap: '0.5rem', margin: '1rem 0' }}>
         <button

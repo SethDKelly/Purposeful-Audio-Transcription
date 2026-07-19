@@ -16,6 +16,14 @@ Envelope fields use `schema_version: "1"` where present. Breaking response shape
 
 ## Changelog
 
+### v2.0 foundation
+
+- Added: safety assessment + safety-events APIs; `SafetyEvent` persistence
+- Added: evaluation runs list/create; CI eval release gates workflow
+- Added: server ZIP report package via `POST /api/v1/exports` (`format=package`)
+- Added: `GET /api/v1/workflow-runs/{id}/findings` (+ drilldown)
+- Added: case pinned-findings
+
 ### v1.4
 
 - Added: `GET /api/v1/modules`, `GET /api/v1/modules/lifecycle`
