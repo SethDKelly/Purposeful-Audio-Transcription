@@ -9,7 +9,7 @@ Architecture and integration guide for deploying the Relationship Reasoning Engi
 | **Deploy role** | `arn:aws:iam::521018312783:role/dev-github-deploy` |
 | **Release baseline** | **v1.0.0** (worker + DAG + custom workflows) |
 | **Deploy** | Version tags `v*.*.*` (all components) or **workflow_dispatch** with `component=all\|api\|ui\|worker` |
-| **Active plan** | [phases/01_v1_1_operational_hardening.md](../planning/phases/01_v1_1_operational_hardening.md) |
+| **Active plan** | [phases/001_v2_1_phase_sequence_overview.md](../planning/phases/001_v2_1_phase_sequence_overview.md) (`001`–`009`) |
 
 ### Data residency (privacy)
 
@@ -390,11 +390,13 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 
 ## 12. Related documents
 
-- [phases/01_v1_1_operational_hardening.md](../planning/phases/01_v1_1_operational_hardening.md) — current phase
-- [deferred_backlog.md](../planning/deferred_backlog.md) — prioritized deferred work
+- [phases/001_v2_1_phase_sequence_overview.md](../planning/phases/001_v2_1_phase_sequence_overview.md) — current band (v2.1 `001`–`009`)
+- [deferred_backlog.md](../planning/deferred_backlog.md) — prioritized deferred work (incl. ALB cutover / ops drills)
+- [product/core_tenets.md](../product/core_tenets.md) — durable product tenets
 - [aws-operations.md](aws-operations.md) — deploy / pause / Logs Insights
 - [../releases/v1.0.0.md](../releases/v1.0.0.md) — current release notes
 - [../archived/planning/executive_roadmap.md](../archived/planning/executive_roadmap.md) — completed program roadmap
+- [../archived/planning/bands/](../archived/planning/bands/) — completed / superseded band checklists
 - [aws-backbone architecture](https://github.com/SethDKelly/aws-backbone/blob/main/docs/architecture.md)
 - [aws-backbone GitHub Actions guide](https://github.com/SethDKelly/aws-backbone/blob/main/docs/github-actions.md)
 - [../user/deployment.md](../user/deployment.md) — operator deployment pointers

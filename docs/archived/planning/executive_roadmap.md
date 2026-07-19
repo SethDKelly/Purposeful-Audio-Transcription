@@ -9,8 +9,8 @@ Historical executive view of the RRE program. Detailed phase records: [phases.md
 | **Post-v1.0 bands** | v1.1–v1.4 + v2.0 foundation **complete** (Phases **50–54**) |
 | **Runtime** | AWS only — Bedrock + Transcribe + ECS + RDS (`521018312783`, `us-east-2`) |
 | **Phase log** | [phases.md](phases.md) (Phases **1–54** complete) |
-| **Next phase number** | **55** (v2.1 cutover / auth / graph — [phases/10](../../planning/phases/10_v2_1_cutover_auth_and_graph_depth.md)) |
-| **Active plan** | [phases/](../../planning/phases/) · [deferred_backlog](../../planning/deferred_backlog.md) · [general_backlog](../../planning/general_backlog.md) |
+| **Next phase number** | **55** (v2.1 numeric `001`–`009` — [phases/001](../../planning/phases/001_v2_1_phase_sequence_overview.md)) |
+| **Active plan** | [phases/](../../planning/phases/) · [deferred_backlog](../../planning/deferred_backlog.md) · [general_backlog](../../planning/general_backlog.md) · [core_tenets](../../product/core_tenets.md) |
 
 ---
 
@@ -69,7 +69,7 @@ Domain Model → Ontology → Module Definitions → Workflow Engine → Prompt 
 | **Platform UI** | 53 | v1.4 graph/cases/modules/governance/Streamlit decision | on `post-v1.0/backlog` |
 | **v2 foundation** | 54 | Safety events, eval release gates, server report packages | on `post-v1.0/backlog` |
 
-**Status:** Phases **1–54** are **complete**. Active next work: Phase **55** / [v2.1](../../planning/phases/10_v2_1_cutover_auth_and_graph_depth.md).
+**Status:** Phases **1–54** are **complete**. Active next work: Phase **55** / v2.1 numeric [001](../../planning/phases/001_v2_1_phase_sequence_overview.md)–[009](../../planning/phases/009_v2_1_react_api_contract_and_release_candidate_readiness.md).
 
 ---
 
@@ -79,7 +79,8 @@ Domain Model → Ontology → Module Definitions → Workflow Engine → Prompt 
 security → transcript quality → ontology → structured persistence
   → graph reasoning → cases → workflow hardening ✓
   → ops harden → eval/API → React MVP → platform UI → v2 foundation ✓
-  → ALB cutover + auth + graph depth (next)
+  → tenet hardening + email auth + evidence + RC (next)
+  → ALB cutover + GA ops (deferred)
 ```
 
 ---
@@ -88,9 +89,11 @@ security → transcript quality → ontology → structured persistence
 
 | Need | Document |
 |------|----------|
-| Full phase detail | [phases.md](phases.md) |
-| Active execution band | [../../planning/phases/10_v2_1_cutover_auth_and_graph_depth.md](../../planning/phases/10_v2_1_cutover_auth_and_graph_depth.md) |
-| v2 vision | [../../planning/phases/05_v2_0_future_state_architecture.md](../../planning/phases/05_v2_0_future_state_architecture.md) |
+| Full phase summaries | [phases.md](phases.md) |
+| Completed band checklists | [bands/](bands/) |
+| Active execution | [../../planning/phases/001_v2_1_phase_sequence_overview.md](../../planning/phases/001_v2_1_phase_sequence_overview.md) (`001`–`009`) |
+| Core tenets | [../../product/core_tenets.md](../../product/core_tenets.md) |
+| v2 vision | [../../planning/v2_future_state_architecture.md](../../planning/v2_future_state_architecture.md) |
 | Priority deferred work | [../../planning/deferred_backlog.md](../../planning/deferred_backlog.md) |
 | Unprioritized ideas | [../../planning/general_backlog.md](../../planning/general_backlog.md) |
 | Release notes | [../../releases/](../../releases/) |

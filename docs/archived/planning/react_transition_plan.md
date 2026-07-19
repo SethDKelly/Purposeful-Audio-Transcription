@@ -1,5 +1,7 @@
 # 06 — React Transition Plan
 
+> **Archived** (transition largely shipped through v1.4 / v2.0 foundation). Living React decisions: [../../planning/react_frontend_plan.md](../../planning/react_frontend_plan.md). Active plan: [../../planning/phases/001_v2_1_phase_sequence_overview.md](../../planning/phases/001_v2_1_phase_sequence_overview.md). ALB cutover: [deferred_backlog.md](../../planning/deferred_backlog.md).
+
 ## Summary Recommendation
 
 React will benefit the application, but it should be introduced after API contracts and operational foundations are stable.

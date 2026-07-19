@@ -116,16 +116,39 @@ Add integration test with mocked LLM in `tests/test_workflow_engine.py` or simil
 - Planning / phases → `docs/planning/`
 - Update [../README.md](../README.md) index when adding major surfaces
 
+## Product tenets (required for product changes)
+
+New features and architecture changes must preserve the [core product tenets](../product/core_tenets.md):
+
+| Tenet | Preserve |
+|-------|----------|
+| Evidence traceability | Claims cite stable quote IDs; concise spans |
+| Confidence calibration | No overstated inferences |
+| Multi-lens analysis | Module provenance; honest convergence/divergence |
+| Non-diagnostic discipline | No clinical/abuse/personality determinations as fact |
+| Longitudinal case tracking | Session/transcript-scoped evidence identity |
+| Professional workflow fit | Reviewable outputs; version metadata |
+| Safety-aware framing | Serious risk not mutualized; cautious language |
+| Structured reasoning graph | Typed relationships with rationale/evidence where possible |
+
+Use [pr_review_tenet_checklist.md](pr_review_tenet_checklist.md) on every product PR. GitHub PRs also load [`.github/pull_request_template.md`](../../.github/pull_request_template.md).
+
+Do **not** specialize the core engine for one market (therapy, mediation, enterprise, coaching) — use templates/presets later.
+
 ## Code review checklist
 
 - [ ] `pytest tests/ -q` passes
 - [ ] No secrets in diff
 - [ ] Evidence IDs preserved in new finding paths
 - [ ] Safety validator considered for new LLM output types
+- [ ] Tenet checklist reviewed for product-facing changes
 
 ## Related
 
 - [development.md](development.md)
 - [architecture.md](architecture.md)
+- [pr_review_tenet_checklist.md](pr_review_tenet_checklist.md)
+- [../product/core_tenets.md](../product/core_tenets.md)
+- [../planning/phases/001_v2_1_phase_sequence_overview.md](../planning/phases/001_v2_1_phase_sequence_overview.md)
 - [../planning/deferred_backlog.md](../planning/deferred_backlog.md)
 - [../archived/planning/phases.md](../archived/planning/phases.md)

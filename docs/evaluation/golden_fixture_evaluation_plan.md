@@ -2,6 +2,8 @@
 
 Regression and quality foundation before growing the module set. Historical roadmap phases: [../archived/planning/phases.md](../archived/planning/phases.md) (Phase 29). Related: [../design/14_testing_evaluation_and_safety.md](../design/14_testing_evaluation_and_safety.md), prior P1-5b / P1-6 fixture intent.
 
+**Tenet compliance:** [tenet_compliance_evaluation_plan.md](tenet_compliance_evaluation_plan.md) (against [../product/core_tenets.md](../product/core_tenets.md)) extends golden/safety gates with product-tenet metrics for v2.1 RC ([phases/009](../planning/phases/009_v2_1_react_api_contract_and_release_candidate_readiness.md)).
+
 **Layout & conventions (reference):** [golden_transcript_fixtures.md](golden_transcript_fixtures.md)
 
 ## Fixtures

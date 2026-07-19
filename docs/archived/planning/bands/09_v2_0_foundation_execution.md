@@ -1,6 +1,6 @@
 # v2.0 Foundation Execution Band
 
-Companion to [05_v2_0_future_state_architecture.md](05_v2_0_future_state_architecture.md).
+Companion to [../../../planning/v2_future_state_architecture.md](../../../planning/v2_future_state_architecture.md).
 This band ships the first **readiness slice** toward v2 — not the full future-state vision.
 
 ## Goal
@@ -41,12 +41,12 @@ deploy cutover scaffolding.
 
 - [x] Document React-primary cutover (Streamlit `/admin`)
 - [x] `rre-dev-web` ECS/ECR already provisioned (`web_desired_count` default 0)
-- [ ] Ops: push web image, set `web_desired_count=1`, flip ALB default _(moved to [10](10_v2_1_cutover_auth_and_graph_depth.md) Workstream A)_
+- [ ] Ops: push web image, set `web_desired_count=1`, flip ALB default _(deferred — see [deferred_backlog.md](../../../planning/deferred_backlog.md) post-RC / GA; superseded band [10](10_v2_1_cutover_auth_and_graph_depth_superseded.md))_
 
 ## Exit for this band
 
 Foundation complete when gates CI exists, safety events are auditable, report packages are
 server-built, findings are on `/api/v1`, and React surfaces safety + evals. Full v2 vision
-(Cognito, S3+CloudFront, deep graph reasoning) remains future work.
+(Cognito/SSO, S3+CloudFront, deep graph contradiction UX) remains deferred — see [deferred_backlog.md](../../../planning/deferred_backlog.md). Near-term auth is email OTP ([phases/003](../../../planning/phases/003_v2_1_simple_email_auth_and_ownership.md)).
 
 **Status:** Foundation band complete (ops ALB cutover still manual).

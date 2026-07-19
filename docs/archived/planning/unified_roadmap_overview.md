@@ -1,5 +1,7 @@
 # 00 — Unified Roadmap Overview
 
+> **Archived** supporting strategy doc. Active execution: [../../planning/phases/](../../planning/phases/). Living vision: [../../planning/v2_future_state_architecture.md](../../planning/v2_future_state_architecture.md).
+
 ## Purpose
 
 This document defines the unified roadmap from the current v1 architecture toward a durable v2 Relationship Reasoning Engine.
@@ -26,7 +28,7 @@ In place today:
 - Auth/RBAC **plan** (implementation outstanding)
 - Supply-chain + data-governance documentation
 
-**Active next band:** [10_v2_1_cutover_auth_and_graph_depth.md](10_v2_1_cutover_auth_and_graph_depth.md) — live React cutover, Cognito/auth MVP, deeper graph/case work, ops drills.
+**Active next band:** [../../planning/phases/001_v2_1_phase_sequence_overview.md](../../planning/phases/001_v2_1_phase_sequence_overview.md) — tenet hardening, email auth, evidence precision/versioning, RC readiness (`001`–`009`).
 
 Avoid expanding analytical module breadth; prefer cutover, auth, evidence/graph depth, and platform maturity.
 
@@ -203,19 +205,23 @@ v2.x Full platform maturity         (vision: 05)
 
 # Non-Goals for Immediate Next Work
 
-Do not prioritize adding many new analysis modules, rewriting backend architecture from scratch, marketing/public launch before auth and safety maturity, or building multi-user collaboration before Cognito (v2.1).
+Do not prioritize adding many new analysis modules, rewriting backend architecture from scratch, marketing/public launch before auth and safety maturity, or building multi-user collaboration before email auth + ownership (v2.1 **003**).
 
 ---
 
-# Doc map (canonical)
+# Doc map (historical snapshot)
+
+> This overview is **archived**. Canonical pointers: [../../planning/README.md](../../planning/README.md).
 
 | Need | Path |
 |------|------|
-| This overview | `docs/planning/phases/00_unified_roadmap_overview.md` |
-| Active phase work | `docs/planning/phases/10` (then `05` vision) |
+| This overview (archived) | `docs/archived/planning/unified_roadmap_overview.md` |
+| Active phase work | `docs/planning/phases/001`–`009` |
+| v2 vision | `docs/planning/v2_future_state_architecture.md` |
 | Deferred (priority) | `docs/planning/deferred_backlog.md` |
 | Unprioritized ideas | `docs/planning/general_backlog.md` |
 | Completed Phases 1–54 | `docs/archived/planning/phases.md` |
+| Completed band checklists | `docs/archived/planning/bands/` |
 | AWS architecture | `docs/developer/aws-deployment.md` |
 
 When v2.1 ships, append archived **Phase 55**.

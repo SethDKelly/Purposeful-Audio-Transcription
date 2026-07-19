@@ -1,7 +1,7 @@
 # React frontend plan (v1.2)
 
 Canonical product decision for starting React after API stabilization.
-Companion detail: [phases/06_react_transition_plan.md](phases/06_react_transition_plan.md).
+Historical transition narrative: [../archived/planning/react_transition_plan.md](../archived/planning/react_transition_plan.md).
 
 ## Stack (selected)
 
@@ -27,8 +27,9 @@ Avoid Next.js unless SSR/SEO requirements appear.
 
 ## Auth
 
-- Dev/UAT: shared `X-API-Key` (same as Streamlit / ECS Secrets Manager).
-- Session cookies / Cognito: deferred until external multi-user UAT (see deferred backlog).
+- Near-term (v2.1 **003**): passwordless email OTP + session cookie ([ADR 001](../developer/architecture_decisions/adr_001_simple_email_auth_before_enterprise_sso.md); [auth_rbac_plan.md](auth_rbac_plan.md)).
+- Shared `X-API-Key` / `VITE_API_KEY`: internal/dev/admin only after product auth lands.
+- Cognito / enterprise SSO: deferred ([deferred_backlog.md](deferred_backlog.md)).
 - Never embed AWS credentials or DB URLs in the frontend.
 
 ## Deployment target

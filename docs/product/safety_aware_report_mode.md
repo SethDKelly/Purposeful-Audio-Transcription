@@ -2,6 +2,8 @@
 
 The app must not diagnose or adjudicate abuse, but it should respond carefully when transcripts contain high-risk content (threats, coercion, intimidation, self-harm, stalking, severe control, etc.). Roadmap: [../archived/planning/phases.md](../archived/planning/phases.md#phase-48--safety-aware-report-mode). Design: [../design/14_testing_evaluation_and_safety.md](../design/14_testing_evaluation_and_safety.md).
 
+**Tenets:** Implements **safety-aware framing** and **non-diagnostic discipline** from [core_tenets.md](core_tenets.md). Further hardening (config-driven policy, stricter claim blocking) is scheduled in [phases/007](../planning/phases/007_v2_1_safety_policy_and_non_diagnostic_enforcement.md). Evaluation: [../evaluation/tenet_compliance_evaluation_plan.md](../evaluation/tenet_compliance_evaluation_plan.md).
+
 ## Capabilities (shipped)
 
 - High-risk scan via `SafetyRiskScanner` (`GET /api/transcripts/{id}/safety-assessment`)

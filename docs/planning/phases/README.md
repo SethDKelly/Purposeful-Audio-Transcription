@@ -1,43 +1,35 @@
-# Relationship Reasoning Engine — Active roadmap (v1.1 → v2.x)
+# Relationship Reasoning Engine — Active roadmap
 
-This folder is the **canonical active plan** after v1.0.0. Historical Phases **1–54** live in [../../archived/planning/phases.md](../../archived/planning/phases.md).
+This folder holds **only unfinished execution phases** for the current band.
 
-## How to use
+Completed history: [../../archived/planning/phases.md](../../archived/planning/phases.md) (Phases **1–54**) · detail checklists in [../../archived/planning/bands/](../../archived/planning/bands/).  
+Living plans (not phases): [../](../) — vision, auth, React, backlogs, readiness.
 
-1. Read [00_unified_roadmap_overview.md](00_unified_roadmap_overview.md).
-2. Execute the current band (today: **v2.1** — [10](10_v2_1_cutover_auth_and_graph_depth.md)).
-3. Keep unscheduled-but-valuable items in [../deferred_backlog.md](../deferred_backlog.md); unprioritized ideas in [../general_backlog.md](../general_backlog.md).
-4. When a band ships, append numbered phases to the archived phase log (next: **Phase 55**).
+## Active sequence — v2.1 (numeric)
 
-## Files
+Start at **[001](001_v2_1_phase_sequence_overview.md)**. Implement in order:
 
 | File | Role |
 |------|------|
-| [00_unified_roadmap_overview.md](00_unified_roadmap_overview.md) | Strategy + phase order |
-| [01_v1_1_operational_hardening.md](01_v1_1_operational_hardening.md) | Complete — Phase 50 |
-| [02_v1_2_evaluation_safety_api_react_readiness.md](02_v1_2_evaluation_safety_api_react_readiness.md) | Complete — Phase 51 |
-| [03_v1_3_react_mvp_product_depth.md](03_v1_3_react_mvp_product_depth.md) | Complete — Phase 52 |
-| [04_v1_4_platform_maturity_react_expansion.md](04_v1_4_platform_maturity_react_expansion.md) | Complete — Phase 53 |
-| [05_v2_0_future_state_architecture.md](05_v2_0_future_state_architecture.md) | v2 vision (north star) |
-| [09_v2_0_foundation_execution.md](09_v2_0_foundation_execution.md) | Complete — Phase 54 |
-| [10_v2_1_cutover_auth_and_graph_depth.md](10_v2_1_cutover_auth_and_graph_depth.md) | **Active** — cutover, auth, graph/case depth |
-| [06_react_transition_plan.md](06_react_transition_plan.md) | Streamlit → React transition (mostly executed) |
-| [07_backlog_triage_and_docs_update_plan.md](07_backlog_triage_and_docs_update_plan.md) | How to triage backlog without losing items |
-| [08_cursor_execution_handoff.md](08_cursor_execution_handoff.md) | Execution rules + first PR order |
+| [001_v2_1_phase_sequence_overview.md](001_v2_1_phase_sequence_overview.md) | Sequence overview + dependency map |
+| [002_v2_1_core_tenets_and_governance.md](002_v2_1_core_tenets_and_governance.md) | Tenets + PR/eval governance |
+| [003_v2_1_simple_email_auth_and_ownership.md](003_v2_1_simple_email_auth_and_ownership.md) | Passwordless email auth + ownership |
+| [004_v2_1_evidence_precision.md](004_v2_1_evidence_precision.md) | Concise evidence spans |
+| [005_v2_1_evidence_snapshots_and_versioning.md](005_v2_1_evidence_snapshots_and_versioning.md) | Transcript/evidence version binding |
+| [006_v2_1_worker_atomicity_and_operational_safety.md](006_v2_1_worker_atomicity_and_operational_safety.md) | Atomic job claim (remaining gap) |
+| [007_v2_1_safety_policy_and_non_diagnostic_enforcement.md](007_v2_1_safety_policy_and_non_diagnostic_enforcement.md) | Config-driven safety / non-diagnostic |
+| [008_v2_1_graph_relationship_evidence_and_case_correctness.md](008_v2_1_graph_relationship_evidence_and_case_correctness.md) | Graph edge evidence + case identity |
+| [009_v2_1_react_api_contract_and_release_candidate_readiness.md](009_v2_1_react_api_contract_and_release_candidate_readiness.md) | OpenAPI client + v2 RC gates |
 
-## Core strategy
+**Guiding tenets:** [../product/core_tenets.md](../../product/core_tenets.md) · Auth decision: [ADR 001](../../developer/architecture_decisions/adr_001_simple_email_auth_before_enterprise_sso.md)
 
-```text
-operational reliability
-→ security boundaries
-→ evaluation quality
-→ safety testing
-→ API stability
-→ React product UI
-→ case/longitudinal depth
-→ v2 foundation
-→ cutover + auth + graph depth
-→ full v2 platform maturity
-```
+Superseded combined band (cutover / Cognito-first): [../../archived/planning/bands/10_v2_1_cutover_auth_and_graph_depth_superseded.md](../../archived/planning/bands/10_v2_1_cutover_auth_and_graph_depth_superseded.md) — leftovers live in [../deferred_backlog.md](../deferred_backlog.md).
 
-Do **not** add analysis modules for breadth. Durable assets are API contracts, domain model, evidence, ontology/graph, evaluation harness, workflow engine, case model, safety boundaries, and product UX.
+## When the sequence ships
+
+1. Append **Phase 55** (and/or per-sub-phase notes) to [../../archived/planning/phases.md](../../archived/planning/phases.md).
+2. Move completed checklists → [../../archived/planning/bands/](../../archived/planning/bands/).
+3. Update [../../archived/planning/executive_roadmap.md](../../archived/planning/executive_roadmap.md) and deferred backlog.
+4. Leave only unfinished work (and this README) here.
+
+Do **not** add analysis modules for breadth. Prefer evidence, confidence, safety, ownership, and graph correctness.

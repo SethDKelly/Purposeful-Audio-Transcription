@@ -134,7 +134,7 @@ Evaluate single-user local/dev model, authenticated individual accounts, therapi
 
 ## Acceptance Criteria
 
-- [x] Auth/RBAC plan exists before broad external use. → [auth_rbac_plan.md](../auth_rbac_plan.md)
+- [x] Auth/RBAC plan exists before broad external use. → [auth_rbac_plan.md](../../../planning/auth_rbac_plan.md)
 - [x] Sensitive case data has a clear access model.
 - [x] Future implementation path is documented.
 
@@ -179,7 +179,7 @@ Evaluate single-user local/dev model, authenticated individual accounts, therapi
 3. Keep Streamlit as eval/golden-review console.
 4. Keep Streamlit temporarily while React matures.
 
-**Decision:** 2 + 3 — see [streamlit_role_decision.md](../streamlit_role_decision.md).
+**Decision:** 2 + 3 — see [streamlit_role_decision.md](../../../planning/streamlit_role_decision.md).
 
 ## Acceptance Criteria
 

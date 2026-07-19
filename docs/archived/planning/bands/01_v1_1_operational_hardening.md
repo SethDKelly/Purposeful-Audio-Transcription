@@ -64,7 +64,7 @@ By the end of v1.1:
 - [x] Document worker deployment and smoke-test behavior.
 - [x] Update stale version / deploy-policy references (tag or manual; not every `main` push).
 - [x] Keep active roadmap in `docs/planning/phases/` (do not revive `implementing.md`).
-- [x] Triage leftovers into `deferred_backlog.md` / `general_backlog.md` per [07](07_backlog_triage_and_docs_update_plan.md).
+- [x] Triage leftovers into `deferred_backlog.md` / `general_backlog.md` (archive practice: [../../README.md](../../README.md)).
 
 ## Acceptance Criteria
 

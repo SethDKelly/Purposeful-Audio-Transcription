@@ -7,7 +7,7 @@
 | **Operators / users** | [user/getting-started.md](user/getting-started.md) → [user/user-guide.md](user/user-guide.md) |
 | **Developers** | [developer/development.md](developer/development.md) → [developer/architecture.md](developer/architecture.md) |
 | **AWS ops** | [developer/aws-operations.md](developer/aws-operations.md) · [developer/aws-deployment.md](developer/aws-deployment.md) · [../infra/dev/README.md](../infra/dev/README.md) |
-| **Active plan** | [planning/phases/10](planning/phases/10_v2_1_cutover_auth_and_graph_depth.md) (**v2.1**) · [planning/deferred_backlog.md](planning/deferred_backlog.md) |
+| **Active plan** | [planning/phases/001](planning/phases/001_v2_1_phase_sequence_overview.md) (**v2.1** `001`–`009`) · [planning/deferred_backlog.md](planning/deferred_backlog.md) · [product/core_tenets.md](product/core_tenets.md) |
 
 > Documentation lives under **`docs/`** (renamed from `doc/` in v0.7.0).
 
@@ -60,20 +60,31 @@ Stable product/technical design (not a task tracker):
 | Document | Description |
 |----------|-------------|
 | [planning/README.md](planning/README.md) | Planning index |
-| [planning/phases/](planning/phases/) | **Active roadmap** (current: v2.1) |
+| [planning/phases/](planning/phases/) | **Active** v2.1 numeric sequence (`001`–`009`) |
+| [planning/v2_readiness_assessment.md](planning/v2_readiness_assessment.md) | v2 beta / RC / GA labeling |
+| [planning/v2_future_state_architecture.md](planning/v2_future_state_architecture.md) | v2 vision / north star |
+| [planning/auth_rbac_plan.md](planning/auth_rbac_plan.md) | Email-first auth; Cognito later |
 | [planning/deferred_backlog.md](planning/deferred_backlog.md) | Prioritized deferred / dependency-gated work |
 | [planning/general_backlog.md](planning/general_backlog.md) | Unprioritized ideas (no commitment) |
-| [archived/planning/](archived/planning/) | Completed Phases 1–54 + executive summary |
+| [archived/planning/](archived/planning/) | Completed Phases 1–54 + retired supporting plans |
+| [archived/planning/bands/](archived/planning/bands/) | Completed / superseded band checklists |
 
-## Architecture / product / evaluation
+## Architecture / product / evaluation / security
 
 | Document | Description |
 |----------|-------------|
+| [product/core_tenets.md](product/core_tenets.md) | Durable product tenets (guides all v2.1 work) |
+| [product/transcript_preparation_workspace.md](product/transcript_preparation_workspace.md) | Transcript prep (**shipped** in v0.7) |
+| [product/safety_aware_report_mode.md](product/safety_aware_report_mode.md) | v1.0 safety-aware reports |
+| [security/simple_email_auth_plan.md](security/simple_email_auth_plan.md) | Passwordless email auth design (phase **003**) |
+| [developer/architecture_decisions/](developer/architecture_decisions/) | ADRs (email auth before SSO; concise evidence) |
+| [developer/evidence_precision_design.md](developer/evidence_precision_design.md) | Concise evidence spans (phase **004**) |
+| [developer/evidence_snapshot_versioning_design.md](developer/evidence_snapshot_versioning_design.md) | Transcript/evidence versioning (phase **005**) |
+| [developer/pr_review_tenet_checklist.md](developer/pr_review_tenet_checklist.md) | PR review against tenets |
 | [architecture/ontology_v1.md](architecture/ontology_v1.md) | Ontology vocabulary v1 (**shipped** in v0.7) |
 | [architecture/structured_persistence_plan.md](architecture/structured_persistence_plan.md) | v0.8 persistence |
 | [architecture/workflow_dag_plan.md](architecture/workflow_dag_plan.md) | v1.0 DAG workflows |
-| [product/transcript_preparation_workspace.md](product/transcript_preparation_workspace.md) | Transcript prep (**shipped** in v0.7) |
-| [product/safety_aware_report_mode.md](product/safety_aware_report_mode.md) | v1.0 safety-aware reports |
+| [evaluation/tenet_compliance_evaluation_plan.md](evaluation/tenet_compliance_evaluation_plan.md) | Tenet compliance metrics / gates |
 | [evaluation/golden_fixture_evaluation_plan.md](evaluation/golden_fixture_evaluation_plan.md) | Golden fixtures |
 | [evaluation/golden_transcript_fixtures.md](evaluation/golden_transcript_fixtures.md) | Golden fixture layout |
 | [evaluation/golden_manual_rubric.md](evaluation/golden_manual_rubric.md) | Human review rubric |
@@ -98,6 +109,6 @@ Stable product/technical design (not a task tracker):
 | Path | Role |
 |------|------|
 | [archived/](archived/) | Pre-RRE / early backlog history |
-| [archived/planning/](archived/planning/) | Executive roadmap + completed phases 1–49 |
+| [archived/planning/](archived/planning/) | Executive roadmap + completed phases **1–54** + retired supporting plans |
 
 **Do not** add new tasks to archived files — use [planning/deferred_backlog.md](planning/deferred_backlog.md) or [planning/general_backlog.md](planning/general_backlog.md).

@@ -1,4 +1,8 @@
-# 05 — v2.0 Future State Architecture
+# v2.0 Future State Architecture
+
+Living **vision / north star** for full v2 readiness — not an execution checklist.  
+Active band: [phases/001_v2_1_phase_sequence_overview.md](phases/001_v2_1_phase_sequence_overview.md) (`001`–`009`).  
+Foundation slice (complete): [../archived/planning/bands/09_v2_0_foundation_execution.md](../archived/planning/bands/09_v2_0_foundation_execution.md).
 
 ## Vision
 
@@ -149,7 +153,8 @@ Streamlit, if retained, should be an internal admin/eval console, not the primar
 
 The application is ready to be called v2 when React owns the primary user journey, API contracts are stable and versioned, worker execution is durable and observable, evidence-linked findings are normalized and queryable, graph reasoning improves synthesis, golden and safety evals gate releases, case/longitudinal workflows are useful, safety-aware UX is mature, deployment and data governance are credible, module lifecycle is managed, and Streamlit has a resolved role.
 
-**Execution band:** [09_v2_0_foundation_execution.md](09_v2_0_foundation_execution.md) (first readiness slice).
+**First readiness slice (complete — Phase 54):** [../archived/planning/bands/09_v2_0_foundation_execution.md](../archived/planning/bands/09_v2_0_foundation_execution.md).  
+**Active next:** [phases/001_v2_1_phase_sequence_overview.md](phases/001_v2_1_phase_sequence_overview.md) (`001`–`009`).
 
 ---
 

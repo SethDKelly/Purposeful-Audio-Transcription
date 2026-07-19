@@ -1,8 +1,15 @@
 # Phases — Relationship Reasoning Engine
 
-Sequential record of **completed** project phases. Numbering starts at **1** and increments by **1**. When a new series of phases is planned and later finished, append starting at the next free number (**50** after this document).
+Sequential record of **completed** project phases. Numbering starts at **1** and increments by **1**. When a new series of phases is planned and later finished, append starting at the next free number.
 
-Executive summary: [executive_roadmap.md](executive_roadmap.md). Active backlogs: [../../planning/deferred_backlog.md](../../planning/deferred_backlog.md) · [../../planning/general_backlog.md](../../planning/general_backlog.md).
+**Archive practice**
+
+1. Append a short **Phase N** summary here (status, band/commit, 2–4 sentence delivery note).
+2. Move the detailed band checklist from `docs/planning/phases/` into [bands/](bands/) (keep history; do not leave completed checklists in the active roadmap folder).
+3. Update [executive_roadmap.md](executive_roadmap.md) completion bands and “next phase” pointer.
+4. Retarget [../../planning/deferred_backlog.md](../../planning/deferred_backlog.md) / active `phases/README.md` so `phases/` holds **only unfinished execution bands** (+ README). Vision/process docs live under `docs/planning/` or here as archived supporting material — not as numbered phase files.
+
+Executive summary: [executive_roadmap.md](executive_roadmap.md). Active plan: [../../planning/phases/](../../planning/phases/). Vision: [../../planning/v2_future_state_architecture.md](../../planning/v2_future_state_architecture.md). Backlogs: [../../planning/deferred_backlog.md](../../planning/deferred_backlog.md) · [../../planning/general_backlog.md](../../planning/general_backlog.md). Detail checklists: [bands/](bands/).
 
 ---
 
@@ -402,7 +409,7 @@ API reference expansion, architecture/user guide refresh, version alignment (`1.
 
 **Status:** Complete · **Band:** v1.1 · **Commits:** through `e2eb380` (Workstream G)
 
-Test/repo hygiene, deployment docs truth, selective component deploy, service IAM, worker queue guardrails, Streamlit API-client boundary, CloudWatch observability/smoke. Plan: [../../planning/phases/01_v1_1_operational_hardening.md](../../planning/phases/01_v1_1_operational_hardening.md).
+Test/repo hygiene, deployment docs truth, selective component deploy, service IAM, worker queue guardrails, Streamlit API-client boundary, CloudWatch observability/smoke. Detail: [bands/01_v1_1_operational_hardening.md](bands/01_v1_1_operational_hardening.md).
 
 ---
 
@@ -410,7 +417,7 @@ Test/repo hygiene, deployment docs truth, selective component deploy, service IA
 
 **Status:** Complete · **Band:** v1.2 · **Commit:** `780b27a`
 
-Golden evaluation harness, safety red-team fixtures, forbidden-claim scoring, `/api/v1` surface + OpenAPI snapshot, React stack/migration plan, Streamlit constrained as API client. Plan: [../../planning/phases/02_v1_2_evaluation_safety_api_react_readiness.md](../../planning/phases/02_v1_2_evaluation_safety_api_react_readiness.md).
+Golden evaluation harness, safety red-team fixtures, forbidden-claim scoring, `/api/v1` surface + OpenAPI snapshot, React stack/migration plan, Streamlit constrained as API client. Detail: [bands/02_v1_2_evaluation_safety_api_react_readiness.md](bands/02_v1_2_evaluation_safety_api_react_readiness.md).
 
 ---
 
@@ -418,7 +425,7 @@ Golden evaluation harness, safety red-team fixtures, forbidden-claim scoring, `/
 
 **Status:** Complete · **Band:** v1.3 · **Commit:** `9597b28`
 
-`frontend-react/` Vite+React+TS vertical slice (ingest → prepare → analyze → evidence-linked report → cases/feedback), `/api/v1` expansions, long-transcript chunking design, React Dockerfile/CI. Plan: [../../planning/phases/03_v1_3_react_mvp_product_depth.md](../../planning/phases/03_v1_3_react_mvp_product_depth.md).
+`frontend-react/` Vite+React+TS vertical slice (ingest → prepare → analyze → evidence-linked report → cases/feedback), `/api/v1` expansions, long-transcript chunking design, React Dockerfile/CI. Split-turn deferred to v2.1. Detail: [bands/03_v1_3_react_mvp_product_depth.md](bands/03_v1_3_react_mvp_product_depth.md).
 
 ---
 
@@ -426,7 +433,7 @@ Golden evaluation harness, safety red-team fixtures, forbidden-claim scoring, `/
 
 **Status:** Complete · **Band:** v1.4 · **Commits:** `097ec04`, `a4c0b63`
 
-React dashboard/graph/modules/settings, longitudinal compare/synthesis, module lifecycle UI + prompt sha256, auth/RBAC plan, Streamlit admin/eval decision, supply-chain (Dependabot + audits), data governance docs, ECR/ECS `rre-dev-web` at `desired_count=0`. Plan: [../../planning/phases/04_v1_4_platform_maturity_react_expansion.md](../../planning/phases/04_v1_4_platform_maturity_react_expansion.md).
+React dashboard/graph/modules/settings, longitudinal compare/synthesis, module lifecycle UI + prompt sha256, auth/RBAC plan, Streamlit admin/eval decision, supply-chain (Dependabot + audits), data governance docs, ECR/ECS `rre-dev-web` at `desired_count=0`. Detail: [bands/04_v1_4_platform_maturity_react_expansion.md](bands/04_v1_4_platform_maturity_react_expansion.md).
 
 ---
 
@@ -434,12 +441,12 @@ React dashboard/graph/modules/settings, longitudinal compare/synthesis, module l
 
 **Status:** Complete · **Band:** v2.0 foundation · **Commit:** `efe7818`
 
-`SafetyEvent` / `EvaluationRun` persistence, safety UX on Analyze/Report, CI eval release gates, server ZIP report packages, findings query on `/api/v1`, case pinned findings, Evaluations page. Plan: [../../planning/phases/09_v2_0_foundation_execution.md](../../planning/phases/09_v2_0_foundation_execution.md). Vision: [../../planning/phases/05_v2_0_future_state_architecture.md](../../planning/phases/05_v2_0_future_state_architecture.md).
+`SafetyEvent` / `EvaluationRun` persistence, safety UX on Analyze/Report, CI eval release gates, server ZIP report packages, findings query on `/api/v1`, case pinned findings, Evaluations page. ALB React cutover deferred to v2.1. Detail: [bands/09_v2_0_foundation_execution.md](bands/09_v2_0_foundation_execution.md). Vision (living): [../../planning/v2_future_state_architecture.md](../../planning/v2_future_state_architecture.md).
 
 ---
 
 ## Append rule
 
-When a new planned series completes, add **Phase 55**, **Phase 56**, … here with status, release tag (if any), and a short delivery summary. Update [executive_roadmap.md](executive_roadmap.md) completion bands accordingly.
+When a new planned series completes, add **Phase 55**, **Phase 56**, … here with status, release tag (if any), and a short delivery summary; move the band detail file into [bands/](bands/); update [executive_roadmap.md](executive_roadmap.md).
 
-**Next planned archive number:** **55** (v2.1 cutover / auth / graph depth — active: [../../planning/phases/10_v2_1_cutover_auth_and_graph_depth.md](../../planning/phases/10_v2_1_cutover_auth_and_graph_depth.md)).
+**Next planned archive number:** **55** (v2.1 numeric sequence `001`–`009` — active: [../../planning/phases/001_v2_1_phase_sequence_overview.md](../../planning/phases/001_v2_1_phase_sequence_overview.md)).

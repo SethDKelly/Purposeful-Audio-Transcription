@@ -2,7 +2,9 @@
 
 High-level map of the RRE codebase. Deep design specs live in [../design/](../design/). Runtime is **AWS only**.
 
-**Current release:** **v1.0.0**. Completed history: [../archived/planning/phases.md](../archived/planning/phases.md). Active: [../planning/phases/](../planning/phases/) (v1.1 operational hardening).
+**Current release:** **v1.0.0**. Completed history: [../archived/planning/phases.md](../archived/planning/phases.md). Active: [../planning/phases/001_v2_1_phase_sequence_overview.md](../planning/phases/001_v2_1_phase_sequence_overview.md) (v2.1 `001`–`009`).
+
+**Product tenets:** [../product/core_tenets.md](../product/core_tenets.md) — evidence traceability, confidence calibration, multi-lens analysis, non-diagnostic discipline, longitudinal cases, professional workflow fit, safety-aware framing, and structured reasoning graph. Features and architecture changes should preserve these.
 
 ## System diagram
 

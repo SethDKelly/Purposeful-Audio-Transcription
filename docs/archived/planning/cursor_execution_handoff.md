@@ -1,11 +1,13 @@
 # 08 — Cursor execution handoff
 
+> **Archived** one-time handoff (pre-numeric). Active plan: [../../planning/phases/001_v2_1_phase_sequence_overview.md](../../planning/phases/001_v2_1_phase_sequence_overview.md) (`001`–`009`).
+
 ## Goal
 
 Execute the active band in `docs/planning/phases/` without inventing a parallel doc tree.
 
-**Current band:** [10_v2_1_cutover_auth_and_graph_depth.md](10_v2_1_cutover_auth_and_graph_depth.md)  
-**Archive:** Phases **1–54** in [../../archived/planning/phases.md](../../archived/planning/phases.md)
+**Current band:** [../../planning/phases/001_v2_1_phase_sequence_overview.md](../../planning/phases/001_v2_1_phase_sequence_overview.md)  
+**Archive:** Phases **1–54** in [phases.md](phases.md)
 
 ---
 
@@ -24,14 +26,14 @@ Mark recommendations as already shipped, partial, or missing.
 | Active roadmap | `docs/planning/phases/` (start at `10`) |
 | Deferred (priority) | `docs/planning/deferred_backlog.md` |
 | General (no priority) | `docs/planning/general_backlog.md` |
-| Completed history | `docs/archived/planning/` |
+| Completed history | `docs/archived/planning/phases.md` + `bands/` |
 | AWS architecture | `docs/developer/aws-deployment.md` |
 
 Do **not** recreate `implementing.md`, `future_considerations.md`, or root-level `roadmap_v1_*.md` duplicates.
 
 Reclassify uncovered items into deferred vs general; do not delete.
 
-When a band ships: append the next Phase number to `archived/planning/phases.md`, update `executive_roadmap.md`, retarget `deferred_backlog` / `README` pointers.
+When a band ships: append the next Phase number to `archived/planning/phases.md`, **move** the detail checklist into `archived/planning/bands/`, update `executive_roadmap.md`, and retarget `deferred_backlog` / `phases/README` so only unfinished work stays under `planning/phases/`.
 
 ---
 
@@ -45,8 +47,8 @@ Use the checkboxes already in each phase file. When implementing, tick tasks and
 
 Anything not covered by the active band stays in:
 
-- [../deferred_backlog.md](../deferred_backlog.md) — still want it when unblocked
-- [../general_backlog.md](../general_backlog.md) — no schedule
+- [../../planning/deferred_backlog.md](../../planning/deferred_backlog.md) — still want it when unblocked
+- [../../planning/general_backlog.md](../../planning/general_backlog.md) — no schedule
 
 ---
 
@@ -54,19 +56,19 @@ Anything not covered by the active band stays in:
 
 v1.1–v1.4 and v2.0 foundation are **complete**. Do not reopen them unless fixing regressions.
 
-v2.1 start order:
+v2.1 start order (superseded — see numeric `001`–`009`):
 
-1. React ALB cutover (`rre-dev-web`)  
-2. Auth MVP (Cognito) per [../auth_rbac_plan.md](../auth_rbac_plan.md)  
-3. Graph/case depth (contradiction, case package, split-turn)  
-4. Ops drills (RDS restore, secret rotation)  
-5. Worker/module status UX  
+1. Core tenets / governance (**002**)  
+2. Auth MVP — **email OTP** per [../../planning/auth_rbac_plan.md](../../planning/auth_rbac_plan.md) / ADR 001 (**003**)  
+3. Evidence precision + snapshots (**004**–**005**)  
+4. Worker atomicity / safety / graph (**006**–**008**)  
+5. React API contract + RC (**009**); ALB cutover deferred to GA  
 
 ---
 
 ## Step 6 — React rule
 
-React must not import backend services or touch DB/AWS directly. Clients talk HTTP to `/api/v1`. Streamlit remains admin/eval only ([../streamlit_role_decision.md](../streamlit_role_decision.md)).
+React must not import backend services or touch DB/AWS directly. Clients talk HTTP to `/api/v1`. Streamlit remains admin/eval only ([../../planning/streamlit_role_decision.md](../../planning/streamlit_role_decision.md)).
 
 ---
 
@@ -98,11 +100,11 @@ No new analysis modules unless required to exercise the platform.
 
 | PR | Scope |
 |----|--------|
-| 1 | ALB/web cutover Terraform + deploy docs |
-| 2 | Cognito / JWT auth MVP |
-| 3 | Graph contradiction + case package export |
-| 4 | Split-turn prepare UX |
-| 5 | Documented RDS restore / secret-rotation drill results |
+| 1 | Tenet governance wiring (**002** leftovers) |
+| 2 | Email OTP auth + ownership (**003**) |
+| 3 | Evidence precision (**004**) |
+| 4 | Evidence snapshots (**005**) |
+| 5 | Atomic worker claim (**006**) |
 
 ---
 
