@@ -2,46 +2,17 @@
 
 Active planning for the **Relationship Reasoning Engine** after **v1.0.0**.
 
-## Canonical set
-
 | Document | Purpose |
 |----------|---------|
-| **[implementing.md](implementing.md)** | Active execution tracker (**post-v1.0**) |
-| **[roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md)** | Phased roadmap v0.7 → v1.0 (**complete**) |
-| **[future_considerations.md](future_considerations.md)** | Deferred / later backlog (do not delete ideas — defer them) |
-| **[golden_transcript_fixtures.md](golden_transcript_fixtures.md)** | Golden transcript layout, metadata/assertions, pytest expectations |
-| **[completed.md](completed.md)** | Shipped capabilities |
-| **[backlog.md](backlog.md)** | Index into future considerations |
+| **[phases/](phases/)** | **Active roadmap** — v1.1 → v2.0 (start here) |
+| **[deferred_backlog.md](deferred_backlog.md)** | Phased items not yet scheduled (or waiting on a dependency) |
+| **[general_backlog.md](general_backlog.md)** | Unprioritized ideas (no commitment) |
 
-**Do not** revive archived MVP plans as the task tracker.
+Completed history (Phases **1–49**): [../archived/planning/](../archived/planning/).  
+When a roadmap band ships, append to [../archived/planning/phases.md](../archived/planning/phases.md) starting at **Phase 50**.
 
-## Architecture / product / evaluation plans
-
-| Document | Purpose |
-|----------|---------|
-| [../architecture/ontology_v1.md](../architecture/ontology_v1.md) | Canonical construct & relationship vocabulary (**shipped** v0.7) |
-| [../architecture/structured_persistence_plan.md](../architecture/structured_persistence_plan.md) | Normalized findings/constructs/graph (**shipped** v0.8) |
-| [../architecture/workflow_dag_plan.md](../architecture/workflow_dag_plan.md) | DAG workflow engine (**shipped** v1.0) |
-| [../product/transcript_preparation_workspace.md](../product/transcript_preparation_workspace.md) | Transcript review before analysis (**shipped** v0.7) |
-| [../product/safety_aware_report_mode.md](../product/safety_aware_report_mode.md) | High-risk report framing (**shipped** v1.0) |
-| [../evaluation/golden_fixture_evaluation_plan.md](../evaluation/golden_fixture_evaluation_plan.md) | Fixtures & eval loop (**shipped** foundation v0.7) |
-| [../evaluation/golden_manual_rubric.md](../evaluation/golden_manual_rubric.md) | Human review rubric |
-
-## AWS & evaluations
-
-| Document | Purpose |
-|----------|---------|
-| **[aws-deployment.md](aws-deployment.md)** | AWS dev architecture, backbone, network, models |
-| **[llm-evaluation-bedrock.md](llm-evaluation-bedrock.md)** | Bedrock decision (AWS-1b) |
-| **[asr-evaluation-transcribe.md](asr-evaluation-transcribe.md)** | Transcribe decision (AWS-1c) |
-| **[log-redaction.md](log-redaction.md)** | CloudWatch redaction (P1-3c) |
-
-Ops: [../developer/aws-operations.md](../developer/aws-operations.md) · Terraform: [../../infra/dev/README.md](../../infra/dev/README.md) · **Pause AWS when idle**
-
-## History
-
-| Path | Purpose |
-|------|---------|
-| **[archived/](archived/)** | Superseded MVP / post-v0.3 plans (read-only) |
+**Current active band:** [phases/01_v1_1_operational_hardening.md](phases/01_v1_1_operational_hardening.md)
 
 **Design anchors:** [../design/01_product_vision_and_scope.md](../design/01_product_vision_and_scope.md) · [../design/04_knowledge_ontology.md](../design/04_knowledge_ontology.md) · [../design/03_domain_model.md](../design/03_domain_model.md)
+
+**AWS ops:** [../developer/aws-operations.md](../developer/aws-operations.md) · [../developer/aws-deployment.md](../developer/aws-deployment.md) · [../../infra/dev/README.md](../../infra/dev/README.md)

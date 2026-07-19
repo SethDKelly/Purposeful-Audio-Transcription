@@ -48,10 +48,18 @@ def main() -> None:
     )
 
     resumed = 0
+    max_in_flight = max(1, int(settings.workflow_worker_max_in_flight or 1))
     for run in workflow_job_service._engine.list_incomplete():
         if run.status == WorkflowRunStatus.CREATED.value:
             continue
-        workflow_job_service._executor.submit(
+        if workflow_job_service.in_flight_count >= max_in_flight:
+            logger.warning(
+                "Deferred resume of remaining in-flight runs; at max_in_flight=%s",
+                max_in_flight,
+                extra={"event": "worker.resume.capped"},
+            )
+            break
+        workflow_job_service._submit_tracked(
             workflow_job_service._run_claimed,
             run.id,
             run.workflow_id,

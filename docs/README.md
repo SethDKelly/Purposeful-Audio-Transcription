@@ -6,8 +6,8 @@
 |----------|------------|
 | **Operators / users** | [user/getting-started.md](user/getting-started.md) → [user/user-guide.md](user/user-guide.md) |
 | **Developers** | [developer/development.md](developer/development.md) → [developer/architecture.md](developer/architecture.md) |
-| **AWS ops** | [developer/aws-operations.md](developer/aws-operations.md) · [planning/aws-deployment.md](planning/aws-deployment.md) · [../infra/dev/README.md](../infra/dev/README.md) |
-| **Active plan** | [planning/implementing.md](planning/implementing.md) · [planning/roadmap_v0.7_to_v1.0.md](planning/roadmap_v0.7_to_v1.0.md) |
+| **AWS ops** | [developer/aws-operations.md](developer/aws-operations.md) · [developer/aws-deployment.md](developer/aws-deployment.md) · [../infra/dev/README.md](../infra/dev/README.md) |
+| **Active plan** | [planning/phases/](planning/phases/) (**v1.1**) · [planning/deferred_backlog.md](planning/deferred_backlog.md) |
 
 > Documentation lives under **`docs/`** (renamed from `doc/` in v0.7.0).
 
@@ -32,6 +32,8 @@
 | [developer/contributing.md](developer/contributing.md) | Conventions, PRs, adding modules |
 | [developer/aws-operations.md](developer/aws-operations.md) | CloudWatch Insights, deploy smoke, pause/resume |
 | [developer/cursor-workflow.md](developer/cursor-workflow.md) | AI-assisted development notes |
+| [developer/aws-deployment.md](developer/aws-deployment.md) | AWS architecture and backbone integration |
+| [developer/log-redaction.md](developer/log-redaction.md) | CloudWatch redaction design |
 
 ## Design package
 
@@ -58,17 +60,10 @@ Stable product/technical design (not a task tracker):
 | Document | Description |
 |----------|-------------|
 | [planning/README.md](planning/README.md) | Planning index |
-| [planning/implementing.md](planning/implementing.md) | Active priorities (**post-v1.0** backlog) |
-| [planning/roadmap_v0.7_to_v1.0.md](planning/roadmap_v0.7_to_v1.0.md) | Phased roadmap + acceptance criteria |
-| [planning/future_considerations.md](planning/future_considerations.md) | Deferred / later backlog |
-| [planning/completed.md](planning/completed.md) | Shipped capabilities |
-| [planning/backlog.md](planning/backlog.md) | Backlog index → future considerations |
-| [planning/aws-deployment.md](planning/aws-deployment.md) | AWS architecture and backbone integration |
-| [planning/golden_transcript_fixtures.md](planning/golden_transcript_fixtures.md) | Golden fixture layout |
-| [planning/llm-evaluation-bedrock.md](planning/llm-evaluation-bedrock.md) | Bedrock LLM decision |
-| [planning/asr-evaluation-transcribe.md](planning/asr-evaluation-transcribe.md) | Whisper vs Transcribe |
-| [planning/log-redaction.md](planning/log-redaction.md) | CloudWatch redaction design |
-| [planning/archived/](planning/archived/) | Superseded planning docs |
+| [planning/phases/](planning/phases/) | **Active roadmap** (v1.1 → v2.0) |
+| [planning/deferred_backlog.md](planning/deferred_backlog.md) | Prioritized deferred / dependency-gated work |
+| [planning/general_backlog.md](planning/general_backlog.md) | Unprioritized ideas (no commitment) |
+| [archived/planning/](archived/planning/) | Completed Phases 1–49 + executive summary |
 
 ## Architecture / product / evaluation
 
@@ -80,7 +75,10 @@ Stable product/technical design (not a task tracker):
 | [product/transcript_preparation_workspace.md](product/transcript_preparation_workspace.md) | Transcript prep (**shipped** in v0.7) |
 | [product/safety_aware_report_mode.md](product/safety_aware_report_mode.md) | v1.0 safety-aware reports |
 | [evaluation/golden_fixture_evaluation_plan.md](evaluation/golden_fixture_evaluation_plan.md) | Golden fixtures |
+| [evaluation/golden_transcript_fixtures.md](evaluation/golden_transcript_fixtures.md) | Golden fixture layout |
 | [evaluation/golden_manual_rubric.md](evaluation/golden_manual_rubric.md) | Human review rubric |
+| [evaluation/llm-evaluation-bedrock.md](evaluation/llm-evaluation-bedrock.md) | Bedrock LLM decision |
+| [evaluation/asr-evaluation-transcribe.md](evaluation/asr-evaluation-transcribe.md) | Whisper vs Transcribe |
 
 ## Releases
 
@@ -100,6 +98,6 @@ Stable product/technical design (not a task tracker):
 | Path | Role |
 |------|------|
 | [archived/](archived/) | Pre-RRE / early backlog history |
-| [planning/archived/](planning/archived/) | Superseded planning docs |
+| [archived/planning/](archived/planning/) | Executive roadmap + completed phases 1–49 |
 
-**Do not** add new tasks to archived files — use [planning/implementing.md](planning/implementing.md) or [planning/backlog.md](planning/backlog.md).
+**Do not** add new tasks to archived files — use [planning/deferred_backlog.md](planning/deferred_backlog.md) or [planning/general_backlog.md](planning/general_backlog.md).

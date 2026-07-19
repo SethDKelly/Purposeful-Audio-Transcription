@@ -2,7 +2,7 @@
 
 High-level map of the RRE codebase. Deep design specs live in [../design/](../design/). Runtime is **AWS only**.
 
-**Current release:** **v1.0.0**. Roadmap complete through v1.0: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Next: [../planning/implementing.md](../planning/implementing.md).
+**Current release:** **v1.0.0**. Roadmap complete through v1.0: [../archived/planning/phases.md](../archived/planning/phases.md). Next: [../planning/deferred_backlog.md](../planning/deferred_backlog.md).
 
 ## System diagram
 
@@ -99,7 +99,7 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 ### Add a golden fixture
 
 1. `tests/fixtures/golden_transcripts/<ID>_<slug>/` with required files
-2. See [../planning/golden_transcript_fixtures.md](../planning/golden_transcript_fixtures.md)
+2. See [../evaluation/golden_transcript_fixtures.md](../evaluation/golden_transcript_fixtures.md)
 
 ## Auth, errors, logging
 
@@ -110,7 +110,7 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 
 ## Related
 
-- [../planning/aws-deployment.md](../planning/aws-deployment.md)
+- [aws-deployment.md](aws-deployment.md)
 - [../architecture/ontology_v1.md](../architecture/ontology_v1.md)
 - [../product/transcript_preparation_workspace.md](../product/transcript_preparation_workspace.md)
 - [../design/02_system_architecture.md](../design/02_system_architecture.md)

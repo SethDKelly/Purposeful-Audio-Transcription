@@ -1,6 +1,6 @@
 # Ontology v1 — Canonical Vocabulary
 
-**Status:** Shipped in **v0.7.0**. Complements conceptual design in [../design/04_knowledge_ontology.md](../design/04_knowledge_ontology.md). Active tracker: [../planning/implementing.md](../planning/implementing.md) (v0.8).
+**Status:** Shipped in **v0.7.0**. Complements conceptual design in [../design/04_knowledge_ontology.md](../design/04_knowledge_ontology.md). Phase history: [../archived/planning/phases.md](../archived/planning/phases.md#phase-27--ontology-vocabulary-v1).
 
 ## Placement
 

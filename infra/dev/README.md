@@ -5,9 +5,10 @@ Terraform for the **dev** environment in account `521018312783` (`us-east-2`).
 | Resource | Name pattern |
 |----------|----------------|
 | State key | `purposeful-audio-transcription/dev/terraform.tfstate` |
-| IAM roles | `rre-dev-ecs-execution`, `rre-dev-ecs-task` |
+| IAM roles | `rre-dev-ecs-execution`, `rre-dev-ecs-execution-ui`, `rre-dev-ecs-task-{ui,api,worker}` |
 | ECS cluster | `rre-dev-cluster` |
-| ECR | `rre-dev-api`, `rre-dev-ui` |
+| ECS services | `rre-dev-api`, `rre-dev-ui`, `rre-dev-worker` |
+| ECR | `rre-dev-api`, `rre-dev-ui` (worker reuses API image) |
 | ALB | `rre-dev-alb` |
 
 ## Prerequisites
@@ -20,9 +21,9 @@ Terraform for the **dev** environment in account `521018312783` (`us-east-2`).
 
 **Push of a `v*.*.*` tag** or manual **Deploy to AWS dev** wakes ECS/RDS. Ordinary commits to `main` do not auto-deploy.
 
-Manual: Actions → **Deploy to AWS dev** → Run workflow.
+Manual: Actions → **Deploy to AWS dev** → Run workflow (optional `component`: `all` / `api` / `ui` / `worker`).
 
-Builds `Dockerfile.cloud` (Transcribe + Bedrock) and `Dockerfile.ui`, applies Terraform, smokes AWS-3f.
+Builds selected image(s), applies Terraform, updates matching ECS services, smokes AWS-3f scoped by component.
 
 ## Manual deploy
 
@@ -74,7 +75,7 @@ terraform output api_log_group
 - RDS PostgreSQL is private; credentials in Secrets Manager (`rre-dev/database`).
 - **API auth:** Shared `API_KEY` in Secrets Manager (`rre-dev/api-key`) is injected into API + UI tasks. UI sends `X-API-Key` on backend calls.
 - **HTTPS (optional):** Set `acm_certificate_arn` to an ACM cert in this region to enable ALB `:443` and HTTP→HTTPS redirect. Default remains HTTP-only on the ALB DNS name (no cert without a domain you control).
-- See [aws-deployment.md](../../docs/planning/aws-deployment.md) for the full network model.
+- See [aws-deployment.md](../../docs/developer/aws-deployment.md) for the full network model.
 
 ## Pause / resume (avoid Fargate + RDS compute charges)
 

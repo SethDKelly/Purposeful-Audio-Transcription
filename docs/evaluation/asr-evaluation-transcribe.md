@@ -85,5 +85,5 @@ Settings: `TRANSCRIPTION_PROVIDER`, `UPLOADS_BUCKET`, `TRANSCRIBE_LANGUAGE` (def
 ## Explicit non-goals
 
 - Replacing ffmpeg for local diarization decode
-- Torchcodec as primary decode ([aws-deployment.md](aws-deployment.md) §5)
+- Torchcodec as primary decode ([../developer/aws-deployment.md](../developer/aws-deployment.md) §5)
 - Multi-language IdentifyLanguage with speaker labels (LanguageCode required; default `en-US`)

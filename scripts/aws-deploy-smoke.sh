@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# P0-AWS-3f â€” post-deploy smoke beyond GET /api/health.
+# Post-deploy smoke beyond GET /api/health.
 # Expects AWS CLI credentials and terraform outputs from infra/dev.
+# Respects DEPLOY_COMPONENT=all|api|ui|worker (default: all).
 set -euo pipefail
 
 TF_DIR="${TF_WORKING_DIR:-infra/dev}"
 CLUSTER="${ECS_CLUSTER:-rre-dev-cluster}"
 API_SERVICE="${ECS_API_SERVICE:-rre-dev-api}"
 UI_SERVICE="${ECS_UI_SERVICE:-rre-dev-ui}"
+WORKER_SERVICE="${ECS_WORKER_SERVICE:-rre-dev-worker}"
+DEPLOY_COMPONENT="${DEPLOY_COMPONENT:-all}"
 MAX_ATTEMPTS="${SMOKE_MAX_ATTEMPTS:-10}"
 SLEEP_SECS="${SMOKE_SLEEP_SECS:-30}"
 
@@ -16,10 +19,26 @@ API_TG=$(terraform output -raw api_target_group_arn)
 UI_TG=$(terraform output -raw ui_target_group_arn)
 API_LOG_GROUP=$(terraform output -raw api_log_group)
 UI_LOG_GROUP=$(terraform output -raw ui_log_group)
+WORKER_LOG_GROUP=$(terraform output -raw worker_log_group 2>/dev/null || true)
 NO_EGRESS=$(terraform output -raw no_egress_networking_enabled)
+
+need_api=0
+need_ui=0
+need_worker=0
+case "$DEPLOY_COMPONENT" in
+  all) need_api=1; need_ui=1; need_worker=1 ;;
+  api) need_api=1 ;;
+  ui) need_ui=1 ;;
+  worker) need_worker=1 ;;
+  *)
+    echo "::error::Unknown DEPLOY_COMPONENT=$DEPLOY_COMPONENT (expected all|api|ui|worker)"
+    exit 1
+    ;;
+esac
 
 echo "ALB URL: $ALB_URL"
 echo "no_egress_networking: $NO_EGRESS"
+echo "deploy_component: $DEPLOY_COMPONENT"
 
 wait_http() {
   local path="$1"
@@ -37,18 +56,16 @@ wait_http() {
   return 1
 }
 
-echo "== HTTP checks =="
-# ALB / ECS use /api/live; full /api/health can be slow while Bedrock warms.
-wait_http "/api/live" "API live"
-
-API_KEY_SECRET_ARN=$(terraform output -raw api_key_secret_arn 2>/dev/null || true)
 API_KEY_HEADER=()
-if [ -n "${API_KEY_SECRET_ARN}" ] && [ "${API_KEY_SECRET_ARN}" != "None" ]; then
-  API_KEY=$(aws secretsmanager get-secret-value --secret-id "$API_KEY_SECRET_ARN" \
-    --query 'SecretString' --output text | python3 -c 'import json,sys; print(json.load(sys.stdin).get("api_key",""))')
-  if [ -n "$API_KEY" ]; then
-    API_KEY_HEADER=(-H "X-API-Key: ${API_KEY}")
-    echo "Using API key from Secrets Manager for authenticated smoke checks"
+if [ "$need_api" = "1" ] || [ "$need_ui" = "1" ]; then
+  API_KEY_SECRET_ARN=$(terraform output -raw api_key_secret_arn 2>/dev/null || true)
+  if [ -n "${API_KEY_SECRET_ARN}" ] && [ "${API_KEY_SECRET_ARN}" != "None" ]; then
+    API_KEY=$(aws secretsmanager get-secret-value --secret-id "$API_KEY_SECRET_ARN" \
+      --query 'SecretString' --output text | python3 -c 'import json,sys; print(json.load(sys.stdin).get("api_key",""))')
+    if [ -n "$API_KEY" ]; then
+      API_KEY_HEADER=(-H "X-API-Key: ${API_KEY}")
+      echo "Using API key from Secrets Manager for authenticated smoke checks"
+    fi
   fi
 fi
 
@@ -68,9 +85,17 @@ wait_http_auth() {
   return 1
 }
 
-wait_http_auth "/api/health" "API health"
+if [ "$need_api" = "1" ] || [ "$need_ui" = "1" ]; then
+  echo "== HTTP checks =="
+  # ALB / ECS use /api/live; full /api/health can be slow while Bedrock warms.
+  # UI-only deploys still require a live API behind the ALB.
+  wait_http "/api/live" "API live"
+fi
 
-python3 - <<'PY'
+if [ "$need_api" = "1" ]; then
+  wait_http_auth "/api/health" "API health"
+
+  python3 - <<'PY'
 import json, sys
 with open("/tmp/rre-smoke-body.json", encoding="utf-8") as f:
     h = json.load(f)
@@ -96,8 +121,8 @@ print(
 )
 PY
 
-wait_http_auth "/api/workflows" "API workflows"
-python3 - <<'PY'
+  wait_http_auth "/api/workflows" "API workflows"
+  python3 - <<'PY'
 import json, sys
 with open("/tmp/rre-smoke-body.json", encoding="utf-8") as f:
     body = json.load(f)
@@ -108,11 +133,19 @@ if "quick_review" not in ids:
     sys.exit(1)
 print(f"Workflows OK: {len(workflows)} listed (includes quick_review)")
 PY
+fi
 
-wait_http "/_stcore/health" "UI health"
+if [ "$need_ui" = "1" ]; then
+  wait_http "/_stcore/health" "UI health"
+fi
 
 echo "== ECS services =="
-SERVICES_JSON=$(aws ecs describe-services --cluster "$CLUSTER" --services "$API_SERVICE" "$UI_SERVICE" --output json)
+SERVICES=()
+[ "$need_api" = "1" ] && SERVICES+=("$API_SERVICE")
+[ "$need_ui" = "1" ] && SERVICES+=("$UI_SERVICE")
+[ "$need_worker" = "1" ] && SERVICES+=("$WORKER_SERVICE")
+
+SERVICES_JSON=$(aws ecs describe-services --cluster "$CLUSTER" --services "${SERVICES[@]}" --output json)
 python3 - "$SERVICES_JSON" <<'PY'
 import json, sys
 data = json.loads(sys.argv[1])
@@ -205,11 +238,24 @@ PY
   return 1
 }
 
-check_tg "$API_TG" "API TG"
-check_tg "$UI_TG" "UI TG"
+if [ "$need_api" = "1" ]; then
+  check_tg "$API_TG" "API TG"
+fi
+if [ "$need_ui" = "1" ]; then
+  check_tg "$UI_TG" "UI TG"
+fi
+if [ "$need_worker" = "1" ] && [ "$need_api" != "1" ] && [ "$need_ui" != "1" ]; then
+  echo "Worker-only deploy: skipping ALB target groups (worker is not ALB-attached)"
+fi
 
 echo "== CloudWatch log groups =="
-for group in "$API_LOG_GROUP" "$UI_LOG_GROUP"; do
+LOG_GROUPS=()
+[ "$need_api" = "1" ] && LOG_GROUPS+=("$API_LOG_GROUP")
+[ "$need_ui" = "1" ] && LOG_GROUPS+=("$UI_LOG_GROUP")
+if [ "$need_worker" = "1" ] && [ -n "${WORKER_LOG_GROUP}" ] && [ "${WORKER_LOG_GROUP}" != "None" ]; then
+  LOG_GROUPS+=("$WORKER_LOG_GROUP")
+fi
+for group in "${LOG_GROUPS[@]}"; do
   streams=$(aws logs describe-log-streams --log-group-name "$group" --order-by LastEventTime --descending --max-items 1 \
     --query 'logStreams[0].logStreamName' --output text 2>/dev/null || true)
   if [ -z "$streams" ] || [ "$streams" = "None" ]; then
@@ -219,4 +265,4 @@ for group in "$API_LOG_GROUP" "$UI_LOG_GROUP"; do
   fi
 done
 
-echo "AWS-3f smoke passed"
+echo "AWS-3f smoke passed (component=$DEPLOY_COMPONENT)"

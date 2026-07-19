@@ -1,7 +1,7 @@
 # Golden Transcript Fixtures — Implementation Note
 
 **Status:** Active evaluation substrate for **v0.7 Priority 5**.  
-**Canonical plan:** [implementing.md](implementing.md) · [../evaluation/golden_fixture_evaluation_plan.md](../evaluation/golden_fixture_evaluation_plan.md)
+**Canonical plan:** [golden_fixture_evaluation_plan.md](golden_fixture_evaluation_plan.md) · phases: [../archived/planning/phases.md](../archived/planning/phases.md) (Phase 29)
 
 ## Location
 

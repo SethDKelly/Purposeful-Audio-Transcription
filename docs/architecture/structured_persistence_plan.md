@@ -1,6 +1,6 @@
 # Structured Persistence Plan (v0.8) — **Shipped in v0.8.0**
 
-Normalize findings, constructs, evidence, and relationships out of module JSON blobs into queryable product objects. Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Release notes: [../releases/v0.8.0.md](../releases/v0.8.0.md).
+Normalize findings, constructs, evidence, and relationships out of module JSON blobs into queryable product objects. Roadmap: [../archived/planning/phases.md](../archived/planning/phases.md#phase-31--normalized-findings-persistence). Release notes: [../releases/v0.8.0.md](../releases/v0.8.0.md).
 
 ## Priority 1 — Findings — Done
 

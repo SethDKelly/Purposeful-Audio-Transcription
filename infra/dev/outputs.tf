@@ -66,6 +66,10 @@ output "ui_log_group" {
   value = aws_cloudwatch_log_group.ui.name
 }
 
+output "worker_log_group" {
+  value = aws_cloudwatch_log_group.worker.name
+}
+
 output "rds_endpoint" {
   value = aws_db_instance.main.address
 }

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Status** | Implemented (P1-3c on `tier-2-p1-trust-workflows`) |
-| **Related** | P1-3c in [implementing.md](implementing.md); [aws-operations.md](../developer/aws-operations.md) |
+| **Related** | Historical P1-3c; [aws-operations.md](aws-operations.md) |
 | **Goal** | Operators can debug runs via correlation IDs without transcript or prompt bodies in CloudWatch |
 
 ---

@@ -1,6 +1,6 @@
 # Analysis suites (archived)
 
-> **Superseded.** Multi-module runs shipped as **workflows** in v0.3.0. See [../planning/completed.md](../planning/completed.md) and [../design/08_workflow_engine.md](../design/08_workflow_engine.md). Remaining suite work: [../planning/implementing.md](../planning/implementing.md) (P1-4). Historical notes below are not the live backlog.
+> **Superseded.** Multi-module runs shipped as **workflows** in v0.3.0. See [../archived/planning/phases.md](../archived/planning/phases.md) and [../design/08_workflow_engine.md](../design/08_workflow_engine.md). Remaining suite work: [../planning/deferred_backlog.md](../planning/deferred_backlog.md) (P1-4). Historical notes below are not the live backlog.
 
 ---
 

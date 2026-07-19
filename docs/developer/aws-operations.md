@@ -6,6 +6,7 @@ CloudWatch log groups for the dev stack:
 |---------|-----------|
 | API | `/rre/dev/api` |
 | UI | `/rre/dev/ui` |
+| Worker | `/rre/dev/worker` |
 
 Structured JSON logs (`LOG_JSON=true`) include correlation fields:
 
@@ -31,7 +32,7 @@ With `LOG_REDACT` auto-on for Bedrock / PostgreSQL (or `LOG_REDACT=true`):
 
 DB remains the store of record. Prefer Insights queries by ID, not free-text search on dialogue.
 
-Design: [log-redaction.md](../planning/log-redaction.md).
+Design: [log-redaction.md](log-redaction.md).
 
 ## CloudWatch Logs Insights queries
 
@@ -97,7 +98,7 @@ fields @timestamp, event, transcript_id, export_format, purged_count, message
 | `LLM_PROVIDER` | `bedrock` |
 | `BEDROCK_MODEL_ID` | `us.anthropic.claude-sonnet-4-5-20250929-v1:0` |
 
-Ensure the ECS task role includes Bedrock invoke + Marketplace subscribe-via-Bedrock (see `infra/dev/iam.tf`). Evaluation note: [llm-evaluation-bedrock.md](../planning/llm-evaluation-bedrock.md).
+Ensure the ECS task role includes Bedrock invoke + Marketplace subscribe-via-Bedrock (see `infra/dev/iam.tf`). Evaluation note: [llm-evaluation-bedrock.md](../evaluation/llm-evaluation-bedrock.md).
 
 ## Deploy wait pattern
 

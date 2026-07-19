@@ -1,6 +1,6 @@
 # Workflow DAG Plan (v1.0) — **Shipped in v1.0**
 
-Replace or extend linear workflow execution with explicit DAG support. Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Engine: `backend/services/workflow_engine.py`, DAG helpers: `backend/core/workflow_dag.py`.
+Replace or extend linear workflow execution with explicit DAG support. Roadmap: [../archived/planning/phases.md](../archived/planning/phases.md#phase-45--workflow-dag-engine). Engine: `backend/services/workflow_engine.py`, DAG helpers: `backend/core/workflow_dag.py`.
 
 ## Goals
 

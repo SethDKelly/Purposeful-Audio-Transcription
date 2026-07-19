@@ -14,7 +14,7 @@ resource "aws_ecs_task_definition" "api" {
   cpu                      = var.api_cpu
   memory                   = var.api_memory
   execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
+  task_role_arn            = aws_iam_role.ecs_task_api.arn
 
   container_definitions = jsonencode([{
     name      = "api"
@@ -87,8 +87,8 @@ resource "aws_ecs_task_definition" "ui" {
   network_mode             = "awsvpc"
   cpu                      = var.ui_cpu
   memory                   = var.ui_memory
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
+  execution_role_arn       = aws_iam_role.ecs_execution_ui.arn
+  task_role_arn            = aws_iam_role.ecs_task_ui.arn
 
   container_definitions = jsonencode([{
     name      = "ui"
@@ -217,7 +217,7 @@ resource "aws_ecs_task_definition" "worker" {
   cpu                      = var.worker_cpu
   memory                   = var.worker_memory
   execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
+  task_role_arn            = aws_iam_role.ecs_task_worker.arn
 
   container_definitions = jsonencode([{
     name      = "worker"
@@ -242,6 +242,8 @@ resource "aws_ecs_task_definition" "worker" {
       { name = "WORKFLOW_JOB_TIMEOUT_SECONDS", value = "7200" },
       { name = "WORKFLOW_JOB_MAX_ATTEMPTS", value = "2" },
       { name = "WORKFLOW_WORKER_POLL_SECONDS", value = "2" },
+      { name = "WORKFLOW_WORKER_MAX_CLAIM_PER_POLL", value = "1" },
+      { name = "WORKFLOW_WORKER_MAX_IN_FLIGHT", value = "2" },
       { name = "DIARIZATION_ENABLED", value = var.diarization_enabled ? "true" : "false" },
       { name = "ALEMBIC_AUTO_UPGRADE", value = "false" },
       { name = "TEMP_DIR", value = "/tmp/rre" },
@@ -253,10 +255,6 @@ resource "aws_ecs_task_definition" "worker" {
       {
         name      = "DATABASE_URL"
         valueFrom = "${aws_secretsmanager_secret.database.arn}:database_url::"
-      },
-      {
-        name      = "API_KEY"
-        valueFrom = "${aws_secretsmanager_secret.api_key.arn}:api_key::"
       },
     ]
 

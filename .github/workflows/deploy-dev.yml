@@ -1,10 +1,21 @@
 name: Deploy to AWS dev
 
-# Deploy on demand for minor-version releases (e.g. v0.7.0), not every main push.
+# Deploy on demand for minor-version releases (e.g. v1.0.0), not every main push.
 # Intra-minor work commits to main without waking AWS.
-# Manual: Actions → Deploy to AWS dev → Run workflow (optionally after tagging).
+# Manual: Actions → Deploy to AWS dev → Run workflow (choose component).
 on:
   workflow_dispatch:
+    inputs:
+      component:
+        description: "Which ECS components to rebuild/redeploy"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - api
+          - ui
+          - worker
   push:
     tags:
       - "v*.*.*"
@@ -18,6 +29,8 @@ env:
   AWS_ACCOUNT_ID: "521018312783"
   TF_WORKING_DIR: infra/dev
   IMAGE_TAG: ${{ github.sha }}
+  # Tag pushes always deploy all; workflow_dispatch uses the input.
+  DEPLOY_COMPONENT: ${{ github.event_name == 'workflow_dispatch' && inputs.component || 'all' }}
 
 jobs:
   test:
@@ -38,8 +51,11 @@ jobs:
           python scripts/validate_yaml.py
           python scripts/validate_config.py
 
+      - name: Guard against committed Python caches
+        run: python scripts/check_no_pycache.py
+
       - name: Run tests
-        run: pytest tests/ -q
+        run: python -m pytest tests/ -q
 
   deploy:
     name: Deploy (dev)
@@ -107,6 +123,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push API image (cloud slim)
+        if: env.DEPLOY_COMPONENT == 'all' || env.DEPLOY_COMPONENT == 'api' || env.DEPLOY_COMPONENT == 'worker'
         env:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
@@ -116,6 +133,7 @@ jobs:
           docker push "$ECR_REGISTRY/rre-dev-api:latest"
 
       - name: Build and push UI image
+        if: env.DEPLOY_COMPONENT == 'all' || env.DEPLOY_COMPONENT == 'ui'
         env:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
@@ -130,9 +148,17 @@ jobs:
         env:
           ECS_CLEAR_MAX_ATTEMPTS: "40"
           ECS_CLEAR_SLEEP_SECS: "15"
+          DEPLOY_COMPONENT: ${{ env.DEPLOY_COMPONENT }}
         run: |
           set -euo pipefail
-          python3 scripts/ecs-clear-before-deploy.py rre-dev-cluster rre-dev-api rre-dev-ui
+          SERVICES=()
+          case "$DEPLOY_COMPONENT" in
+            all) SERVICES=(rre-dev-api rre-dev-ui rre-dev-worker) ;;
+            api) SERVICES=(rre-dev-api) ;;
+            ui) SERVICES=(rre-dev-ui) ;;
+            worker) SERVICES=(rre-dev-worker) ;;
+          esac
+          python3 scripts/ecs-clear-before-deploy.py rre-dev-cluster "${SERVICES[@]}"
 
       - name: Terraform apply
         working-directory: ${{ env.TF_WORKING_DIR }}
@@ -143,13 +169,22 @@ jobs:
           ECS_WAIT_MAX_ATTEMPTS: "80"
           ECS_WAIT_SLEEP_SECS: "30"
           ECS_STEADY_POLLS: "3"
+          DEPLOY_COMPONENT: ${{ env.DEPLOY_COMPONENT }}
         run: |
           set -euo pipefail
-          python3 scripts/wait-ecs-stable.py rre-dev-cluster rre-dev-api rre-dev-ui
+          SERVICES=()
+          case "$DEPLOY_COMPONENT" in
+            all) SERVICES=(rre-dev-api rre-dev-ui rre-dev-worker) ;;
+            api) SERVICES=(rre-dev-api) ;;
+            ui) SERVICES=(rre-dev-ui) ;;
+            worker) SERVICES=(rre-dev-worker) ;;
+          esac
+          python3 scripts/wait-ecs-stable.py rre-dev-cluster "${SERVICES[@]}"
 
       - name: Smoke test (AWS-3f)
         env:
           TF_WORKING_DIR: ${{ env.TF_WORKING_DIR }}
+          DEPLOY_COMPONENT: ${{ env.DEPLOY_COMPONENT }}
         run: |
           chmod +x scripts/aws-deploy-smoke.sh
           ./scripts/aws-deploy-smoke.sh
@@ -158,8 +193,10 @@ jobs:
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
           echo "## RRE dev deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Component: ${DEPLOY_COMPONENT}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Image tag: ${IMAGE_TAG}" >> "$GITHUB_STEP_SUMMARY"
           echo "- URL: $(terraform output -raw alb_url)" >> "$GITHUB_STEP_SUMMARY"
           echo "- API logs: $(terraform output -raw api_log_group)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Worker service: $(terraform output -raw ecs_worker_service_name)" >> "$GITHUB_STEP_SUMMARY"
           echo "- No-egress networking: $(terraform output -raw no_egress_networking_enabled)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Smoke: AWS-3f (health payload, workflows, UI, ECS, target groups)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Smoke: AWS-3f (health payload, workflows, UI, ECS, target groups, worker)" >> "$GITHUB_STEP_SUMMARY"

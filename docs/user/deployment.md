@@ -4,7 +4,7 @@ The Relationship Reasoning Engine runs on **AWS ECS** (API + UI), **RDS PostgreS
 
 | Topic | Document |
 |-------|----------|
-| Architecture & Terraform | [../planning/aws-deployment.md](../planning/aws-deployment.md) |
+| Architecture & Terraform | [../developer/aws-deployment.md](../developer/aws-deployment.md) |
 | Deploy / pause / logs | [../developer/aws-operations.md](../developer/aws-operations.md) |
 | Infra README | [../../infra/dev/README.md](../../infra/dev/README.md) |
 | Day-one usage | [getting-started.md](getting-started.md) |
@@ -50,5 +50,5 @@ Developer `.env` / SQLite are for **pytest and tooling only**, not a supported l
 ## Related
 
 - [user-guide.md](user-guide.md) · [model-setup.md](model-setup.md)
-- [../planning/implementing.md](../planning/implementing.md)
+- [../planning/deferred_backlog.md](../planning/deferred_backlog.md)
 - API: [../developer/api-reference.md](../developer/api-reference.md)

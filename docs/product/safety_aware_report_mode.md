@@ -1,6 +1,6 @@
 # Safety-Aware Report Mode (v1.0 Priority 5) — **Shipped in v1.0**
 
-The app must not diagnose or adjudicate abuse, but it should respond carefully when transcripts contain high-risk content (threats, coercion, intimidation, self-harm, stalking, severe control, etc.). Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Design: [../design/14_testing_evaluation_and_safety.md](../design/14_testing_evaluation_and_safety.md).
+The app must not diagnose or adjudicate abuse, but it should respond carefully when transcripts contain high-risk content (threats, coercion, intimidation, self-harm, stalking, severe control, etc.). Roadmap: [../archived/planning/phases.md](../archived/planning/phases.md#phase-48--safety-aware-report-mode). Design: [../design/14_testing_evaluation_and_safety.md](../design/14_testing_evaluation_and_safety.md).
 
 ## Capabilities (shipped)
 

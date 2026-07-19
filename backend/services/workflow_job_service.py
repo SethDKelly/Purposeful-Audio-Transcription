@@ -17,12 +17,35 @@ logger = logging.getLogger(__name__)
 
 
 class WorkflowJobService:
-    def __init__(self, engine: WorkflowEngine | None = None, max_workers: int = 2) -> None:
+    def __init__(
+        self,
+        engine: WorkflowEngine | None = None,
+        max_workers: int | None = None,
+    ) -> None:
         self._engine = engine or workflow_engine
+        workers = max_workers
+        if workers is None:
+            workers = max(1, int(settings.workflow_worker_max_in_flight or 2))
         self._executor = ThreadPoolExecutor(
-            max_workers=max_workers,
+            max_workers=workers,
             thread_name_prefix="workflow-job",
         )
+        self._in_flight: set[Future] = set()
+
+    def _prune_in_flight(self) -> None:
+        done = {fut for fut in self._in_flight if fut.done()}
+        self._in_flight -= done
+
+    @property
+    def in_flight_count(self) -> int:
+        self._prune_in_flight()
+        return len(self._in_flight)
+
+    def _submit_tracked(self, fn, *args) -> Future:  # noqa: ANN001
+        fut = self._executor.submit(fn, *args)
+        self._in_flight.add(fut)
+        fut.add_done_callback(lambda f: self._in_flight.discard(f))
+        return fut
 
     @property
     def worker_mode(self) -> bool:
@@ -81,7 +104,7 @@ class WorkflowJobService:
                 "mode": "inline",
             },
         )
-        return self._executor.submit(self._execute_job, run_id, workflow_id, transcript_id, model)
+        return self._submit_tracked(self._execute_job, run_id, workflow_id, transcript_id, model)
 
     def _execute_job(
         self,
@@ -159,19 +182,44 @@ class WorkflowJobService:
                 }:
                     run.status = WorkflowRunStatus.FAILED.value
                     run.completed_at = utc_now()
-                    run.error_log = error
+                    run.error_log = f"Retry exhausted after {max_attempts} attempt(s): {error}"
                     self._engine._repository.save(session, run)
+                    logger.warning(
+                        "Workflow run %s exhausted retries (%s)",
+                        run_id,
+                        max_attempts,
+                        extra={
+                            "event": "workflow.run.retry_exhausted",
+                            "run_id": run_id,
+                            "max_attempts": max_attempts,
+                        },
+                    )
 
     def poll_once(self) -> int:
         """Claim and execute queued runs (dedicated worker). Returns jobs started."""
+        self._prune_in_flight()
+        max_in_flight = max(1, int(settings.workflow_worker_max_in_flight or 1))
+        max_claim = max(1, int(settings.workflow_worker_max_claim_per_poll or 1))
+        capacity = max_in_flight - len(self._in_flight)
+        if capacity <= 0:
+            logger.debug(
+                "Worker at max in-flight (%s); skipping claim",
+                max_in_flight,
+                extra={"event": "worker.claim.skipped", "reason": "max_in_flight"},
+            )
+            return 0
+
+        claim_limit = min(max_claim, capacity)
         queued = self._engine.list_queued()
         started = 0
         for run in queued:
+            if started >= claim_limit:
+                break
             claimed = self._engine.claim_queued(run.id)
             if claimed is None:
                 continue
             started += 1
-            self._executor.submit(
+            self._submit_tracked(
                 self._run_claimed,
                 claimed.id,
                 claimed.workflow_id,
@@ -215,7 +263,7 @@ class WorkflowJobService:
                 )
             else:
                 # In-flight resume: re-enter run() which skips completed modules.
-                self._executor.submit(
+                self._submit_tracked(
                     self._engine.run,
                     workflow_run.workflow_id,
                     workflow_run.transcript_id,

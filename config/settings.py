@@ -61,6 +61,10 @@ class Settings(BaseSettings):
     # Dedicated worker polls CREATED jobs when true; API does not run them inline.
     workflow_worker_enabled: bool = False
     workflow_worker_poll_seconds: float = 2.0
+    # Max CREATED jobs to claim in one poll_once() cycle.
+    workflow_worker_max_claim_per_poll: int = 1
+    # Max concurrent workflow jobs on a single worker process.
+    workflow_worker_max_in_flight: int = 2
     # Wall-clock timeout for a single workflow job attempt (0 = disabled).
     workflow_job_timeout_seconds: float = 7200.0
     # Requeue failed attempts up to this count (includes the first try).

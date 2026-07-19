@@ -1,8 +1,8 @@
 # Golden Fixture Evaluation Plan (v0.7 Priority 5)
 
-Regression and quality foundation before growing the module set. Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Related: [../design/14_testing_evaluation_and_safety.md](../design/14_testing_evaluation_and_safety.md), prior P1-5b / P1-6 fixture intent.
+Regression and quality foundation before growing the module set. Historical roadmap phases: [../archived/planning/phases.md](../archived/planning/phases.md) (Phase 29). Related: [../design/14_testing_evaluation_and_safety.md](../design/14_testing_evaluation_and_safety.md), prior P1-5b / P1-6 fixture intent.
 
-**Layout & conventions (reference):** [../planning/golden_transcript_fixtures.md](../planning/golden_transcript_fixtures.md)
+**Layout & conventions (reference):** [golden_transcript_fixtures.md](golden_transcript_fixtures.md)
 
 ## Fixtures
 

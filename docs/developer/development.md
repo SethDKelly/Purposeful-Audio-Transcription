@@ -57,11 +57,18 @@ Dockerfile.ui       # UI image
 
 ## Tests
 
+Prefer **`python -m pytest`** so the active interpreter’s environment is used (works without putting `.venv/Scripts` on `PATH`):
+
 ```powershell
-pytest tests/ -q
+.venv\Scripts\Activate.ps1   # optional but recommended
+python -m pytest tests/ -q
 # Golden fixtures (mocked):
-pytest -m "golden and not live_model" -q
+python -m pytest -m "golden and not live_model" -q
 ```
+
+After `pip install -e ".[dev]"` and with the venv activated, bare `pytest tests/ -q` also works.
+
+CI and pre-commit use `python -m pytest` / `python scripts/run_venv.py -m pytest`.
 
 `tests/conftest.py` forces an isolated **SQLite** DB per session (`ALEMBIC_AUTO_UPGRADE=false`). Most LLM/ASR calls are mocked.
 
@@ -107,4 +114,4 @@ Ops: [aws-operations.md](aws-operations.md).
 - [architecture.md](architecture.md)
 - [contributing.md](contributing.md)
 - [api-reference.md](api-reference.md)
-- [../planning/aws-deployment.md](../planning/aws-deployment.md)
+- [aws-deployment.md](aws-deployment.md)

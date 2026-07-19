@@ -7,13 +7,13 @@ Architecture and integration guide for deploying the Relationship Reasoning Engi
 | **Account** | `521018312783` |
 | **Region** | `us-east-2` (Ohio) |
 | **Deploy role** | `arn:aws:iam::521018312783:role/dev-github-deploy` |
-| **Branch** | `main` @ **v0.6.0** (canonical) |
-| **Deploy** | Path-filtered push to `main` + `workflow_dispatch` |
-| **Active plan** | [implementing.md](implementing.md) |
+| **Release baseline** | **v1.0.0** (worker + DAG + custom workflows) |
+| **Deploy** | Version tags `v*.*.*` (all components) or **workflow_dispatch** with `component=all\|api\|ui\|worker` |
+| **Active plan** | [phases/01_v1_1_operational_hardening.md](../planning/phases/01_v1_1_operational_hardening.md) |
 
 ### Data residency (privacy)
 
-On AWS, audio objects, transcripts, and analysis results stay in **this account** (S3, RDS, ECS in VPC). Inference uses **Amazon Bedrock** and **Amazon Transcribe** — no off-account LLM/ASR APIs. Operators should pause the stack when idle ([aws-operations.md](../developer/aws-operations.md)). This product is **AWS-only** (no local Whisper/Ollama runtime).
+On AWS, audio objects, transcripts, and analysis results stay in **this account** (S3, RDS, ECS in VPC). Inference uses **Amazon Bedrock** and **Amazon Transcribe** — no off-account LLM/ASR APIs. Operators should pause the stack when idle ([aws-operations.md](aws-operations.md)). This product is **AWS-only** (no local Whisper/Ollama runtime).
 
 ---
 
@@ -46,9 +46,10 @@ RRE additions must be **additive only**.
 | GitHub repo (OIDC) | `SethDKelly/Purposeful-Audio-Transcription` |
 | IAM role prefix | `rre-dev-*` |
 | Terraform state key | `purposeful-audio-transcription/dev/terraform.tfstate` |
-| ECR repositories | `rre-dev-api`, `rre-dev-ui` |
-| ECS cluster | `rre-dev` |
-| CloudWatch log groups | `/rre/dev/api`, `/rre/dev/ui` |
+| ECR repositories | `rre-dev-api`, `rre-dev-ui` (worker reuses API image) |
+| ECS cluster | `rre-dev-cluster` |
+| ECS services | `rre-dev-api`, `rre-dev-ui`, `rre-dev-worker` |
+| CloudWatch log groups | `/rre/dev/api`, `/rre/dev/ui`, `/rre/dev/worker` |
 | S3 bucket | `rre-dev-uploads-521018312783` (example) |
 
 ---
@@ -84,35 +85,59 @@ Today `modules/dev-iam/main.tf` and `app_deploy_iam.tf` scope IAM mutations to `
 ## 3. Target architecture (dev)
 
 ```text
-                    GitHub Actions (push main / workflow_dispatch)
+           GitHub Actions (tag v*.*.* | workflow_dispatch + component)
                               │
                               ▼ OIDC
                     dev-github-deploy
                               │
          ┌────────────────────┼────────────────────┐
          ▼                    ▼                    ▼
-      ECR push          terraform apply        ECS deploy
-         │                    │                    │
+      ECR push          terraform apply        ECS update-service
+   (api and/or ui)            │              (api / ui / worker)
          └────────────────────┴────────────────────┘
                               │
                     ┌─────────▼─────────┐
-                    │  ALB (HTTP today; HTTPS backlog) │
+                    │  ALB (HTTP; HTTPS optional) │
                     └─────────┬─────────┘
               ┌───────────────┴───────────────┐
               ▼                               ▼
       ECS: rre-dev-api                 ECS: rre-dev-ui
-      (FastAPI)                        (Streamlit)
-              │                               │
-              ├─────────── RDS PostgreSQL ────┤
-              ├─────────── S3 uploads ────────┤
-              ├─────────── Secrets Manager ───┤
+      (FastAPI)                        (Streamlit → API)
               │
+              │  queues jobs (CREATED)
+              ▼
+      ECS: rre-dev-worker
+      (same cloud image; RRE_PROCESS=worker)
+              │
+              ├── RDS PostgreSQL
+              ├── S3 uploads
+              ├── Secrets Manager
               ├── Amazon Bedrock (LLM — module runs, synthesis)
-              └── Amazon Transcribe (ASR — audio ingest, phase 2)
+              └── Amazon Transcribe (ASR)
 
 VPC: private subnets for tasks; VPC endpoints for AWS API calls.
 No public internet egress required during model operations.
 ```
+
+### Service topology
+
+| Service | Image | Role | ALB |
+|---------|-------|------|-----|
+| `rre-dev-api` | `rre-dev-api` (`Dockerfile.cloud`) | HTTP API, job enqueue, health | Yes (`/api/*`) |
+| `rre-dev-ui` | `rre-dev-ui` (`Dockerfile.ui`) | Streamlit client via `RRE_API_BASE_URL` | Yes (`/` + `/_stcore/health`) |
+| `rre-dev-worker` | **same** `rre-dev-api` image | Poll/claim jobs; Bedrock/Transcribe/workflows | No (ECS + `/rre/dev/worker` logs) |
+
+Today API/UI/worker use **separate** ECS task roles and a dedicated UI execution role (v1.1 Workstream D):
+
+| Role | Used by | Notable allows / denies |
+|------|---------|-------------------------|
+| `rre-dev-ecs-execution-ui` | UI | Secrets: `API_KEY` only (no `DATABASE_URL`) |
+| `rre-dev-ecs-execution` | API, worker | Secrets: `DATABASE_URL` + `API_KEY` |
+| `rre-dev-ecs-task-ui` | UI | No Bedrock / Transcribe / S3 |
+| `rre-dev-ecs-task-api` | API | Bedrock catalog (health), S3 uploads, Transcribe; **no** `InvokeModel` |
+| `rre-dev-ecs-task-worker` | Worker | `InvokeModel`, Marketplace subscribe, S3, Transcribe |
+
+Validate UI cannot read the DB secret: its execution role policy resources list must omit the database secret ARN (see `infra/dev/iam.tf`).
 
 ### Network: no outbound during model operations
 
@@ -174,7 +199,7 @@ AmazonTranscribeProvider  ← S3 uploads bucket
 | `UPLOADS_BUCKET` | `rre-dev-uploads-…` |
 | `AWS_REGION` | `us-east-2` |
 
-Formal notes: [llm-evaluation-bedrock.md](llm-evaluation-bedrock.md) · [asr-evaluation-transcribe.md](asr-evaluation-transcribe.md).
+Formal notes: [../evaluation/llm-evaluation-bedrock.md](../evaluation/llm-evaluation-bedrock.md) · [../evaluation/asr-evaluation-transcribe.md](../evaluation/asr-evaluation-transcribe.md).
 
 Local Ollama / Whisper / pyannote stacks are **removed** from the product (P1-7).
 
@@ -188,16 +213,28 @@ Amazon Transcribe owns decode and speaker labeling. The API uploads to S3, polls
 
 ## 6. Runtime images
 
-| Image | Contents |
-|-------|----------|
-| `Dockerfile.cloud` | Slim API — FastAPI, boto3, SQLAlchemy; Bedrock + Transcribe |
-| `Dockerfile.ui` | Streamlit only → ALB `/api` |
+| Image | Contents | Used by |
+|-------|----------|---------|
+| `Dockerfile.cloud` → ECR `rre-dev-api` | Slim API — FastAPI, boto3, SQLAlchemy; Bedrock + Transcribe | `rre-dev-api`, `rre-dev-worker` |
+| `Dockerfile.ui` → ECR `rre-dev-ui` | Streamlit only → ALB `/` | `rre-dev-ui` |
 
 ```text
-ALB → rre-dev-ui (Streamlit) + rre-dev-api (Bedrock + Transcribe + RDS + S3)
+ALB → rre-dev-ui (Streamlit) + rre-dev-api (enqueue + HTTP)
+Worker (no ALB) → same cloud image; claims jobs; Bedrock + Transcribe + RDS + S3
 ```
 
-CI builds and pushes **cloud + UI** only. Developer loop: `pip install -e ".[dev]"` + pytest (SQLite) + Deploy.
+CI builds/pushes images based on **`component`**:
+
+| `component` | Builds | Forces ECS update |
+|-------------|--------|-------------------|
+| `all` | API + UI | api, ui, worker |
+| `api` | API | api |
+| `ui` | UI | ui |
+| `worker` | API (shared image) | worker |
+
+Tag pushes always use `component=all`. Path-filtered auto-deploy on `main` is **not** used (cost/control: tags or manual only).
+
+Developer loop: `pip install -e ".[dev]"` + `python -m pytest` (SQLite) + Deploy.
 
 Scale Fargate for Python/JSON, not model weights.
 
@@ -240,7 +277,7 @@ Enable via `LOG_JSON=true` (already in settings).
 | Bind context vars in workflow/module routes | API routes |
 | ERROR logs with exception info | `module_runner`, `workflow_engine`, `output_parser` |
 | Terraform: log groups + retention (14–30 days dev) | `infra/dev/` |
-| Runbook: Logs Insights queries | [docs/developer/aws-operations.md](../developer/aws-operations.md) |
+| Runbook: Logs Insights queries | [aws-operations.md](aws-operations.md) |
 
 ### Example Logs Insights queries
 
@@ -268,44 +305,45 @@ name: Deploy to AWS dev
 
 on:
   workflow_dispatch:
+    inputs:
+      component:
+        type: choice
+        options: [all, api, ui, worker]
   push:
     tags:
       - "v*.*.*"
-
-permissions:
-  id-token: write
-  contents: read
 ```
 
-Ordinary pushes to `main` do **not** deploy. Use a version tag or **workflow_dispatch**.
+Ordinary pushes to `main` do **not** deploy. Use a version tag (`all`) or **workflow_dispatch** with a component.
 
-```yaml
-# remainder of workflow (test → ECR → terraform → smoke) unchanged in spirit
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -e ".[dev]" && pytest tests/ -q
+Flow: test (`python -m pytest`) → OIDC → ensure RDS → build selected image(s) → terraform apply → `ecs update-service` for selected services → wait stable → `scripts/aws-deploy-smoke.sh` (scoped by `DEPLOY_COMPONENT`).
 
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::521018312783:role/dev-github-deploy
-          aws-region: us-east-2
-      # build → ECR push → terraform apply → ecs update-service
-```
+**Smoke by component**
+
+| Component | Checks |
+|-----------|--------|
+| `api` | `/api/live`, `/api/health`, `/api/workflows`, API ECS + TG, `/rre/dev/api` |
+| `ui` | `/api/live` (dependency), `/_stcore/health`, UI ECS + TG, `/rre/dev/ui` |
+| `worker` | Worker ECS desired=running, `/rre/dev/worker` (no ALB) |
+| `all` | Union of the above |
 
 **Do not** store AWS access keys in GitHub Secrets — OIDC only.
 
-**Cost control:** When the stack is idle, run **Pause AWS dev** (`pause-dev.yml`) to scale ECS to 0 and stop RDS. Resume with **Deploy to AWS dev**. Standing practice is documented in [implementing.md](implementing.md) and [../developer/aws-operations.md](../developer/aws-operations.md).
+### Per-service rollback
+
+ECS keeps previous task definition revisions. To roll back one service without rebuilding others:
+
+```bash
+# Example: roll API back to a prior revision (replace N)
+aws ecs update-service --cluster rre-dev-cluster --service rre-dev-api \
+  --task-definition rre-dev-api:N --force-new-deployment
+
+# UI / worker similarly: rre-dev-ui:N / rre-dev-worker:N
+```
+
+Or re-run **Deploy to AWS dev** with `component=api|ui|worker` after fixing the image/tag. Worker shares the API image digest; rolling worker alone redeploys the last pushed `rre-dev-api` image with `RRE_PROCESS=worker`.
+
+**Cost control:** When the stack is idle, run **Pause AWS dev** (`pause-dev.yml`) to scale ECS (api/ui/worker) to 0 and stop RDS. Resume with **Deploy to AWS dev**. Standing practice: [deferred_backlog.md](../planning/deferred_backlog.md) and [aws-operations.md](aws-operations.md).
 
 ---
 
@@ -329,35 +367,33 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 |------|-------|------------|--------|
 | 1. Merge aws-backbone PR (OIDC + `rre-dev-*`) | aws-backbone | — | ✓ |
 | 2. Architecture sign-off (this doc) | RRE | — | ✓ |
-| 3. `LLMProvider` + Bedrock spike | RRE | — | ✓ |
-| 4. Dockerfile + local smoke | RRE | — | ✓ |
-| 5. `infra/dev/` minimal (ECR, ECS, RDS, ALB, logs) | RRE | Step 1 | ✓ |
-| 6. `deploy-dev.yml` | RRE | Steps 4–5 | ✓ (push `main` + `workflow_dispatch`) |
-| 7. Quick Review on Bedrock in dev | RRE | Step 6 | ✓ |
-| 8. Transcribe path | RRE | Step 7 | ✓ (slim + Stage B burn-in 2026-07-14) |
-| 9. PR `phase-m0-docs` → `main` / **v0.5.1 release** | RRE | Stable dev | ✓ |
+| 3. Bedrock + Transcribe on AWS | RRE | — | ✓ |
+| 4. Split ECS API + UI | RRE | — | ✓ |
+| 5. Dedicated worker (`rre-dev-worker`) | RRE | v1.0 | ✓ |
+| 6. Tag / manual deploy (not every `main` push) | RRE | — | ✓ |
+| 7. Selective `component` deploy + scoped smoke | RRE | v1.1 C | ✓ |
+| 8. Service-specific IAM roles | RRE | v1.1 D | ✓ |
 
 ---
 
 ## 11. Open questions
 
-| Question | Options | Decision by |
-|----------|---------|-------------|
-| ECS Fargate vs EC2 GPU for interim Whisper | Fargate only if Transcribe is fast-follow | After Transcribe spike |
-| Single vs split ECS services (API + UI) | Split recommended (independent scale/restart) | Infra PR |
-| Bedrock model default | Claude 3.5 Sonnet vs Llama 3.1 70B | After JSON spike |
-| Public ALB vs VPN-only | Today: shared API key (Secrets Manager); optional ACM HTTPS when cert set. Target: domain + TLS for external UAT | Before broad external UAT |
-| NAT gateway | Required if tasks need outbound non-AWS; avoid for no-egress goal | Network design |
-| Slim cloud image cutover | After Bedrock only vs after Transcribe too | After P1-1 spike |
-| `Dockerfile.cloud` naming | Separate file vs multi-stage `target` | Infra PR |
+| Question | Status |
+|----------|--------|
+| Public ALB vs VPN-only | Today: shared API key; optional ACM HTTPS when cert set. Domain + TLS before broad external UAT |
+| NAT gateway | Avoid for no-egress goal; VPC endpoints cover AWS APIs |
+| Split task IAM (UI vs API vs worker) | v1.1 Workstream D |
+| Path-filtered auto-deploy on `main` | Declined — tags + `workflow_dispatch` only |
 
 ---
 
 ## 12. Related documents
 
-- [implementing.md](implementing.md) — active priorities
-- [../developer/aws-operations.md](../developer/aws-operations.md) — deploy / pause / Logs Insights
-- [../releases/v0.7.0.md](../releases/v0.7.0.md) — current release notes
+- [phases/01_v1_1_operational_hardening.md](../planning/phases/01_v1_1_operational_hardening.md) — current phase
+- [deferred_backlog.md](../planning/deferred_backlog.md) — prioritized deferred work
+- [aws-operations.md](aws-operations.md) — deploy / pause / Logs Insights
+- [../releases/v1.0.0.md](../releases/v1.0.0.md) — current release notes
+- [../archived/planning/executive_roadmap.md](../archived/planning/executive_roadmap.md) — completed program roadmap
 - [aws-backbone architecture](https://github.com/SethDKelly/aws-backbone/blob/main/docs/architecture.md)
 - [aws-backbone GitHub Actions guide](https://github.com/SethDKelly/aws-backbone/blob/main/docs/github-actions.md)
 - [../user/deployment.md](../user/deployment.md) — operator deployment pointers

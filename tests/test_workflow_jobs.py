@@ -143,3 +143,66 @@ def test_job_service_poll_claims_created(monkeypatch) -> None:
         time.sleep(0.05)
     assert engine.get(run.id).status == WorkflowRunStatus.COMPLETED.value
     jobs.shutdown()
+
+
+def test_poll_respects_max_claim_per_poll(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "workflow_worker_enabled", True)
+    monkeypatch.setattr(settings, "workflow_worker_max_claim_per_poll", 1)
+    monkeypatch.setattr(settings, "workflow_worker_max_in_flight", 4)
+    mock_llm = MagicMock()
+    mock_llm.chat.side_effect = [
+        _module_llm_response("relationship_conversation_analysis"),
+        _module_llm_response("nvc_analysis"),
+        _module_llm_response("bias_epistemic_quality"),
+    ] * 4
+    engine = _build_engine(mock_llm)
+    jobs = WorkflowJobService(engine=engine, max_workers=4)
+    bundle = _ingest_golden(TranscriptService())
+    TranscriptService().mark_ready(bundle.transcript.id)
+
+    for _ in range(2):
+        engine.create_run(
+            "quick_review",
+            bundle.transcript.id,
+            model="test-model",
+            queued=True,
+        )
+
+    assert jobs.poll_once() == 1
+    assert len(engine.list_queued()) == 1
+    jobs.shutdown()
+
+
+def test_poll_respects_max_in_flight(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "workflow_worker_enabled", True)
+    monkeypatch.setattr(settings, "workflow_worker_max_claim_per_poll", 2)
+    monkeypatch.setattr(settings, "workflow_worker_max_in_flight", 1)
+
+    engine = MagicMock()
+    hold = MagicMock()
+    hold.id = "run-a"
+    hold.workflow_id = "quick_review"
+    hold.transcript_id = "t1"
+    hold.model_used = "test"
+    queued = MagicMock()
+    queued.id = "run-b"
+    engine.list_queued.side_effect = [[hold], [queued]]
+    engine.claim_queued.side_effect = [hold, None]
+
+    jobs = WorkflowJobService(engine=engine, max_workers=1)
+
+    def _block(*_a, **_k):
+        import time
+
+        time.sleep(0.3)
+        return hold
+
+    jobs._run_claimed = _block  # type: ignore[method-assign]
+    assert jobs.poll_once() == 1
+    assert jobs.in_flight_count == 1
+    assert jobs.poll_once() == 0
+    import time
+
+    time.sleep(0.4)
+    assert jobs.in_flight_count == 0
+    jobs.shutdown()
