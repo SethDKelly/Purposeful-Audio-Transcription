@@ -6,11 +6,14 @@ export function AppShell() {
       <header className="nav">
         <strong style={{ fontSize: '1.15rem', letterSpacing: '0.02em' }}>RRE</strong>
         <NavLink to="/" end>
-          Ingest
+          Dashboard
         </NavLink>
+        <NavLink to="/ingest">Ingest</NavLink>
         <NavLink to="/cases">Cases</NavLink>
+        <NavLink to="/modules">Modules</NavLink>
+        <NavLink to="/settings">Settings</NavLink>
         <span className="muted" style={{ marginLeft: 'auto', fontSize: '0.85rem' }}>
-          React MVP · API client only
+          Primary UI · /api/v1
         </span>
       </header>
       <Outlet />

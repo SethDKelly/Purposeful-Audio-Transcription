@@ -1,4 +1,5 @@
 import type { Finding } from '../api/client'
+import type { ReviewStatus } from '../lib/localPrefs'
 
 const FEEDBACK_LABELS = [
   'helpful',
@@ -19,7 +20,9 @@ type Props = {
   selected?: boolean
   onSelectEvidence?: (quoteId: string) => void
   onFeedback?: (findingKey: string, rating: string) => void
+  onReview?: (findingKey: string, status: ReviewStatus) => void
   findingKey?: string
+  reviewStatus?: ReviewStatus
 }
 
 export function FindingCard({
@@ -27,7 +30,9 @@ export function FindingCard({
   selected,
   onSelectEvidence,
   onFeedback,
+  onReview,
   findingKey,
+  reviewStatus = 'unreviewed',
 }: Props) {
   const conf = (finding.confidence || 'moderate').toLowerCase()
   const hasEvidence = (finding.evidence_quote_ids || []).length > 0
@@ -40,7 +45,9 @@ export function FindingCard({
       }}
     >
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.4rem' }}>
-        <span className={`badge badge-${conf === 'high' || conf === 'observed' ? 'high' : conf === 'low' ? 'low' : 'moderate'}`}>
+        <span
+          className={`badge badge-${conf === 'high' || conf === 'observed' ? 'high' : conf === 'low' ? 'low' : 'moderate'}`}
+        >
           {finding.confidence}
         </span>
         {!hasEvidence && <span className="badge badge-flag">no evidence</span>}
@@ -50,6 +57,7 @@ export function FindingCard({
             {finding.module_run_id}
           </span>
         )}
+        <span className="badge">{reviewStatus}</span>
       </div>
       <h3 style={{ margin: '0 0 0.35rem', fontSize: '1rem' }}>{finding.title}</h3>
       <p className="muted" style={{ marginTop: 0 }}>
@@ -80,6 +88,20 @@ export function FindingCard({
           </button>
         ))}
       </div>
+      {onReview && findingKey && (
+        <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+          {(['accepted', 'rejected', 'needs_followup', 'unreviewed'] as ReviewStatus[]).map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`btn ${reviewStatus === s ? 'btn-primary' : ''}`}
+              onClick={() => onReview(findingKey, s)}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
       {onFeedback && findingKey && (
         <div style={{ marginTop: '0.75rem' }}>
           <label className="muted" style={{ fontSize: '0.8rem' }}>

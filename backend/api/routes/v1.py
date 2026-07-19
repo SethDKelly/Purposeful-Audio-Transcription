@@ -1,16 +1,20 @@
-"""Stable `/api/v1` surface for React / generated clients (v1.2).
+"""Stable `/api/v1` surface for React / generated clients (v1.2+).
 
-Legacy `/api/*` routes remain for Streamlit. Prefer `/api/v1` for new clients.
+Legacy `/api/*` routes remain for Streamlit admin/eval. Prefer `/api/v1` for product clients.
 Responses include ``schema_version: "1"`` on envelope helpers where noted.
 """
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+import hashlib
+
+from fastapi import APIRouter, Response
 from pydantic import BaseModel, Field
 
 from backend.api.routes import cases as cases_routes
+from backend.api.routes import exploration as exploration_routes
 from backend.api.routes import feedback as feedback_routes
+from backend.api.routes import modules as modules_routes
 from backend.api.routes import transcripts as transcripts_routes
 from backend.api.routes import workflows as workflows_routes
 from backend.api.schemas import (
@@ -19,14 +23,20 @@ from backend.api.schemas import (
     CaseDetailResponse,
     CaseResponse,
     CasesResponse,
+    CompareCaseTranscriptsRequest,
+    CompareCaseTranscriptsResponse,
     CreateCaseRequest,
     CreateTranscriptRequest,
     FindingFeedbackRequest,
     FindingFeedbackResponse,
+    KnowledgeGraphResponse,
     MarkReadyRequest,
+    ModulesResponse,
     RunWorkflowRequest,
+    StructuredGraphResponse,
     SynthesisReportResponse,
     TranscriptBundleResponse,
+    TranscriptWorkflowRunsResponse,
     UpdateCaseRequest,
     UpdateSpeakersRequest,
     UpdateTurnsRequest,
@@ -34,6 +44,7 @@ from backend.api.schemas import (
     WorkflowsResponse,
     synthesis_report_to_response,
 )
+from backend.core.module_registry import module_registry
 from backend.services.synthesis_engine import synthesis_engine
 from backend.services.workflow_engine import workflow_engine
 
@@ -79,6 +90,26 @@ class ExportV1Response(V1Envelope):
     workflow_run_id: str
     format: str
     download_hint: str
+
+
+class ModuleLifecycleItem(BaseModel):
+    id: str
+    name: str
+    version: str
+    enabled: bool
+    description: str = ""
+    output_schema: str = "module_output_v1"
+    prompt_file: str = ""
+    prompt_sha256: str = ""
+    deprecated: bool = False
+
+
+class ModuleLifecycleResponse(V1Envelope):
+    modules: list[ModuleLifecycleItem] = Field(default_factory=list)
+    compatibility_note: str = (
+        "Reports store module_id + module version at run time; interpret old "
+        "outputs with the run's recorded version, not the live registry alone."
+    )
 
 
 @router.post("/transcripts", response_model=TranscriptBundleResponse)
@@ -274,3 +305,75 @@ def assign_transcript_case(
     transcript_id: str, request: AssignTranscriptCaseRequest
 ) -> AssignTranscriptCaseResponse:
     return cases_routes.assign_transcript_case(transcript_id, request)
+
+
+@router.delete("/cases/{case_id}", status_code=204)
+def delete_case(case_id: str) -> Response:
+    return cases_routes.delete_case(case_id)
+
+
+@router.post("/cases/{case_id}/longitudinal-synthesis")
+def run_longitudinal_synthesis(case_id: str, model: str | None = None) -> dict:
+    payload = cases_routes.run_longitudinal_synthesis(case_id, model=model)
+    return {"schema_version": SCHEMA_VERSION, **payload}
+
+
+@router.get("/modules", response_model=ModulesResponse)
+def list_modules() -> ModulesResponse:
+    return modules_routes.list_modules()
+
+
+@router.get("/modules/lifecycle", response_model=ModuleLifecycleResponse)
+def module_lifecycle() -> ModuleLifecycleResponse:
+    items: list[ModuleLifecycleItem] = []
+    for module in module_registry.list_modules():
+        cfg = module.config
+        prompt_sha = hashlib.sha256(module.module_prompt.encode("utf-8")).hexdigest()
+        items.append(
+            ModuleLifecycleItem(
+                id=cfg.id,
+                name=cfg.name,
+                version=cfg.version,
+                enabled=cfg.enabled,
+                description=cfg.description,
+                output_schema=cfg.output_schema,
+                prompt_file=cfg.prompt_file,
+                prompt_sha256=prompt_sha,
+                deprecated=not cfg.enabled,
+            )
+        )
+    return ModuleLifecycleResponse(modules=items)
+
+
+@router.get(
+    "/workflow-runs/{run_id}/knowledge-graph",
+    response_model=KnowledgeGraphResponse,
+)
+def get_knowledge_graph(run_id: str) -> KnowledgeGraphResponse:
+    return exploration_routes.get_knowledge_graph(run_id)
+
+
+@router.get(
+    "/workflow-runs/{run_id}/structured-graph",
+    response_model=StructuredGraphResponse,
+)
+def get_structured_graph(run_id: str) -> StructuredGraphResponse:
+    return exploration_routes.get_structured_graph(run_id)
+
+
+@router.post(
+    "/exploration/compare-transcripts",
+    response_model=CompareCaseTranscriptsResponse,
+)
+def compare_case_transcripts(
+    request: CompareCaseTranscriptsRequest,
+) -> CompareCaseTranscriptsResponse:
+    return exploration_routes.compare_case_transcripts(request)
+
+
+@router.get(
+    "/transcripts/{transcript_id}/workflow-runs",
+    response_model=TranscriptWorkflowRunsResponse,
+)
+def list_transcript_workflow_runs(transcript_id: str) -> TranscriptWorkflowRunsResponse:
+    return exploration_routes.list_transcript_workflow_runs(transcript_id)

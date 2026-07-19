@@ -130,30 +130,18 @@ def test_openapi_v1_paths_snapshot() -> None:
     client = TestClient(app)
     spec = client.get("/openapi.json").json()
     paths = sorted(p for p in spec["paths"] if p.startswith("/api/v1/"))
-    expected = [
-        "/api/v1/cases",
-        "/api/v1/cases/{case_id}",
-        "/api/v1/cases/{case_id}/timeline",
-        "/api/v1/exports",
-        "/api/v1/findings/{finding_key}/feedback",
-        "/api/v1/reports/{run_id}",
-        "/api/v1/reports/{run_id}/evidence",
-        "/api/v1/reports/{run_id}/findings",
-        "/api/v1/transcripts",
-        "/api/v1/transcripts/{transcript_id}",
-        "/api/v1/transcripts/{transcript_id}/case",
-        "/api/v1/transcripts/{transcript_id}/evidence/rebuild",
-        "/api/v1/transcripts/{transcript_id}/ready",
-        "/api/v1/transcripts/{transcript_id}/speakers",
-        "/api/v1/transcripts/{transcript_id}/turns",
-        "/api/v1/workflow-runs",
-        "/api/v1/workflow-runs/{run_id}",
-        "/api/v1/workflow-runs/{run_id}/status",
-        "/api/v1/workflows",
-    ]
+    expected = json.loads(
+        Path("tests/snapshots/openapi_v1_paths.json").read_text(encoding="utf-8")
+    )
     assert paths == expected
-    snapshot = Path("tests/snapshots/openapi_v1_paths.json")
-    snapshot.parent.mkdir(parents=True, exist_ok=True)
-    if not snapshot.is_file():
-        snapshot.write_text(json.dumps(expected, indent=2) + "\n", encoding="utf-8")
-    assert json.loads(snapshot.read_text(encoding="utf-8")) == expected
+
+
+def test_legacy_api_still_available_alongside_v1() -> None:
+    """Backwards compatibility: Streamlit admin paths remain under /api (not /api/v1)."""
+    client = TestClient(app)
+    spec = client.get("/openapi.json").json()
+    paths = set(spec["paths"])
+    assert "/api/modules" in paths
+    assert "/api/v1/modules" in paths
+    assert "/api/workflow-runs/{run_id}/exploration/knowledge-graph" in paths
+    assert "/api/v1/workflow-runs/{run_id}/knowledge-graph" in paths

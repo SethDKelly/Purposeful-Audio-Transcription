@@ -1,9 +1,13 @@
 [
   "/api/v1/cases",
   "/api/v1/cases/{case_id}",
+  "/api/v1/cases/{case_id}/longitudinal-synthesis",
   "/api/v1/cases/{case_id}/timeline",
+  "/api/v1/exploration/compare-transcripts",
   "/api/v1/exports",
   "/api/v1/findings/{finding_key}/feedback",
+  "/api/v1/modules",
+  "/api/v1/modules/lifecycle",
   "/api/v1/reports/{run_id}",
   "/api/v1/reports/{run_id}/evidence",
   "/api/v1/reports/{run_id}/findings",
@@ -14,8 +18,11 @@
   "/api/v1/transcripts/{transcript_id}/ready",
   "/api/v1/transcripts/{transcript_id}/speakers",
   "/api/v1/transcripts/{transcript_id}/turns",
+  "/api/v1/transcripts/{transcript_id}/workflow-runs",
   "/api/v1/workflow-runs",
   "/api/v1/workflow-runs/{run_id}",
+  "/api/v1/workflow-runs/{run_id}/knowledge-graph",
   "/api/v1/workflow-runs/{run_id}/status",
+  "/api/v1/workflow-runs/{run_id}/structured-graph",
   "/api/v1/workflows"
 ]

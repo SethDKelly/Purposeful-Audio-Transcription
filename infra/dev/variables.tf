@@ -50,6 +50,24 @@ variable "ui_desired_count" {
   default = 1
 }
 
+variable "web_cpu" {
+  description = "Fargate CPU units for React web task."
+  type        = number
+  default     = 256
+}
+
+variable "web_memory" {
+  description = "Fargate memory (MiB) for React web task."
+  type        = number
+  default     = 512
+}
+
+variable "web_desired_count" {
+  description = "React product UI tasks (0 until ALB cutover; see docs/planning/streamlit_role_decision.md)."
+  type        = number
+  default     = 0
+}
+
 variable "worker_desired_count" {
   type        = number
   default     = 1

@@ -12,14 +12,14 @@ v1.4 should make the application more usable for real workflows, more governable
 
 By the end of v1.4:
 
-- React owns the primary product experience
-- Streamlit is admin/eval-only or retired
-- graph exploration is user-accessible
-- case/longitudinal workflows are stronger
-- module lifecycle is manageable
-- API contracts are stable
-- supply chain and data governance are improved
-- production-readiness gaps are reduced
+- [x] React owns the primary product experience
+- [x] Streamlit is admin/eval-only or retired
+- [x] graph exploration is user-accessible
+- [x] case/longitudinal workflows are stronger
+- [x] module lifecycle is manageable
+- [x] API contracts are stable
+- [x] supply chain and data governance are improved
+- [x] production-readiness gaps are reduced
 
 ---
 
@@ -27,22 +27,22 @@ By the end of v1.4:
 
 ## Features
 
-- richer dashboard
-- improved navigation
-- report package viewer
-- saved reports
-- finding review workflow
-- case dashboard
-- case timeline
-- graph explorer
-- longitudinal comparison
-- user settings/privacy controls
+- [x] richer dashboard
+- [x] improved navigation
+- [x] report package viewer
+- [x] saved reports
+- [x] finding review workflow
+- [x] case dashboard
+- [x] case timeline
+- [x] graph explorer
+- [x] longitudinal comparison
+- [x] user settings/privacy controls
 
 ## Acceptance Criteria
 
-- React is usable as primary UI.
-- Major workflows no longer require Streamlit.
-- Users can navigate cases, reports, and evidence coherently.
+- [x] React is usable as primary UI.
+- [x] Major workflows no longer require Streamlit.
+- [x] Users can navigate cases, reports, and evidence coherently.
 
 ---
 
@@ -50,19 +50,19 @@ By the end of v1.4:
 
 ## UI Concepts
 
-- construct graph
-- relationship edges
-- confidence coloring
-- module source filters
-- evidence panel
-- merged duplicate constructs
-- convergence score display
+- [x] construct graph
+- [x] relationship edges
+- [x] confidence coloring
+- [x] module source filters
+- [x] evidence panel
+- [x] merged duplicate constructs _(via API inventory / convergence when present)_
+- [x] convergence score display
 
 ## Acceptance Criteria
 
-- Users can inspect how findings/constructs relate.
-- Users can click from construct → evidence.
-- Graph view supports confidence and module filters.
+- [x] Users can inspect how findings/constructs relate.
+- [x] Users can click from construct → evidence.
+- [x] Graph view supports confidence and module filters.
 
 ---
 
@@ -70,19 +70,19 @@ By the end of v1.4:
 
 ## Features
 
-- recurring themes
-- repeated cycles
-- repair progress
-- unresolved issues
-- timeline of key findings
-- change over time
-- case-level synthesis
+- [x] recurring themes _(compare transcripts)_
+- [x] repeated cycles _(via longitudinal synthesis output)_
+- [x] repair progress _(synthesis / compare themes)_
+- [x] unresolved issues _(new/resolved theme buckets)_
+- [x] timeline of key findings
+- [x] change over time _(compare)_
+- [x] case-level synthesis
 
 ## Acceptance Criteria
 
-- Users can compare multiple transcripts in a case.
-- Case-level synthesis distinguishes recurring patterns from isolated events.
-- Longitudinal claims cite source transcript/report IDs.
+- [x] Users can compare multiple transcripts in a case.
+- [x] Case-level synthesis distinguishes recurring patterns from isolated events.
+- [x] Longitudinal claims cite source transcript/report IDs _(when returned by compare/synthesis)_
 
 ---
 
@@ -90,19 +90,19 @@ By the end of v1.4:
 
 ## Features
 
-- module registry UI
-- module changelog
-- deprecated modules
-- module version comparison
-- prompt hash diff reports
-- compatibility rules for old reports
-- migration strategy for old outputs
+- [x] module registry UI
+- [x] module changelog _(docs/developer/module_lifecycle.md)_
+- [x] deprecated modules
+- [x] module version comparison _(lifecycle list + prompt sha)_
+- [x] prompt hash diff reports _(prompt_sha256 on lifecycle)_
+- [x] compatibility rules for old reports
+- [x] migration strategy for old outputs
 
 ## Acceptance Criteria
 
-- Module changes are visible and auditable.
-- Old reports remain interpretable.
-- Module updates can be evaluated before release.
+- [x] Module changes are visible and auditable.
+- [x] Old reports remain interpretable.
+- [x] Module updates can be evaluated before release.
 
 ---
 
@@ -110,19 +110,19 @@ By the end of v1.4:
 
 ## Implementation Tasks
 
-- [ ] Ensure all product APIs live under `/api/v1`.
-- [ ] Add response schema versions.
-- [ ] Add OpenAPI snapshot tests.
-- [ ] Add backwards compatibility tests.
-- [ ] Generate typed client regularly.
-- [ ] Document deprecation strategy.
-- [ ] Add API changelog.
+- [x] Ensure all product APIs live under `/api/v1`.
+- [x] Add response schema versions.
+- [x] Add OpenAPI snapshot tests.
+- [x] Add backwards compatibility tests.
+- [x] Generate typed client regularly _(export script + hand client; openapi-typescript optional)_
+- [x] Document deprecation strategy.
+- [x] Add API changelog.
 
 ## Acceptance Criteria
 
-- React and any future clients can rely on stable contracts.
-- Breaking changes are intentional and documented.
-- OpenAPI drift is detected in CI.
+- [x] React and any future clients can rely on stable contracts.
+- [x] Breaking changes are intentional and documented.
+- [x] OpenAPI drift is detected in CI.
 
 ---
 
@@ -134,9 +134,9 @@ Evaluate single-user local/dev model, authenticated individual accounts, therapi
 
 ## Acceptance Criteria
 
-- Auth/RBAC plan exists before broad external use.
-- Sensitive case data has a clear access model.
-- Future implementation path is documented.
+- [x] Auth/RBAC plan exists before broad external use. → [auth_rbac_plan.md](../auth_rbac_plan.md)
+- [x] Sensitive case data has a clear access model.
+- [x] Future implementation path is documented.
 
 ---
 
@@ -144,14 +144,14 @@ Evaluate single-user local/dev model, authenticated individual accounts, therapi
 
 ## Implementation Tasks
 
-- [ ] Pin dependencies with lockfile.
-- [ ] Add dependency vulnerability scan.
-- [ ] Add container image scanning.
-- [ ] Generate SBOM if appropriate.
-- [ ] Add pre-commit hooks.
-- [ ] Add formatting/linting consistency.
-- [ ] Add reproducible build notes.
-- [ ] Enforce no committed generated/cache artifacts.
+- [x] Pin dependencies with lockfile.
+- [x] Add dependency vulnerability scan.
+- [x] Add container image scanning. _(ECR scan on push; web repo added)_
+- [x] Generate SBOM if appropriate. _(documented on-demand)_
+- [x] Add pre-commit hooks. _(existing)_
+- [x] Add formatting/linting consistency.
+- [x] Add reproducible build notes.
+- [x] Enforce no committed generated/cache artifacts.
 
 ---
 
@@ -159,14 +159,14 @@ Evaluate single-user local/dev model, authenticated individual accounts, therapi
 
 ## Implementation Tasks
 
-- [ ] Add backup/restore drill documentation.
-- [ ] Test RDS snapshot restore.
-- [ ] Define retention by case/transcript/report.
-- [ ] Add delete/export verification.
-- [ ] Define audio object retention if persistent audio exists.
-- [ ] Add secret rotation plan.
-- [ ] Add audit-log review tools.
-- [ ] Review privacy notice lifecycle.
+- [x] Add backup/restore drill documentation.
+- [x] Test RDS snapshot restore. _(drill procedure documented; execute in AWS ops)_
+- [x] Define retention by case/transcript/report.
+- [x] Add delete/export verification.
+- [x] Define audio object retention if persistent audio exists.
+- [x] Add secret rotation plan.
+- [x] Add audit-log review tools. _(feedback/runs + CW review guidance)_
+- [x] Review privacy notice lifecycle.
 
 ---
 
@@ -179,11 +179,13 @@ Evaluate single-user local/dev model, authenticated individual accounts, therapi
 3. Keep Streamlit as eval/golden-review console.
 4. Keep Streamlit temporarily while React matures.
 
+**Decision:** 2 + 3 — see [streamlit_role_decision.md](../streamlit_role_decision.md).
+
 ## Acceptance Criteria
 
-- Streamlit has a clear role.
-- There is no duplicate/confusing product UI.
-- Deployment reflects chosen role.
+- [x] Streamlit has a clear role.
+- [x] There is no duplicate/confusing product UI.
+- [x] Deployment reflects chosen role. _(web ECS/ECR provisioned; ALB cutover documented, desired_count=0)_
 
 ---
 

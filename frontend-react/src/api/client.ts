@@ -114,6 +114,27 @@ export const api = {
     }),
   getCaseTimeline: (id: string) =>
     request<{ events: CaseTimelineEvent[]; case_id: string }>(`/api/v1/cases/${id}/timeline`),
+  deleteCase: (id: string) => request<void>(`/api/v1/cases/${id}`, { method: 'DELETE' }),
+  runLongitudinal: (case_id: string) =>
+    request<LongitudinalRun>(`/api/v1/cases/${case_id}/longitudinal-synthesis`, { method: 'POST' }),
+  compareCaseTranscripts: (case_id: string) =>
+    request<CompareCaseResult>('/api/v1/exploration/compare-transcripts', {
+      method: 'POST',
+      body: JSON.stringify({ case_id }),
+    }),
+  listModules: () => request<{ modules: ModuleSummary[] }>('/api/v1/modules'),
+  moduleLifecycle: () =>
+    request<{ modules: ModuleLifecycleItem[]; compatibility_note: string }>(
+      '/api/v1/modules/lifecycle',
+    ),
+  getKnowledgeGraph: (runId: string) =>
+    request<KnowledgeGraph>(`/api/v1/workflow-runs/${runId}/knowledge-graph`),
+  getStructuredGraph: (runId: string) =>
+    request<StructuredGraph>(`/api/v1/workflow-runs/${runId}/structured-graph`),
+  listTranscriptRuns: (transcriptId: string) =>
+    request<{ transcript_id: string; workflow_runs: TranscriptRunSummary[] }>(
+      `/api/v1/transcripts/${transcriptId}/workflow-runs`,
+    ),
 }
 
 export type Speaker = {
@@ -218,4 +239,88 @@ export type CaseTimelineEvent = {
   created_at: string
   analysis_ready: boolean
   workflow_run_count: number
+}
+
+export type ModuleSummary = {
+  id: string
+  name: string
+  version: string
+  description?: string
+  enabled: boolean
+  primary_lens?: string
+  output_schema?: string
+}
+
+export type ModuleLifecycleItem = {
+  id: string
+  name: string
+  version: string
+  enabled: boolean
+  description: string
+  output_schema: string
+  prompt_file: string
+  prompt_sha256: string
+  deprecated: boolean
+}
+
+export type KnowledgeGraphNode = {
+  id: string
+  type: string
+  label: string
+  module_id: string
+  confidence?: string | null
+  evidence_quote_ids?: string[]
+  convergence_score?: string | null
+}
+
+export type KnowledgeGraphEdge = {
+  source: string
+  target: string
+  relationship_type: string
+  module_id?: string | null
+  confidence?: string | null
+}
+
+export type KnowledgeGraph = {
+  workflow_run_id: string
+  nodes: KnowledgeGraphNode[]
+  edges: KnowledgeGraphEdge[]
+  source?: string | null
+}
+
+export type StructuredGraph = {
+  workflow_run_id: string
+  findings: Record<string, unknown>[]
+  constructs: Record<string, unknown>[]
+  relationships: Record<string, unknown>[]
+  counts: { findings: number; constructs: number; relationships: number }
+}
+
+export type CompareCaseResult = {
+  case_id: string
+  case_title: string
+  sessions: Record<string, unknown>[]
+  shared_themes: Array<{ label?: string; transcript_ids?: string[]; report_ids?: string[] } | Record<string, unknown>>
+  new_themes: Record<string, unknown>[]
+  resolved_themes: Record<string, unknown>[]
+  recurring_evidence_quote_ids: string[]
+  counts: Record<string, number>
+}
+
+export type LongitudinalRun = {
+  schema_version?: string
+  id: string
+  module_id: string
+  status: string
+  parsed_output?: Record<string, unknown> | null
+  validation_errors?: string[]
+  validation_warnings?: string[]
+}
+
+export type TranscriptRunSummary = {
+  id: string
+  workflow_id: string
+  status: string
+  created_at?: string | null
+  completed_at?: string | null
 }

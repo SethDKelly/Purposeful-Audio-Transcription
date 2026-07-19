@@ -210,6 +210,77 @@ resource "aws_ecs_service" "ui" {
   ]
 }
 
+# React product UI — provisioned at desired_count=0 until ALB cutover.
+resource "aws_ecs_task_definition" "web" {
+  family                   = "${local.name}-web"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = var.web_cpu
+  memory                   = var.web_memory
+  execution_role_arn       = aws_iam_role.ecs_execution_ui.arn
+  task_role_arn            = aws_iam_role.ecs_task_ui.arn
+
+  container_definitions = jsonencode([{
+    name      = "web"
+    image     = local.web_image
+    essential = true
+
+    portMappings = [{
+      containerPort = 80
+      hostPort      = 80
+      protocol      = "tcp"
+    }]
+
+    environment = [
+      { name = "LOG_JSON", value = "true" },
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.web.name
+        awslogs-region        = var.aws_region
+        awslogs-stream-prefix = "web"
+      }
+    }
+
+    healthCheck = {
+      command     = ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || curl -f http://127.0.0.1/ || exit 1"]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 30
+    }
+  }])
+}
+
+resource "aws_ecs_service" "web" {
+  name            = "${local.name}-web"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.web.arn
+  desired_count   = var.web_desired_count
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = data.aws_subnets.default.ids
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    assign_public_ip = !var.enable_no_egress_networking
+  }
+
+  deployment_minimum_healthy_percent = 0
+  deployment_maximum_percent         = 200
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
+  depends_on = [
+    aws_vpc_endpoint.s3,
+    aws_vpc_endpoint.interface,
+  ]
+}
+
 resource "aws_ecs_task_definition" "worker" {
   family                   = "${local.name}-worker"
   requires_compatibilities = ["FARGATE"]
