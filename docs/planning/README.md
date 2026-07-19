@@ -12,7 +12,7 @@ Active planning for the **Relationship Reasoning Engine** after **v1.0.0**.
 Completed history (Phases **1–49**): [../archived/planning/](../archived/planning/).  
 When a roadmap band ships, append to [../archived/planning/phases.md](../archived/planning/phases.md) starting at **Phase 50**.
 
-**Current active band:** [phases/02_v1_2_evaluation_safety_api_react_readiness.md](phases/02_v1_2_evaluation_safety_api_react_readiness.md) (v1.1 complete)
+**Current active band:** [phases/04_v1_4_platform_maturity_react_expansion.md](phases/04_v1_4_platform_maturity_react_expansion.md) (v1.1–v1.3 complete)
 
 **Design anchors:** [../design/01_product_vision_and_scope.md](../design/01_product_vision_and_scope.md) · [../design/04_knowledge_ontology.md](../design/04_knowledge_ontology.md) · [../design/03_domain_model.md](../design/03_domain_model.md)
 

@@ -1,6 +1,9 @@
 # UI / API boundary (v1.1 Workstream F)
 
 Streamlit is an **HTTP client** of the FastAPI service. It must not execute analysis,
+import worker/engine modules, or open DB connections. React (`frontend-react/`) is the
+**primary product UI** as of v1.3; Streamlit remains for admin/eval/internal workflows.
+
 touch RDS, or call Bedrock/Transcribe directly.
 
 ## Allowed UI dependencies

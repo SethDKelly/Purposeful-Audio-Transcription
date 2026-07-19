@@ -40,10 +40,12 @@ Avoid Next.js unless SSR/SEO requirements appear.
 
 | Phase | Role |
 |-------|------|
-| Now (v1.2) | Temporary product UI; HTTP client only |
-| v1.3 | Core flows move to React; Streamlit = admin/eval console |
+| v1.2 | Temporary product UI; HTTP client only |
+| **v1.3 (now)** | Core product flows in React (`frontend-react/`); Streamlit demoted to admin/eval/internal console |
 | v1.4+ | React primary; Streamlit optional internal tooling |
 | v2 | Retire or keep eval-only |
+
+**v1.3 demotion note:** New user journeys (ingest → prepare → analyze → evidence-linked report → feedback/cases) ship in React via `/api/v1`. Keep Streamlit for golden eval review, ops debugging, and any admin surfaces not yet ported. Do not add new product features only in Streamlit.
 
 ## Screen inventory (MVP)
 

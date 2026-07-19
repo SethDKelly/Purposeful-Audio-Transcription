@@ -131,6 +131,7 @@ def test_openapi_v1_paths_snapshot() -> None:
     spec = client.get("/openapi.json").json()
     paths = sorted(p for p in spec["paths"] if p.startswith("/api/v1/"))
     expected = [
+        "/api/v1/cases",
         "/api/v1/cases/{case_id}",
         "/api/v1/cases/{case_id}/timeline",
         "/api/v1/exports",
@@ -140,10 +141,15 @@ def test_openapi_v1_paths_snapshot() -> None:
         "/api/v1/reports/{run_id}/findings",
         "/api/v1/transcripts",
         "/api/v1/transcripts/{transcript_id}",
+        "/api/v1/transcripts/{transcript_id}/case",
+        "/api/v1/transcripts/{transcript_id}/evidence/rebuild",
+        "/api/v1/transcripts/{transcript_id}/ready",
+        "/api/v1/transcripts/{transcript_id}/speakers",
         "/api/v1/transcripts/{transcript_id}/turns",
         "/api/v1/workflow-runs",
         "/api/v1/workflow-runs/{run_id}",
         "/api/v1/workflow-runs/{run_id}/status",
+        "/api/v1/workflows",
     ]
     assert paths == expected
     snapshot = Path("tests/snapshots/openapi_v1_paths.json")

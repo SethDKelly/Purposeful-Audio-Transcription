@@ -27,17 +27,17 @@ By the end of v1.3:
 
 ## Implementation Tasks
 
-- [ ] Create `frontend-react/`.
-- [ ] Use Vite + React + TypeScript.
-- [ ] Add routing.
-- [ ] Add TanStack Query.
-- [ ] Add generated or typed API client.
-- [ ] Add Zod validation where useful.
-- [ ] Add design system baseline.
-- [ ] Add environment config.
-- [ ] Add Vitest.
-- [ ] Add Playwright.
-- [ ] Add Dockerfile for React static serving if using ECS initially.
+- [x] Create `frontend-react/`.
+- [x] Use Vite + React + TypeScript.
+- [x] Add routing.
+- [x] Add TanStack Query.
+- [x] Add generated or typed API client.
+- [x] Add Zod validation where useful.
+- [x] Add design system baseline.
+- [x] Add environment config.
+- [x] Add Vitest.
+- [x] Add Playwright.
+- [x] Add Dockerfile for React static serving if using ECS initially.
 
 ## Acceptance Criteria
 
@@ -65,17 +65,17 @@ transcript upload or paste
 
 ## Implementation Tasks
 
-- [ ] Transcript upload/paste screen.
-- [ ] Transcript detail screen.
-- [ ] Workflow selection screen.
-- [ ] Workflow run status screen.
-- [ ] Report summary screen.
-- [ ] Finding cards.
-- [ ] Evidence drawer or side panel.
-- [ ] Export button.
-- [ ] Basic error states.
-- [ ] Loading/progress states.
-- [ ] Empty states.
+- [x] Transcript upload/paste screen.
+- [x] Transcript detail screen.
+- [x] Workflow selection screen.
+- [x] Workflow run status screen.
+- [x] Report summary screen.
+- [x] Finding cards.
+- [x] Evidence drawer or side panel.
+- [x] Export button.
+- [x] Basic error states.
+- [x] Loading/progress states.
+- [x] Empty states.
 
 ## Acceptance Criteria
 
@@ -103,14 +103,14 @@ Finding card
 
 ## Implementation Tasks
 
-- [ ] Finding list with confidence filters.
-- [ ] Evidence quote side panel.
-- [ ] Module/source filter.
-- [ ] Construct type filter.
-- [ ] Confidence filter.
-- [ ] Alternative explanation display.
-- [ ] Unsupported/low-confidence warning display.
-- [ ] Copy/export selected finding.
+- [x] Finding list with confidence filters.
+- [x] Evidence quote side panel.
+- [x] Module/source filter.
+- [x] Construct type filter.
+- [x] Confidence filter.
+- [x] Alternative explanation display.
+- [x] Unsupported/low-confidence warning display.
+- [x] Copy/export selected finding.
 
 ## Acceptance Criteria
 
@@ -125,16 +125,16 @@ Finding card
 
 ## Features
 
-- turn-by-turn editing
-- speaker relabeling
-- split turn
-- merge turns
-- delete irrelevant turn
-- mark section excluded from analysis
-- edit original vs cleaned transcript
-- unsaved changes warning
-- transcript quality warnings
-- regenerate evidence index after edits
+- [x] turn-by-turn editing
+- [x] speaker relabeling
+- [ ] split turn _(deferred — merge-up shipped)_
+- [x] merge turns
+- [x] delete irrelevant turn _(via exclude)_
+- [x] mark section excluded from analysis
+- [x] edit original vs cleaned transcript _(single editable turn text)_
+- [x] unsaved changes warning
+- [x] transcript quality warnings
+- [x] regenerate evidence index after edits
 
 ## Acceptance Criteria
 
@@ -162,14 +162,14 @@ PinnedFinding
 
 ## Implementation Tasks
 
-- [ ] Case dashboard in React.
-- [ ] Add transcript to case.
-- [ ] Show case transcripts.
-- [ ] Show prior reports.
-- [ ] Pin important findings.
-- [ ] Add case notes.
-- [ ] Add basic timeline events.
-- [ ] Add case-level export placeholder.
+- [x] Case dashboard in React.
+- [x] Add transcript to case.
+- [x] Show case transcripts.
+- [x] Show prior reports.
+- [x] Pin important findings.
+- [x] Add case notes.
+- [x] Add basic timeline events.
+- [x] Add case-level export placeholder.
 
 ## Acceptance Criteria
 
@@ -217,12 +217,12 @@ long transcript
 
 ## v1.3 Scope
 
-- [ ] Define chunk model.
-- [ ] Define quote ID preservation strategy.
-- [ ] Add transcript length warning.
-- [ ] Add chunking design doc.
-- [ ] Implement simple chunking prototype if feasible.
-- [ ] Do not claim full long-transcript support until consolidation exists.
+- [x] Define chunk model.
+- [x] Define quote ID preservation strategy.
+- [x] Add transcript length warning.
+- [x] Add chunking design doc.
+- [x] Implement simple chunking prototype if feasible.
+- [x] Do not claim full long-transcript support until consolidation exists.
 
 ---
 
@@ -236,8 +236,8 @@ Later: S3 + CloudFront.
 
 ## Acceptance Criteria
 
-- React can be deployed separately from API/worker.
-- React deployment does not disrupt Streamlit/internal UI if retained.
+- [x] React can be deployed separately from API/worker.
+- [x] React deployment does not disrupt Streamlit/internal UI if retained.
 
 ---
 

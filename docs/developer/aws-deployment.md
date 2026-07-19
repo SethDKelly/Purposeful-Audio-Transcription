@@ -124,7 +124,8 @@ No public internet egress required during model operations.
 | Service | Image | Role | ALB |
 |---------|-------|------|-----|
 | `rre-dev-api` | `rre-dev-api` (`Dockerfile.cloud`) | HTTP API, job enqueue, health | Yes (`/api/*`) |
-| `rre-dev-ui` | `rre-dev-ui` (`Dockerfile.ui`) | Streamlit client via `RRE_API_BASE_URL` | Yes (`/` + `/_stcore/health`) |
+| `rre-dev-ui` | `rre-dev-ui` (`Dockerfile.ui`) | Streamlit admin/eval client via `RRE_API_BASE_URL` | Yes (`/` + `/_stcore/health`) |
+| `rre-dev-web` _(v1.3)_ | `frontend-react/Dockerfile` (nginx static) | React product UI → `/api/v1` | Optional separate listener/path; ECS wiring in v1.4 |
 | `rre-dev-worker` | **same** `rre-dev-api` image | Poll/claim jobs; Bedrock/Transcribe/workflows | No (ECS + `/rre/dev/worker` logs) |
 
 Today API/UI/worker use **separate** ECS task roles and a dedicated UI execution role (v1.1 Workstream D):

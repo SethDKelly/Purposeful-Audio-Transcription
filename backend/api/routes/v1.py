@@ -14,14 +14,24 @@ from backend.api.routes import feedback as feedback_routes
 from backend.api.routes import transcripts as transcripts_routes
 from backend.api.routes import workflows as workflows_routes
 from backend.api.schemas import (
+    AssignTranscriptCaseRequest,
+    AssignTranscriptCaseResponse,
+    CaseDetailResponse,
+    CaseResponse,
+    CasesResponse,
+    CreateCaseRequest,
     CreateTranscriptRequest,
     FindingFeedbackRequest,
     FindingFeedbackResponse,
+    MarkReadyRequest,
     RunWorkflowRequest,
     SynthesisReportResponse,
     TranscriptBundleResponse,
+    UpdateCaseRequest,
+    UpdateSpeakersRequest,
     UpdateTurnsRequest,
     WorkflowRunResponse,
+    WorkflowsResponse,
     synthesis_report_to_response,
 )
 from backend.services.synthesis_engine import synthesis_engine
@@ -176,8 +186,8 @@ def submit_finding_feedback_v1(
     return feedback_routes.submit_finding_feedback(workflow_run_id, finding_key, request)
 
 
-@router.get("/cases/{case_id}")
-def get_case(case_id: str):
+@router.get("/cases/{case_id}", response_model=CaseDetailResponse)
+def get_case(case_id: str) -> CaseDetailResponse:
     return cases_routes.get_case(case_id)
 
 
@@ -212,3 +222,55 @@ def create_export(request: ExportV1Request) -> ExportV1Response:
         format=request.format,
         download_hint=f"/api/workflow-runs/{request.workflow_run_id}/synthesis",
     )
+
+
+@router.get("/workflows", response_model=WorkflowsResponse)
+def list_workflows() -> WorkflowsResponse:
+    return workflows_routes.list_workflows()
+
+
+@router.patch("/transcripts/{transcript_id}/speakers", response_model=TranscriptBundleResponse)
+def update_speakers(
+    transcript_id: str, request: UpdateSpeakersRequest
+) -> TranscriptBundleResponse:
+    return transcripts_routes.update_speakers(transcript_id, request)
+
+
+@router.post("/transcripts/{transcript_id}/ready", response_model=TranscriptBundleResponse)
+def mark_ready(
+    transcript_id: str, request: MarkReadyRequest | None = None
+) -> TranscriptBundleResponse:
+    return transcripts_routes.mark_transcript_ready(transcript_id, request)
+
+
+@router.post(
+    "/transcripts/{transcript_id}/evidence/rebuild",
+    response_model=TranscriptBundleResponse,
+)
+def rebuild_evidence(transcript_id: str) -> TranscriptBundleResponse:
+    return transcripts_routes.rebuild_evidence(transcript_id)
+
+
+@router.post("/cases", response_model=CaseResponse)
+def create_case(request: CreateCaseRequest) -> CaseResponse:
+    return cases_routes.create_case(request)
+
+
+@router.get("/cases", response_model=CasesResponse)
+def list_cases() -> CasesResponse:
+    return cases_routes.list_cases()
+
+
+@router.patch("/cases/{case_id}", response_model=CaseResponse)
+def update_case(case_id: str, request: UpdateCaseRequest) -> CaseResponse:
+    return cases_routes.update_case(case_id, request)
+
+
+@router.patch(
+    "/transcripts/{transcript_id}/case",
+    response_model=AssignTranscriptCaseResponse,
+)
+def assign_transcript_case(
+    transcript_id: str, request: AssignTranscriptCaseRequest
+) -> AssignTranscriptCaseResponse:
+    return cases_routes.assign_transcript_case(transcript_id, request)
