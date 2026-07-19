@@ -1,12 +1,31 @@
 # Contributing
 
+## Branching model
+
+```text
+feature / fix / docs branches
+        ↓  PR
+  pre-production     ← integration & pre-prod testing
+        ↓  PR (when ready to release)
+      main           ← production releases only
+```
+
+| Branch | Role |
+|--------|------|
+| **`main`** | Production. Deploy tags / production releases come from here. |
+| **`pre-production`** | Integration line for testing before production. Basis: post-v1.0 backlog work through v2 foundation. |
+| **Feature branches** | Cut from `pre-production`; merge back to `pre-production` via PR. Do not merge features straight to `main`. |
+
+Promote `pre-production` → `main` only when intentionally shipping a production release (PR + review + tag as needed).
+
 ## Workflow
 
-1. Fork / branch from `main`
+1. Branch from **`pre-production`** (not `main`, unless hotfixing production)
 2. Make focused changes with tests
 3. Install hooks once: `pip install -e ".[dev]" && pre-commit install`
-4. Run `pre-commit run --all-files` (or rely on the git hook) and `pytest tests/ -q`
-5. Open a PR with summary and test plan
+4. Run `pre-commit run --all-files` (or rely on the git hook) and `python -m pytest tests/ -q`
+5. Open a PR **into `pre-production`** with summary and test plan
+6. After pre-prod validation, open a release PR **`pre-production` → `main`** when ready to deploy
 
 ### Pre-commit gates (Tier 1 + 2)
 
