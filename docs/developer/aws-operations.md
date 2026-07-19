@@ -34,9 +34,24 @@ DB remains the store of record. Prefer Insights queries by ID, not free-text sea
 
 Design: [log-redaction.md](log-redaction.md).
 
-## CloudWatch Logs Insights queries
+## Trace a workflow (API → job → worker → module)
 
-Run in **Logs Insights** against `/rre/dev/api`.
+1. Note `request_id` from the API response header `X-Request-ID` or error body.
+2. In Logs Insights (groups `/rre/dev/api` and `/rre/dev/worker`), filter on that ID or on `workflow_run_id`.
+3. JSON logs include `service` (`api` / `worker`), `event`, `module_id`, and `error_type`.
+4. Queue depth / oldest age: `GET /api/queue/stats` or CloudWatch namespace `RRE/Dev`.
+5. Dashboard: **`rre-dev-ops`** (queue metrics + ECS CPU/memory).
+
+### Cross-service failed runs
+
+```text
+fields @timestamp, service, event, workflow_run_id, module_id, error_type, message
+| filter event like /failed|retry_exhausted|stale_/
+| sort @timestamp desc
+| limit 50
+```
+
+Run against `/rre/dev/api` and `/rre/dev/worker` (multi-source query in the console).
 
 ### Failed module runs (last hour)
 

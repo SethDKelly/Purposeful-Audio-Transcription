@@ -17,6 +17,7 @@ _STANDARD_EXTRA_KEYS = (
     "workflow_run_id",
     "module_run_id",
     "module_id",
+    "service",
     "error_type",
     "run_id",
     "workflow_id",
@@ -31,6 +32,9 @@ _STANDARD_EXTRA_KEYS = (
     "retention_days",
     "turn_count",
     "quote_count",
+    "queue_depth",
+    "oldest_queued_age_seconds",
+    "in_flight",
 )
 
 
@@ -74,6 +78,8 @@ class JsonLogFormatter(logging.Formatter):
                 value = module_run_id_var.get()
             elif value is None and key == "module_id":
                 value = module_id_var.get()
+            elif value is None and key == "service":
+                value = settings.resolved_service_name
             if value is not None:
                 payload[key] = value
 

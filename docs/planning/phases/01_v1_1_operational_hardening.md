@@ -182,11 +182,11 @@ Prepare for React by making Streamlit behave like an external API client.
 
 ## Implementation Tasks
 
-- [ ] Add request IDs to logs across API and worker.
-- [ ] Include workflow/job IDs in logs.
-- [ ] Add structured logging fields.
-- [ ] Add service-level dashboards for API, worker, provider calls, DB, and UI.
-- [ ] Add smoke test scripts for API, UI, and worker.
+- [x] Add request IDs to logs across API and worker.
+- [x] Include workflow/job IDs in logs.
+- [x] Add structured logging fields.
+- [x] Add service-level dashboards for API, worker, provider calls, DB, and UI.
+- [x] Add smoke test scripts for API, UI, and worker.
 
 ## Acceptance Criteria
 

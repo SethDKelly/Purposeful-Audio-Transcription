@@ -62,6 +62,8 @@ class Settings(BaseSettings):
     api_key: str = ""
     log_json: bool = False
     log_redact: bool | None = None
+    # api | worker | ui — set via RRE_PROCESS on ECS worker; defaults to api.
+    rre_process: str = "api"
     workflow_background_default: bool = False
     workflow_sync_module_limit: int = 6
     # Parallel transcript modules within a workflow (meta-synthesis stays sequential).
@@ -98,6 +100,15 @@ class Settings(BaseSettings):
     allowed_extensions: frozenset[str] = frozenset(
         {".mp3", ".wav", ".m4a", ".flac", ".ogg", ".webm", ".mp4"}
     )
+
+    @property
+    def resolved_service_name(self) -> str:
+        process = (self.rre_process or "api").strip().lower()
+        if process == "worker":
+            return "worker"
+        if process == "ui":
+            return "ui"
+        return "api"
 
     @property
     def max_upload_bytes(self) -> int:
