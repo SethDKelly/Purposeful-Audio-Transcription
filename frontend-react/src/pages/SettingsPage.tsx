@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getPrivacyPrefs, setPrivacyPrefs, type PrivacyPrefs } from '../lib/localPrefs'
+import { getPrivacyPrefs, setPrivacyPrefs, type PrivacyPrefs } from '../prefs/localPrefs'
 
 export function SettingsPage() {
   const [prefs, setPrefs] = useState<PrivacyPrefs>(getPrivacyPrefs())

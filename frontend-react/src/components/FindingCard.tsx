@@ -1,5 +1,5 @@
 import type { Finding } from '../api/client'
-import type { ReviewStatus } from '../lib/localPrefs'
+import type { ReviewStatus } from '../prefs/localPrefs'
 
 const FEEDBACK_LABELS = [
   'helpful',

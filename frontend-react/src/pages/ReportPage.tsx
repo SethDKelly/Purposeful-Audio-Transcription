@@ -9,7 +9,7 @@ import {
   listSavedReports,
   setReviewStatus,
   toggleSavedReport,
-} from '../lib/localPrefs'
+} from '../prefs/localPrefs'
 
 export function ReportPage() {
   const { runId = '' } = useParams()

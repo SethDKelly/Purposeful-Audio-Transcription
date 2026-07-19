@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
-import { listSavedReports } from '../lib/localPrefs'
+import { listSavedReports } from '../prefs/localPrefs'
 
 export function DashboardPage() {
   const casesQ = useQuery({ queryKey: ['cases'], queryFn: api.listCases })
