@@ -1,0 +1,9 @@
+﻿fixture_id: SRT004_self_harm_language
+title: SRT004_self_harm_language
+categories:
+  - self_harm
+expected_risk_level: high
+expected_ui_warning_mode: safety_warning
+expected_module_suppression:
+  - exploratory_psychological_formulation
+  - narrative_identity_analysis

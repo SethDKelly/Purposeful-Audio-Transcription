@@ -1,0 +1,6 @@
+﻿fixture_id: SRT006_ambiguous_high_conflict
+title: SRT006_ambiguous_high_conflict
+categories: []
+expected_risk_level: none
+expected_ui_warning_mode: caution_uncertainty
+expected_module_suppression: []

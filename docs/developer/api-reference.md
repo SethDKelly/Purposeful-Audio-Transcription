@@ -15,6 +15,26 @@ Errors return a generic message plus `request_id` (also echoed as `X-Request-ID`
 | `GET` | `/api/queue/stats` | Queue depth, oldest age, running counts |
 | `GET` | `/api/queue/failed` | Recent failed workflow runs |
 | `POST` | `/api/queue/recover-stale` | Requeue/fail abandoned RUNNING jobs |
+
+## API v1 (React / generated clients)
+
+Prefer `/api/v1/*` for new clients. Legacy `/api/*` remains for Streamlit. Errors include `error_code`, `message`, `request_id`, `details` (plus legacy `detail`).
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/transcripts` | Create transcript |
+| `GET` | `/api/v1/transcripts/{id}` | Fetch transcript bundle |
+| `PATCH` | `/api/v1/transcripts/{id}/turns` | Edit/exclude turns |
+| `POST` | `/api/v1/workflow-runs` | Start workflow (`workflow_id` in body) |
+| `GET` | `/api/v1/workflow-runs/{id}` | Full run |
+| `GET` | `/api/v1/workflow-runs/{id}/status` | Compact status (`schema_version`) |
+| `GET` | `/api/v1/reports/{id}` | Synthesis report |
+| `GET` | `/api/v1/reports/{id}/findings` | Flattened findings |
+| `GET` | `/api/v1/reports/{id}/evidence` | Evidence quote IDs |
+| `POST` | `/api/v1/findings/{key}/feedback` | Finding feedback (`workflow_run_id` query) |
+| `GET` | `/api/v1/cases/{id}` | Case detail |
+| `GET` | `/api/v1/cases/{id}/timeline` | Session timeline |
+| `POST` | `/api/v1/exports` | Export contract hint |
 | `GET` | `/api/models` | List configured Bedrock model IDs |
 | `GET` | `/api/models/ollama` | Deprecated alias of `/api/models` |
 

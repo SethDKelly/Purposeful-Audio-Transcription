@@ -1,0 +1,15 @@
+[
+  "/api/v1/cases/{case_id}",
+  "/api/v1/cases/{case_id}/timeline",
+  "/api/v1/exports",
+  "/api/v1/findings/{finding_key}/feedback",
+  "/api/v1/reports/{run_id}",
+  "/api/v1/reports/{run_id}/evidence",
+  "/api/v1/reports/{run_id}/findings",
+  "/api/v1/transcripts",
+  "/api/v1/transcripts/{transcript_id}",
+  "/api/v1/transcripts/{transcript_id}/turns",
+  "/api/v1/workflow-runs",
+  "/api/v1/workflow-runs/{run_id}",
+  "/api/v1/workflow-runs/{run_id}/status"
+]

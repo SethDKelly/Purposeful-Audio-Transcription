@@ -27,18 +27,18 @@ By the end of v1.2:
 
 ## Implementation Tasks
 
-- [ ] Create an evaluation runner for golden fixtures.
-- [ ] Support running selected workflows against selected fixtures.
-- [ ] Store structured eval outputs outside fixture files.
-- [ ] Score required signals from `expected_assertions.yaml`.
-- [ ] Score forbidden or low-confidence claim categories.
-- [ ] Track schema validity.
-- [ ] Track evidence quote coverage.
-- [ ] Track unsupported inference rate.
-- [ ] Track construct coverage.
-- [ ] Track confidence ceiling violations.
-- [ ] Generate Markdown/JSON eval reports.
-- [ ] Add release-gate thresholds for critical tests.
+- [x] Create an evaluation runner for golden fixtures.
+- [x] Support running selected workflows against selected fixtures.
+- [x] Store structured eval outputs outside fixture files.
+- [x] Score required signals from `expected_assertions.yaml`.
+- [x] Score forbidden or low-confidence claim categories.
+- [x] Track schema validity.
+- [x] Track evidence quote coverage.
+- [x] Track unsupported inference rate.
+- [x] Track construct coverage.
+- [x] Track confidence ceiling violations.
+- [x] Generate Markdown/JSON eval reports.
+- [x] Add release-gate thresholds for critical tests.
 
 ## Suggested Metrics
 
@@ -73,6 +73,8 @@ Create synthetic fixtures for explicit threats, coercive control indicators, sta
 
 For each fixture, add transcript, metadata, expected safety behavior, forbidden outputs, expected UI warning mode, and expected module suppression rules where applicable.
 
+**Shipped fixtures:** `tests/fixtures/safety_red_team/SRT001`–`SRT006` (threat, coercion, stalking, self-harm, ordinary conflict FP, ambiguous high-conflict).
+
 ## Required Safety Assertions
 
 The system should avoid diagnosing, avoid determining abuse as fact from insufficient evidence, avoid mutualizing serious safety concerns, recommend appropriate support language when severe risk appears, distinguish high-risk evidence from ordinary conflict, and preserve uncertainty where evidence is ambiguous.
@@ -90,11 +92,11 @@ The system should avoid diagnosing, avoid determining abuse as fact from insuffi
 
 ## Implementation Tasks
 
-- [ ] Define forbidden/high-risk claim taxonomy.
-- [ ] Add detector/scorer for high-risk claims.
-- [ ] Flag diagnosis, personality disorder determination, narcissism determination, abuse determination, coercive control determination, intentional manipulation determination, trauma-history claim, stable attachment-style claim, and relationship prognosis.
-- [ ] Allow exploratory discussion only with low/moderate confidence and caveats.
-- [ ] Add tests ensuring speculative domains remain appropriately caveated.
+- [x] Define forbidden/high-risk claim taxonomy.
+- [x] Add detector/scorer for high-risk claims.
+- [x] Flag diagnosis, personality disorder determination, narcissism determination, abuse determination, coercive control determination, intentional manipulation determination, trauma-history claim, stable attachment-style claim, and relationship prognosis.
+- [x] Allow exploratory discussion only with low/moderate confidence and caveats.
+- [x] Add tests ensuring speculative domains remain appropriately caveated.
 
 ## Acceptance Criteria
 
@@ -108,10 +110,10 @@ The system should avoid diagnosing, avoid determining abuse as fact from insuffi
 
 ## Implementation Tasks
 
-- [ ] Store module ID, module version, prompt version, compiler hash, and model ID.
-- [ ] Run same fixture/module across two module versions.
-- [ ] Compare schema validity, signal hit rate, evidence coverage, construct count, forbidden claim count, cost/latency, and human review score.
-- [ ] Generate comparison reports.
+- [x] Store module ID, module version, prompt version, compiler hash, and model ID.
+- [x] Run same fixture/module across two module versions.
+- [x] Compare schema validity, signal hit rate, evidence coverage, construct count, forbidden claim count, cost/latency, and human review score.
+- [x] Generate comparison reports.
 
 ## Acceptance Criteria
 
@@ -143,13 +145,13 @@ POST   /api/v1/exports
 
 ## Implementation Tasks
 
-- [ ] Formalize `/api/v1`.
-- [ ] Add response schema versioning.
-- [ ] Generate OpenAPI spec.
-- [ ] Add OpenAPI snapshot tests.
-- [ ] Create frontend-facing DTOs.
-- [ ] Ensure API errors use a stable shape with `error_code`, `message`, `request_id`, and safe `details`.
-- [ ] Add API contract tests.
+- [x] Formalize `/api/v1`.
+- [x] Add response schema versioning.
+- [x] Generate OpenAPI spec.
+- [x] Add OpenAPI snapshot tests.
+- [x] Create frontend-facing DTOs.
+- [x] Ensure API errors use a stable shape with `error_code`, `message`, `request_id`, and safe `details`.
+- [x] Add API contract tests.
 
 ## Acceptance Criteria
 
@@ -164,15 +166,15 @@ POST   /api/v1/exports
 
 ## Implementation Tasks
 
-- [ ] Choose React stack.
-- [ ] Create screen inventory.
-- [ ] Create component inventory.
-- [ ] Document product flows.
-- [ ] Decide Streamlit long-term role.
-- [ ] Define generated API client approach.
-- [ ] Define frontend auth/API-key/session approach.
-- [ ] Define frontend deployment target.
-- [ ] Create `docs/planning/react_frontend_plan.md`.
+- [x] Choose React stack.
+- [x] Create screen inventory.
+- [x] Create component inventory.
+- [x] Document product flows.
+- [x] Decide Streamlit long-term role.
+- [x] Define generated API client approach.
+- [x] Define frontend auth/API-key/session approach.
+- [x] Define frontend deployment target.
+- [x] Create `docs/planning/react_frontend_plan.md`.
 
 ## Recommended Stack
 
