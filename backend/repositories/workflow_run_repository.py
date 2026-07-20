@@ -2,7 +2,7 @@ import json
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from backend.core.exceptions import WorkflowRunNotFoundError
@@ -119,16 +119,32 @@ class WorkflowRunRepository:
         }
 
     def claim_queued(self, session: Session, run_id: str) -> WorkflowRun | None:
-        """Atomically claim a CREATED run for execution. Returns None if already claimed."""
+        """Atomically claim a CREATED run for execution. Returns None if already claimed.
+
+        Uses a conditional UPDATE so concurrent workers cannot both succeed:
+        ``UPDATE … WHERE id=:id AND status='created' AND cancel_requested=false``.
+        """
+        now = utc_now()
+        result = session.execute(
+            update(WorkflowRunRow)
+            .where(
+                WorkflowRunRow.id == run_id,
+                WorkflowRunRow.status == WorkflowRunStatus.CREATED.value,
+                WorkflowRunRow.cancel_requested.is_(False),
+            )
+            .values(
+                status=WorkflowRunStatus.RUNNING_MODULES.value,
+                attempt_count=WorkflowRunRow.attempt_count + 1,
+                started_at=now,
+            )
+        )
+        if result.rowcount != 1:
+            return None
+        # Drop identity map so we reload post-UPDATE values (attempt_count, status).
+        session.expire_all()
         row = session.get(WorkflowRunRow, run_id)
         if row is None:
             return None
-        if row.status != WorkflowRunStatus.CREATED.value or row.cancel_requested:
-            return None
-        row.status = WorkflowRunStatus.RUNNING_MODULES.value
-        row.attempt_count = int(row.attempt_count or 0) + 1
-        row.started_at = utc_now()
-        session.flush()
         return _enrich_run(session, _from_row(row))
 
     def list_by_transcript_id(

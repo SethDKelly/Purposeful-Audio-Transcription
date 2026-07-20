@@ -6,6 +6,8 @@ Close the remaining **atomic claim** gap and verify worker queue safety before b
 
 Much of queue observability already shipped in v1.1 (Phase **50**): max in-flight, queue metrics, stale recovery patterns, health checks, and alarms. This phase focuses on **true concurrent claim** (no fetch-then-update race) and tests that prove it.
 
+**Status:** Complete · Tests: `tests/test_phase_006_worker_atomicity.py`
+
 ---
 
 # Problem
@@ -28,13 +30,12 @@ Use atomic SQL update:
 
 ```sql
 UPDATE workflow_runs
-SET status = 'running',
+SET status = 'running_modules',
     attempt_count = attempt_count + 1,
     started_at = now()
 WHERE id = :id
   AND status = 'created'
   AND cancel_requested = false
-RETURNING *
 ```
 
 Or use:
@@ -46,31 +47,33 @@ FOR UPDATE SKIP LOCKED
 
 for Postgres-backed queue claiming.
 
+Implemented as a conditional SQLAlchemy `UPDATE … WHERE status='created' AND cancel_requested=false` in `WorkflowRunRepository.claim_queued` (portable across SQLite and Postgres).
+
 ---
 
 # Implementation Tasks
 
 ## Worker Claiming (primary gap)
 
-- [ ] Replace fetch-then-update claim logic with atomic claim (`UPDATE … WHERE status=created RETURNING` or `FOR UPDATE SKIP LOCKED`).
-- [ ] Ensure cancellation is respected during claim.
-- [ ] Confirm max jobs claimed per poll / max in-flight still enforced (likely already present from v1.1 — verify, do not rebuild).
-- [ ] Confirm retry exhaustion + stale job recovery still correct after atomic claim change.
+- [x] Replace fetch-then-update claim logic with atomic claim (`UPDATE … WHERE status=created RETURNING` or `FOR UPDATE SKIP LOCKED`).
+- [x] Ensure cancellation is respected during claim.
+- [x] Confirm max jobs claimed per poll / max in-flight still enforced (likely already present from v1.1 — verify, do not rebuild).
+- [x] Confirm retry exhaustion + stale job recovery still correct after atomic claim change.
 
 ## Operational Metrics (verify / fill gaps)
 
 - [x] Queue depth / oldest age / running / failed metrics exist from v1.1 — re-verify after claim change.
-- [ ] Add any missing metric only if atomic-claim work regresses observability.
-- [ ] Confirm CloudWatch alarms and worker health checks still fire.
+- [x] Add any missing metric only if atomic-claim work regresses observability.
+- [x] Confirm CloudWatch alarms and worker health checks still fire.
 
 ## Tests
 
-- [ ] Simulate two workers claiming the same job.
-- [ ] Verify only one worker succeeds.
-- [ ] Verify canceled jobs are not claimed.
-- [ ] Verify stale jobs can be recovered.
-- [ ] Verify retry exhaustion.
-- [ ] Verify queue metrics remain emitted or callable.
+- [x] Simulate two workers claiming the same job.
+- [x] Verify only one worker succeeds.
+- [x] Verify canceled jobs are not claimed.
+- [x] Verify stale jobs can be recovered.
+- [x] Verify retry exhaustion.
+- [x] Verify queue metrics remain emitted or callable.
 
 ---
 
