@@ -42,7 +42,10 @@ Put any human-readable report inside `raw_markdown_report` — do not emit markd
       "source_construct_id": "C001",
       "target_construct_id": "C002",
       "relationship_type": "contributes_to",
-      "confidence": "moderate"
+      "confidence": "moderate",
+      "rationale": "Short explanation of why the link is claimed",
+      "evidence_quote_ids": ["Q001"],
+      "alternative_explanations": []
     }
   ],
   "recommendations": ["Practical suggestions when appropriate"],
@@ -64,6 +67,7 @@ Use one of: observation, interaction_cycle, emotion, need, value, belief, narrat
 5. Only use quote IDs that appear in the provided evidence index.
 6. Cite the smallest useful span: prefer one atomic quote or a short exchange (about 2–4 turns). Avoid paragraph-length evidence and avoid citing many quote IDs for one finding.
 7. Put the real analysis in structured fields (`findings`, `constructs`, `relationships`, `recommendations`). Prefer `raw_markdown_report` as `""`; if used, keep it under ~150 words. Do not duplicate the full finding list as markdown.
+8. Relationships should include a `rationale`. Include `evidence_quote_ids` when possible. Inferred relationships (confidence high, moderate, low, or exploratory) should include `alternative_explanations`.
 
 ## Response Format
 

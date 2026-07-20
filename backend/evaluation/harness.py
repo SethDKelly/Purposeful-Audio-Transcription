@@ -33,6 +33,8 @@ class EvalGateConfig:
     max_average_evidence_chars: float | None = None
     max_paragraph_evidence_count: int | None = None
     warn_average_evidence_chars: float | None = None
+    # Relationship evidence coverage (phase 008). None = do not gate.
+    max_relationship_without_evidence_or_rationale: int | None = None
 
 
 @dataclass
@@ -54,6 +56,7 @@ class ModuleEvalResult:
     average_evidence_chars: float = 0.0
     paragraph_evidence_count: int = 0
     evidence_precision_warnings: list[str] = field(default_factory=list)
+    relationship_without_evidence_or_rationale_count: int = 0
     gate_passed: bool = True
     details: dict[str, Any] = field(default_factory=dict)
 
@@ -150,6 +153,18 @@ def evaluate_module_output(
             f"exceeds warning threshold {warn_avg}"
         )
 
+    relationships = [
+        item
+        for item in (module_output.get("relationships") or [])
+        if isinstance(item, dict)
+    ]
+    relationship_without_evidence_or_rationale = sum(
+        1
+        for rel in relationships
+        if not (rel.get("evidence_quote_ids") or [])
+        and not str(rel.get("rationale") or "").strip()
+    )
+
     result = ModuleEvalResult(
         fixture_id=fixture.fixture_id,
         workflow_id=workflow_id,
@@ -168,11 +183,15 @@ def evaluate_module_output(
         average_evidence_chars=precision["average_evidence_chars"],
         paragraph_evidence_count=precision["paragraph_evidence_count"],
         evidence_precision_warnings=precision_warnings,
+        relationship_without_evidence_or_rationale_count=(
+            relationship_without_evidence_or_rationale
+        ),
         details={
             "schema_errors": schema_errors,
             "forbidden": claim_score.to_dict(),
             "text_length": len(flatten_output_text(module_output)),
             "evidence_precision": precision,
+            "relationship_count": len(relationships),
         },
     )
     result.gate_passed = _passes_gates(result, gates)
@@ -233,6 +252,12 @@ def _passes_gates(result: ModuleEvalResult, gates: EvalGateConfig) -> bool:
     if (
         gates.max_paragraph_evidence_count is not None
         and result.paragraph_evidence_count > gates.max_paragraph_evidence_count
+    ):
+        return False
+    if (
+        gates.max_relationship_without_evidence_or_rationale is not None
+        and result.relationship_without_evidence_or_rationale_count
+        > gates.max_relationship_without_evidence_or_rationale
     ):
         return False
     return True

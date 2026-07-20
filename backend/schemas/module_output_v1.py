@@ -38,6 +38,9 @@ class ConstructRelationshipInput(BaseModel):
     target_construct_id: str
     relationship_type: RelationshipType | str
     confidence: Confidence | str
+    rationale: str = ""
+    evidence_quote_ids: list[str] = Field(default_factory=list)
+    alternative_explanations: list[str] = Field(default_factory=list)
 
 
 class ModuleRunOutputInput(BaseModel):

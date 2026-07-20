@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import uuid
 from datetime import UTC, datetime
 
@@ -49,6 +50,7 @@ class ConstructRelationshipRepository:
             if target_row is None:
                 link_warnings.append(f"Missing target construct: {rel.target_construct_id}")
 
+            alts = [item.strip() for item in rel.alternative_explanations if item.strip()]
             row_id = str(uuid.uuid4())
             session.add(
                 ConstructRelationshipRow(
@@ -63,12 +65,22 @@ class ConstructRelationshipRepository:
                     target_construct_row_id=target_row,
                     relationship_type=rel_type,
                     confidence=_enum_value(rel.confidence),
+                    rationale=(rel.rationale or "").strip() or None,
+                    alternative_explanations_json=json.dumps(alts) if alts else None,
                     ontology_resolved=resolved is not None,
                     ontology_warning=ontology_warning,
                     link_warning="; ".join(link_warnings) if link_warnings else None,
                     created_at=now,
                 )
             )
+            for position, quote_id in enumerate(rel.evidence_quote_ids):
+                session.add(
+                    ConstructRelationshipEvidenceQuoteRow(
+                        relationship_id=row_id,
+                        quote_id=quote_id,
+                        position=position,
+                    )
+                )
             persisted.append(row_id)
         session.flush()
         return persisted
@@ -114,6 +126,22 @@ class ConstructRelationshipRepository:
             .where(ConstructRelationshipRow.workflow_run_id == workflow_run_id)
             .order_by(ConstructRelationshipRow.created_at, ConstructRelationshipRow.source_id)
         ).all()
+        if not rows:
+            return []
+
+        rel_ids = [row.id for row in rows]
+        quote_rows = session.scalars(
+            select(ConstructRelationshipEvidenceQuoteRow)
+            .where(ConstructRelationshipEvidenceQuoteRow.relationship_id.in_(rel_ids))
+            .order_by(
+                ConstructRelationshipEvidenceQuoteRow.relationship_id,
+                ConstructRelationshipEvidenceQuoteRow.position,
+            )
+        ).all()
+        quotes_by_rel: dict[str, list[str]] = {rel_id: [] for rel_id in rel_ids}
+        for quote in quote_rows:
+            quotes_by_rel.setdefault(quote.relationship_id, []).append(quote.quote_id)
+
         return [
             {
                 "row_id": row.id,
@@ -127,12 +155,27 @@ class ConstructRelationshipRepository:
                 "target_construct_row_id": row.target_construct_row_id,
                 "relationship_type": row.relationship_type,
                 "confidence": row.confidence,
+                "rationale": row.rationale or "",
+                "evidence_quote_ids": quotes_by_rel.get(row.id, []),
+                "alternative_explanations": _parse_alts(row.alternative_explanations_json),
                 "ontology_resolved": row.ontology_resolved,
                 "ontology_warning": row.ontology_warning,
                 "link_warning": row.link_warning,
             }
             for row in rows
         ]
+
+
+def _parse_alts(raw: str | None) -> list[str]:
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(parsed, list):
+        return []
+    return [str(item) for item in parsed if str(item).strip()]
 
 
 def _enum_value(value: object) -> str:

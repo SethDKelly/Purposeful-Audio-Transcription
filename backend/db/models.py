@@ -342,6 +342,8 @@ class ConstructRelationshipRow(Base):
     target_construct_row_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     relationship_type: Mapped[str] = mapped_column(String(128))
     confidence: Mapped[str] = mapped_column(String(32))
+    rationale: Mapped[str | None] = mapped_column(Text, nullable=True)
+    alternative_explanations_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     ontology_resolved: Mapped[bool] = mapped_column(Boolean, default=True)
     ontology_warning: Mapped[str | None] = mapped_column(Text, nullable=True)
     link_warning: Mapped[str | None] = mapped_column(Text, nullable=True)

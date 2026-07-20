@@ -4,6 +4,8 @@
 
 Deepen the structured reasoning graph by making relationships evidence-backed and fixing case/longitudinal evidence identity.
 
+**Status:** Complete
+
 ---
 
 # Part 1 — Graph Relationship Evidence
@@ -42,14 +44,14 @@ That edge needs:
 
 ## Tasks
 
-- [ ] Update module output schema to allow/require relationship evidence.
-- [ ] Update parser and validator.
-- [ ] Update persistence layer.
-- [ ] Update graph merge to preserve relationship evidence.
-- [ ] Rewire edges when constructs are merged.
-- [ ] Merge duplicate edges after canonicalization.
-- [ ] Update React graph UI to show edge rationale/evidence.
-- [ ] Add graph-edge evidence coverage eval.
+- [x] Update module output schema to allow/require relationship evidence.
+- [x] Update parser and validator.
+- [x] Update persistence layer.
+- [x] Update graph merge to preserve relationship evidence.
+- [x] Rewire edges when constructs are merged.
+- [x] Merge duplicate edges after canonicalization.
+- [x] Update React graph UI to show edge rationale/evidence.
+- [x] Add graph-edge evidence coverage eval.
 
 ---
 
@@ -83,13 +85,13 @@ Longitudinal claims must identify which session/transcript supports them.
 
 ## Tasks
 
-- [ ] Audit latest-run selection logic.
-- [ ] Fix any oldest-vs-latest completed run issue.
-- [ ] Add transcript/version identity to case-level evidence references.
-- [ ] Update longitudinal synthesis prompts/outputs to cite sessions.
-- [ ] Add tests with duplicate quote IDs across transcripts.
-- [ ] Ensure recurring pattern claims cite multiple transcripts.
-- [ ] Ensure single-session claims are not framed as longitudinal.
+- [x] Audit latest-run selection logic.
+- [x] Fix any oldest-vs-latest completed run issue.
+- [x] Add transcript/version identity to case-level evidence references.
+- [x] Update longitudinal synthesis prompts/outputs to cite sessions.
+- [x] Add tests with duplicate quote IDs across transcripts.
+- [x] Ensure recurring pattern claims cite multiple transcripts.
+- [x] Ensure single-session claims are not framed as longitudinal.
 
 ---
 

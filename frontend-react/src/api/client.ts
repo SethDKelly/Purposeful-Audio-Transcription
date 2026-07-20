@@ -353,6 +353,10 @@ export type KnowledgeGraphEdge = {
   relationship_type: string
   module_id?: string | null
   confidence?: string | null
+  row_id?: string | null
+  rationale?: string | null
+  evidence_quote_ids?: string[]
+  alternative_explanations?: string[]
 }
 
 export type KnowledgeGraph = {
@@ -377,7 +381,10 @@ export type CompareCaseResult = {
   shared_themes: Array<{ label?: string; transcript_ids?: string[]; report_ids?: string[] } | Record<string, unknown>>
   new_themes: Record<string, unknown>[]
   resolved_themes: Record<string, unknown>[]
+  recurring_theme_keys?: string[]
   recurring_evidence_quote_ids: string[]
+  recurring_evidence_refs?: Record<string, unknown>[]
+  cross_session_evidence_refs?: Record<string, unknown>[]
   counts: Record<string, number>
 }
 

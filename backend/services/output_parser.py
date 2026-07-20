@@ -166,6 +166,12 @@ def _coerce_raw_module_payload(data: dict[str, Any]) -> dict[str, Any]:
             )
         if not item.get("confidence"):
             item["confidence"] = "exploratory"
+        if item.get("rationale") is None:
+            item["rationale"] = ""
+        if not item.get("evidence_quote_ids"):
+            item["evidence_quote_ids"] = []
+        if not item.get("alternative_explanations"):
+            item["alternative_explanations"] = []
         if item.get("source_construct_id") and item.get("target_construct_id"):
             relationships.append(item)
     coerced["relationships"] = relationships
@@ -253,6 +259,11 @@ def _normalize_relationship(
             "relationship type",
         ),
         confidence=_coerce_enum(Confidence, relationship.confidence, "relationship confidence"),
+        rationale=(relationship.rationale or "").strip(),
+        evidence_quote_ids=list(relationship.evidence_quote_ids),
+        alternative_explanations=[
+            item.strip() for item in relationship.alternative_explanations if item.strip()
+        ],
     )
 
 

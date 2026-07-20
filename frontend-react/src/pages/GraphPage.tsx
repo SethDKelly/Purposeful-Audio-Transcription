@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { api, type KnowledgeGraphNode } from '../api/client'
+import { api, type KnowledgeGraphEdge, type KnowledgeGraphNode } from '../api/client'
 
 function confidenceColor(c?: string | null) {
   const v = (c || '').toLowerCase()
@@ -10,13 +10,18 @@ function confidenceColor(c?: string | null) {
   return 'var(--accent)'
 }
 
+type Selection =
+  | { kind: 'node'; node: KnowledgeGraphNode }
+  | { kind: 'edge'; edge: KnowledgeGraphEdge }
+  | null
+
 export function GraphPage() {
   const { runId: routeRunId = '' } = useParams()
   const [params] = useSearchParams()
   const runId = routeRunId || params.get('runId') || ''
   const [moduleFilter, setModuleFilter] = useState('')
   const [confidenceFilter, setConfidenceFilter] = useState('all')
-  const [selected, setSelected] = useState<KnowledgeGraphNode | null>(null)
+  const [selected, setSelected] = useState<Selection>(null)
 
   const graphQ = useQuery({
     queryKey: ['kg', runId],
@@ -62,6 +67,9 @@ export function GraphPage() {
     )
   }
 
+  const selectedNode = selected?.kind === 'node' ? selected.node : null
+  const selectedEdge = selected?.kind === 'edge' ? selected.edge : null
+
   return (
     <section>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
@@ -101,20 +109,41 @@ export function GraphPage() {
               const s = layout.find((n) => n.id === e.source)
               const t = layout.find((n) => n.id === e.target)
               if (!s || !t) return null
+              const isSelected =
+                selectedEdge?.source === e.source &&
+                selectedEdge?.target === e.target &&
+                selectedEdge?.relationship_type === e.relationship_type
               return (
-                <line
-                  key={`${e.source}-${e.target}-${i}`}
-                  x1={s.x}
-                  y1={s.y}
-                  x2={t.x}
-                  y2={t.y}
-                  stroke="var(--border)"
-                  strokeWidth={1.5}
-                />
+                <g
+                  key={`${e.source}-${e.target}-${e.relationship_type}-${i}`}
+                  onClick={() => setSelected({ kind: 'edge', edge: e })}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <line
+                    x1={s.x}
+                    y1={s.y}
+                    x2={t.x}
+                    y2={t.y}
+                    stroke="transparent"
+                    strokeWidth={12}
+                  />
+                  <line
+                    x1={s.x}
+                    y1={s.y}
+                    x2={t.x}
+                    y2={t.y}
+                    stroke={isSelected ? 'var(--accent)' : 'var(--border)'}
+                    strokeWidth={isSelected ? 2.5 : 1.5}
+                  />
+                </g>
               )
             })}
             {layout.map((n) => (
-              <g key={n.id} onClick={() => setSelected(n)} style={{ cursor: 'pointer' }}>
+              <g
+                key={n.id}
+                onClick={() => setSelected({ kind: 'node', node: n })}
+                style={{ cursor: 'pointer' }}
+              >
                 <circle cx={n.x} cy={n.y} r={14} fill={confidenceColor(n.confidence)} opacity={0.9} />
                 <text x={n.x} y={n.y + 28} textAnchor="middle" fill="var(--muted)" fontSize={10}>
                   {(n.label || n.id).slice(0, 18)}
@@ -124,27 +153,27 @@ export function GraphPage() {
           </svg>
           <p className="muted" style={{ fontSize: '0.85rem' }}>
             {filtered.nodes.length} nodes · {filtered.edges.length} edges
-            {selected?.convergence_score ? ` · convergence ${selected.convergence_score}` : ''}
+            {selectedNode?.convergence_score ? ` · convergence ${selectedNode.convergence_score}` : ''}
           </p>
         </div>
 
         <div className="card">
           <h2 style={{ marginTop: 0 }}>Evidence</h2>
           {!selected ? (
-            <p className="muted">Select a construct/node.</p>
-          ) : (
+            <p className="muted">Select a construct/node or relationship edge.</p>
+          ) : selectedNode ? (
             <>
               <p>
-                <strong>{selected.label}</strong>
+                <strong>{selectedNode.label}</strong>
               </p>
               <p className="muted">
-                {selected.type} · {selected.module_id} · {selected.confidence || 'n/a'}
+                {selectedNode.type} · {selectedNode.module_id} · {selectedNode.confidence || 'n/a'}
               </p>
-              {(selected.evidence_quote_ids || []).length === 0 ? (
+              {(selectedNode.evidence_quote_ids || []).length === 0 ? (
                 <p className="muted">No cited quotes on this node.</p>
               ) : (
                 <ul>
-                  {(selected.evidence_quote_ids || []).map((qid) => (
+                  {(selectedNode.evidence_quote_ids || []).map((qid) => (
                     <li key={qid}>
                       <code>{qid}</code>
                     </li>
@@ -152,7 +181,46 @@ export function GraphPage() {
                 </ul>
               )}
             </>
-          )}
+          ) : selectedEdge ? (
+            <>
+              <p>
+                <strong>{selectedEdge.relationship_type}</strong>
+              </p>
+              <p className="muted">
+                {selectedEdge.source} → {selectedEdge.target}
+              </p>
+              <p className="muted">
+                {selectedEdge.module_id || 'n/a'} · {selectedEdge.confidence || 'n/a'}
+              </p>
+              {selectedEdge.rationale ? (
+                <p>{selectedEdge.rationale}</p>
+              ) : (
+                <p className="muted">No rationale on this edge.</p>
+              )}
+              <h3 style={{ fontSize: '0.95rem' }}>Evidence quote IDs</h3>
+              {(selectedEdge.evidence_quote_ids || []).length === 0 ? (
+                <p className="muted">None cited.</p>
+              ) : (
+                <ul>
+                  {(selectedEdge.evidence_quote_ids || []).map((qid) => (
+                    <li key={qid}>
+                      <code>{qid}</code>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <h3 style={{ fontSize: '0.95rem' }}>Alternative explanations</h3>
+              {(selectedEdge.alternative_explanations || []).length === 0 ? (
+                <p className="muted">None listed.</p>
+              ) : (
+                <ul>
+                  {(selectedEdge.alternative_explanations || []).map((alt, i) => (
+                    <li key={`${alt}-${i}`}>{alt}</li>
+                  ))}
+                </ul>
+              )}
+            </>
+          ) : null}
         </div>
       </div>
     </section>

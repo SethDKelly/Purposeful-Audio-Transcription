@@ -122,6 +122,15 @@ class ModuleOutputValidator:
                     f"exceeds module ceiling {config.confidence_ceiling.value}"
                 )
 
+        for relationship in output.relationships:
+            self._validate_relationship(
+                relationship,
+                valid_quote_ids,
+                ceiling_rank,
+                result,
+                quote_texts=texts,
+            )
+
         result.construct_coverage = self._assess_construct_coverage(output, module)
         result.warnings.extend(
             self._coverage_warnings(result.construct_coverage, module.config.id)
@@ -243,6 +252,57 @@ class ModuleOutputValidator:
             result.errors.append(
                 f"finding {finding.id} with confidence {finding.confidence.value} "
                 "must include alternative_explanations"
+            )
+
+    def _validate_relationship(
+        self,
+        relationship,
+        valid_quote_ids: set[str],
+        ceiling_rank: int,
+        result: ModuleOutputValidationResult,
+        *,
+        quote_texts: dict[str, str] | None = None,
+    ) -> None:
+        context = f"relationship {relationship.id}"
+        if relationship.confidence not in {
+            Confidence.OBSERVED,
+            Confidence.INSUFFICIENT_EVIDENCE,
+        } and CONFIDENCE_RANK[relationship.confidence] > ceiling_rank:
+            result.errors.append(
+                f"{context} confidence {relationship.confidence.value} "
+                "exceeds module ceiling"
+            )
+
+        if relationship.evidence_quote_ids:
+            self._validate_quote_ids(
+                relationship.evidence_quote_ids,
+                valid_quote_ids,
+                context,
+                result,
+            )
+            self._validate_evidence_precision(
+                relationship.evidence_quote_ids,
+                context,
+                result,
+                quote_texts=quote_texts or {},
+                enforce_max_items=False,
+            )
+
+        rationale = (relationship.rationale or "").strip()
+        if not rationale:
+            result.warnings.append(f"{context} should include a rationale")
+        if not relationship.evidence_quote_ids and not rationale:
+            result.warnings.append(
+                f"{context} has no evidence_quote_ids and no rationale"
+            )
+
+        if (
+            relationship.confidence in _INFERRED_CONFIDENCES
+            and not relationship.alternative_explanations
+        ):
+            result.warnings.append(
+                f"{context} with confidence {relationship.confidence.value} "
+                "should include alternative_explanations"
             )
 
     def _validate_quote_ids(

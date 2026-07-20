@@ -17,6 +17,7 @@ from backend.repositories.relationship_repository import ConstructRelationshipRe
 from backend.repositories.workflow_run_repository import WorkflowRunRepository
 from backend.services.llm_factory import get_llm_provider
 from backend.services.llm_provider import LLMProvider
+from backend.services.run_selection import select_latest_completed_run
 from backend.services.synthesis_engine import SynthesisEngine, synthesis_engine
 from backend.services.transcript_service import TranscriptService, transcript_service
 from backend.services.workflow_engine import WorkflowEngine, workflow_engine
@@ -183,17 +184,33 @@ class ExplorationService:
                     "row_id": construct["row_id"],
                     "convergence_score": construct.get("convergence_score"),
                 }
-            edges = [
-                {
-                    "source": f"{rel['module_id']}:{rel['source_construct_id']}",
-                    "target": f"{rel['module_id']}:{rel['target_construct_id']}",
-                    "relationship_type": rel["relationship_type"],
-                    "module_id": rel["module_id"],
-                    "confidence": rel["confidence"],
-                    "row_id": rel["row_id"],
-                }
-                for rel in relationships
-            ]
+            edges = []
+            row_to_node = {
+                node["row_id"]: node["id"]
+                for node in nodes.values()
+                if node.get("row_id")
+            }
+            for rel in relationships:
+                source = row_to_node.get(rel.get("source_construct_row_id")) or (
+                    f"{rel['module_id']}:{rel['source_construct_id']}"
+                )
+                target = row_to_node.get(rel.get("target_construct_row_id")) or (
+                    f"{rel['module_id']}:{rel['target_construct_id']}"
+                )
+                edges.append(
+                    {
+                        "source": source,
+                        "target": target,
+                        "relationship_type": rel["relationship_type"],
+                        "module_id": rel["module_id"],
+                        "confidence": rel["confidence"],
+                        "row_id": rel["row_id"],
+                        "rationale": rel.get("rationale") or "",
+                        "evidence_quote_ids": rel.get("evidence_quote_ids") or [],
+                        "alternative_explanations": rel.get("alternative_explanations")
+                        or [],
+                    }
+                )
             return {
                 "workflow_run_id": workflow_run_id,
                 "nodes": list(nodes.values()),
@@ -230,6 +247,12 @@ class ExplorationService:
                         "relationship_type": relationship.get("relationship_type", "related"),
                         "module_id": module_id,
                         "confidence": relationship.get("confidence"),
+                        "rationale": relationship.get("rationale") or "",
+                        "evidence_quote_ids": relationship.get("evidence_quote_ids") or [],
+                        "alternative_explanations": relationship.get(
+                            "alternative_explanations"
+                        )
+                        or [],
                     }
                 )
 
@@ -283,11 +306,10 @@ class ExplorationService:
         sessions: list[dict] = []
         for transcript in detail.transcripts:
             runs = self.list_transcript_workflow_runs(transcript.id)
-            completed = [run for run in runs if run.get("status") == "completed"]
+            latest = select_latest_completed_run(runs)
             findings: list[dict] = []
             constructs: list[dict] = []
-            if completed:
-                latest = completed[-1]
+            if latest:
                 run_id = latest["id"]
                 findings = self.list_findings(run_id)
                 with get_session() as session:
@@ -304,11 +326,40 @@ class ExplorationService:
                 for item in constructs
                 if item.get("label")
             }
-            quote_ids: set[str] = set()
+            workflow_run_id = latest["id"] if latest else None
+            transcript_version_id = (
+                latest.get("transcript_version_id") if latest else None
+            )
+            evidence_refs: list[dict] = []
+            seen_refs: set[tuple] = set()
             for item in findings:
-                quote_ids.update(item.get("evidence_quote_ids") or [])
+                for quote_id in item.get("evidence_quote_ids") or []:
+                    key = (transcript.id, transcript_version_id, quote_id, workflow_run_id)
+                    if key in seen_refs:
+                        continue
+                    seen_refs.add(key)
+                    evidence_refs.append(
+                        {
+                            "transcript_id": transcript.id,
+                            "transcript_version_id": transcript_version_id,
+                            "quote_id": quote_id,
+                            "workflow_run_id": workflow_run_id,
+                        }
+                    )
             for item in constructs:
-                quote_ids.update(item.get("evidence_quote_ids") or [])
+                for quote_id in item.get("evidence_quote_ids") or []:
+                    key = (transcript.id, transcript_version_id, quote_id, workflow_run_id)
+                    if key in seen_refs:
+                        continue
+                    seen_refs.add(key)
+                    evidence_refs.append(
+                        {
+                            "transcript_id": transcript.id,
+                            "transcript_version_id": transcript_version_id,
+                            "quote_id": quote_id,
+                            "workflow_run_id": workflow_run_id,
+                        }
+                    )
             sessions.append(
                 {
                     "transcript_id": transcript.id,
@@ -317,14 +368,12 @@ class ExplorationService:
                     "session_date": transcript.session_date.isoformat()
                     if transcript.session_date
                     else None,
-                    "workflow_run_id": completed[-1]["id"] if completed else None,
-                    "transcript_version_id": (
-                        completed[-1].get("transcript_version_id") if completed else None
-                    ),
+                    "workflow_run_id": workflow_run_id,
+                    "transcript_version_id": transcript_version_id,
                     "theme_keys": sorted(theme_keys),
                     "finding_count": len(findings),
                     "construct_count": len(constructs),
-                    "evidence_quote_ids": sorted(quote_ids),
+                    "evidence_refs": evidence_refs,
                     "findings": findings,
                     "constructs": [
                         {
@@ -339,20 +388,32 @@ class ExplorationService:
             )
 
         earliest = sessions[0]
-        latest = sessions[-1]
+        latest_session = sessions[-1]
         earliest_themes = set(earliest["theme_keys"])
-        latest_themes = set(latest["theme_keys"])
+        latest_themes = set(latest_session["theme_keys"])
         shared = sorted(earliest_themes & latest_themes)
         new_themes = sorted(latest_themes - earliest_themes)
         resolved = sorted(earliest_themes - latest_themes)
 
-        quote_counts: dict[str, int] = {}
-        for session in sessions:
-            for quote_id in session["evidence_quote_ids"]:
-                quote_counts[quote_id] = quote_counts.get(quote_id, 0) + 1
-        recurring = sorted(
-            quote_id for quote_id, count in quote_counts.items() if count >= 2
-        )
+        cross_session_evidence_refs: list[dict] = []
+        for theme in shared:
+            evidence_by_session = [
+                {
+                    "transcript_id": session["transcript_id"],
+                    "transcript_version_id": session["transcript_version_id"],
+                    "workflow_run_id": session["workflow_run_id"],
+                    "evidence_refs": session["evidence_refs"],
+                }
+                for session in sessions
+                if theme in session["theme_keys"]
+            ]
+            if len(evidence_by_session) >= 2:
+                cross_session_evidence_refs.append(
+                    {
+                        "theme_key": theme,
+                        "evidence_by_session": evidence_by_session,
+                    }
+                )
 
         def _theme_rows(keys: list[str]) -> list[dict]:
             return [{"theme": key} for key in keys]
@@ -367,15 +428,21 @@ class ExplorationService:
                     "session_label": s["session_label"],
                     "session_date": s["session_date"],
                     "workflow_run_id": s["workflow_run_id"],
+                    "transcript_version_id": s["transcript_version_id"],
                     "finding_count": s["finding_count"],
                     "construct_count": s["construct_count"],
+                    "evidence_refs": s["evidence_refs"],
                 }
                 for s in sessions
             ],
             "shared_themes": _theme_rows(shared),
             "new_themes": _theme_rows(new_themes),
             "resolved_themes": _theme_rows(resolved),
-            "recurring_evidence_quote_ids": recurring,
+            "recurring_theme_keys": shared,
+            # Bare quote IDs collide across transcripts; never treat as same evidence.
+            "recurring_evidence_quote_ids": [],
+            "recurring_evidence_refs": [],
+            "cross_session_evidence_refs": cross_session_evidence_refs,
             "counts": {
                 "transcripts": len(sessions),
                 "shared_themes": len(shared),

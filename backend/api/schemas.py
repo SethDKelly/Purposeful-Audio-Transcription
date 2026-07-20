@@ -608,6 +608,9 @@ class KnowledgeGraphEdge(BaseModel):
     module_id: str | None = None
     confidence: str | None = None
     row_id: str | None = None
+    rationale: str = ""
+    evidence_quote_ids: list[str] = Field(default_factory=list)
+    alternative_explanations: list[str] = Field(default_factory=list)
 
 
 class KnowledgeGraphResponse(BaseModel):
@@ -646,7 +649,10 @@ class CompareCaseTranscriptsResponse(BaseModel):
     shared_themes: list[dict] = Field(default_factory=list)
     new_themes: list[dict] = Field(default_factory=list)
     resolved_themes: list[dict] = Field(default_factory=list)
+    recurring_theme_keys: list[str] = Field(default_factory=list)
     recurring_evidence_quote_ids: list[str] = Field(default_factory=list)
+    recurring_evidence_refs: list[dict] = Field(default_factory=list)
+    cross_session_evidence_refs: list[dict] = Field(default_factory=list)
     counts: dict = Field(default_factory=dict)
 
 
