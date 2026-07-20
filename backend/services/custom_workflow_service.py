@@ -8,7 +8,7 @@ from backend.core.exceptions import CustomWorkflowValidationError
 from backend.core.module_registry import ModuleRegistry, module_registry
 from backend.core.workflow_dag import WorkflowStepConfig, expand_steps_to_waves
 from backend.core.workflow_registry import WorkflowConfig, WorkflowDefinition, workflow_registry
-from backend.services.safety_risk_scanner import SKIP_IN_SAFETY_MODE
+from backend.services.safety_policy import get_safety_policy
 
 META_SYNTHESIS_ID = "meta_synthesis"
 
@@ -40,7 +40,8 @@ class CustomWorkflowService:
             else:
                 modules = module_ids
         if safety_mode:
-            modules = [m for m in modules if m not in SKIP_IN_SAFETY_MODE]
+            skip = get_safety_policy().suppress_modules
+            modules = [m for m in modules if m not in skip]
             if steps:
                 steps = _filter_steps_for_safety(steps)
         self._validate_modules(modules)
@@ -87,10 +88,11 @@ class CustomWorkflowService:
 
 
 def _filter_steps_for_safety(steps: list[WorkflowStepConfig]) -> list[WorkflowStepConfig]:
+    skip = get_safety_policy().suppress_modules
     filtered: list[WorkflowStepConfig] = []
     for step in steps:
-        parallel = [m for m in step.parallel if m not in SKIP_IN_SAFETY_MODE]
-        module = step.module if step.module not in SKIP_IN_SAFETY_MODE else None
+        parallel = [m for m in step.parallel if m not in skip]
+        module = step.module if step.module not in skip else None
         if not parallel and not module:
             continue
         filtered.append(

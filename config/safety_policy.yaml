@@ -1,0 +1,40 @@
+# Safety policy — phase 007 (config-driven safety-aware framing).
+# See docs/product/safety_aware_report_mode.md and docs/planning/phases/007_*.md
+
+version: 1
+
+safety_policy:
+  elevated_risk_triggers_safety_mode: true
+  high_risk_triggers_safety_mode: true
+  require_safety_framing: true
+  prohibit_mutualizing_serious_concerns: true
+  # Modules omitted entirely when safety_mode is active.
+  suppress_modules:
+    - exploratory_psychological_formulation
+    - narrative_identity_analysis
+  # Modules still run, but receive safety-aware prompt overlays.
+  modify_modules:
+    - trauma_informed_communication
+    - attachment_interaction_matrix
+
+synthesis_framing: |
+  ## Safety-aware framing
+
+  This analysis may involve high-risk dynamics (threats, coercion, control,
+  stalking, or self-harm cues). Stay evidence-limited and non-adjudicative.
+  - Do not pressure reconciliation, mutual compromise, or shared-responsibility framing.
+  - Do not coach both parties as equally accountable when control or threat cues dominate.
+  - Do not mutualize serious safety concerns.
+  - Recommend professional or emergency support where appropriate without diagnosing.
+  - Avoid exploratory personality or identity interpretations; prioritize safety and boundaries.
+  - Prefer cautious language: indicators may warrant careful review; more context may be needed.
+
+module_modify_framing: |
+  ## Safety-aware module constraints
+
+  Safety-aware mode is active for this run.
+  - Stay non-diagnostic: do not assign disorders, personality labels, or trauma histories as fact.
+  - Do not treat abuse, manipulation, or attachment style as settled determinations.
+  - Prefer observed transcript cues with uncertainty and alternative explanations.
+  - Do not mutualize serious safety concerns or push reconciliation.
+  - If safety-relevant indicators appear, note them cautiously and recommend appropriate support.

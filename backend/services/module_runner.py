@@ -95,13 +95,16 @@ class ModuleRunner:
         transcript_id: str,
         model: str | None = None,
         workflow_run_id: str | None = None,
+        safety_mode: bool = False,
     ) -> ModuleRun:
         module = self._registry.get(module_id)
         self._ensure_transcript_runnable(module)
 
         bundle = self._bundle_for_run(transcript_id, workflow_run_id)
         resolved_model = self._resolve_model(module, model)
-        compiled = self._compiler.compile_for_transcript(module, bundle)
+        compiled = self._compiler.compile_for_transcript(
+            module, bundle, safety_mode=safety_mode
+        )
         valid_quote_ids = {quote.quote_id for quote in bundle.evidence_quotes}
         quote_texts = {quote.quote_id: quote.text for quote in bundle.evidence_quotes}
 
@@ -114,6 +117,7 @@ class ModuleRunner:
             quote_texts=quote_texts,
             workflow_run_id=workflow_run_id,
             require_evidence=True,
+            safety_mode=safety_mode,
         )
 
     def run_synthesis(
@@ -167,6 +171,7 @@ class ModuleRunner:
             quote_texts=quote_texts,
             workflow_run_id=workflow_run_id,
             require_evidence=False,
+            safety_mode=safety_mode,
         )
 
     def stream_for_transcript_text(
@@ -209,6 +214,7 @@ class ModuleRunner:
         workflow_run_id: str | None,
         require_evidence: bool,
         quote_texts: dict[str, str] | None = None,
+        safety_mode: bool = False,
     ) -> ModuleRun:
         workflow_token = workflow_run_id_var.set(workflow_run_id) if workflow_run_id else None
         module_token = module_id_var.set(module.config.id)
@@ -319,7 +325,9 @@ class ModuleRunner:
                             ),
                         )
                     else:
-                        safety_result = self._safety.validate(parsed_output)
+                        safety_result = self._safety.validate(
+                            parsed_output, safety_mode=safety_mode
+                        )
                         if safety_result.violations:
                             validation_errors = safety_result.violations
                             validation_failure_count += 1

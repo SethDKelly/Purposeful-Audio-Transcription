@@ -54,6 +54,8 @@ class PromptCompiler:
         self,
         module: AnalysisModule,
         bundle: TranscriptBundle,
+        *,
+        safety_mode: bool = False,
     ) -> CompiledPrompt:
         if module.config.input_type != "transcript":
             raise ValueError(
@@ -65,7 +67,7 @@ class PromptCompiler:
             bundle.speakers,
         )
         user_prefix = self._build_evidence_user_prefix(evidence_text)
-        user_suffix = self._build_transcript_user_task(module)
+        user_suffix = self._build_transcript_user_task(module, safety_mode=safety_mode)
         return self._compile(module, user_prefix=user_prefix, user_suffix=user_suffix)
 
     def compile_for_module_outputs(
@@ -182,13 +184,24 @@ class PromptCompiler:
             f"{evidence_text}"
         )
 
-    def _build_transcript_user_task(self, module: AnalysisModule) -> str:
-        return (
+    def _build_transcript_user_task(
+        self, module: AnalysisModule, *, safety_mode: bool = False
+    ) -> str:
+        sections = [
             f"Analyze the conversation using the **{module.config.name}** module.\n\n"
             "Return only one JSON object matching module_output_v1. "
             "Put primary analysis in structured fields. "
             "Leave `raw_markdown_report` empty unless a short prose note is essential."
-        )
+        ]
+        if safety_mode:
+            from backend.services.safety_policy import get_safety_policy
+
+            policy = get_safety_policy()
+            if policy.require_safety_framing:
+                sections.append(policy.synthesis_framing)
+            if policy.should_modify_module(module.config.id):
+                sections.append(policy.module_modify_framing)
+        return "\n\n".join(sections)
 
     def _build_module_outputs_user_prefix(self, module_outputs: str) -> str:
         return (
@@ -206,9 +219,11 @@ class PromptCompiler:
             "Prefer structured synthesis fields; keep `raw_markdown_report` brief or empty."
         ]
         if safety_mode:
-            from backend.services.safety_risk_scanner import SAFETY_SYNTHESIS_FRAMING
+            from backend.services.safety_policy import get_safety_policy
 
-            sections.append(SAFETY_SYNTHESIS_FRAMING)
+            policy = get_safety_policy()
+            if policy.require_safety_framing:
+                sections.append(policy.synthesis_framing)
         return "\n\n".join(sections)
 
 

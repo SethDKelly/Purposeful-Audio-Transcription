@@ -5,7 +5,8 @@ from __future__ import annotations
 import pytest
 
 from backend.evaluation.claims import ForbiddenClaimScorer
-from backend.services.safety_risk_scanner import SKIP_IN_SAFETY_MODE, safety_risk_scanner
+from backend.services.safety_policy import get_safety_policy
+from backend.services.safety_risk_scanner import safety_risk_scanner
 from tests.helpers.safety_fixtures import iter_safety_fixtures
 
 pytestmark = [pytest.mark.golden]
@@ -34,12 +35,13 @@ def test_high_risk_fixtures_recommend_safety_mode() -> None:
         if (f.assertions.get("expected_risk_level") or "") == "high"
     ]
     assert highs
+    suppress = get_safety_policy().suppress_modules
     for fixture in highs:
         scan = safety_risk_scanner.scan(fixture.transcript_text)
         assert scan.safety_mode_recommended is True
-        suppress = fixture.metadata.get("expected_module_suppression") or []
-        for module_id in suppress:
-            assert module_id in SKIP_IN_SAFETY_MODE or module_id
+        expected_suppress = fixture.metadata.get("expected_module_suppression") or []
+        for module_id in expected_suppress:
+            assert module_id in suppress or module_id
 
 
 def test_ordinary_conflict_is_false_positive_guard() -> None:

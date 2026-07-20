@@ -27,7 +27,7 @@ from backend.services.module_runner import (
     module_runner,
 )
 from backend.services.transcript_service import TranscriptService, transcript_service
-from backend.services.safety_risk_scanner import SKIP_IN_SAFETY_MODE
+from backend.services.safety_policy import get_safety_policy
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -261,7 +261,8 @@ class WorkflowEngine:
                     for m in wave.module_ids
                     if m not in completed_module_ids
                     and not (
-                        workflow_run.safety_mode and m in SKIP_IN_SAFETY_MODE
+                        workflow_run.safety_mode
+                        and get_safety_policy().should_suppress_module(m)
                     )
                 ]
                 if not pending:
@@ -373,7 +374,9 @@ class WorkflowEngine:
 
         for module_id in workflow.module_sequence:
             self._check_abort(workflow_run, started)
-            if workflow_run.safety_mode and module_id in SKIP_IN_SAFETY_MODE:
+            if workflow_run.safety_mode and get_safety_policy().should_suppress_module(
+                module_id
+            ):
                 logger.info(
                     "Skipping module %s for safety_mode on workflow run %s",
                     module_id,
@@ -488,6 +491,7 @@ class WorkflowEngine:
                     transcript_id=transcript_id,
                     model=model,
                     workflow_run_id=workflow_run.id,
+                    safety_mode=workflow_run.safety_mode,
                 )
                 results[module_id] = module_run
                 if module_run.status != ModuleRunStatus.COMPLETED.value:
@@ -510,6 +514,7 @@ class WorkflowEngine:
                         transcript_id,
                         model,
                         workflow_run.id,
+                        workflow_run.safety_mode,
                     ): module_id
                     for module_id in module_ids
                 }

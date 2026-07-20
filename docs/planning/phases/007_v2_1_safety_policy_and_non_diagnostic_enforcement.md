@@ -4,6 +4,8 @@
 
 Make safety-aware framing configurable and enforce stricter non-diagnostic discipline.
 
+**Status:** Complete · Tests: `tests/test_phase_007_safety_policy.py` · Policy: `config/safety_policy.yaml`
+
 ---
 
 # Target Safety Policy
@@ -22,6 +24,8 @@ safety_policy:
     - trauma_informed_communication
     - attachment_interaction_matrix
 ```
+
+Shipped config also suppresses `narrative_identity_analysis` (existing safety-mode behavior).
 
 ---
 
@@ -52,37 +56,37 @@ The app may say:
 
 ## Policy Config
 
-- [ ] Add safety policy YAML/config.
-- [ ] Move module suppression/modification rules into config.
-- [ ] Define elevated-risk and high-risk behavior.
-- [ ] Add policy docs.
+- [x] Add safety policy YAML/config.
+- [x] Move module suppression/modification rules into config.
+- [x] Define elevated-risk and high-risk behavior.
+- [x] Add policy docs.
 
 ## Validator
 
-- [ ] Tighten forbidden-claim detection.
-- [ ] Distinguish quoted text from model claim.
-- [ ] Force lower confidence or repair for risky claims.
-- [ ] Block definitive diagnostic/adjudicative outputs.
+- [x] Tighten forbidden-claim detection.
+- [x] Distinguish quoted text from model claim.
+- [x] Force lower confidence or repair for risky claims.
+- [x] Block definitive diagnostic/adjudicative outputs.
 
 ## Prompting
 
-- [ ] Add safety-aware framing instructions.
-- [ ] Add non-diagnostic language instructions.
-- [ ] Add “do not mutualize serious concerns” instruction.
+- [x] Add safety-aware framing instructions.
+- [x] Add non-diagnostic language instructions.
+- [x] Add “do not mutualize serious concerns” instruction.
 
 ## Reports
 
-- [ ] Add safety-aware report banner.
-- [ ] Add limitations where needed.
-- [ ] Avoid ordinary conflict-coaching framing for high-risk cases.
+- [x] Add safety-aware report banner.
+- [x] Add limitations where needed.
+- [x] Avoid ordinary conflict-coaching framing for high-risk cases.
 
 ## Evaluation
 
-- [ ] Add tests for elevated-risk safety mode.
-- [ ] Add tests for high-risk safety mode.
-- [ ] Add tests for false positives.
-- [ ] Add tests for forbidden diagnostic/manipulation/abuse claims.
-- [ ] Add tests for mutualizing serious concerns.
+- [x] Add tests for elevated-risk safety mode.
+- [x] Add tests for high-risk safety mode.
+- [x] Add tests for false positives.
+- [x] Add tests for forbidden diagnostic/manipulation/abuse claims.
+- [x] Add tests for mutualizing serious concerns.
 
 ---
 

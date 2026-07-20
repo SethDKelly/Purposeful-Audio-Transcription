@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     framework_dir: Path = Path("./config/framework")
     workflows_dir: Path = Path("./config/workflows")
     ontology_dir: Path = Path("./config/ontology")
+    safety_policy_path: Path = Path("./config/safety_policy.yaml")
     # Legacy alias accepted for module/model resolution when BEDROCK default unused.
     default_ollama_model: str = ""
     database_url: str = "sqlite:///./data/rre.db"

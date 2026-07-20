@@ -1,10 +1,14 @@
-"""Safety checks for module analysis output."""
+"""Safety checks for module analysis output (phase 007 hardened)."""
+
+from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
 
+from backend.domain.enums import Confidence
 from backend.domain.synthesis import SynthesisReport
 from backend.schemas.module_output_v1 import ModuleRunOutput
+from backend.services.safety_policy import get_safety_policy
 
 _DIAGNOSIS_PATTERNS = [
     re.compile(pattern, re.IGNORECASE)
@@ -12,14 +16,18 @@ _DIAGNOSIS_PATTERNS = [
         r"\b(diagnosed with|diagnosis of|has ptsd|has adhd|narcissist|narcissistic personality)\b",
         r"\b(borderline personality|bipolar disorder|schizophreni[ac])\b",
         r"\b(mentally ill|psychopath|sociopath)\b",
+        r"\b(narcissistic personality disorder|borderline personality disorder|has npd|has bpd)\b",
+        r"\b(is a narcissist|clearly narcissistic|definite narcissism)\b",
     )
 ]
 
 _ABUSE_ASSERTION_PATTERNS = [
     re.compile(pattern, re.IGNORECASE)
     for pattern in (
-        r"\b(is abusive|was abusive|abuser)\b",
+        r"\b(is abusive|was abusive|is an abuser|this is abuse)\b",
         r"\b(is a narcissist|is manipulative)\b",
+        r"\b(is coercive control|engages in coercive control|definitely controlling)\b",
+        r"\b(intentionally manipulat\w*|deliberately manipulat\w*)\b",
     )
 ]
 
@@ -48,11 +56,43 @@ _INTENT_AS_FACT_PATTERNS = [
     )
 ]
 
+_TRAUMA_ATTACHMENT_PATTERNS = [
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"\b(has childhood trauma|was traumatized as a child)\b",
+        r"\b(is securely attached|is avoidantly attached|has anxious attachment)\b",
+        r"\b(attachment style is)\b",
+    )
+]
+
+_MUTUALIZING_PATTERNS = [
+    re.compile(pattern, re.IGNORECASE)
+    for pattern in (
+        r"\bboth\b.{0,40}\bequally responsible\b",
+        r"\b(equally at fault|mutual abuse)\b",
+        r"\b(both need to (compromise|reconcile|meet in the middle))\b",
+        r"\b(recommend(ed|ing)? reconcil)\b",
+        r"\b(you should stay and work it out)\b",
+        r"\b(shared responsibility for (the )?(threats|violence|coercion))\b",
+    )
+]
+
+_QUOTE_SPAN = re.compile(r"[\"“”']([^\"“”']{3,})[\"“”']")
+_CONFIDENCE_RANK = {
+    Confidence.OBSERVED: 5,
+    Confidence.HIGH: 4,
+    Confidence.MODERATE: 3,
+    Confidence.LOW: 2,
+    Confidence.EXPLORATORY: 1,
+    Confidence.INSUFFICIENT_EVIDENCE: 0,
+}
+
 
 @dataclass
 class SafetyValidationResult:
     violations: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    downgraded_finding_ids: list[str] = field(default_factory=list)
 
     @property
     def is_safe(self) -> bool:
@@ -64,9 +104,14 @@ class SafetyValidationResult:
 
 
 class SafetyValidator:
-    def validate(self, output: ModuleRunOutput) -> SafetyValidationResult:
+    def validate(
+        self,
+        output: ModuleRunOutput,
+        *,
+        safety_mode: bool = False,
+    ) -> SafetyValidationResult:
         result = SafetyValidationResult()
-        texts = _collect_texts(output)
+        texts = _collect_claim_texts(output)
 
         for text in texts:
             self._check_patterns(
@@ -91,15 +136,40 @@ class SafetyValidator:
                 text,
                 _INTENT_AS_FACT_PATTERNS,
                 "Intent stated as fact without qualification",
-                result.warnings,
+                result.warnings if not safety_mode else result.violations,
             )
-            self._check_abuse_assertions(text, output, result)
+            self._check_patterns(
+                text,
+                _TRAUMA_ATTACHMENT_PATTERNS,
+                "Definitive trauma history or fixed attachment-style claim detected",
+                result.violations,
+            )
+            self._check_patterns(
+                text,
+                _ABUSE_ASSERTION_PATTERNS,
+                "Definitive abuse, manipulation, or adjudicative labeling detected",
+                result.violations,
+            )
+            if get_safety_policy().prohibit_mutualizing_serious_concerns:
+                self._check_patterns(
+                    text,
+                    _MUTUALIZING_PATTERNS,
+                    "Mutualizing or reconciliation pressure around serious concerns detected",
+                    result.violations if safety_mode else result.warnings,
+                )
 
+        # Soft repair assist: lower confidence on risky findings (does not clear hard violations).
+        self._downgrade_risky_findings(output, result)
         return result
 
-    def validate_synthesis(self, report: SynthesisReport) -> SafetyValidationResult:
+    def validate_synthesis(
+        self,
+        report: SynthesisReport,
+        *,
+        safety_mode: bool = False,
+    ) -> SafetyValidationResult:
         result = SafetyValidationResult()
-        texts = _collect_synthesis_texts(report)
+        texts = [_strip_quoted_spans(t) for t in _collect_synthesis_texts(report)]
 
         for text in texts:
             self._check_patterns(
@@ -124,8 +194,27 @@ class SafetyValidator:
                 text,
                 _INTENT_AS_FACT_PATTERNS,
                 "Intent stated as fact without qualification",
-                result.warnings,
+                result.warnings if not safety_mode else result.violations,
             )
+            self._check_patterns(
+                text,
+                _TRAUMA_ATTACHMENT_PATTERNS,
+                "Definitive trauma history or fixed attachment-style claim detected",
+                result.violations,
+            )
+            self._check_patterns(
+                text,
+                _ABUSE_ASSERTION_PATTERNS,
+                "Definitive abuse, manipulation, or adjudicative labeling detected",
+                result.violations,
+            )
+            if get_safety_policy().prohibit_mutualizing_serious_concerns:
+                self._check_patterns(
+                    text,
+                    _MUTUALIZING_PATTERNS,
+                    "Mutualizing or reconciliation pressure around serious concerns detected",
+                    result.violations if safety_mode else result.warnings,
+                )
 
         return result
 
@@ -140,33 +229,54 @@ class SafetyValidator:
             if pattern.search(text) and message not in bucket:
                 bucket.append(message)
 
-    def _check_abuse_assertions(
+    def _downgrade_risky_findings(
         self,
-        text: str,
         output: ModuleRunOutput,
         result: SafetyValidationResult,
     ) -> None:
-        for pattern in _ABUSE_ASSERTION_PATTERNS:
-            if not pattern.search(text):
+        """Force lower confidence on findings with adjudicative language (repair assist)."""
+        risky = (
+            _DIAGNOSIS_PATTERNS
+            + _ABUSE_ASSERTION_PATTERNS
+            + _TRAUMA_ATTACHMENT_PATTERNS
+            + _MUTUALIZING_PATTERNS
+        )
+        for finding in output.findings:
+            claim = _strip_quoted_spans(f"{finding.title} {finding.summary}")
+            if not any(pattern.search(claim) for pattern in risky):
                 continue
-
-            has_strong_evidence = any(
-                finding.evidence_quote_ids
-                and finding.confidence.value in {"observed", "high"}
-                for finding in output.findings
-                if pattern.search(f"{finding.title} {finding.summary}")
+            if _CONFIDENCE_RANK.get(finding.confidence, 0) <= _CONFIDENCE_RANK[
+                Confidence.EXPLORATORY
+            ]:
+                continue
+            finding.confidence = Confidence.EXPLORATORY
+            note = (
+                "Confidence lowered: claim language was adjudicative or diagnostic; "
+                "treat as exploratory only."
             )
-            message = "Strong character or abuse labeling without sufficient evidence"
-            if not has_strong_evidence and message not in result.violations:
-                result.violations.append(message)
+            if note not in finding.limitations:
+                finding.limitations.append(note)
+            result.downgraded_finding_ids.append(finding.id)
+            warning = (
+                f"Finding {finding.id} confidence downgraded due to risky claim language"
+            )
+            if warning not in result.warnings:
+                result.warnings.append(warning)
 
 
-def _collect_texts(output: ModuleRunOutput) -> list[str]:
+def _strip_quoted_spans(text: str) -> str:
+    """Remove quoted spans so cited transcript text is not treated as model claims."""
+    if not text:
+        return ""
+    return _QUOTE_SPAN.sub(" ", text)
+
+
+def _collect_claim_texts(output: ModuleRunOutput) -> list[str]:
     texts = [output.executive_summary, output.raw_markdown_report]
     texts.extend(finding.title for finding in output.findings)
     texts.extend(finding.summary for finding in output.findings)
     texts.extend(output.recommendations)
-    return [text for text in texts if text]
+    return [_strip_quoted_spans(text) for text in texts if text]
 
 
 def _collect_synthesis_texts(report: SynthesisReport) -> list[str]:

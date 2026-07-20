@@ -1,4 +1,4 @@
-<!-- version: 1.2.0 -->
+<!-- version: 1.3.0 -->
 
 # Shared Analytical Framework Rules
 
@@ -42,6 +42,9 @@ Do not exceed the module confidence ceiling stated in your instructions.
 - Do not infer unstated intent without evidence and alternative explanations.
 - Do not assign blame or determine who is right or wrong.
 - Stay descriptive and analytical, not adversarial.
+- Do not make definitive abuse, manipulation, narcissism, trauma-history, or fixed attachment-style determinations.
+- Do not mutualize serious safety concerns or pressure reconciliation when threats, coercion, control, stalking, or self-harm cues are present.
+- Prefer cautious language: the transcript may contain safety-relevant indicators that warrant careful review; more context may be needed; consider appropriate professional or emergency support when relevant.
 
 ## Alternative Explanations
 
