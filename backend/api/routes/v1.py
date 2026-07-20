@@ -150,9 +150,13 @@ def create_transcript(
 
 
 @router.get("/transcripts/{transcript_id}", response_model=TranscriptBundleResponse)
-def get_transcript(transcript_id: str, http_request: Request) -> TranscriptBundleResponse:
+def get_transcript(
+    transcript_id: str,
+    http_request: Request,
+    version_id: str | None = None,
+) -> TranscriptBundleResponse:
     ownership_api.assert_transcript_access(transcript_id, resolve_auth_context(http_request))
-    return transcripts_routes.get_transcript(transcript_id)
+    return transcripts_routes.get_transcript(transcript_id, version_id=version_id)
 
 
 @router.patch("/transcripts/{transcript_id}/turns", response_model=TranscriptBundleResponse)
@@ -307,7 +311,12 @@ def create_export(request: ExportV1Request, http_request: Request):
     if request.format in {"package", "zip"}:
         report = synthesis_engine.get_report(request.workflow_run_id)
         payload = synthesis_report_to_response(report).model_dump()
-        bundle = transcript_service.get(run.transcript_id)
+        if run.transcript_version_id:
+            bundle = transcript_service.get_for_version(
+                run.transcript_id, run.transcript_version_id
+            )
+        else:
+            bundle = transcript_service.get(run.transcript_id)
         speakers = {s.id: (s.display_name or s.label) for s in bundle.speakers}
         structured = structured_graph_service.inventory(request.workflow_run_id)
         lifecycle = [
@@ -324,6 +333,10 @@ def create_export(request: ExportV1Request, http_request: Request):
                 "workflow_id": run.workflow_id,
                 "transcript_id": run.transcript_id,
                 "safety_mode": bool(getattr(run, "safety_mode", False)),
+                "transcript_version_id": getattr(run, "transcript_version_id", None),
+                "transcript_version_number": getattr(
+                    run, "transcript_version_number", None
+                ),
             },
             synthesis=payload,
             evidence_quotes=[
@@ -331,6 +344,7 @@ def create_export(request: ExportV1Request, http_request: Request):
                     "quote_id": q.quote_id,
                     "text": q.text,
                     "speaker_label": speakers.get(q.speaker_id, q.speaker_id),
+                    "transcript_version_id": getattr(q, "transcript_version_id", None),
                 }
                 for q in bundle.evidence_quotes
             ],

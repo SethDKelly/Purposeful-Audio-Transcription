@@ -194,6 +194,10 @@ class WorkflowRunResponse(BaseModel):
     cancel_requested: bool = False
     attempt_count: int = 0
     safety_mode: bool = False
+    transcript_version_id: str | None = None
+    transcript_version_number: int | None = None
+    transcript_current_version_id: str | None = None
+    transcript_is_stale: bool = False
     module_runs: list[WorkflowRunModuleSummary] = Field(default_factory=list)
 
 
@@ -317,6 +321,16 @@ def workflow_run_to_response(
         cancel_requested=bool(getattr(workflow_run, "cancel_requested", False)),
         attempt_count=int(getattr(workflow_run, "attempt_count", 0) or 0),
         safety_mode=bool(getattr(workflow_run, "safety_mode", False)),
+        transcript_version_id=getattr(workflow_run, "transcript_version_id", None),
+        transcript_version_number=getattr(
+            workflow_run, "transcript_version_number", None
+        ),
+        transcript_current_version_id=getattr(
+            workflow_run, "transcript_current_version_id", None
+        ),
+        transcript_is_stale=bool(
+            getattr(workflow_run, "transcript_is_stale", False)
+        ),
         module_runs=summaries,
     )
 
@@ -442,6 +456,17 @@ class MarkReadyRequest(BaseModel):
     skip_review: bool = False
 
 
+class TranscriptVersionResponse(BaseModel):
+    id: str
+    transcript_id: str
+    version_number: int
+    created_at: str
+    created_by_user_id: str | None = None
+    source_type: str | None = None
+    change_summary: str | None = None
+    is_current: bool = True
+
+
 class TranscriptResponse(BaseModel):
     id: str
     title: str
@@ -455,6 +480,8 @@ class TranscriptResponse(BaseModel):
     case_id: str | None = None
     session_label: str | None = None
     session_date: str | None = None
+    current_version_id: str | None = None
+    current_version_number: int | None = None
 
 
 class SpeakerResponse(BaseModel):
@@ -488,6 +515,7 @@ class EvidenceQuoteResponse(BaseModel):
     evidence_type: str = "atomic_quote"
     span_text: str | None = None
     speaker_label: str | None = None
+    transcript_version_id: str | None = None
 
 
 class TranscriptBundleResponse(BaseModel):
@@ -496,6 +524,7 @@ class TranscriptBundleResponse(BaseModel):
     turns: list[TurnResponse] = Field(default_factory=list)
     evidence_quotes: list[EvidenceQuoteResponse] = Field(default_factory=list)
     quality_warnings: list[str] = Field(default_factory=list)
+    transcript_version: TranscriptVersionResponse | None = None
 
 
 class ExplorationFindingSummary(BaseModel):
@@ -522,6 +551,7 @@ class ExplorationEvidenceQuote(BaseModel):
     turn_index: int
     context_before: str | None = None
     context_after: str | None = None
+    transcript_version_id: str | None = None
 
 
 class ExplorationRelatedFinding(BaseModel):
@@ -538,6 +568,7 @@ class FindingDrilldownResponse(BaseModel):
     module_run_id: str
     workflow_run_id: str
     transcript_id: str
+    transcript_version_id: str | None = None
     evidence_chain: list[ExplorationEvidenceQuote] = Field(default_factory=list)
     related_findings: list[ExplorationRelatedFinding] = Field(default_factory=list)
     linked_constructs: list[dict] = Field(default_factory=list)
@@ -658,6 +689,9 @@ class TranscriptWorkflowRunSummary(BaseModel):
     model_used: str | None = None
     started_at: str
     completed_at: str | None = None
+    transcript_version_id: str | None = None
+    transcript_version_number: int | None = None
+    transcript_is_stale: bool = False
 
 
 class TranscriptWorkflowRunsResponse(BaseModel):
@@ -676,6 +710,7 @@ def bundle_to_response(bundle) -> TranscriptBundleResponse:
     from backend.services.transcript_service import transcript_service
 
     transcript = bundle.transcript
+    version = getattr(bundle, "transcript_version", None)
     return TranscriptBundleResponse(
         transcript=TranscriptResponse(
             id=transcript.id,
@@ -692,6 +727,8 @@ def bundle_to_response(bundle) -> TranscriptBundleResponse:
             session_date=(
                 transcript.session_date.isoformat() if transcript.session_date else None
             ),
+            current_version_id=getattr(transcript, "current_version_id", None),
+            current_version_number=getattr(transcript, "current_version_number", None),
         ),
         speakers=[
             SpeakerResponse(
@@ -729,8 +766,23 @@ def bundle_to_response(bundle) -> TranscriptBundleResponse:
                 evidence_type=getattr(quote, "evidence_type", None) or "atomic_quote",
                 span_text=getattr(quote, "span_text", None),
                 speaker_label=_speaker_label(bundle.speakers, quote.speaker_id),
+                transcript_version_id=getattr(quote, "transcript_version_id", None),
             )
             for quote in bundle.evidence_quotes
         ],
         quality_warnings=transcript_service.quality_warnings(bundle),
+        transcript_version=(
+            TranscriptVersionResponse(
+                id=version.id,
+                transcript_id=version.transcript_id,
+                version_number=version.version_number,
+                created_at=version.created_at.isoformat(),
+                created_by_user_id=version.created_by_user_id,
+                source_type=version.source_type,
+                change_summary=version.change_summary,
+                is_current=bool(version.is_current),
+            )
+            if version is not None
+            else None
+        ),
     )

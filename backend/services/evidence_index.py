@@ -21,11 +21,16 @@ class EvidenceIndexService:
         bundle: TranscriptBundle,
         parsed_turns: list[ParsedTurn],
         speaker_id_by_label: dict[str, str],
+        *,
+        transcript_version_id: str | None = None,
     ) -> list[EvidenceQuote]:
         quotes: list[EvidenceQuote] = []
         turn_texts = [turn.text for turn in parsed_turns]
         before_n = max(0, settings.evidence_context_window_before_turns)
         after_n = max(0, settings.evidence_context_window_after_turns)
+        version_id = transcript_version_id or getattr(
+            bundle.transcript, "current_version_id", None
+        )
 
         for index, (parsed_turn, turn) in enumerate(
             zip(parsed_turns, bundle.turns, strict=True), start=1
@@ -48,6 +53,7 @@ class EvidenceIndexService:
                     context_after=_truncate(context_after),
                     evidence_type=classify_evidence_type(parsed_turn.text),
                     span_text=span_text,
+                    transcript_version_id=version_id,
                 )
             )
 
@@ -59,6 +65,7 @@ class EvidenceIndexService:
         turns: list,
         *,
         include_excluded: bool = False,
+        transcript_version_id: str | None = None,
     ) -> list[EvidenceQuote]:
         """Rebuild quote IDs from current turn rows (skips excluded by default)."""
         from backend.domain.transcript import Turn
@@ -90,6 +97,7 @@ class EvidenceIndexService:
                     context_after=_truncate(context_after),
                     evidence_type=classify_evidence_type(turn.text),
                     span_text=span_text,
+                    transcript_version_id=transcript_version_id,
                 )
             )
         return quotes

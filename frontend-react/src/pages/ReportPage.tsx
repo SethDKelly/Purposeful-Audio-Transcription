@@ -31,8 +31,15 @@ export function ReportPage() {
     enabled: tab === 'package',
   })
   const transcriptQ = useQuery({
-    queryKey: ['transcript', runQ.data?.transcript_id],
-    queryFn: () => api.getTranscript(runQ.data!.transcript_id),
+    queryKey: [
+      'transcript',
+      runQ.data?.transcript_id,
+      runQ.data?.transcript_version_id ?? null,
+    ],
+    queryFn: () =>
+      api.getTranscript(runQ.data!.transcript_id, {
+        versionId: runQ.data?.transcript_version_id ?? undefined,
+      }),
     enabled: Boolean(runQ.data?.transcript_id),
   })
 
@@ -120,6 +127,30 @@ export function ReportPage() {
         <p style={{ color: 'var(--warn)', marginTop: '0.75rem' }}>
           Safety-aware report mode was active for this run — exploratory modules may have been
           skipped; treat claims cautiously.
+        </p>
+      )}
+      {runQ.data?.transcript_version_number != null && (
+        <p className="muted" style={{ marginTop: '0.5rem' }}>
+          Transcript version {runQ.data.transcript_version_number}
+          {runQ.data.transcript_is_stale ? ' (not current)' : ''}
+        </p>
+      )}
+      {runQ.data?.transcript_is_stale && (
+        <p
+          style={{
+            color: 'var(--warn)',
+            marginTop: '0.75rem',
+            padding: '0.75rem 1rem',
+            border: '1px solid var(--warn)',
+            borderRadius: 6,
+          }}
+        >
+          This report was generated from transcript version{' '}
+          {runQ.data.transcript_version_number ?? '—'}. The transcript has since been edited.
+          Re-run analysis to use the latest version.{' '}
+          <Link to={`/transcripts/${runQ.data.transcript_id}/analyze`}>Re-run on latest</Link>
+          {' · '}
+          <Link to={`/transcripts/${runQ.data.transcript_id}`}>Open prepare</Link>
         </p>
       )}
       {(reportQ.data?.safety_flags || []).length > 0 && (

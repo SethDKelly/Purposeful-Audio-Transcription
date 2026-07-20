@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.core.exceptions import WorkflowRunNotFoundError
-from backend.db.models import WorkflowRunRow
+from backend.db.models import TranscriptRow, TranscriptVersionRow, WorkflowRunRow
 from backend.domain.enums import WorkflowRunStatus
 from backend.domain.workflow import WorkflowRun
 
@@ -29,6 +29,7 @@ class WorkflowRunRepository:
         status: str | None = None,
         safety_mode: bool = False,
         owner_user_id: str | None = None,
+        transcript_version_id: str | None = None,
     ) -> WorkflowRun:
         now = utc_now()
         run = WorkflowRun(
@@ -41,10 +42,11 @@ class WorkflowRunRepository:
             cancel_requested=False,
             attempt_count=0,
             safety_mode=safety_mode,
+            transcript_version_id=transcript_version_id,
         )
         session.add(_to_row(run, owner_user_id=owner_user_id))
         session.flush()
-        return run
+        return _enrich_run(session, run)
 
     def save(self, session: Session, run: WorkflowRun) -> WorkflowRun:
         row = session.get(WorkflowRunRow, run.id)
@@ -52,19 +54,19 @@ class WorkflowRunRepository:
             session.add(_to_row(run))
         else:
             _update_row(row, run)
-        return run
+        return _enrich_run(session, run)
 
     def get(self, session: Session, run_id: str) -> WorkflowRun:
         row = session.get(WorkflowRunRow, run_id)
         if row is None:
             raise WorkflowRunNotFoundError(f"Workflow run not found: {run_id}")
-        return _from_row(row)
+        return _enrich_run(session, _from_row(row))
 
     def list_incomplete(self, session: Session) -> list[WorkflowRun]:
         rows = session.scalars(
             select(WorkflowRunRow).where(WorkflowRunRow.status.in_(_INCOMPLETE_STATUSES))
         ).all()
-        return [_from_row(row) for row in rows]
+        return [_enrich_run(session, _from_row(row)) for row in rows]
 
     def list_queued(self, session: Session) -> list[WorkflowRun]:
         """Runs waiting for a worker (CREATED, not cancelled)."""
@@ -74,7 +76,7 @@ class WorkflowRunRepository:
             .where(WorkflowRunRow.cancel_requested.is_(False))
             .order_by(WorkflowRunRow.started_at.asc())
         ).all()
-        return [_from_row(row) for row in rows]
+        return [_enrich_run(session, _from_row(row)) for row in rows]
 
     def list_failed(
         self,
@@ -88,7 +90,7 @@ class WorkflowRunRepository:
             .order_by(WorkflowRunRow.completed_at.desc())
             .limit(max(1, min(limit, 200)))
         ).all()
-        return [_from_row(row) for row in rows]
+        return [_enrich_run(session, _from_row(row)) for row in rows]
 
     def queue_stats(self, session: Session) -> dict[str, object]:
         queued = self.list_queued(session)
@@ -127,7 +129,7 @@ class WorkflowRunRepository:
         row.attempt_count = int(row.attempt_count or 0) + 1
         row.started_at = utc_now()
         session.flush()
-        return _from_row(row)
+        return _enrich_run(session, _from_row(row))
 
     def list_by_transcript_id(
         self,
@@ -140,7 +142,7 @@ class WorkflowRunRepository:
         if status is not None:
             query = query.where(WorkflowRunRow.status == status)
         rows = session.scalars(query.order_by(WorkflowRunRow.started_at.desc())).all()
-        return [_from_row(row) for row in rows]
+        return [_enrich_run(session, _from_row(row)) for row in rows]
 
 
 def new_workflow_run_id() -> str:
@@ -168,6 +170,7 @@ def _to_row(run: WorkflowRun, *, owner_user_id: str | None = None) -> WorkflowRu
         attempt_count=run.attempt_count,
         safety_mode=run.safety_mode,
         owner_user_id=owner_user_id,
+        transcript_version_id=run.transcript_version_id,
     )
 
 
@@ -183,6 +186,7 @@ def _update_row(row: WorkflowRunRow, run: WorkflowRun) -> None:
     row.cancel_requested = run.cancel_requested
     row.attempt_count = run.attempt_count
     row.safety_mode = run.safety_mode
+    row.transcript_version_id = run.transcript_version_id
 
 
 def _from_row(row: WorkflowRunRow) -> WorkflowRun:
@@ -201,4 +205,24 @@ def _from_row(row: WorkflowRunRow) -> WorkflowRun:
         cancel_requested=bool(row.cancel_requested),
         attempt_count=int(row.attempt_count or 0),
         safety_mode=bool(row.safety_mode),
+        transcript_version_id=getattr(row, "transcript_version_id", None),
     )
+
+
+def _enrich_run(session: Session, run: WorkflowRun) -> WorkflowRun:
+    transcript = session.get(TranscriptRow, run.transcript_id)
+    current_version_id = (
+        getattr(transcript, "current_version_id", None) if transcript else None
+    )
+    run.transcript_current_version_id = current_version_id
+    version_number = None
+    if run.transcript_version_id:
+        version = session.get(TranscriptVersionRow, run.transcript_version_id)
+        if version is not None:
+            version_number = version.version_number
+    run.transcript_version_number = version_number
+    if run.transcript_version_id and current_version_id:
+        run.transcript_is_stale = run.transcript_version_id != current_version_id
+    else:
+        run.transcript_is_stale = False
+    return run

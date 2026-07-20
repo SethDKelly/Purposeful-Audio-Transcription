@@ -19,15 +19,17 @@ from backend.db.models import (
     SpeakerRow,
     SynthesisReportRow,
     TranscriptRow,
+    TranscriptVersionRow,
     TurnRow,
     WorkflowRunRow,
 )
-from backend.domain.enums import SourceType
+from backend.domain.enums import SourceType, WorkflowRunStatus
 from backend.domain.transcript import (
     EvidenceQuote,
     Speaker,
     Transcript,
     TranscriptBundle,
+    TranscriptVersion,
     Turn,
 )
 
@@ -41,6 +43,30 @@ class TranscriptRepository:
         owner_user_id: str | None = None,
     ) -> None:
         transcript = bundle.transcript
+        version_id = transcript.current_version_id or (
+            bundle.transcript_version.id if bundle.transcript_version else None
+        )
+        if version_id is None:
+            version_id = new_transcript_id()
+            transcript.current_version_id = version_id
+
+        version = bundle.transcript_version
+        if version is None:
+            version = TranscriptVersion(
+                id=version_id,
+                transcript_id=transcript.id,
+                version_number=1,
+                created_at=transcript.created_at,
+                source_type=(
+                    transcript.source_type.value
+                    if hasattr(transcript.source_type, "value")
+                    else str(transcript.source_type)
+                ),
+                change_summary="Initial version",
+                is_current=True,
+            )
+            bundle.transcript_version = version
+
         session.add(
             TranscriptRow(
                 id=transcript.id,
@@ -56,6 +82,20 @@ class TranscriptRepository:
                 session_label=transcript.session_label,
                 session_date=transcript.session_date,
                 owner_user_id=owner_user_id,
+                current_version_id=version_id,
+            )
+        )
+        session.flush()
+        session.add(
+            TranscriptVersionRow(
+                id=version.id,
+                transcript_id=version.transcript_id,
+                version_number=version.version_number,
+                created_at=version.created_at,
+                created_by_user_id=version.created_by_user_id,
+                source_type=version.source_type,
+                change_summary=version.change_summary,
+                is_current=True,
             )
         )
         for speaker in bundle.speakers:
@@ -83,6 +123,7 @@ class TranscriptRepository:
             )
         session.flush()
         for quote in bundle.evidence_quotes:
+            quote_version_id = quote.transcript_version_id or version_id
             session.add(
                 EvidenceQuoteRow(
                     id=quote.id,
@@ -96,13 +137,36 @@ class TranscriptRepository:
                     context_after=quote.context_after,
                     evidence_type=quote.evidence_type,
                     span_text=quote.span_text,
+                    transcript_version_id=quote_version_id,
                 )
             )
 
-    def get_bundle(self, session: Session, transcript_id: str) -> TranscriptBundle:
+    def get_bundle(
+        self,
+        session: Session,
+        transcript_id: str,
+        version_id: str | None = None,
+    ) -> TranscriptBundle:
         row = session.get(TranscriptRow, transcript_id)
         if row is None:
             raise TranscriptNotFoundError(f"Transcript not found: {transcript_id}")
+
+        resolved_version_id = version_id or row.current_version_id
+        version_row = None
+        if resolved_version_id:
+            version_row = session.get(TranscriptVersionRow, resolved_version_id)
+        elif row.current_version_id:
+            version_row = session.get(TranscriptVersionRow, row.current_version_id)
+
+        current_version_number = None
+        if row.current_version_id:
+            current_row = (
+                version_row
+                if version_row and version_row.id == row.current_version_id
+                else session.get(TranscriptVersionRow, row.current_version_id)
+            )
+            if current_row is not None:
+                current_version_number = current_row.version_number
 
         transcript = Transcript(
             id=row.id,
@@ -117,6 +181,8 @@ class TranscriptRepository:
             case_id=row.case_id,
             session_label=row.session_label,
             session_date=row.session_date,
+            current_version_id=row.current_version_id,
+            current_version_number=current_version_number,
         )
         speakers = [
             Speaker(
@@ -140,6 +206,12 @@ class TranscriptRepository:
             )
             for turn in sorted(row.turns, key=lambda t: t.turn_index)
         ]
+
+        quote_rows = list(row.evidence_quotes)
+        if resolved_version_id is not None:
+            quote_rows = [
+                q for q in quote_rows if q.transcript_version_id == resolved_version_id
+            ]
         quotes = [
             EvidenceQuote(
                 id=quote.id,
@@ -153,14 +225,18 @@ class TranscriptRepository:
                 context_after=quote.context_after,
                 evidence_type=getattr(quote, "evidence_type", None) or "atomic_quote",
                 span_text=getattr(quote, "span_text", None),
+                transcript_version_id=getattr(quote, "transcript_version_id", None),
             )
-            for quote in sorted(row.evidence_quotes, key=lambda q: q.quote_index)
+            for quote in sorted(quote_rows, key=lambda q: q.quote_index)
         ]
+
+        transcript_version = _version_from_row(version_row) if version_row else None
         return TranscriptBundle(
             transcript=transcript,
             speakers=speakers,
             turns=turns,
             evidence_quotes=quotes,
+            transcript_version=transcript_version,
         )
 
     def update_speakers(
@@ -233,13 +309,21 @@ class TranscriptRepository:
         session.flush()
 
     def replace_evidence_quotes(
-        self, session: Session, transcript_id: str, quotes: list[EvidenceQuote]
+        self,
+        session: Session,
+        transcript_id: str,
+        quotes: list[EvidenceQuote],
+        *,
+        version_id: str,
     ) -> None:
         row = session.get(TranscriptRow, transcript_id)
         if row is None:
             raise TranscriptNotFoundError(f"Transcript not found: {transcript_id}")
         session.execute(
-            delete(EvidenceQuoteRow).where(EvidenceQuoteRow.transcript_id == transcript_id)
+            delete(EvidenceQuoteRow).where(
+                EvidenceQuoteRow.transcript_id == transcript_id,
+                EvidenceQuoteRow.transcript_version_id == version_id,
+            )
         )
         session.flush()
         for quote in quotes:
@@ -256,9 +340,78 @@ class TranscriptRepository:
                     context_after=quote.context_after,
                     evidence_type=quote.evidence_type,
                     span_text=quote.span_text,
+                    transcript_version_id=quote.transcript_version_id or version_id,
                 )
             )
         session.flush()
+
+    def create_new_version(
+        self,
+        session: Session,
+        transcript_id: str,
+        *,
+        change_summary: str,
+        source_type: str | None = None,
+    ) -> TranscriptVersion:
+        row = session.get(TranscriptRow, transcript_id)
+        if row is None:
+            raise TranscriptNotFoundError(f"Transcript not found: {transcript_id}")
+
+        existing = list(
+            session.scalars(
+                select(TranscriptVersionRow).where(
+                    TranscriptVersionRow.transcript_id == transcript_id
+                )
+            ).all()
+        )
+        next_number = max((v.version_number for v in existing), default=0) + 1
+        for version in existing:
+            version.is_current = False
+
+        version_id = new_transcript_id()
+        now = utc_now().replace(tzinfo=None)
+        version_row = TranscriptVersionRow(
+            id=version_id,
+            transcript_id=transcript_id,
+            version_number=next_number,
+            created_at=now,
+            created_by_user_id=None,
+            source_type=source_type or row.source_type,
+            change_summary=change_summary,
+            is_current=True,
+        )
+        session.add(version_row)
+        row.current_version_id = version_id
+        session.flush()
+        return _version_from_row(version_row)
+
+    def has_completed_workflow_runs(self, session: Session, transcript_id: str) -> bool:
+        row = session.scalars(
+            select(WorkflowRunRow.id)
+            .where(WorkflowRunRow.transcript_id == transcript_id)
+            .where(WorkflowRunRow.status == WorkflowRunStatus.COMPLETED.value)
+            .limit(1)
+        ).first()
+        return row is not None
+
+    def get_version(self, session: Session, version_id: str) -> TranscriptVersion:
+        row = session.get(TranscriptVersionRow, version_id)
+        if row is None:
+            raise TranscriptNotFoundError(f"Transcript version not found: {version_id}")
+        return _version_from_row(row)
+
+    def list_versions(self, session: Session, transcript_id: str) -> list[TranscriptVersion]:
+        row = session.get(TranscriptRow, transcript_id)
+        if row is None:
+            raise TranscriptNotFoundError(f"Transcript not found: {transcript_id}")
+        versions = list(
+            session.scalars(
+                select(TranscriptVersionRow)
+                .where(TranscriptVersionRow.transcript_id == transcript_id)
+                .order_by(TranscriptVersionRow.version_number.asc())
+            ).all()
+        )
+        return [_version_from_row(v) for v in versions]
 
     def sync_raw_text_from_turns(self, session: Session, transcript_id: str) -> None:
         row = session.get(TranscriptRow, transcript_id)
@@ -391,8 +544,16 @@ class TranscriptRepository:
         session.execute(
             delete(ModuleRunRow).where(ModuleRunRow.transcript_id == transcript_id)
         )
+        # Clear version pointer before deleting version rows (FK-safe).
+        row.current_version_id = None
+        session.flush()
         session.execute(
             delete(EvidenceQuoteRow).where(EvidenceQuoteRow.transcript_id == transcript_id)
+        )
+        session.execute(
+            delete(TranscriptVersionRow).where(
+                TranscriptVersionRow.transcript_id == transcript_id
+            )
         )
         session.execute(delete(TurnRow).where(TurnRow.transcript_id == transcript_id))
         session.execute(delete(SpeakerRow).where(SpeakerRow.transcript_id == transcript_id))
@@ -414,3 +575,16 @@ def new_transcript_id() -> str:
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
+
+
+def _version_from_row(row: TranscriptVersionRow) -> TranscriptVersion:
+    return TranscriptVersion(
+        id=row.id,
+        transcript_id=row.transcript_id,
+        version_number=row.version_number,
+        created_at=row.created_at,
+        created_by_user_id=row.created_by_user_id,
+        source_type=row.source_type,
+        change_summary=row.change_summary,
+        is_current=bool(row.is_current),
+    )

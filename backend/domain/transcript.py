@@ -5,6 +5,17 @@ from pydantic import BaseModel, Field
 from backend.domain.enums import SourceType
 
 
+class TranscriptVersion(BaseModel):
+    id: str
+    transcript_id: str
+    version_number: int
+    created_at: datetime
+    created_by_user_id: str | None = None
+    source_type: str | None = None
+    change_summary: str | None = None
+    is_current: bool = True
+
+
 class Transcript(BaseModel):
     id: str
     title: str
@@ -18,6 +29,8 @@ class Transcript(BaseModel):
     case_id: str | None = None
     session_label: str | None = None
     session_date: datetime | None = None
+    current_version_id: str | None = None
+    current_version_number: int | None = None
 
 
 class Speaker(BaseModel):
@@ -50,6 +63,7 @@ class EvidenceQuote(BaseModel):
     context_after: str | None = None
     evidence_type: str = "atomic_quote"
     span_text: str | None = None
+    transcript_version_id: str | None = None
 
 
 class TranscriptBundle(BaseModel):
@@ -57,3 +71,4 @@ class TranscriptBundle(BaseModel):
     speakers: list[Speaker] = Field(default_factory=list)
     turns: list[Turn] = Field(default_factory=list)
     evidence_quotes: list[EvidenceQuote] = Field(default_factory=list)
+    transcript_version: TranscriptVersion | None = None

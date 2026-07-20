@@ -75,6 +75,8 @@ def build_v1_report_package_zip(
         "workflow_run_id": workflow_run.get("id"),
         "workflow_id": workflow_run.get("workflow_id"),
         "transcript_id": workflow_run.get("transcript_id"),
+        "transcript_version_id": workflow_run.get("transcript_version_id"),
+        "transcript_version_number": workflow_run.get("transcript_version_number"),
         "safety_mode": bool(workflow_run.get("safety_mode")),
         "finding_count": len(findings),
         "evidence_quote_count": len(quote_ids),

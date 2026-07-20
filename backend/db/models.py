@@ -85,13 +85,38 @@ class TranscriptRow(Base):
     owner_user_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("users.id"), nullable=True, index=True
     )
+    current_version_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
     speakers: Mapped[list["SpeakerRow"]] = relationship(back_populates="transcript")
     turns: Mapped[list["TurnRow"]] = relationship(back_populates="transcript")
     evidence_quotes: Mapped[list["EvidenceQuoteRow"]] = relationship(
         back_populates="transcript"
     )
+    versions: Mapped[list["TranscriptVersionRow"]] = relationship(
+        back_populates="transcript",
+        cascade="all, delete-orphan",
+    )
     case: Mapped["CaseRow | None"] = relationship(back_populates="transcripts")
+
+
+class TranscriptVersionRow(Base):
+    __tablename__ = "transcript_versions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    transcript_id: Mapped[str] = mapped_column(
+        ForeignKey("transcripts.id"), index=True
+    )
+    version_number: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    created_by_user_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    source_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    change_summary: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    is_current: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    transcript: Mapped["TranscriptRow"] = relationship(back_populates="versions")
+    evidence_quotes: Mapped[list["EvidenceQuoteRow"]] = relationship(
+        back_populates="transcript_version"
+    )
 
 
 class CaseRow(Base):
@@ -153,8 +178,14 @@ class EvidenceQuoteRow(Base):
         String(32), default="atomic_quote", server_default="atomic_quote"
     )
     span_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    transcript_version_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("transcript_versions.id"), nullable=True, index=True
+    )
 
     transcript: Mapped["TranscriptRow"] = relationship(back_populates="evidence_quotes")
+    transcript_version: Mapped["TranscriptVersionRow | None"] = relationship(
+        back_populates="evidence_quotes"
+    )
 
 
 class ModuleRunRow(Base):
@@ -196,6 +227,9 @@ class WorkflowRunRow(Base):
     safety_mode: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     owner_user_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("users.id"), nullable=True, index=True
+    )
+    transcript_version_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("transcript_versions.id"), nullable=True, index=True
     )
 
 

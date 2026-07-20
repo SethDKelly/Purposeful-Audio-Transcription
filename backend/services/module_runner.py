@@ -99,7 +99,7 @@ class ModuleRunner:
         module = self._registry.get(module_id)
         self._ensure_transcript_runnable(module)
 
-        bundle = self._transcripts.get(transcript_id)
+        bundle = self._bundle_for_run(transcript_id, workflow_run_id)
         resolved_model = self._resolve_model(module, model)
         compiled = self._compiler.compile_for_transcript(module, bundle)
         valid_quote_ids = {quote.quote_id for quote in bundle.evidence_quotes}
@@ -129,7 +129,7 @@ class ModuleRunner:
         if module.config.input_type != "module_outputs":
             raise ModuleRunError(f"Module {module_id} is not a synthesis module")
 
-        bundle = self._transcripts.get(transcript_id)
+        bundle = self._bundle_for_run(transcript_id, workflow_run_id)
         resolved_model = self._resolve_model(module, model)
         handoff: dict[str, Any] = {
             "module_outputs": prior_outputs,
@@ -389,6 +389,19 @@ class ModuleRunner:
                 "use the synthesis workflow instead."
             )
         raise ModuleRunError(f"Module {module.config.id} is not enabled for direct runs")
+
+    def _bundle_for_run(self, transcript_id: str, workflow_run_id: str | None):
+        if not workflow_run_id:
+            return self._transcripts.get(transcript_id)
+        from backend.repositories.workflow_run_repository import WorkflowRunRepository
+
+        with get_session() as session:
+            run = WorkflowRunRepository().get(session, workflow_run_id)
+        if run.transcript_version_id:
+            return self._transcripts.get_for_version(
+                transcript_id, run.transcript_version_id
+            )
+        return self._transcripts.get(transcript_id)
 
     def _resolve_model(self, module: AnalysisModule, model: str | None) -> str:
         resolved = (

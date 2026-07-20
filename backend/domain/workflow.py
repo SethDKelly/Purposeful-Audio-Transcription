@@ -25,3 +25,7 @@ class WorkflowRun(BaseModel):
     cancel_requested: bool = False
     attempt_count: int = 0
     safety_mode: bool = False
+    transcript_version_id: str | None = None
+    transcript_version_number: int | None = None
+    transcript_current_version_id: str | None = None
+    transcript_is_stale: bool = False

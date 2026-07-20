@@ -68,8 +68,12 @@ export const api = {
       '/api/v1/transcripts',
       { method: 'POST', body: JSON.stringify({ raw_text, source_type: 'paste', title }) },
     ),
-  getTranscript: (id: string) =>
-    request<TranscriptBundle>(`/api/v1/transcripts/${id}`),
+  getTranscript: (id: string, opts?: { versionId?: string }) => {
+    const qs = opts?.versionId
+      ? `?version_id=${encodeURIComponent(opts.versionId)}`
+      : ''
+    return request<TranscriptBundle>(`/api/v1/transcripts/${id}${qs}`)
+  },
   updateTurns: (id: string, turns: Partial<Turn>[]) =>
     request<TranscriptBundle>(`/api/v1/transcripts/${id}/turns`, {
       method: 'PATCH',
@@ -207,13 +211,26 @@ export type EvidenceQuote = {
   context_after?: string | null
   evidence_type?: string
   span_text?: string | null
+  transcript_version_id?: string | null
 }
 
 export type TranscriptBundle = {
-  transcript: { id: string; title?: string | null; analysis_ready?: boolean }
+  transcript: {
+    id: string
+    title?: string | null
+    analysis_ready?: boolean
+    current_version_id?: string | null
+    current_version_number?: number | null
+  }
   turns: Turn[]
   speakers: Speaker[]
   evidence_quotes: EvidenceQuote[]
+  transcript_version?: {
+    id: string
+    version_number: number
+    change_summary?: string | null
+    is_current?: boolean
+  } | null
 }
 
 export type WorkflowSummary = {
@@ -231,6 +248,10 @@ export type WorkflowRun = {
   error_log?: string | null
   safety_mode?: boolean
   attempt_count?: number
+  transcript_version_id?: string | null
+  transcript_version_number?: number | null
+  transcript_current_version_id?: string | null
+  transcript_is_stale?: boolean
 }
 
 export type WorkflowStatus = {
@@ -376,6 +397,9 @@ export type TranscriptRunSummary = {
   status: string
   created_at?: string | null
   completed_at?: string | null
+  transcript_version_id?: string | null
+  transcript_version_number?: number | null
+  transcript_is_stale?: boolean
 }
 
 export type SafetyEvent = {

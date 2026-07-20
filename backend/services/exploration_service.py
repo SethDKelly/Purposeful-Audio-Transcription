@@ -107,7 +107,13 @@ class ExplorationService:
         if target is None:
             raise FindingNotFoundError(f"Finding not found: {finding_key}")
 
-        bundle = self._transcripts.get(workflow_run.transcript_id)
+        bundle = (
+            self._transcripts.get_for_version(
+                workflow_run.transcript_id, workflow_run.transcript_version_id
+            )
+            if workflow_run.transcript_version_id
+            else self._transcripts.get(workflow_run.transcript_id)
+        )
         quotes_by_id = {quote.quote_id: quote for quote in bundle.evidence_quotes}
         quote_ids = target.finding.get("evidence_quote_ids", [])
         evidence_chain = [
@@ -125,6 +131,7 @@ class ExplorationService:
             "module_run_id": target.module_run_id,
             "workflow_run_id": workflow_run_id,
             "transcript_id": workflow_run.transcript_id,
+            "transcript_version_id": workflow_run.transcript_version_id,
             "evidence_chain": evidence_chain,
             "related_findings": related,
             "linked_constructs": constructs,
@@ -311,6 +318,9 @@ class ExplorationService:
                     if transcript.session_date
                     else None,
                     "workflow_run_id": completed[-1]["id"] if completed else None,
+                    "transcript_version_id": (
+                        completed[-1].get("transcript_version_id") if completed else None
+                    ),
                     "theme_keys": sorted(theme_keys),
                     "finding_count": len(findings),
                     "construct_count": len(constructs),
@@ -396,6 +406,7 @@ class ExplorationService:
             workflow_run_id=workflow_run_id,
             module_runs=module_runs,
             transcript_id=workflow_run.transcript_id,
+            transcript_version_id=workflow_run.transcript_version_id,
             finding_key=finding_key,
         )
         resolved_model = model or workflow_run.model_used or settings.default_llm_model
@@ -453,6 +464,9 @@ class ExplorationService:
                 "model_used": run.model_used,
                 "started_at": run.started_at.isoformat(),
                 "completed_at": run.completed_at.isoformat() if run.completed_at else None,
+                "transcript_version_id": run.transcript_version_id,
+                "transcript_version_number": run.transcript_version_number,
+                "transcript_is_stale": run.transcript_is_stale,
             }
             for run in runs
         ]
@@ -464,9 +478,14 @@ class ExplorationService:
         module_runs: list[ModuleRun],
         transcript_id: str,
         finding_key: str | None,
+        transcript_version_id: str | None = None,
     ) -> dict:
         indexed = _index_findings(module_runs)
-        bundle = self._transcripts.get(transcript_id)
+        bundle = (
+            self._transcripts.get_for_version(transcript_id, transcript_version_id)
+            if transcript_version_id
+            else self._transcripts.get(transcript_id)
+        )
         quotes_by_id = {quote.quote_id: quote for quote in bundle.evidence_quotes}
 
         if finding_key:
@@ -581,6 +600,7 @@ def _quote_to_dict(quote, speakers) -> dict:
         "turn_index": quote.quote_index,
         "context_before": quote.context_before,
         "context_after": quote.context_after,
+        "transcript_version_id": getattr(quote, "transcript_version_id", None),
     }
 
 

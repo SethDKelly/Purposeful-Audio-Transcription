@@ -63,7 +63,8 @@ class WorkflowEngine:
         owner_user_id: str | None = None,
     ) -> WorkflowRun:
         self._workflows.get(workflow_id)
-        self._transcripts.ensure_ready_for_analysis(transcript_id)
+        bundle = self._transcripts.ensure_ready_for_analysis(transcript_id)
+        transcript_version_id = bundle.transcript.current_version_id
 
         with get_session() as session:
             workflow_run = self._repository.create(
@@ -78,6 +79,7 @@ class WorkflowEngine:
                 ),
                 safety_mode=safety_mode,
                 owner_user_id=owner_user_id,
+                transcript_version_id=transcript_version_id,
             )
             if not queued:
                 workflow_run.status = WorkflowRunStatus.RUNNING_MODULES.value
