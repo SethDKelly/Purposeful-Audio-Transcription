@@ -94,6 +94,8 @@ class TranscriptRepository:
                     text=quote.text,
                     context_before=quote.context_before,
                     context_after=quote.context_after,
+                    evidence_type=quote.evidence_type,
+                    span_text=quote.span_text,
                 )
             )
 
@@ -149,6 +151,8 @@ class TranscriptRepository:
                 text=quote.text,
                 context_before=quote.context_before,
                 context_after=quote.context_after,
+                evidence_type=getattr(quote, "evidence_type", None) or "atomic_quote",
+                span_text=getattr(quote, "span_text", None),
             )
             for quote in sorted(row.evidence_quotes, key=lambda q: q.quote_index)
         ]
@@ -250,6 +254,8 @@ class TranscriptRepository:
                     text=quote.text,
                     context_before=quote.context_before,
                     context_after=quote.context_after,
+                    evidence_type=quote.evidence_type,
+                    span_text=quote.span_text,
                 )
             )
         session.flush()

@@ -44,11 +44,28 @@ def build_v1_report_package_zip(
     ]
     for qid in quote_ids:
         q = quotes_by_id.get(qid, {})
-        text = q.get("text", "(quote text unavailable)")
+        full_text = q.get("text", "(quote text unavailable)")
+        span = q.get("span_text") or full_text
         if redact:
-            text = "[redacted]"
+            full_text = "[redacted]"
+            span = "[redacted]"
         speaker = q.get("speaker_label") or q.get("speaker") or "Speaker"
-        appendix_lines.extend([f"## {qid}", f"- Speaker: {speaker}", f"- Text: {text}", ""])
+        evidence_type = q.get("evidence_type") or "atomic_quote"
+        appendix_lines.extend(
+            [
+                f"## {qid}",
+                f"- Speaker: {speaker}",
+                f"- Type: {evidence_type}",
+                f"- Cite: {span}",
+            ]
+        )
+        if not redact and full_text != span:
+            appendix_lines.append(f"- Full turn: {full_text}")
+        if not redact and q.get("context_before"):
+            appendix_lines.append(f"- Context before: {q['context_before']}")
+        if not redact and q.get("context_after"):
+            appendix_lines.append(f"- Context after: {q['context_after']}")
+        appendix_lines.append("")
 
     now = datetime.now(UTC).isoformat()
     manifest = {

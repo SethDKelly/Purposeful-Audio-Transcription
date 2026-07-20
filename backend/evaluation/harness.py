@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from backend.evaluation.claims import ForbiddenClaimScorer, flatten_output_text
+from backend.services.evidence_precision import looks_like_paragraph
+from config.settings import settings
 from tests.helpers.golden_transcripts import (
     GoldenFixture,
     collect_constructs,
@@ -27,6 +29,10 @@ class EvalGateConfig:
     max_forbidden_claim_count: int = 0
     max_confidence_ceiling_violations: int = 0
     require_schema_valid: bool = True
+    # Evidence precision (phase 004). None = do not gate on that metric.
+    max_average_evidence_chars: float | None = None
+    max_paragraph_evidence_count: int | None = None
+    warn_average_evidence_chars: float | None = None
 
 
 @dataclass
@@ -45,6 +51,9 @@ class ModuleEvalResult:
     unsupported_claim_count: int = 0
     confidence_ceiling_violations: int = 0
     construct_coverage_hit: bool = False
+    average_evidence_chars: float = 0.0
+    paragraph_evidence_count: int = 0
+    evidence_precision_warnings: list[str] = field(default_factory=list)
     gate_passed: bool = True
     details: dict[str, Any] = field(default_factory=dict)
 
@@ -59,6 +68,7 @@ def evaluate_module_output(
     module_id: str,
     module_output: dict[str, Any],
     valid_quote_ids: set[str] | None = None,
+    quote_texts: dict[str, str] | None = None,
     confidence_ceiling: str | None = None,
     module_version: str | None = None,
     model_id: str | None = None,
@@ -69,6 +79,7 @@ def evaluate_module_output(
     assertions = fixture.assertions
     findings = collect_findings(module_output)
     constructs = collect_constructs(module_output)
+    texts = quote_texts or {}
 
     schema_valid = True
     schema_errors: list[str] = []
@@ -126,6 +137,19 @@ def evaluate_module_output(
     if min_total and len(constructs) < min_total:
         construct_hit = False
 
+    precision = _score_evidence_precision(findings, texts)
+    warn_avg = (
+        gates.warn_average_evidence_chars
+        if gates.warn_average_evidence_chars is not None
+        else float(settings.evidence_warning_threshold_chars)
+    )
+    precision_warnings = list(precision["warnings"])
+    if precision["average_evidence_chars"] > warn_avg and precision["cited_quote_count"]:
+        precision_warnings.append(
+            f"average_evidence_chars {precision['average_evidence_chars']} "
+            f"exceeds warning threshold {warn_avg}"
+        )
+
     result = ModuleEvalResult(
         fixture_id=fixture.fixture_id,
         workflow_id=workflow_id,
@@ -141,14 +165,53 @@ def evaluate_module_output(
         unsupported_claim_count=unsupported,
         confidence_ceiling_violations=ceiling_violations,
         construct_coverage_hit=construct_hit,
+        average_evidence_chars=precision["average_evidence_chars"],
+        paragraph_evidence_count=precision["paragraph_evidence_count"],
+        evidence_precision_warnings=precision_warnings,
         details={
             "schema_errors": schema_errors,
             "forbidden": claim_score.to_dict(),
             "text_length": len(flatten_output_text(module_output)),
+            "evidence_precision": precision,
         },
     )
     result.gate_passed = _passes_gates(result, gates)
     return result
+
+
+def _score_evidence_precision(
+    findings: list[dict[str, Any]],
+    quote_texts: dict[str, str],
+) -> dict[str, Any]:
+    lengths: list[int] = []
+    paragraph_count = 0
+    warnings: list[str] = []
+    for finding in findings:
+        quote_ids = finding.get("evidence_quote_ids") or []
+        if len(quote_ids) > settings.evidence_max_items_per_finding:
+            warnings.append(
+                f"finding {finding.get('id')} cites {len(quote_ids)} evidence items "
+                f"(max {settings.evidence_max_items_per_finding})"
+            )
+        for quote_id in quote_ids:
+            text = quote_texts.get(str(quote_id))
+            if text is None:
+                continue
+            lengths.append(len(text))
+            if looks_like_paragraph(text) or len(text) > settings.evidence_hard_max_chars:
+                paragraph_count += 1
+            if len(text) > settings.evidence_warning_threshold_chars:
+                warnings.append(
+                    f"quote {quote_id} length {len(text)} exceeds warning threshold"
+                )
+    average = round(sum(lengths) / len(lengths), 2) if lengths else 0.0
+    return {
+        "average_evidence_chars": average,
+        "paragraph_evidence_count": paragraph_count,
+        "cited_quote_count": len(lengths),
+        "max_evidence_chars": max(lengths) if lengths else 0,
+        "warnings": warnings,
+    }
 
 
 def _passes_gates(result: ModuleEvalResult, gates: EvalGateConfig) -> bool:
@@ -161,6 +224,16 @@ def _passes_gates(result: ModuleEvalResult, gates: EvalGateConfig) -> bool:
     if result.forbidden_claim_count > gates.max_forbidden_claim_count:
         return False
     if result.confidence_ceiling_violations > gates.max_confidence_ceiling_violations:
+        return False
+    if (
+        gates.max_average_evidence_chars is not None
+        and result.average_evidence_chars > gates.max_average_evidence_chars
+    ):
+        return False
+    if (
+        gates.max_paragraph_evidence_count is not None
+        and result.paragraph_evidence_count > gates.max_paragraph_evidence_count
+    ):
         return False
     return True
 
@@ -178,6 +251,7 @@ class GoldenEvalHarness:
         module_id: str,
         module_output: dict[str, Any],
         valid_quote_ids: set[str] | None = None,
+        quote_texts: dict[str, str] | None = None,
         confidence_ceiling: str | None = None,
         module_version: str | None = None,
         model_id: str | None = None,
@@ -189,6 +263,7 @@ class GoldenEvalHarness:
             module_id=module_id,
             module_output=module_output,
             valid_quote_ids=valid_quote_ids,
+            quote_texts=quote_texts,
             confidence_ceiling=confidence_ceiling,
             module_version=module_version,
             model_id=model_id,

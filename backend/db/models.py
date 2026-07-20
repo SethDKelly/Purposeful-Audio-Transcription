@@ -149,6 +149,10 @@ class EvidenceQuoteRow(Base):
     text: Mapped[str] = mapped_column(Text)
     context_before: Mapped[str | None] = mapped_column(Text, nullable=True)
     context_after: Mapped[str | None] = mapped_column(Text, nullable=True)
+    evidence_type: Mapped[str] = mapped_column(
+        String(32), default="atomic_quote", server_default="atomic_quote"
+    )
+    span_text: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     transcript: Mapped["TranscriptRow"] = relationship(back_populates="evidence_quotes")
 

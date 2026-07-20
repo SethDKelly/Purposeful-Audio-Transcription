@@ -101,6 +101,16 @@ class Settings(BaseSettings):
     evidence_prompt_max_quotes: int = 120
     evidence_prompt_head_quotes: int = 80
     evidence_prompt_tail_quotes: int = 40
+    # Evidence precision (phase 004) — cite smallest useful span.
+    evidence_atomic_quote_max_chars: int = 280
+    evidence_short_exchange_max_turns: int = 4
+    evidence_context_window_before_turns: int = 1
+    evidence_context_window_after_turns: int = 1
+    evidence_max_items_per_finding: int = 3
+    evidence_prefer_sentence_spans: bool = True
+    evidence_allow_paragraph_evidence: bool = False
+    evidence_warning_threshold_chars: int = 360
+    evidence_hard_max_chars: int = 600
     transcript_retention_days: int | None = None
     # Pytest-only convenience: auto-approve transcripts when workflows start.
     # Never enable on AWS ECS.

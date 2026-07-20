@@ -485,6 +485,9 @@ class EvidenceQuoteResponse(BaseModel):
     text: str
     context_before: str | None = None
     context_after: str | None = None
+    evidence_type: str = "atomic_quote"
+    span_text: str | None = None
+    speaker_label: str | None = None
 
 
 class TranscriptBundleResponse(BaseModel):
@@ -662,6 +665,13 @@ class TranscriptWorkflowRunsResponse(BaseModel):
     workflow_runs: list[TranscriptWorkflowRunSummary] = Field(default_factory=list)
 
 
+def _speaker_label(speakers, speaker_id: str) -> str | None:
+    for speaker in speakers or []:
+        if speaker.id == speaker_id:
+            return speaker.display_name or speaker.label
+    return None
+
+
 def bundle_to_response(bundle) -> TranscriptBundleResponse:
     from backend.services.transcript_service import transcript_service
 
@@ -716,6 +726,9 @@ def bundle_to_response(bundle) -> TranscriptBundleResponse:
                 text=quote.text,
                 context_before=quote.context_before,
                 context_after=quote.context_after,
+                evidence_type=getattr(quote, "evidence_type", None) or "atomic_quote",
+                span_text=getattr(quote, "span_text", None),
+                speaker_label=_speaker_label(bundle.speakers, quote.speaker_id),
             )
             for quote in bundle.evidence_quotes
         ],

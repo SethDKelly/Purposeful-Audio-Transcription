@@ -65,7 +65,7 @@ def test_prompt_compiler_metadata() -> None:
     assert compiled.module_id == "bias_epistemic_quality"
     assert compiled.module_version == "1.0.0"
     assert compiled.compiler_version == COMPILER_VERSION
-    assert compiled.shared_instructions_version == "1.1.0"
+    assert compiled.shared_instructions_version == "1.2.0"
     assert compiled.output_schema_id == "module_output_v1"
     assert compiled.confidence_ceiling == Confidence.HIGH
     assert len(compiled.prompt_template_hash) == 64

@@ -10,7 +10,7 @@ from backend.domain.transcript import TranscriptBundle
 from backend.services.evidence_index import EvidenceIndexService
 from config.settings import settings
 
-COMPILER_VERSION = "1.2.0"
+COMPILER_VERSION = "1.3.0"
 _VERSION_PATTERN = re.compile(r"version:\s*([\d.]+)", re.IGNORECASE)
 
 
@@ -166,6 +166,10 @@ class PromptCompiler:
             "general methodological limitation.\n"
             "- Inferred findings must include at least one alternative explanation.\n"
             "- Use only quote IDs provided in the evidence index.\n"
+            "- Cite the smallest useful span (atomic quote or short exchange); "
+            "do not cite paragraph-length evidence by default.\n"
+            f"- Prefer at most {settings.evidence_max_items_per_finding} "
+            "evidence quote IDs per finding.\n"
             "- Prefer structured `findings` / `constructs` over long prose; keep "
             "`raw_markdown_report` empty or under ~150 words."
         )
@@ -173,7 +177,8 @@ class PromptCompiler:
     def _build_evidence_user_prefix(self, evidence_text: str) -> str:
         return (
             "## Evidence Index\n\n"
-            "Each line is a quotable turn. Cite using the bracketed quote ID.\n\n"
+            "Each line is a quotable turn. Cite using the bracketed quote ID.\n"
+            "Prefer the smallest useful cite (one sentence/turn or a short exchange).\n\n"
             f"{evidence_text}"
         )
 

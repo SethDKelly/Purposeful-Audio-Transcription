@@ -48,6 +48,8 @@ class EvidenceQuote(BaseModel):
     text: str
     context_before: str | None = None
     context_after: str | None = None
+    evidence_type: str = "atomic_quote"
+    span_text: str | None = None
 
 
 class TranscriptBundle(BaseModel):

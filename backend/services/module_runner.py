@@ -103,6 +103,7 @@ class ModuleRunner:
         resolved_model = self._resolve_model(module, model)
         compiled = self._compiler.compile_for_transcript(module, bundle)
         valid_quote_ids = {quote.quote_id for quote in bundle.evidence_quotes}
+        quote_texts = {quote.quote_id: quote.text for quote in bundle.evidence_quotes}
 
         return self._execute(
             module=module,
@@ -110,6 +111,7 @@ class ModuleRunner:
             compiled=compiled,
             resolved_model=resolved_model,
             valid_quote_ids=valid_quote_ids,
+            quote_texts=quote_texts,
             workflow_run_id=workflow_run_id,
             require_evidence=True,
         )
@@ -144,6 +146,7 @@ class ModuleRunner:
             module, outputs_text, safety_mode=safety_mode
         )
         valid_quote_ids = {quote.quote_id for quote in bundle.evidence_quotes}
+        quote_texts = {quote.quote_id: quote.text for quote in bundle.evidence_quotes}
         valid_quote_ids |= collect_quote_ids(prior_outputs)
         if "structured_inventory" in handoff:
             for finding in handoff["structured_inventory"].get("findings", []):
@@ -161,6 +164,7 @@ class ModuleRunner:
             compiled=compiled,
             resolved_model=resolved_model,
             valid_quote_ids=valid_quote_ids,
+            quote_texts=quote_texts,
             workflow_run_id=workflow_run_id,
             require_evidence=False,
         )
@@ -204,6 +208,7 @@ class ModuleRunner:
         valid_quote_ids: set[str],
         workflow_run_id: str | None,
         require_evidence: bool,
+        quote_texts: dict[str, str] | None = None,
     ) -> ModuleRun:
         workflow_token = workflow_run_id_var.set(workflow_run_id) if workflow_run_id else None
         module_token = module_id_var.set(module.config.id)
@@ -295,6 +300,7 @@ class ModuleRunner:
                             run.id,
                             valid_quote_ids,
                             require_evidence=require_evidence,
+                            quote_texts=quote_texts,
                         )
                     except OutputParseError as exc:
                         validation_errors = [str(exc)]
@@ -406,6 +412,7 @@ class ModuleRunner:
         valid_quote_ids: set[str],
         *,
         require_evidence: bool = True,
+        quote_texts: dict[str, str] | None = None,
     ) -> tuple[ModuleRunOutput, list[str], dict | None]:
         data = self._parser.extract_json(raw_output)
         output = self._parser.normalize(data, module, module_run_id)
@@ -414,6 +421,7 @@ class ModuleRunner:
             module,
             valid_quote_ids,
             require_evidence=require_evidence,
+            quote_texts=quote_texts,
         )
         if not validation.is_valid:
             raise OutputParseError("; ".join(validation.errors))

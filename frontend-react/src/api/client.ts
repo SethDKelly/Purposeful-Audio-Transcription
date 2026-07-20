@@ -203,6 +203,10 @@ export type EvidenceQuote = {
   text: string
   turn_id?: string
   speaker_label?: string
+  context_before?: string | null
+  context_after?: string | null
+  evidence_type?: string
+  span_text?: string | null
 }
 
 export type TranscriptBundle = {

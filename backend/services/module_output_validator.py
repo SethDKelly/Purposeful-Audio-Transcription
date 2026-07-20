@@ -9,6 +9,8 @@ from backend.core.module_registry import AnalysisModule
 from backend.core.ontology_registry import OntologyRegistry, ontology_registry
 from backend.domain.enums import CONFIDENCE_RANK, Confidence
 from backend.schemas.module_output_v1 import ModuleRunOutput
+from backend.services.evidence_precision import looks_like_paragraph
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +69,11 @@ class ModuleOutputValidator:
         valid_quote_ids: set[str],
         *,
         require_evidence: bool = True,
+        quote_texts: dict[str, str] | None = None,
     ) -> ModuleOutputValidationResult:
         result = ModuleOutputValidationResult()
         config = module.config
+        texts = quote_texts or {}
 
         if output.module_id != config.id:
             result.errors.append(
@@ -91,6 +95,7 @@ class ModuleOutputValidator:
                 ceiling_rank,
                 result,
                 require_evidence=require_evidence,
+                quote_texts=texts,
             )
 
         for construct in output.constructs:
@@ -100,6 +105,13 @@ class ModuleOutputValidator:
                     valid_quote_ids,
                     f"construct {construct.id}",
                     result,
+                )
+                self._validate_evidence_precision(
+                    construct.evidence_quote_ids,
+                    f"construct {construct.id}",
+                    result,
+                    quote_texts=texts,
+                    enforce_max_items=False,
                 )
             if construct.confidence not in {
                 Confidence.OBSERVED,
@@ -189,6 +201,7 @@ class ModuleOutputValidator:
         result: ModuleOutputValidationResult,
         *,
         require_evidence: bool = True,
+        quote_texts: dict[str, str] | None = None,
     ) -> None:
         if not finding.title.strip() or not finding.summary.strip():
             result.errors.append(f"finding {finding.id} must include title and summary")
@@ -215,6 +228,13 @@ class ModuleOutputValidator:
                 f"finding {finding.id}",
                 result,
             )
+            self._validate_evidence_precision(
+                finding.evidence_quote_ids,
+                f"finding {finding.id}",
+                result,
+                quote_texts=quote_texts or {},
+                enforce_max_items=True,
+            )
 
         if (
             finding.confidence in _INFERRED_CONFIDENCES
@@ -235,6 +255,47 @@ class ModuleOutputValidator:
         for quote_id in quote_ids:
             if quote_id not in valid_quote_ids:
                 result.errors.append(f"{context} references unknown quote ID {quote_id}")
+
+    def _validate_evidence_precision(
+        self,
+        quote_ids: list[str],
+        context: str,
+        result: ModuleOutputValidationResult,
+        *,
+        quote_texts: dict[str, str],
+        enforce_max_items: bool,
+    ) -> None:
+        max_items = settings.evidence_max_items_per_finding
+        if enforce_max_items and len(quote_ids) > max_items:
+            result.errors.append(
+                f"{context} cites {len(quote_ids)} evidence items "
+                f"(max {max_items}); prefer the smallest useful spans"
+            )
+
+        if not quote_texts:
+            return
+
+        for quote_id in quote_ids:
+            text = quote_texts.get(quote_id)
+            if text is None:
+                continue
+            length = len(text)
+            if length > settings.evidence_hard_max_chars:
+                result.errors.append(
+                    f"{context} evidence {quote_id} is {length} chars "
+                    f"(hard max {settings.evidence_hard_max_chars}); "
+                    "cite a shorter turn or sentence-level span"
+                )
+            elif length > settings.evidence_warning_threshold_chars:
+                result.warnings.append(
+                    f"{context} evidence {quote_id} is {length} chars "
+                    f"(warning threshold {settings.evidence_warning_threshold_chars})"
+                )
+            if looks_like_paragraph(text):
+                result.warnings.append(
+                    f"{context} evidence {quote_id} looks like paragraph-length "
+                    "evidence; prefer an atomic quote or short exchange"
+                )
 
 
 module_output_validator = ModuleOutputValidator()

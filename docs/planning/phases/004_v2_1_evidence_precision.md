@@ -6,6 +6,8 @@ Improve evidence traceability by making evidence snippets concise, claim-specifi
 
 Earlier versions sometimes produced evidence that was a paragraph or more. That is too broad for good traceability.
 
+**Status:** Complete · Tests: `tests/test_phase_004_evidence_precision.py`
+
 **Design:** [../../developer/evidence_precision_design.md](../../developer/evidence_precision_design.md) · [ADR 002](../../developer/architecture_decisions/adr_002_concise_evidence_spans.md)
 
 ---
@@ -43,49 +45,51 @@ evidence_precision:
   hard_max_chars: 600
 ```
 
+Defaults live on `config/settings.py` (`evidence_*` fields) and are documented in `.env.example`.
+
 ---
 
 # Implementation Tasks
 
 ## Config
 
-- [ ] Add evidence precision configuration.
-- [ ] Make thresholds environment/configurable.
-- [ ] Document defaults.
+- [x] Add evidence precision configuration.
+- [x] Make thresholds environment/configurable.
+- [x] Document defaults.
 
 ## Prompting
 
-- [ ] Update shared prompt instructions to request concise evidence.
-- [ ] Tell modules to cite the smallest useful span.
-- [ ] Tell modules to avoid paragraph evidence.
-- [ ] Tell modules to use short exchanges only when needed.
+- [x] Update shared prompt instructions to request concise evidence.
+- [x] Tell modules to cite the smallest useful span.
+- [x] Tell modules to avoid paragraph evidence.
+- [x] Tell modules to use short exchanges only when needed.
 
 ## Evidence Index
 
-- [ ] Support concise evidence text separate from context.
-- [ ] Consider sentence-level extraction.
-- [ ] Preserve speaker and turn identity.
-- [ ] Add evidence type: `atomic_quote`, `short_exchange`, `context_window`.
+- [x] Support concise evidence text separate from context.
+- [x] Consider sentence-level extraction.
+- [x] Preserve speaker and turn identity.
+- [x] Add evidence type: `atomic_quote`, `short_exchange`, `context_window`.
 
 ## Validation
 
-- [ ] Warn when evidence exceeds threshold.
-- [ ] Fail or repair when evidence exceeds hard max.
-- [ ] Check findings do not cite too many evidence items.
-- [ ] Check evidence exists in transcript/version.
+- [x] Warn when evidence exceeds threshold.
+- [x] Fail or repair when evidence exceeds hard max.
+- [x] Check findings do not cite too many evidence items.
+- [x] Check evidence exists in transcript/version.
 
 ## React UI
 
-- [ ] Show concise evidence by default.
-- [ ] Add “show context” expansion.
-- [ ] Avoid showing full paragraph evidence inline.
-- [ ] Display speaker and quote ID clearly.
+- [x] Show concise evidence by default.
+- [x] Add “show context” expansion.
+- [x] Avoid showing full paragraph evidence inline.
+- [x] Display speaker and quote ID clearly.
 
 ## Evaluation
 
-- [ ] Add evidence length metrics.
-- [ ] Add golden fixture evidence precision checks.
-- [ ] Add release gate warning/failure thresholds.
+- [x] Add evidence length metrics.
+- [x] Add golden fixture evidence precision checks.
+- [x] Add release gate warning/failure thresholds.
 
 ---
 
