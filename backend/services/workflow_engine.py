@@ -60,6 +60,7 @@ class WorkflowEngine:
         *,
         queued: bool = False,
         safety_mode: bool = False,
+        owner_user_id: str | None = None,
     ) -> WorkflowRun:
         self._workflows.get(workflow_id)
         self._transcripts.ensure_ready_for_analysis(transcript_id)
@@ -76,6 +77,7 @@ class WorkflowEngine:
                     else WorkflowRunStatus.RUNNING_MODULES.value
                 ),
                 safety_mode=safety_mode,
+                owner_user_id=owner_user_id,
             )
             if not queued:
                 workflow_run.status = WorkflowRunStatus.RUNNING_MODULES.value
@@ -108,6 +110,7 @@ class WorkflowEngine:
         *,
         run_id: str | None = None,
         safety_mode: bool | None = None,
+        owner_user_id: str | None = None,
     ) -> WorkflowRun:
         workflow = self._workflows.get(workflow_id)
         self._transcripts.ensure_ready_for_analysis(transcript_id)
@@ -130,6 +133,7 @@ class WorkflowEngine:
                 transcript_id,
                 model=model,
                 safety_mode=resolved_safety,
+                owner_user_id=owner_user_id,
             )
             existing_module_runs = []
             resolved_model = model

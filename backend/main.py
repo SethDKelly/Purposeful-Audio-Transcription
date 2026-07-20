@@ -10,6 +10,7 @@ from sqlalchemy import text
 from backend.api.middleware import APIKeyMiddleware, RequestContextMiddleware
 from backend.api.routes import (
     audit,
+    auth,
     cases,
     exploration,
     feedback,
@@ -174,6 +175,7 @@ app.add_middleware(APIKeyMiddleware)
 app.add_middleware(RequestContextMiddleware)
 
 app.include_router(health.router)
+app.include_router(auth.router)
 app.include_router(queue.router)
 app.include_router(models.router)
 app.include_router(transcribe.router)

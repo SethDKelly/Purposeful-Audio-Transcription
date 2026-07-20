@@ -78,6 +78,8 @@ class WorkflowJobService:
         transcript_id: str,
         model: str | None = None,
         safety_mode: bool = False,
+        *,
+        owner_user_id: str | None = None,
     ) -> WorkflowRun:
         workflow_run = self._engine.create_run(
             workflow_id=workflow_id,
@@ -85,6 +87,7 @@ class WorkflowJobService:
             model=model,
             queued=True,
             safety_mode=safety_mode,
+            owner_user_id=owner_user_id,
         )
         if self.worker_mode:
             logger.info(

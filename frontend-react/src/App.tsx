@@ -7,6 +7,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { EvaluationsPage } from './pages/EvaluationsPage'
 import { GraphPage } from './pages/GraphPage'
 import { IngestPage } from './pages/IngestPage'
+import { LoginPage } from './pages/LoginPage'
 import { ModulesPage } from './pages/ModulesPage'
 import { PreparePage } from './pages/PreparePage'
 import { ReportPage } from './pages/ReportPage'
@@ -23,6 +24,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
+          <Route path="/login" element={<LoginPage />} />
           <Route element={<AppShell />}>
             <Route index element={<DashboardPage />} />
             <Route path="ingest" element={<IngestPage />} />

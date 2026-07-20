@@ -32,6 +32,8 @@ class TranscriptService:
         source_type: SourceType,
         title: str | None = None,
         language: str | None = None,
+        *,
+        owner_user_id: str | None = None,
     ) -> TranscriptBundle:
         parsed_turns = self._parser.parse(raw_text)
         transcript_id = new_transcript_id()
@@ -87,7 +89,9 @@ class TranscriptService:
         )
 
         with get_session() as session:
-            self._repository.save_bundle(session, bundle)
+            self._repository.save_bundle(
+                session, bundle, owner_user_id=owner_user_id
+            )
 
         audit_event(
             "transcript.ingest",

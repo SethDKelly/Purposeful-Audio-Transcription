@@ -33,7 +33,13 @@ from backend.domain.transcript import (
 
 
 class TranscriptRepository:
-    def save_bundle(self, session: Session, bundle: TranscriptBundle) -> None:
+    def save_bundle(
+        self,
+        session: Session,
+        bundle: TranscriptBundle,
+        *,
+        owner_user_id: str | None = None,
+    ) -> None:
         transcript = bundle.transcript
         session.add(
             TranscriptRow(
@@ -49,6 +55,7 @@ class TranscriptRepository:
                 case_id=transcript.case_id,
                 session_label=transcript.session_label,
                 session_date=transcript.session_date,
+                owner_user_id=owner_user_id,
             )
         )
         for speaker in bundle.speakers:

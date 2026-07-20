@@ -1,8 +1,17 @@
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ApiError, api } from '../api/client'
 import { getPrivacyPrefs, setPrivacyPrefs, type PrivacyPrefs } from '../prefs/localPrefs'
 
 export function SettingsPage() {
   const [prefs, setPrefs] = useState<PrivacyPrefs>(getPrivacyPrefs())
+  const me = useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: () => api.me(),
+    retry: false,
+  })
+  const signedIn = me.data && !(me.error instanceof ApiError && me.error.status === 401)
 
   return (
     <section className="card">
@@ -11,6 +20,20 @@ export function SettingsPage() {
         Client-side preferences for this browser. Server retention and deletion follow API/
         ops policy (see docs/developer/data_governance.md).
       </p>
+
+      <h2>Account</h2>
+      {signedIn ? (
+        <p>
+          Signed in as <strong>{me.data?.email}</strong>
+          {me.data?.display_name ? ` (${me.data.display_name})` : ''}
+        </p>
+      ) : (
+        <p className="muted">
+          Not signed in. <Link to="/login">Sign in with email</Link> for ownership-scoped
+          resources. Product auth uses session cookies — not a shared browser API key.
+        </p>
+      )}
+
       <label style={{ display: 'block', marginTop: '1rem' }}>
         <input
           type="checkbox"
@@ -38,12 +61,12 @@ export function SettingsPage() {
       {prefs.showPrivacyBanner && (
         <p style={{ color: 'var(--warn)', marginTop: '1rem' }}>
           Sensitive dialogue: treat cases as confidential. Delete transcripts you no longer need.
-          Auth today is shared API key (dev/UAT); multi-user RBAC is planned.
         </p>
       )}
-      <h2>API key</h2>
+      <h2>Developer / admin API key</h2>
       <p className="muted">
-        Set <code>VITE_API_KEY</code> in <code>.env</code> for local builds. Never commit keys.
+        Optional <code>VITE_API_KEY</code> is for internal/dev break-glass only. Real users
+        authenticate with email OTP. Cognito / enterprise SSO is deferred.
       </p>
     </section>
   )

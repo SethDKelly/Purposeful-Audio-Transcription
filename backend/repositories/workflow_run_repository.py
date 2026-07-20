@@ -28,6 +28,7 @@ class WorkflowRunRepository:
         model_used: str | None = None,
         status: str | None = None,
         safety_mode: bool = False,
+        owner_user_id: str | None = None,
     ) -> WorkflowRun:
         now = utc_now()
         run = WorkflowRun(
@@ -41,7 +42,7 @@ class WorkflowRunRepository:
             attempt_count=0,
             safety_mode=safety_mode,
         )
-        session.add(_to_row(run))
+        session.add(_to_row(run, owner_user_id=owner_user_id))
         session.flush()
         return run
 
@@ -150,7 +151,7 @@ def utc_now() -> datetime:
     return datetime.now(UTC)
 
 
-def _to_row(run: WorkflowRun) -> WorkflowRunRow:
+def _to_row(run: WorkflowRun, *, owner_user_id: str | None = None) -> WorkflowRunRow:
     return WorkflowRunRow(
         id=run.id,
         workflow_id=run.workflow_id,
@@ -166,6 +167,7 @@ def _to_row(run: WorkflowRun) -> WorkflowRunRow:
         cancel_requested=run.cancel_requested,
         attempt_count=run.attempt_count,
         safety_mode=run.safety_mode,
+        owner_user_id=owner_user_id,
     )
 
 

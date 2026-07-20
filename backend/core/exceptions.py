@@ -141,3 +141,18 @@ class FindingNotFoundError(AppError):
 class ExplorationError(AppError):
     def __init__(self, message: str):
         super().__init__(message, status_code=400)
+
+
+class AuthenticationError(AppError):
+    def __init__(self, message: str = "Authentication required"):
+        super().__init__(message, status_code=401, error_code="AuthenticationError")
+
+
+class AuthorizationError(AppError):
+    def __init__(self, message: str = "Not allowed to access this resource"):
+        super().__init__(message, status_code=403, error_code="AuthorizationError")
+
+
+class AuthValidationError(AppError):
+    def __init__(self, message: str):
+        super().__init__(message, status_code=400, error_code="AuthValidationError")

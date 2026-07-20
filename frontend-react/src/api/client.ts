@@ -30,6 +30,7 @@ function headers(json = true): HeadersInit {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
+    credentials: 'include',
     headers: { ...headers(!(init?.body instanceof FormData)), ...init?.headers },
   })
   if (!res.ok) {
@@ -47,6 +48,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   health: () => request<{ status: string }>('/api/live'),
+  requestLoginCode: (email: string) =>
+    request<{ status: string; message: string }>('/api/v1/auth/request-code', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  verifyLoginCode: (email: string, code: string) =>
+    request<{ id: string; email: string; display_name?: string | null; is_admin: boolean }>(
+      '/api/v1/auth/verify-code',
+      { method: 'POST', body: JSON.stringify({ email, code }) },
+    ),
+  logout: () => request<{ status: string }>('/api/v1/auth/logout', { method: 'POST' }),
+  me: () =>
+    request<{ id: string; email: string; display_name?: string | null; is_admin: boolean }>(
+      '/api/v1/auth/me',
+    ),
   createTranscript: (raw_text: string, title?: string) =>
     request<{ transcript: { id: string; title?: string }; turns: Turn[]; speakers: Speaker[]; evidence_quotes: EvidenceQuote[] }>(
       '/api/v1/transcripts',
@@ -93,6 +109,7 @@ export const api = {
     const key = import.meta.env.VITE_API_KEY as string | undefined
     const res = await fetch(`${API_BASE}/api/v1/exports`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...(key ? { 'X-API-Key': key } : {}),

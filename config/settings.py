@@ -60,6 +60,15 @@ class Settings(BaseSettings):
     database_pool_size: int = 5
     alembic_auto_upgrade: bool = False
     api_key: str = ""
+    # When true, /api/v1 (except /auth/*) requires a valid session cookie or API key.
+    session_auth_required: bool = False
+    session_cookie_name: str = "rre_session"
+    session_ttl_hours: int = 168
+    login_code_ttl_minutes: int = 10
+    login_code_max_attempts: int = 5
+    login_code_rate_limit_per_hour: int = 10
+    auth_cookie_secure: bool = False
+    auth_cookie_samesite: str = "lax"
     log_json: bool = False
     log_redact: bool | None = None
     # api | worker | ui — set via RRE_PROCESS on ECS worker; defaults to api.

@@ -8,15 +8,18 @@ from __future__ import annotations
 
 import hashlib
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel, Field
 
+from backend.api.deps import resolve_auth_context
+from backend.api import ownership as ownership_api
 from backend.api.routes import cases as cases_routes
 from backend.api.routes import exploration as exploration_routes
 from backend.api.routes import feedback as feedback_routes
 from backend.api.routes import modules as modules_routes
 from backend.api.routes import transcripts as transcripts_routes
 from backend.api.routes import workflows as workflows_routes
+from backend.api.routes.workflows import run_workflow_for_user
 from backend.api.schemas import (
     AssignTranscriptCaseRequest,
     AssignTranscriptCaseResponse,
@@ -45,11 +48,13 @@ from backend.api.schemas import (
     UpdateTurnsRequest,
     WorkflowRunResponse,
     WorkflowsResponse,
+    bundle_to_response,
     synthesis_report_to_response,
 )
 from backend.core.module_registry import module_registry
 from backend.db.base import get_session
 from backend.repositories.finding_feedback_repository import FindingFeedbackRepository
+from backend.services.case_service import case_service
 from backend.services.evaluation_run_service import evaluation_run_service
 from backend.services.report_package_service import build_v1_report_package_zip
 from backend.services.structured_graph_service import structured_graph_service
@@ -130,23 +135,41 @@ class ModuleLifecycleResponse(V1Envelope):
 
 
 @router.post("/transcripts", response_model=TranscriptBundleResponse)
-def create_transcript(request: CreateTranscriptRequest) -> TranscriptBundleResponse:
-    return transcripts_routes.create_transcript(request)
+def create_transcript(
+    request: CreateTranscriptRequest, http_request: Request
+) -> TranscriptBundleResponse:
+    ctx = resolve_auth_context(http_request)
+    bundle = transcript_service.ingest(
+        raw_text=request.raw_text,
+        source_type=request.source_type,
+        title=request.title,
+        language=request.language,
+        owner_user_id=ctx.user_id,
+    )
+    return bundle_to_response(bundle)
 
 
 @router.get("/transcripts/{transcript_id}", response_model=TranscriptBundleResponse)
-def get_transcript(transcript_id: str) -> TranscriptBundleResponse:
+def get_transcript(transcript_id: str, http_request: Request) -> TranscriptBundleResponse:
+    ownership_api.assert_transcript_access(transcript_id, resolve_auth_context(http_request))
     return transcripts_routes.get_transcript(transcript_id)
 
 
 @router.patch("/transcripts/{transcript_id}/turns", response_model=TranscriptBundleResponse)
-def update_turns(transcript_id: str, request: UpdateTurnsRequest) -> TranscriptBundleResponse:
+def update_turns(
+    transcript_id: str, request: UpdateTurnsRequest, http_request: Request
+) -> TranscriptBundleResponse:
+    ownership_api.assert_transcript_access(transcript_id, resolve_auth_context(http_request))
     return transcripts_routes.update_turns(transcript_id, request)
 
 
 @router.post("/workflow-runs", response_model=WorkflowRunResponse)
-def start_workflow_run(request: StartWorkflowV1Request) -> WorkflowRunResponse:
-    return workflows_routes.run_workflow(
+def start_workflow_run(
+    request: StartWorkflowV1Request, http_request: Request
+) -> WorkflowRunResponse:
+    ctx = resolve_auth_context(http_request)
+    ownership_api.assert_transcript_access(request.transcript_id, ctx)
+    return run_workflow_for_user(
         request.workflow_id,
         RunWorkflowRequest(
             transcript_id=request.transcript_id,
@@ -154,16 +177,21 @@ def start_workflow_run(request: StartWorkflowV1Request) -> WorkflowRunResponse:
             background=request.background,
             safety_mode=request.safety_mode,
         ),
+        owner_user_id=ctx.user_id,
     )
 
 
 @router.get("/workflow-runs/{run_id}", response_model=WorkflowRunResponse)
-def get_workflow_run(run_id: str) -> WorkflowRunResponse:
+def get_workflow_run(run_id: str, http_request: Request) -> WorkflowRunResponse:
+    ownership_api.assert_run_access(run_id, resolve_auth_context(http_request))
     return workflows_routes.get_workflow_run(run_id)
 
 
 @router.get("/workflow-runs/{run_id}/status", response_model=WorkflowStatusV1Response)
-def get_workflow_run_status(run_id: str) -> WorkflowStatusV1Response:
+def get_workflow_run_status(
+    run_id: str, http_request: Request
+) -> WorkflowStatusV1Response:
+    ownership_api.assert_run_access(run_id, resolve_auth_context(http_request))
     run = workflow_engine.get(run_id)
     return WorkflowStatusV1Response(
         id=run.id,
@@ -175,12 +203,16 @@ def get_workflow_run_status(run_id: str) -> WorkflowStatusV1Response:
 
 
 @router.get("/reports/{run_id}", response_model=SynthesisReportResponse)
-def get_report(run_id: str) -> SynthesisReportResponse:
+def get_report(run_id: str, http_request: Request) -> SynthesisReportResponse:
+    ownership_api.assert_run_access(run_id, resolve_auth_context(http_request))
     return workflows_routes.get_workflow_synthesis(run_id)
 
 
 @router.get("/reports/{run_id}/findings", response_model=ReportFindingsV1Response)
-def get_report_findings(run_id: str) -> ReportFindingsV1Response:
+def get_report_findings(
+    run_id: str, http_request: Request
+) -> ReportFindingsV1Response:
+    ownership_api.assert_run_access(run_id, resolve_auth_context(http_request))
     report = synthesis_engine.get_report(run_id)
     payload = synthesis_report_to_response(report)
     findings = [
@@ -199,7 +231,10 @@ def get_report_findings(run_id: str) -> ReportFindingsV1Response:
 
 
 @router.get("/reports/{run_id}/evidence", response_model=ReportEvidenceV1Response)
-def get_report_evidence(run_id: str) -> ReportEvidenceV1Response:
+def get_report_evidence(
+    run_id: str, http_request: Request
+) -> ReportEvidenceV1Response:
+    ownership_api.assert_run_access(run_id, resolve_auth_context(http_request))
     report = synthesis_engine.get_report(run_id)
     quote_ids: list[str] = []
     for finding in (
@@ -235,12 +270,14 @@ def submit_finding_feedback_v1(
 
 
 @router.get("/cases/{case_id}", response_model=CaseDetailResponse)
-def get_case(case_id: str) -> CaseDetailResponse:
+def get_case(case_id: str, http_request: Request) -> CaseDetailResponse:
+    ownership_api.assert_case_access(case_id, resolve_auth_context(http_request))
     return cases_routes.get_case(case_id)
 
 
 @router.get("/cases/{case_id}/timeline")
-def get_case_timeline(case_id: str) -> dict:
+def get_case_timeline(case_id: str, http_request: Request) -> dict:
+    ownership_api.assert_case_access(case_id, resolve_auth_context(http_request))
     detail = cases_routes.get_case(case_id)
     events = [
         {
@@ -262,7 +299,10 @@ def get_case_timeline(case_id: str) -> dict:
 
 
 @router.post("/exports", response_model=None)
-def create_export(request: ExportV1Request):
+def create_export(request: ExportV1Request, http_request: Request):
+    ownership_api.assert_run_access(
+        request.workflow_run_id, resolve_auth_context(http_request)
+    )
     run = workflow_engine.get(request.workflow_run_id)
     if request.format in {"package", "zip"}:
         report = synthesis_engine.get_report(request.workflow_run_id)
@@ -321,15 +361,21 @@ def list_workflows() -> WorkflowsResponse:
 
 @router.patch("/transcripts/{transcript_id}/speakers", response_model=TranscriptBundleResponse)
 def update_speakers(
-    transcript_id: str, request: UpdateSpeakersRequest
+    transcript_id: str,
+    request: UpdateSpeakersRequest,
+    http_request: Request,
 ) -> TranscriptBundleResponse:
+    ownership_api.assert_transcript_access(transcript_id, resolve_auth_context(http_request))
     return transcripts_routes.update_speakers(transcript_id, request)
 
 
 @router.post("/transcripts/{transcript_id}/ready", response_model=TranscriptBundleResponse)
 def mark_ready(
-    transcript_id: str, request: MarkReadyRequest | None = None
+    transcript_id: str,
+    http_request: Request,
+    request: MarkReadyRequest | None = None,
 ) -> TranscriptBundleResponse:
+    ownership_api.assert_transcript_access(transcript_id, resolve_auth_context(http_request))
     return transcripts_routes.mark_transcript_ready(transcript_id, request)
 
 
@@ -337,22 +383,37 @@ def mark_ready(
     "/transcripts/{transcript_id}/evidence/rebuild",
     response_model=TranscriptBundleResponse,
 )
-def rebuild_evidence(transcript_id: str) -> TranscriptBundleResponse:
+def rebuild_evidence(
+    transcript_id: str, http_request: Request
+) -> TranscriptBundleResponse:
+    ownership_api.assert_transcript_access(transcript_id, resolve_auth_context(http_request))
     return transcripts_routes.rebuild_evidence(transcript_id)
 
 
 @router.post("/cases", response_model=CaseResponse)
-def create_case(request: CreateCaseRequest) -> CaseResponse:
-    return cases_routes.create_case(request)
+def create_case(request: CreateCaseRequest, http_request: Request) -> CaseResponse:
+    ctx = resolve_auth_context(http_request)
+    case = case_service.create(
+        title=request.title, notes=request.notes, owner_user_id=ctx.user_id
+    )
+    return cases_routes._case_response(case)  # noqa: SLF001
 
 
 @router.get("/cases", response_model=CasesResponse)
-def list_cases() -> CasesResponse:
-    return cases_routes.list_cases()
+def list_cases(http_request: Request) -> CasesResponse:
+    ctx = resolve_auth_context(http_request)
+    filter_owner = ctx.user is not None and not ctx.is_api_key_admin
+    cases = case_service.list(
+        owner_user_id=ctx.user_id, filter_owner=filter_owner
+    )
+    return CasesResponse(cases=[cases_routes._case_response(c) for c in cases])  # noqa: SLF001
 
 
 @router.patch("/cases/{case_id}", response_model=CaseResponse)
-def update_case(case_id: str, request: UpdateCaseRequest) -> CaseResponse:
+def update_case(
+    case_id: str, request: UpdateCaseRequest, http_request: Request
+) -> CaseResponse:
+    ownership_api.assert_case_access(case_id, resolve_auth_context(http_request))
     return cases_routes.update_case(case_id, request)
 
 
@@ -367,7 +428,8 @@ def assign_transcript_case(
 
 
 @router.delete("/cases/{case_id}", status_code=204)
-def delete_case(case_id: str) -> Response:
+def delete_case(case_id: str, http_request: Request) -> Response:
+    ownership_api.assert_case_access(case_id, resolve_auth_context(http_request))
     return cases_routes.delete_case(case_id)
 
 

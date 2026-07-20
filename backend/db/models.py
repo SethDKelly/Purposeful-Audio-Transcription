@@ -6,6 +6,65 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.db.base import Base
 
 
+class UserRow(Base):
+    """Application user (email OTP auth — phase 003)."""
+
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
+    display_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class LoginCodeRow(Base):
+    """One-time email login code."""
+
+    __tablename__ = "login_codes"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    email: Mapped[str] = mapped_column(String(320), index=True)
+    code_hash: Mapped[str] = mapped_column(String(64))
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    request_ip_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
+class UserSessionRow(Base):
+    """Browser session for passwordless auth."""
+
+    __tablename__ = "user_sessions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    session_token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    user_agent_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    ip_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
+class AuthAuditEventRow(Base):
+    """Auth and ownership audit events."""
+
+    __tablename__ = "auth_audit_events"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    actor_user_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    event_type: Mapped[str] = mapped_column(String(64))
+    resource_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    resource_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    metadata_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+
+
 class TranscriptRow(Base):
     __tablename__ = "transcripts"
 
@@ -23,6 +82,9 @@ class TranscriptRow(Base):
     )
     session_label: Mapped[str | None] = mapped_column(String(128), nullable=True)
     session_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    owner_user_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("users.id"), nullable=True, index=True
+    )
 
     speakers: Mapped[list["SpeakerRow"]] = relationship(back_populates="transcript")
     turns: Mapped[list["TurnRow"]] = relationship(back_populates="transcript")
@@ -42,6 +104,9 @@ class CaseRow(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime)
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    owner_user_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("users.id"), nullable=True, index=True
+    )
 
     transcripts: Mapped[list["TranscriptRow"]] = relationship(back_populates="case")
 
@@ -125,6 +190,9 @@ class WorkflowRunRow(Base):
     cancel_requested: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     attempt_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     safety_mode: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    owner_user_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("users.id"), nullable=True, index=True
+    )
 
 
 class SynthesisReportRow(Base):
@@ -269,6 +337,9 @@ class FindingFeedbackRow(Base):
     rating: Mapped[str] = mapped_column(String(32))
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime)
+    owner_user_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("users.id"), nullable=True, index=True
+    )
 
 
 class SafetyEventRow(Base):
@@ -298,3 +369,6 @@ class EvaluationRunRow(Base):
     gate_passed: Mapped[bool] = mapped_column(Boolean, default=False)
     summary_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime)
+    owner_user_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("users.id"), nullable=True, index=True
+    )
