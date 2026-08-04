@@ -45,7 +45,9 @@ export function LoginPage() {
         const status = (await api.powerStatus()) as PowerStatus
         if (cancelled) return
         setPower(status)
-        if (status.state === 'awake' || status.should_sleep === false) {
+        // Only exchange once Dynamo power state is awake. Do not treat
+        // should_sleep===false as ready — API returns that for waking/sleeping too.
+        if (status.state === 'awake') {
           await api.powerHandoff(handoffToken!)
           navigate('/', { replace: true })
         }

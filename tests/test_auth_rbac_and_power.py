@@ -241,3 +241,77 @@ def test_lambda_login_html_exchanges_handoff_for_session() -> None:
     assert "searchParams.set('handoff'" not in html
     # Accept verify payload shape (`status`) as well as Dynamo status (`state`).
     assert "s.state || s.status" in html
+
+
+def test_lambda_verify_does_not_restart_wake_when_already_awake() -> None:
+    """OTP while awake must mint handoff but not StartBuild (avoids sleep race)."""
+    from pathlib import Path
+
+    source = Path("infra/lambda/power_control/handler.py").read_text(encoding="utf-8")
+    assert "def _set_waking() -> tuple[" in source
+    verify = source[
+        source.index("def handle_verify_code") : source.index("def handle_wake")
+    ]
+    assert "started_wake" in verify
+    assert 'if started_wake:' in verify
+    assert verify.index("started_wake") < verify.index('_start_codebuild("wake")')
+
+
+def test_lambda_wake_requires_handoff_token() -> None:
+    """Public ALB /wake must not start CodeBuild without a verified handoff token."""
+    from pathlib import Path
+
+    source = Path("infra/lambda/power_control/handler.py").read_text(encoding="utf-8")
+    wake = source[source.index("def handle_wake") : source.index("\nROUTES")]
+    assert "Handoff token required" in wake
+    assert "if not token:" in wake
+
+
+def test_idle_handler_uses_conditional_sleep_transition() -> None:
+    """Idle sleep must not clobber a concurrent waking transition."""
+    from pathlib import Path
+
+    source = Path("infra/lambda/power_control/idle_handler.py").read_text(
+        encoding="utf-8"
+    )
+    assert "ConditionExpression" in source
+    assert "state_changed" in source
+    assert "def _begin_sleep" in source
+
+
+def test_power_orchestrator_sleep_aborts_when_waking(monkeypatch: pytest.MonkeyPatch) -> None:
+    import scripts.power_orchestrator as orch
+
+    calls: list[str] = []
+
+    monkeypatch.setattr(
+        orch,
+        "_get_power_state",
+        lambda _ddb: {"pk": "POWER#STATE", "state": "waking"},
+    )
+
+    def _set(ddb, state: str, **extra):  # noqa: ANN001
+        calls.append(f"set:{state}")
+
+    def _ecs(ecs, desired: int) -> None:  # noqa: ANN001
+        calls.append(f"ecs:{desired}")
+
+    monkeypatch.setattr(orch, "_set_power_state", _set)
+    monkeypatch.setattr(orch, "_update_ecs_desired", _ecs)
+    monkeypatch.setattr(
+        orch,
+        "_delete_managed_endpoints",
+        lambda _ec2: calls.append("delete_endpoints"),
+    )
+    monkeypatch.setattr(orch, "_stop_rds", lambda _rds: calls.append("stop_rds"))
+
+    orch.sleep({"ddb": object(), "ecs": object(), "ec2": object(), "rds": object()})
+    assert calls == []
+
+
+def test_login_page_handoff_only_when_awake() -> None:
+    from pathlib import Path
+
+    source = Path("frontend-react/src/pages/LoginPage.tsx").read_text(encoding="utf-8")
+    assert "status.state === 'awake'" in source
+    assert "should_sleep === false" not in source
