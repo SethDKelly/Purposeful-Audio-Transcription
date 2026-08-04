@@ -5,6 +5,7 @@ RRE is an **AWS-only** product. Develop on a laptop; run the application on ECS.
 ## Prerequisites
 
 - Python 3.11+
+- Node.js 22+ (for `frontend-react/` tooling)
 - GitHub access to deploy workflows
 - AWS operator access for integration checks (optional for most PRs)
 
@@ -45,15 +46,31 @@ config/
   workflows/        # Workflow YAML
   prompts/          # Markdown prompts
   framework/        # Shared compiler fragments
-ui/                 # Streamlit (ECS UI image)
+frontend-react/     # React product UI (Vite + react-router-dom)
+ui/                 # Streamlit admin/eval UI (ECS UI image)
 infra/dev/          # Terraform for AWS
 docs/               # Product and developer documentation
 tests/
   fixtures/
     golden_transcripts/
 Dockerfile.cloud    # API image
-Dockerfile.ui       # UI image
+Dockerfile.ui       # Streamlit UI image
+frontend-react/Dockerfile  # React nginx image (rre-dev-web)
 ```
+
+## React frontend
+
+Primary product UI. Quick start and route map: [../../frontend-react/README.md](../../frontend-react/README.md).
+
+```bash
+cd frontend-react
+cp .env.example .env
+npm ci
+npm run test
+npm run lint
+```
+
+Leave `VITE_API_BASE_URL` empty for the Vite `/api` proxy. Boundary rules: [ui-api-boundary.md](ui-api-boundary.md).
 
 ## Tests
 
@@ -78,6 +95,8 @@ CI and pre-commit use `python -m pytest` / `python scripts/run_venv.py -m pytest
 - **Integration** — API via `TestClient` with mocked Bedrock / Transcribe
 - **Golden** — `tests/fixtures/golden_transcripts/` signal-based regression
 - **Fixtures** — `tests/fixtures/golden_transcript.txt`, `sample_module_output.json`
+- **React** — Vitest + Testing Library in `frontend-react/` (wrap router hooks with `MemoryRouter`); Playwright smoke via `npm run test:e2e`
+
 ## Database
 
 | Context | Engine |
@@ -114,4 +133,6 @@ Ops: [aws-operations.md](aws-operations.md).
 - [architecture.md](architecture.md)
 - [contributing.md](contributing.md)
 - [api-reference.md](api-reference.md)
+- [ui-api-boundary.md](ui-api-boundary.md)
+- [../../frontend-react/README.md](../../frontend-react/README.md)
 - [aws-deployment.md](aws-deployment.md)

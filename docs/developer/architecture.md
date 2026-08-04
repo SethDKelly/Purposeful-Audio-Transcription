@@ -10,13 +10,18 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│  Streamlit UI (ECS)                                          │
-│  Ingest · Prepare · Cases · Analyze · Custom · Report · Explore │
+│  React product UI (frontend-react/, ECS rre-dev-web)         │
+│  BrowserRouter · session cookie · /api/v1 client             │
+│  Ingest · Prepare · Analyze · Report · Graph · Cases         │
 └──────────────────────────┬──────────────────────────────────┘
-                           │ HTTP + optional X-API-Key
+                           │ HTTP + session cookie (optional X-API-Key)
+┌──────────────────────────┐ │
+│  Streamlit (admin/eval)  │─┘
+└──────────────────────────┬─┘
+                           │
 ┌──────────────────────────▼──────────────────────────────────┐
 │  FastAPI (ECS) — queues workflow jobs when worker enabled    │
-│  /transcripts · /cases · /workflows · /modules · /transcribe │
+│  /api/v1 · auth · transcripts · cases · workflows · modules  │
 └──────────────────────────┬──────────────────────────────────┘
                            │
      ┌─────────────────────┼─────────────────────┐
@@ -35,6 +40,8 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
               ECS Worker (RRE_PROCESS=worker)
               polls CREATED → runs modules
 ```
+
+UI boundary and React routes: [ui-api-boundary.md](ui-api-boundary.md), [../../frontend-react/README.md](../../frontend-react/README.md).
 
 ## Core services
 

@@ -16,6 +16,13 @@ Always commit lockfiles. Do not commit `node_modules/`, `dist/`, `.terraform/`, 
 - **CI** — `.github/workflows/supply-chain.yml` runs `npm audit` (frontend) and `pip-audit` when available.
 - **ECR** — image scanning on push enabled for API/UI (and web when provisioned).
 
+### Frontend dependency patches
+
+npm patch bumps under `frontend-react/` (for example `react-router-dom` 7.x) should update
+`package.json` + `package-lock.json` together via Dependabot or `npm ci` / lockfile refresh.
+No application code change is required unless the package changelog notes a behavior break.
+After merge, smoke with `npm run test` (and `npm run build` when touching bundler/router majors).
+
 ## SBOM
 
 Generate on demand for release candidates:
