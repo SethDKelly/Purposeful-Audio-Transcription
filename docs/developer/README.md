@@ -11,7 +11,8 @@
 | [api-reference.md](api-reference.md) | REST endpoints (prep, ready, telemetry) |
 | [contributing.md](contributing.md) | Conventions and PR workflow |
 | [aws-operations.md](aws-operations.md) | AWS CloudWatch, deploy smoke, pause/resume |
-| [ui-api-boundary.md](ui-api-boundary.md) | Streamlit as API client (React primary product UI) |
+| [ui-api-boundary.md](ui-api-boundary.md) | React + Streamlit as HTTP clients only |
+| [../../frontend-react/README.md](../../frontend-react/README.md) | React routes, Vite setup, SPA / router pitfalls |
 | [api_changelog.md](api_changelog.md) | `/api/v1` changelog + deprecation |
 | [module_lifecycle.md](module_lifecycle.md) | Module versions, prompt hashes, old reports |
 | [supply_chain.md](supply_chain.md) | Lockfiles, scans, SBOM, reproducible builds |
