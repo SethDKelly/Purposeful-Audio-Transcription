@@ -449,18 +449,19 @@ def handle_verify_code(event: dict[str, Any]) -> dict[str, Any]:
 
 
 def handle_wake(event: dict[str, Any]) -> dict[str, Any]:
-    """Idempotent wake; optional handoff token from a prior verify."""
+    """Idempotent wake; requires a valid handoff token from OTP verify."""
     body = _json_body(event)
     headers = {k.lower(): v for k, v in (event.get("headers") or {}).items()}
     token = (
         str(body.get("handoff_token") or body.get("token") or "").strip()
         or (headers.get("authorization") or "").removeprefix("Bearer ").strip()
     )
-    if token:
-        try:
-            _parse_handoff_token(token)
-        except ValueError as exc:
-            return _response(401, {"detail": str(exc)})
+    if not token:
+        return _response(401, {"detail": "Handoff token required"})
+    try:
+        _parse_handoff_token(token)
+    except ValueError as exc:
+        return _response(401, {"detail": str(exc)})
 
     item = _get_power_state()
     state = str(item.get("state") or "asleep")

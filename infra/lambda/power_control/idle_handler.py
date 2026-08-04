@@ -83,7 +83,18 @@ def handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
             "active_jobs": idle.get("active_jobs"),
         }
 
-    item["state"] = "sleeping"
-    _table.put_item(Item={**item, "pk": POWER_STATE_PK})
+    # Atomic state transition only — do not put_item the whole row (that races
+    # with API touch_activity and can clobber a fresh last_activity_at).
+    try:
+        _table.update_item(
+            Key={"pk": POWER_STATE_PK},
+            UpdateExpression="SET #s = :sleeping",
+            ConditionExpression="#s = :awake",
+            ExpressionAttributeNames={"#s": "state"},
+            ExpressionAttributeValues={":sleeping": "sleeping", ":awake": "awake"},
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.info("Skip sleep; state changed under us: %s", exc)
+        return {"skipped": True, "reason": "state_race"}
     _start_sleep()
     return {"started_sleep": True}
