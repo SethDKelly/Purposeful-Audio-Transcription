@@ -14,7 +14,7 @@ resource "aws_ecs_task_definition" "api" {
   cpu                      = var.api_cpu
   memory                   = var.api_memory
   execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
+  task_role_arn            = aws_iam_role.ecs_task_api.arn
 
   container_definitions = jsonencode([{
     name      = "api"
@@ -27,40 +27,64 @@ resource "aws_ecs_task_definition" "api" {
       protocol      = "tcp"
     }]
 
-    environment = [
-      { name = "LOG_JSON", value = "true" },
-      { name = "LOG_LEVEL", value = "INFO" },
-      { name = "PYTHONUNBUFFERED", value = "1" },
-      { name = "LLM_PROVIDER", value = var.llm_provider },
-      { name = "BEDROCK_MODEL_ID", value = var.bedrock_model_id },
-      { name = "UPLOADS_BUCKET", value = aws_s3_bucket.uploads.bucket },
-      { name = "TRANSCRIPTION_PROVIDER", value = var.transcription_provider },
-      { name = "TRANSCRIBE_TIMEOUT_SECONDS", value = "3600" },
-      { name = "WORKFLOW_MODULE_CONCURRENCY", value = "3" },
-      { name = "BEDROCK_PROMPT_CACHE", value = "true" },
-      { name = "BEDROCK_PROMPT_CACHE_TTL", value = "1h" },
-      { name = "BEDROCK_MAX_TOKENS", value = "8192" },
-      { name = "MODULE_RUN_MAX_RETRIES", value = "1" },
-      { name = "WORKFLOW_WORKER_ENABLED", value = "true" },
-      { name = "WORKFLOW_JOB_TIMEOUT_SECONDS", value = "7200" },
-      { name = "WORKFLOW_JOB_MAX_ATTEMPTS", value = "2" },
-      { name = "DIARIZATION_ENABLED", value = var.diarization_enabled ? "true" : "false" },
-      { name = "ALEMBIC_AUTO_UPGRADE", value = "true" },
-      { name = "TEMP_DIR", value = "/tmp/rre" },
-      { name = "AWS_REGION", value = var.aws_region },
-      { name = "AWS_DEFAULT_REGION", value = var.aws_region },
-    ]
+    environment = concat(
+      [
+        { name = "LOG_JSON", value = "true" },
+        { name = "LOG_LEVEL", value = "INFO" },
+        { name = "PYTHONUNBUFFERED", value = "1" },
+        { name = "LLM_PROVIDER", value = var.llm_provider },
+        { name = "BEDROCK_MODEL_ID", value = var.bedrock_model_id },
+        { name = "UPLOADS_BUCKET", value = aws_s3_bucket.uploads.bucket },
+        { name = "TRANSCRIPTION_PROVIDER", value = var.transcription_provider },
+        { name = "TRANSCRIBE_TIMEOUT_SECONDS", value = "3600" },
+        { name = "WORKFLOW_MODULE_CONCURRENCY", value = "3" },
+        { name = "BEDROCK_PROMPT_CACHE", value = "true" },
+        { name = "BEDROCK_PROMPT_CACHE_TTL", value = "1h" },
+        { name = "BEDROCK_MAX_TOKENS", value = "8192" },
+        { name = "MODULE_RUN_MAX_RETRIES", value = "1" },
+        { name = "WORKFLOW_WORKER_ENABLED", value = "true" },
+        { name = "WORKFLOW_JOB_TIMEOUT_SECONDS", value = "10800" },
+        { name = "WORKFLOW_JOB_STALE_SECONDS", value = "11400" },
+        { name = "WORKFLOW_JOB_MAX_ATTEMPTS", value = "2" },
+        { name = "DIARIZATION_ENABLED", value = var.diarization_enabled ? "true" : "false" },
+        { name = "ALEMBIC_AUTO_UPGRADE", value = "true" },
+        { name = "TEMP_DIR", value = "/tmp/rre" },
+        { name = "AWS_REGION", value = var.aws_region },
+        { name = "AWS_DEFAULT_REGION", value = var.aws_region },
+        { name = "SESSION_AUTH_REQUIRED", value = "true" },
+        { name = "AUTH_INVITE_ONLY", value = "true" },
+        { name = "EMAIL_DELIVERY", value = "ses" },
+        { name = "SES_FROM_EMAIL", value = var.ses_from_email },
+        { name = "KILL_LONG_JOBS_ENABLED", value = "true" },
+        { name = "KILL_LONG_JOBS_SECONDS", value = "10800" },
+        { name = "IDLE_SLEEP_AFTER_SECONDS", value = "7200" },
+        { name = "POWER_CONTROL_ENABLED", value = var.enable_power_control ? "true" : "false" },
+        {
+          name  = "POWER_STATE_TABLE"
+          value = var.enable_power_control ? aws_dynamodb_table.power_state[0].name : ""
+        },
+      ],
+      local.https_enabled ? [{ name = "AUTH_COOKIE_SECURE", value = "true" }] : [],
+    )
 
-    secrets = [
-      {
-        name      = "DATABASE_URL"
-        valueFrom = "${aws_secretsmanager_secret.database.arn}:database_url::"
-      },
-      {
-        name      = "API_KEY"
-        valueFrom = "${aws_secretsmanager_secret.api_key.arn}:api_key::"
-      },
-    ]
+    secrets = concat(
+      [
+        {
+          name      = "DATABASE_URL"
+          valueFrom = "${aws_secretsmanager_secret.database.arn}:database_url::"
+        },
+        {
+          name      = "API_KEY"
+          valueFrom = "${aws_secretsmanager_secret.api_key.arn}:api_key::"
+        },
+      ],
+      var.enable_power_control ? [
+        {
+          name      = "POWER_HANDOFF_SECRET"
+          valueFrom = "${aws_secretsmanager_secret.power_handoff[0].arn}:power_handoff_secret::"
+        },
+      ] : [],
+    )
 
     logConfiguration = {
       logDriver = "awslogs"
@@ -87,8 +111,8 @@ resource "aws_ecs_task_definition" "ui" {
   network_mode             = "awsvpc"
   cpu                      = var.ui_cpu
   memory                   = var.ui_memory
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
+  execution_role_arn       = aws_iam_role.ecs_execution_ui.arn
+  task_role_arn            = aws_iam_role.ecs_task_ui.arn
 
   container_definitions = jsonencode([{
     name      = "ui"
@@ -210,6 +234,77 @@ resource "aws_ecs_service" "ui" {
   ]
 }
 
+# React product UI — provisioned at desired_count=0 until ALB cutover.
+resource "aws_ecs_task_definition" "web" {
+  family                   = "${local.name}-web"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = var.web_cpu
+  memory                   = var.web_memory
+  execution_role_arn       = aws_iam_role.ecs_execution_ui.arn
+  task_role_arn            = aws_iam_role.ecs_task_ui.arn
+
+  container_definitions = jsonencode([{
+    name      = "web"
+    image     = local.web_image
+    essential = true
+
+    portMappings = [{
+      containerPort = 80
+      hostPort      = 80
+      protocol      = "tcp"
+    }]
+
+    environment = [
+      { name = "LOG_JSON", value = "true" },
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.web.name
+        awslogs-region        = var.aws_region
+        awslogs-stream-prefix = "web"
+      }
+    }
+
+    healthCheck = {
+      command     = ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || curl -f http://127.0.0.1/ || exit 1"]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 30
+    }
+  }])
+}
+
+resource "aws_ecs_service" "web" {
+  name            = "${local.name}-web"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.web.arn
+  desired_count   = var.web_desired_count
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = data.aws_subnets.default.ids
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    assign_public_ip = !var.enable_no_egress_networking
+  }
+
+  deployment_minimum_healthy_percent = 0
+  deployment_maximum_percent         = 200
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
+  depends_on = [
+    aws_vpc_endpoint.s3,
+    aws_vpc_endpoint.interface,
+  ]
+}
+
 resource "aws_ecs_task_definition" "worker" {
   family                   = "${local.name}-worker"
   requires_compatibilities = ["FARGATE"]
@@ -217,7 +312,7 @@ resource "aws_ecs_task_definition" "worker" {
   cpu                      = var.worker_cpu
   memory                   = var.worker_memory
   execution_role_arn       = aws_iam_role.ecs_execution.arn
-  task_role_arn            = aws_iam_role.ecs_task.arn
+  task_role_arn            = aws_iam_role.ecs_task_worker.arn
 
   container_definitions = jsonencode([{
     name      = "worker"
@@ -239,24 +334,34 @@ resource "aws_ecs_task_definition" "worker" {
       { name = "BEDROCK_PROMPT_CACHE_TTL", value = "1h" },
       { name = "BEDROCK_MAX_TOKENS", value = "8192" },
       { name = "MODULE_RUN_MAX_RETRIES", value = "1" },
-      { name = "WORKFLOW_JOB_TIMEOUT_SECONDS", value = "7200" },
+      { name = "WORKFLOW_JOB_TIMEOUT_SECONDS", value = "10800" },
       { name = "WORKFLOW_JOB_MAX_ATTEMPTS", value = "2" },
       { name = "WORKFLOW_WORKER_POLL_SECONDS", value = "2" },
+      { name = "WORKFLOW_WORKER_MAX_CLAIM_PER_POLL", value = "1" },
+      { name = "WORKFLOW_WORKER_MAX_IN_FLIGHT", value = "2" },
+      { name = "WORKFLOW_WORKER_HEALTH_PORT", value = "8080" },
+      { name = "WORKFLOW_JOB_STALE_SECONDS", value = "11400" },
+      { name = "BEDROCK_THROTTLE_MAX_RETRIES", value = "5" },
+      { name = "BEDROCK_THROTTLE_BASE_SECONDS", value = "2" },
       { name = "DIARIZATION_ENABLED", value = var.diarization_enabled ? "true" : "false" },
       { name = "ALEMBIC_AUTO_UPGRADE", value = "false" },
       { name = "TEMP_DIR", value = "/tmp/rre" },
       { name = "AWS_REGION", value = var.aws_region },
       { name = "AWS_DEFAULT_REGION", value = var.aws_region },
+      { name = "KILL_LONG_JOBS_ENABLED", value = "true" },
+      { name = "KILL_LONG_JOBS_SECONDS", value = "10800" },
+      { name = "IDLE_SLEEP_AFTER_SECONDS", value = "7200" },
+      { name = "POWER_CONTROL_ENABLED", value = var.enable_power_control ? "true" : "false" },
+      {
+        name  = "POWER_STATE_TABLE"
+        value = var.enable_power_control ? aws_dynamodb_table.power_state[0].name : ""
+      },
     ]
 
     secrets = [
       {
         name      = "DATABASE_URL"
         valueFrom = "${aws_secretsmanager_secret.database.arn}:database_url::"
-      },
-      {
-        name      = "API_KEY"
-        valueFrom = "${aws_secretsmanager_secret.api_key.arn}:api_key::"
       },
     ]
 
@@ -267,6 +372,14 @@ resource "aws_ecs_task_definition" "worker" {
         awslogs-region        = var.aws_region
         awslogs-stream-prefix = "worker"
       }
+    }
+
+    healthCheck = {
+      command     = ["CMD-SHELL", "curl -f http://127.0.0.1:8080/health || exit 1"]
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 60
     }
   }])
 }

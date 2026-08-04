@@ -1,0 +1,148 @@
+"""Server-side report package builder (v2.0) — no ui/ dependency."""
+
+from __future__ import annotations
+
+import io
+import json
+import zipfile
+from datetime import UTC, datetime
+from typing import Any
+
+
+def build_v1_report_package_zip(
+    *,
+    workflow_run: dict[str, Any],
+    synthesis: dict[str, Any] | None,
+    evidence_quotes: list[dict[str, Any]] | None = None,
+    structured: dict[str, Any] | None = None,
+    module_lifecycle: list[dict[str, Any]] | None = None,
+    redact: bool = False,
+) -> bytes:
+    """Professional package: manifest, report JSON, findings, evidence, versions."""
+    evidence_quotes = evidence_quotes or []
+    safety_mode = bool(workflow_run.get("safety_mode"))
+    synthesis_payload = dict(synthesis) if synthesis else None
+    if safety_mode and synthesis_payload is not None:
+        limitations = list(synthesis_payload.get("limitations") or [])
+        note = (
+            "Safety-aware mode: treat claims as evidence-limited; "
+            "not a clinical or legal determination."
+        )
+        if note not in limitations:
+            limitations.append(note)
+            synthesis_payload["limitations"] = limitations
+
+    findings = []
+    if synthesis_payload:
+        for bucket in (
+            "high_confidence_findings",
+            "moderate_confidence_findings",
+            "exploratory_hypotheses",
+        ):
+            findings.extend(synthesis_payload.get(bucket) or [])
+
+    quote_ids: list[str] = []
+    for f in findings:
+        for qid in f.get("evidence_quote_ids") or []:
+            if qid not in quote_ids:
+                quote_ids.append(qid)
+
+    quotes_by_id = {q.get("quote_id"): q for q in evidence_quotes if q.get("quote_id")}
+    appendix_lines = [
+        "# Evidence appendix",
+        "",
+        "Exploratory, non-diagnostic, evidence-limited analysis.",
+        "",
+    ]
+    for qid in quote_ids:
+        q = quotes_by_id.get(qid, {})
+        full_text = q.get("text", "(quote text unavailable)")
+        span = q.get("span_text") or full_text
+        if redact:
+            full_text = "[redacted]"
+            span = "[redacted]"
+        speaker = q.get("speaker_label") or q.get("speaker") or "Speaker"
+        evidence_type = q.get("evidence_type") or "atomic_quote"
+        appendix_lines.extend(
+            [
+                f"## {qid}",
+                f"- Speaker: {speaker}",
+                f"- Type: {evidence_type}",
+                f"- Cite: {span}",
+            ]
+        )
+        if not redact and full_text != span:
+            appendix_lines.append(f"- Full turn: {full_text}")
+        if not redact and q.get("context_before"):
+            appendix_lines.append(f"- Context before: {q['context_before']}")
+        if not redact and q.get("context_after"):
+            appendix_lines.append(f"- Context after: {q['context_after']}")
+        appendix_lines.append("")
+
+    now = datetime.now(UTC).isoformat()
+    manifest = {
+        "schema_version": "1",
+        "package_type": "rre_report_package",
+        "created_at": now,
+        "workflow_run_id": workflow_run.get("id"),
+        "workflow_id": workflow_run.get("workflow_id"),
+        "transcript_id": workflow_run.get("transcript_id"),
+        "transcript_version_id": workflow_run.get("transcript_version_id"),
+        "transcript_version_number": workflow_run.get("transcript_version_number"),
+        "safety_mode": safety_mode,
+        "finding_count": len(findings),
+        "evidence_quote_count": len(quote_ids),
+        "redacted": redact,
+        "confidence_legend": {
+            "high": "Strong evidence-linked claims",
+            "moderate": "Plausible with partial evidence",
+            "exploratory": "Hypotheses; treat cautiously",
+        },
+    }
+
+    version_manifest = {
+        "workflow_id": workflow_run.get("workflow_id"),
+        "modules": module_lifecycle or [],
+        "report_id": (synthesis_payload or {}).get("id"),
+    }
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("manifest.json", json.dumps(manifest, indent=2) + "\n")
+        zf.writestr("version_manifest.json", json.dumps(version_manifest, indent=2) + "\n")
+        zf.writestr("report.json", json.dumps(synthesis_payload or {}, indent=2) + "\n")
+        zf.writestr("findings_index.json", json.dumps(findings, indent=2) + "\n")
+        zf.writestr("evidence_appendix.md", "\n".join(appendix_lines).rstrip() + "\n")
+        if structured:
+            zf.writestr("structured_graph.json", json.dumps(structured, indent=2) + "\n")
+        readme_lines = [
+            "RRE report package (v2). See manifest.json for confidence legend and counts.",
+        ]
+        if safety_mode:
+            readme_lines.extend(
+                [
+                    "",
+                    "SAFETY-AWARE MODE WAS ACTIVE FOR THIS RUN.",
+                    "This report uses cautious, evidence-limited framing.",
+                    "Do not treat findings as diagnosis, legal determination, or mutual",
+                    "coaching guidance when serious safety concerns may be present.",
+                ]
+            )
+            zf.writestr(
+                "safety_banner.md",
+                "\n".join(
+                    [
+                        "# Safety-aware report",
+                        "",
+                        "Safety-aware mode was active for this analysis.",
+                        "",
+                        "- Findings are exploratory and non-diagnostic.",
+                        "- Serious concerns are not mutualized or coached as shared fault.",
+                        "- Consider professional or emergency support when indicators warrant it.",
+                        "- Ordinary conflict-coaching framing does not apply to high-risk dynamics.",
+                        "",
+                    ]
+                ),
+            )
+        zf.writestr("README.txt", "\n".join(readme_lines) + "\n")
+    return buf.getvalue()

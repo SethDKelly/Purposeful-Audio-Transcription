@@ -27,7 +27,7 @@ from backend.services.module_runner import (
     module_runner,
 )
 from backend.services.transcript_service import TranscriptService, transcript_service
-from backend.services.safety_risk_scanner import SKIP_IN_SAFETY_MODE
+from backend.services.safety_policy import get_safety_policy
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -60,9 +60,11 @@ class WorkflowEngine:
         *,
         queued: bool = False,
         safety_mode: bool = False,
+        owner_user_id: str | None = None,
     ) -> WorkflowRun:
         self._workflows.get(workflow_id)
-        self._transcripts.ensure_ready_for_analysis(transcript_id)
+        bundle = self._transcripts.ensure_ready_for_analysis(transcript_id)
+        transcript_version_id = bundle.transcript.current_version_id
 
         with get_session() as session:
             workflow_run = self._repository.create(
@@ -76,6 +78,8 @@ class WorkflowEngine:
                     else WorkflowRunStatus.RUNNING_MODULES.value
                 ),
                 safety_mode=safety_mode,
+                owner_user_id=owner_user_id,
+                transcript_version_id=transcript_version_id,
             )
             if not queued:
                 workflow_run.status = WorkflowRunStatus.RUNNING_MODULES.value
@@ -108,6 +112,7 @@ class WorkflowEngine:
         *,
         run_id: str | None = None,
         safety_mode: bool | None = None,
+        owner_user_id: str | None = None,
     ) -> WorkflowRun:
         workflow = self._workflows.get(workflow_id)
         self._transcripts.ensure_ready_for_analysis(transcript_id)
@@ -130,6 +135,7 @@ class WorkflowEngine:
                 transcript_id,
                 model=model,
                 safety_mode=resolved_safety,
+                owner_user_id=owner_user_id,
             )
             existing_module_runs = []
             resolved_model = model
@@ -159,6 +165,14 @@ class WorkflowEngine:
         with get_session() as session:
             return self._repository.list_queued(session)
 
+    def list_failed(self, *, limit: int = 50) -> list[WorkflowRun]:
+        with get_session() as session:
+            return self._repository.list_failed(session, limit=limit)
+
+    def queue_stats(self) -> dict[str, object]:
+        with get_session() as session:
+            return self._repository.queue_stats(session)
+
     def claim_queued(self, run_id: str) -> WorkflowRun | None:
         with get_session() as session:
             return self._repository.claim_queued(session, run_id)
@@ -181,6 +195,8 @@ class WorkflowEngine:
             raise WorkflowRunCancelled(f"Workflow run {workflow_run.id} cancelled")
 
         timeout = float(settings.workflow_job_timeout_seconds or 0)
+        if settings.kill_long_jobs_enabled:
+            timeout = float(settings.kill_long_jobs_seconds or timeout)
         if timeout > 0 and (time.monotonic() - started) > timeout:
             workflow_run.status = WorkflowRunStatus.FAILED.value
             workflow_run.completed_at = utc_now()
@@ -247,7 +263,8 @@ class WorkflowEngine:
                     for m in wave.module_ids
                     if m not in completed_module_ids
                     and not (
-                        workflow_run.safety_mode and m in SKIP_IN_SAFETY_MODE
+                        workflow_run.safety_mode
+                        and get_safety_policy().should_suppress_module(m)
                     )
                 ]
                 if not pending:
@@ -359,7 +376,9 @@ class WorkflowEngine:
 
         for module_id in workflow.module_sequence:
             self._check_abort(workflow_run, started)
-            if workflow_run.safety_mode and module_id in SKIP_IN_SAFETY_MODE:
+            if workflow_run.safety_mode and get_safety_policy().should_suppress_module(
+                module_id
+            ):
                 logger.info(
                     "Skipping module %s for safety_mode on workflow run %s",
                     module_id,
@@ -474,6 +493,7 @@ class WorkflowEngine:
                     transcript_id=transcript_id,
                     model=model,
                     workflow_run_id=workflow_run.id,
+                    safety_mode=workflow_run.safety_mode,
                 )
                 results[module_id] = module_run
                 if module_run.status != ModuleRunStatus.COMPLETED.value:
@@ -496,6 +516,7 @@ class WorkflowEngine:
                         transcript_id,
                         model,
                         workflow_run.id,
+                        workflow_run.safety_mode,
                     ): module_id
                     for module_id in module_ids
                 }

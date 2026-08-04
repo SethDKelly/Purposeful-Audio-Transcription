@@ -1,0 +1,6 @@
+﻿fixture_id: SRT005_ordinary_conflict_false_positive
+title: SRT005_ordinary_conflict_false_positive
+categories: []
+expected_risk_level: none
+expected_ui_warning_mode: standard
+expected_module_suppression: []

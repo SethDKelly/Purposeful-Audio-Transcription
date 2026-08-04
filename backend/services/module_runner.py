@@ -95,14 +95,18 @@ class ModuleRunner:
         transcript_id: str,
         model: str | None = None,
         workflow_run_id: str | None = None,
+        safety_mode: bool = False,
     ) -> ModuleRun:
         module = self._registry.get(module_id)
         self._ensure_transcript_runnable(module)
 
-        bundle = self._transcripts.get(transcript_id)
+        bundle = self._bundle_for_run(transcript_id, workflow_run_id)
         resolved_model = self._resolve_model(module, model)
-        compiled = self._compiler.compile_for_transcript(module, bundle)
+        compiled = self._compiler.compile_for_transcript(
+            module, bundle, safety_mode=safety_mode
+        )
         valid_quote_ids = {quote.quote_id for quote in bundle.evidence_quotes}
+        quote_texts = {quote.quote_id: quote.text for quote in bundle.evidence_quotes}
 
         return self._execute(
             module=module,
@@ -110,8 +114,10 @@ class ModuleRunner:
             compiled=compiled,
             resolved_model=resolved_model,
             valid_quote_ids=valid_quote_ids,
+            quote_texts=quote_texts,
             workflow_run_id=workflow_run_id,
             require_evidence=True,
+            safety_mode=safety_mode,
         )
 
     def run_synthesis(
@@ -127,7 +133,7 @@ class ModuleRunner:
         if module.config.input_type != "module_outputs":
             raise ModuleRunError(f"Module {module_id} is not a synthesis module")
 
-        bundle = self._transcripts.get(transcript_id)
+        bundle = self._bundle_for_run(transcript_id, workflow_run_id)
         resolved_model = self._resolve_model(module, model)
         handoff: dict[str, Any] = {
             "module_outputs": prior_outputs,
@@ -144,6 +150,7 @@ class ModuleRunner:
             module, outputs_text, safety_mode=safety_mode
         )
         valid_quote_ids = {quote.quote_id for quote in bundle.evidence_quotes}
+        quote_texts = {quote.quote_id: quote.text for quote in bundle.evidence_quotes}
         valid_quote_ids |= collect_quote_ids(prior_outputs)
         if "structured_inventory" in handoff:
             for finding in handoff["structured_inventory"].get("findings", []):
@@ -161,8 +168,10 @@ class ModuleRunner:
             compiled=compiled,
             resolved_model=resolved_model,
             valid_quote_ids=valid_quote_ids,
+            quote_texts=quote_texts,
             workflow_run_id=workflow_run_id,
             require_evidence=False,
+            safety_mode=safety_mode,
         )
 
     def stream_for_transcript_text(
@@ -204,6 +213,8 @@ class ModuleRunner:
         valid_quote_ids: set[str],
         workflow_run_id: str | None,
         require_evidence: bool,
+        quote_texts: dict[str, str] | None = None,
+        safety_mode: bool = False,
     ) -> ModuleRun:
         workflow_token = workflow_run_id_var.set(workflow_run_id) if workflow_run_id else None
         module_token = module_id_var.set(module.config.id)
@@ -295,6 +306,7 @@ class ModuleRunner:
                             run.id,
                             valid_quote_ids,
                             require_evidence=require_evidence,
+                            quote_texts=quote_texts,
                         )
                     except OutputParseError as exc:
                         validation_errors = [str(exc)]
@@ -313,7 +325,9 @@ class ModuleRunner:
                             ),
                         )
                     else:
-                        safety_result = self._safety.validate(parsed_output)
+                        safety_result = self._safety.validate(
+                            parsed_output, safety_mode=safety_mode
+                        )
                         if safety_result.violations:
                             validation_errors = safety_result.violations
                             validation_failure_count += 1
@@ -384,6 +398,19 @@ class ModuleRunner:
             )
         raise ModuleRunError(f"Module {module.config.id} is not enabled for direct runs")
 
+    def _bundle_for_run(self, transcript_id: str, workflow_run_id: str | None):
+        if not workflow_run_id:
+            return self._transcripts.get(transcript_id)
+        from backend.repositories.workflow_run_repository import WorkflowRunRepository
+
+        with get_session() as session:
+            run = WorkflowRunRepository().get(session, workflow_run_id)
+        if run.transcript_version_id:
+            return self._transcripts.get_for_version(
+                transcript_id, run.transcript_version_id
+            )
+        return self._transcripts.get(transcript_id)
+
     def _resolve_model(self, module: AnalysisModule, model: str | None) -> str:
         resolved = (
             model
@@ -406,6 +433,7 @@ class ModuleRunner:
         valid_quote_ids: set[str],
         *,
         require_evidence: bool = True,
+        quote_texts: dict[str, str] | None = None,
     ) -> tuple[ModuleRunOutput, list[str], dict | None]:
         data = self._parser.extract_json(raw_output)
         output = self._parser.normalize(data, module, module_run_id)
@@ -414,6 +442,7 @@ class ModuleRunner:
             module,
             valid_quote_ids,
             require_evidence=require_evidence,
+            quote_texts=quote_texts,
         )
         if not validation.is_valid:
             raise OutputParseError("; ".join(validation.errors))

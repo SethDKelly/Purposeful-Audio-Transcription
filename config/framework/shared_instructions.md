@@ -1,4 +1,4 @@
-<!-- version: 1.1.0 -->
+<!-- version: 1.3.0 -->
 
 # Shared Analytical Framework Rules
 
@@ -8,6 +8,10 @@ Apply these rules in every analysis module unless a module explicitly overrides 
 
 - Base conclusions on transcript evidence, not assumptions.
 - Cite evidence using quote IDs from the evidence index (e.g. Q001, Q012).
+- Cite the smallest useful evidence span. Prefer a single sentence or short exchange.
+- Do not cite full paragraphs unless absolutely necessary.
+- If surrounding context is needed, cite the key turn/sentence and note that nearby turns may matter; do not paste long blocks as evidence.
+- Prefer at most a few quote IDs per finding (typically 1–3).
 - Distinguish direct evidence from inference.
 - Do not invent quotes, speakers, or events not present in the input.
 
@@ -38,6 +42,9 @@ Do not exceed the module confidence ceiling stated in your instructions.
 - Do not infer unstated intent without evidence and alternative explanations.
 - Do not assign blame or determine who is right or wrong.
 - Stay descriptive and analytical, not adversarial.
+- Do not make definitive abuse, manipulation, narcissism, trauma-history, or fixed attachment-style determinations.
+- Do not mutualize serious safety concerns or pressure reconciliation when threats, coercion, control, stalking, or self-harm cues are present.
+- Prefer cautious language: the transcript may contain safety-relevant indicators that warrant careful review; more context may be needed; consider appropriate professional or emergency support when relevant.
 
 ## Alternative Explanations
 

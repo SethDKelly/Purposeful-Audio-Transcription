@@ -2,7 +2,9 @@
 
 High-level map of the RRE codebase. Deep design specs live in [../design/](../design/). Runtime is **AWS only**.
 
-**Current release:** **v1.0.0**. Roadmap complete through v1.0: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Next: [../planning/implementing.md](../planning/implementing.md).
+**Current release:** **v1.0.0**. Completed history: [../archived/planning/phases.md](../archived/planning/phases.md). Active: [../planning/phases/001_v2_1_phase_sequence_overview.md](../planning/phases/001_v2_1_phase_sequence_overview.md) (v2.1 `001`–`009`).
+
+**Product tenets:** [../product/core_tenets.md](../product/core_tenets.md) — evidence traceability, confidence calibration, multi-lens analysis, non-diagnostic discipline, longitudinal cases, professional workflow fit, safety-aware framing, and structured reasoning graph. Features and architecture changes should preserve these.
 
 ## System diagram
 
@@ -99,7 +101,7 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 ### Add a golden fixture
 
 1. `tests/fixtures/golden_transcripts/<ID>_<slug>/` with required files
-2. See [../planning/golden_transcript_fixtures.md](../planning/golden_transcript_fixtures.md)
+2. See [../evaluation/golden_transcript_fixtures.md](../evaluation/golden_transcript_fixtures.md)
 
 ## Auth, errors, logging
 
@@ -110,7 +112,7 @@ High-level map of the RRE codebase. Deep design specs live in [../design/](../de
 
 ## Related
 
-- [../planning/aws-deployment.md](../planning/aws-deployment.md)
+- [aws-deployment.md](aws-deployment.md)
 - [../architecture/ontology_v1.md](../architecture/ontology_v1.md)
 - [../product/transcript_preparation_workspace.md](../product/transcript_preparation_workspace.md)
 - [../design/02_system_architecture.md](../design/02_system_architecture.md)

@@ -10,6 +10,7 @@ from sqlalchemy import text
 from backend.api.middleware import APIKeyMiddleware, RequestContextMiddleware
 from backend.api.routes import (
     audit,
+    auth,
     cases,
     exploration,
     feedback,
@@ -17,10 +18,13 @@ from backend.api.routes import (
     models,
     module_stream,
     modules,
+    power,
     process,
     purposes,
+    queue,
     transcribe,
     transcripts,
+    v1,
     workflows,
 )
 from backend.core.exceptions import AppError
@@ -38,8 +42,21 @@ _GENERIC_INTERNAL_ERROR = (
 )
 
 
-def _error_payload(detail: str, request: Request | None = None) -> dict[str, object]:
-    payload: dict[str, object] = {"detail": detail}
+def _error_payload(
+    detail: str,
+    request: Request | None = None,
+    *,
+    error_code: str = "AppError",
+    details: object | None = None,
+) -> dict[str, object]:
+    # Stable client contract (v1.2): error_code + message + request_id.
+    # `detail` retained for backward compatibility with existing Streamlit clients.
+    payload: dict[str, object] = {
+        "detail": detail,
+        "error_code": error_code,
+        "message": detail,
+        "details": details,
+    }
     request_id = None
     if request is not None:
         request_id = getattr(request.state, "request_id", None)
@@ -159,6 +176,9 @@ app.add_middleware(APIKeyMiddleware)
 app.add_middleware(RequestContextMiddleware)
 
 app.include_router(health.router)
+app.include_router(auth.router)
+app.include_router(power.router)
+app.include_router(queue.router)
 app.include_router(models.router)
 app.include_router(transcribe.router)
 app.include_router(purposes.router)
@@ -171,11 +191,17 @@ app.include_router(transcripts.router)
 app.include_router(cases.router)
 app.include_router(feedback.router)
 app.include_router(audit.router)
+app.include_router(v1.router)
 
 
 @app.exception_handler(AppError)
 async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
-    payload = _error_payload(exc.message, request)
+    payload = _error_payload(
+        exc.message,
+        request,
+        error_code=getattr(exc, "error_code", None) or type(exc).__name__,
+        details=getattr(exc, "details", None),
+    )
     response = JSONResponse(status_code=exc.status_code, content=payload)
     request_id = payload.get("request_id")
     if isinstance(request_id, str) and request_id:
@@ -196,7 +222,11 @@ async def unhandled_error_handler(request: Request, exc: Exception) -> JSONRespo
             "request_id": request_id,
         },
     )
-    payload = _error_payload(_GENERIC_INTERNAL_ERROR, request)
+    payload = _error_payload(
+        _GENERIC_INTERNAL_ERROR,
+        request,
+        error_code="InternalError",
+    )
     response = JSONResponse(status_code=500, content=payload)
     rid = payload.get("request_id")
     if isinstance(rid, str) and rid:
@@ -211,5 +241,6 @@ def root() -> dict[str, str]:
         "docs": "/docs",
         "health": "/api/health",
         "live": "/api/live",
+        "api_v1": "/api/v1",
         "database": "postgresql" if not settings.is_sqlite else "sqlite",
     }

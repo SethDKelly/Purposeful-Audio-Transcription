@@ -1,9 +1,18 @@
 class AppError(Exception):
     """Base application error."""
 
-    def __init__(self, message: str, status_code: int = 500):
+    def __init__(
+        self,
+        message: str,
+        status_code: int = 500,
+        *,
+        error_code: str | None = None,
+        details: dict | None = None,
+    ):
         self.message = message
         self.status_code = status_code
+        self.error_code = error_code or type(self).__name__
+        self.details = details
         super().__init__(message)
 
 
@@ -132,3 +141,18 @@ class FindingNotFoundError(AppError):
 class ExplorationError(AppError):
     def __init__(self, message: str):
         super().__init__(message, status_code=400)
+
+
+class AuthenticationError(AppError):
+    def __init__(self, message: str = "Authentication required"):
+        super().__init__(message, status_code=401, error_code="AuthenticationError")
+
+
+class AuthorizationError(AppError):
+    def __init__(self, message: str = "Not allowed to access this resource"):
+        super().__init__(message, status_code=403, error_code="AuthorizationError")
+
+
+class AuthValidationError(AppError):
+    def __init__(self, message: str):
+        super().__init__(message, status_code=400, error_code="AuthValidationError")

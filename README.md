@@ -6,7 +6,7 @@
 |--|--|
 | **Canonical release** | [v1.0.0](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v1.0.0) |
 | **Runtime** | AWS only (account `521018312783`, `us-east-2`) |
-| **Active work** | [docs/planning/implementing.md](docs/planning/implementing.md) · [docs/planning/future_considerations.md](docs/planning/future_considerations.md) |
+| **Active work** | [docs/planning/phases/](docs/planning/phases/) (**v1.1**) · [docs/planning/deferred_backlog.md](docs/planning/deferred_backlog.md) |
 
 ## Quick start (operators)
 
@@ -35,8 +35,8 @@ Tests use SQLite. There is **no** supported local Whisper/Ollama server — inte
 |----------|-------|
 | **Operators / users** | [docs/user/](docs/user/) — getting started, guide, AWS deployment, models |
 | **Developers** | [docs/developer/](docs/developer/) — architecture, API, contributing, AWS ops |
-| **Architecture** | [docs/planning/aws-deployment.md](docs/planning/aws-deployment.md) |
-| **Planning** | [docs/planning/](docs/planning/) — completed / implementing / backlog |
+| **Architecture** | [docs/developer/aws-deployment.md](docs/developer/aws-deployment.md) |
+| **Planning** | [docs/planning/](docs/planning/) — deferred backlog · general backlog |
 | **Index** | [docs/README.md](docs/README.md) |
 
 ## Capabilities (v1.0.0)

@@ -105,6 +105,15 @@ MODULE_OUTPUT_V1_JSON_SCHEMA: dict = {
                         "enum": _RELATIONSHIP_TYPES,
                     },
                     "confidence": {"type": "string", "enum": _CONFIDENCES},
+                    "rationale": {"type": "string"},
+                    "evidence_quote_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "alternative_explanations": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
                 },
             },
         },
