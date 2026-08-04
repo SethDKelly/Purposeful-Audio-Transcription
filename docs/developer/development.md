@@ -69,6 +69,7 @@ pytest -m "golden and not live_model" -q
 
 - **Unit** — parsers, validators, ontology, exploration logic
 - **Integration** — API via `TestClient` with mocked Bedrock / Transcribe
+- **Auth / power** — `tests/test_phase_003_email_auth.py`, `tests/test_auth_rbac_and_power.py` (see [auth-and-power.md](auth-and-power.md))
 - **Golden** — `tests/fixtures/golden_transcripts/` signal-based regression
 - **Fixtures** — `tests/fixtures/golden_transcript.txt`, `sample_module_output.json`
 ## Database

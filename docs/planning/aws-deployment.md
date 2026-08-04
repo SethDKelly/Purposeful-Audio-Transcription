@@ -305,7 +305,7 @@ jobs:
 
 **Do not** store AWS access keys in GitHub Secrets — OIDC only.
 
-**Cost control:** When the stack is idle, run **Pause AWS dev** (`pause-dev.yml`) to scale ECS to 0 and stop RDS. Resume with **Deploy to AWS dev**. Standing practice is documented in [implementing.md](implementing.md) and [../developer/aws-operations.md](../developer/aws-operations.md).
+**Cost control (v2.1 middle idle depth):** Prefer idle sleep or **Pause AWS dev** (`pause-dev.yml`): scale ECS to 0, **delete** `rre-dev-*` VPC endpoints, stop RDS, keep ALB. Wake via ALB **`/login`** or break-glass **Deploy to AWS dev**. See [../developer/auth-and-power.md](../developer/auth-and-power.md) and [../developer/aws-operations.md](../developer/aws-operations.md).
 
 ---
 
@@ -314,7 +314,9 @@ jobs:
 | Secret / config | Store | Notes |
 |-----------------|-------|-------|
 | `DATABASE_URL` | Secrets Manager | RDS PostgreSQL in AWS |
-| `API_KEY` | Secrets Manager | Optional auth |
+| `API_KEY` | Secrets Manager | Break-glass `X-API-Key` (product auth is email OTP sessions) |
+| `SES_FROM_EMAIL` / `ses_from_email` | Terraform + optional Actions var | Verified SES From identity for OTP |
+| `SESSION_AUTH_REQUIRED` | ECS env | `true` on API for product sessions |
 | `BEDROCK_MODEL_ID` | Env / SSM | Non-secret |
 | `HF_TOKEN` | Not used in AWS | Transcribe replaces pyannote |
 | Upload storage | S3 | Pre-signed or API proxy; lifecycle expiration |

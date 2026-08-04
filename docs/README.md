@@ -6,7 +6,7 @@
 |----------|------------|
 | **Operators / users** | [user/getting-started.md](user/getting-started.md) → [user/user-guide.md](user/user-guide.md) |
 | **Developers** | [developer/development.md](developer/development.md) → [developer/architecture.md](developer/architecture.md) |
-| **AWS ops** | [developer/aws-operations.md](developer/aws-operations.md) · [planning/aws-deployment.md](planning/aws-deployment.md) · [../infra/dev/README.md](../infra/dev/README.md) |
+| **AWS ops** | [developer/aws-operations.md](developer/aws-operations.md) · [developer/auth-and-power.md](developer/auth-and-power.md) · [planning/aws-deployment.md](planning/aws-deployment.md) · [../infra/dev/README.md](../infra/dev/README.md) |
 | **Active plan** | [planning/implementing.md](planning/implementing.md) · [planning/roadmap_v0.7_to_v1.0.md](planning/roadmap_v0.7_to_v1.0.md) |
 
 > Documentation lives under **`docs/`** (renamed from `doc/` in v0.7.0).
@@ -31,6 +31,7 @@
 | [developer/api-reference.md](developer/api-reference.md) | REST API summary |
 | [developer/contributing.md](developer/contributing.md) | Conventions, PRs, adding modules |
 | [developer/aws-operations.md](developer/aws-operations.md) | CloudWatch Insights, deploy smoke, pause/resume |
+| [developer/auth-and-power.md](developer/auth-and-power.md) | Email OTP, ownership, idle power wake/sleep |
 | [developer/cursor-workflow.md](developer/cursor-workflow.md) | AI-assisted development notes |
 
 ## Design package

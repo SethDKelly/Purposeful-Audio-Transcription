@@ -12,17 +12,20 @@ Operator path from a paused stack to your first workflow report on **AWS**.
 
 No local Whisper, Ollama, ffmpeg, or Hugging Face token is required for product use.
 
-## Deploy
+## Deploy or wake
 
-1. In GitHub Actions, run **Deploy to AWS dev** (`workflow_dispatch`), or push a version tag such as `v1.0.0`.
-2. Wait for ECS services healthy (workflow summary includes ALB URL tips).
-3. Open the Streamlit UI via the ALB (see [aws-operations.md](../developer/aws-operations.md)).
+| Stack state | What to do |
+|-------------|------------|
+| **Asleep / paused** (v2.1 power control) | Open ALB **`/login`**, enter an invite-only email, verify the SES code. Cold start often 5–15+ minutes. |
+| **Never deployed / break-glass** | Actions → **Deploy to AWS dev** (`workflow_dispatch`), or push a `v*.*.*` tag. |
 
-Ordinary commits to `main` do **not** auto-deploy. When finished, run **Pause AWS dev**.
+Ordinary commits to `main` do **not** auto-deploy. When finished, prefer idle sleep or **Pause AWS dev** (ECS 0 + VPC endpoints deleted + RDS stopped; ALB stays up for `/login`).
+
+Details: [auth-and-power.md](../developer/auth-and-power.md) · [aws-operations.md](../developer/aws-operations.md).
 
 ## First workflow (5 minutes)
 
-1. Open the UI; sidebar should show API healthy with Bedrock / Transcribe / database available.
+1. Sign in when session auth is enabled. Open the UI; sidebar should show API healthy with Bedrock / Transcribe / database available.
 2. **Ingest** — paste a short two-speaker transcript or upload audio (Transcribe) / text.
 3. **Prepare** — rename speakers if needed; edit or exclude turns; click **Ready to Analyze** (or skip review intentionally).
 4. **Analyze** — choose **Quick Review** and the Bedrock model; prefer background for long suites.
