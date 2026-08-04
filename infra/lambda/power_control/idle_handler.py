@@ -10,6 +10,7 @@ import urllib.request
 from typing import Any
 
 import boto3
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -63,6 +64,33 @@ def _start_sleep() -> None:
     logger.info("Started CodeBuild sleep project=%s", CODEBUILD_PROJECT)
 
 
+def _begin_sleep() -> tuple[bool, str]:
+    """Atomically mark sleeping only if still awake.
+
+    Prevents a lost-update race where OTP wake sets ``waking`` during the
+    idle-status HTTP call, then this handler overwrites it with ``sleeping``
+    and starts a concurrent sleep CodeBuild.
+    """
+    item = _get_state()
+    state = str(item.get("state") or "asleep")
+    if state != "awake":
+        return False, state
+    item = {**item, "pk": POWER_STATE_PK, "state": "sleeping"}
+    try:
+        _table.put_item(
+            Item=item,
+            ConditionExpression="#s = :awake",
+            ExpressionAttributeNames={"#s": "state"},
+            ExpressionAttributeValues={":awake": "awake"},
+        )
+    except ClientError as exc:
+        if exc.response.get("Error", {}).get("Code") == "ConditionalCheckFailedException":
+            latest = str((_get_state() or {}).get("state") or "unknown")
+            return False, latest
+        raise
+    return True, "sleeping"
+
+
 def handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
     item = _get_state()
     state = str(item.get("state") or "asleep")
@@ -83,7 +111,10 @@ def handler(event: dict[str, Any], _context: Any) -> dict[str, Any]:
             "active_jobs": idle.get("active_jobs"),
         }
 
-    item["state"] = "sleeping"
-    _table.put_item(Item={**item, "pk": POWER_STATE_PK})
+    started, new_state = _begin_sleep()
+    if not started:
+        logger.info("Skip sleep; state changed during idle check to %s", new_state)
+        return {"skipped": True, "reason": "state_changed", "state": new_state}
+
     _start_sleep()
     return {"started_sleep": True}

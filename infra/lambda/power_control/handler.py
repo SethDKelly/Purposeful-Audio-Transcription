@@ -160,16 +160,23 @@ def _start_codebuild(mode: str) -> None:
     logger.info("Started CodeBuild %s mode=%s", CODEBUILD_PROJECT, mode)
 
 
-def _set_waking() -> dict[str, Any]:
+def _set_waking() -> tuple[dict[str, Any], bool]:
+    """Transition to waking when asleep/sleeping.
+
+    Returns ``(item, started)`` where ``started`` is True only when this call
+    performed the transition (caller should start CodeBuild wake).
+    Already ``awake`` / ``waking`` is a no-op so OTP sign-in while the stack is
+    up does not launch a second orchestrator that races idle sleep.
+    """
     item = _get_power_state()
     state = str(item.get("state") or "asleep")
     if state in {"awake", "waking"}:
-        return item
+        return item, False
     item["state"] = "waking"
     item["wake_requested_at"] = _iso()
     item["idle_timer_started_at"] = None
     _put_power_state(item)
-    return item
+    return item, True
 
 
 LOGIN_HTML = """<!DOCTYPE html>
@@ -426,12 +433,13 @@ def handle_verify_code(event: dict[str, Any]) -> dict[str, Any]:
 
     user_id = str(user.get("user_id") or "")
     token = _mint_handoff_token(user_id=user_id, email=email)
-    item = _set_waking()
-    try:
-        _start_codebuild("wake")
-    except Exception:
-        logger.exception("CodeBuild start failed after verify")
-        return _response(500, {"detail": "Failed to start wake"})
+    item, started_wake = _set_waking()
+    if started_wake:
+        try:
+            _start_codebuild("wake")
+        except Exception:
+            logger.exception("CodeBuild start failed after verify")
+            return _response(500, {"detail": "Failed to start wake"})
 
     return _response(
         200,
@@ -449,32 +457,37 @@ def handle_verify_code(event: dict[str, Any]) -> dict[str, Any]:
 
 
 def handle_wake(event: dict[str, Any]) -> dict[str, Any]:
-    """Idempotent wake; optional handoff token from a prior verify."""
+    """Idempotent wake; requires a valid handoff token from OTP verify.
+
+    The ALB exposes this path publicly; without a token anyone could start
+    CodeBuild wake and incur AWS cost. OTP verify remains the primary wake path.
+    """
     body = _json_body(event)
     headers = {k.lower(): v for k, v in (event.get("headers") or {}).items()}
     token = (
         str(body.get("handoff_token") or body.get("token") or "").strip()
         or (headers.get("authorization") or "").removeprefix("Bearer ").strip()
     )
-    if token:
-        try:
-            _parse_handoff_token(token)
-        except ValueError as exc:
-            return _response(401, {"detail": str(exc)})
+    if not token:
+        return _response(401, {"detail": "Handoff token required"})
+    try:
+        _parse_handoff_token(token)
+    except ValueError as exc:
+        return _response(401, {"detail": str(exc)})
 
     item = _get_power_state()
     state = str(item.get("state") or "asleep")
     if state in {"awake", "waking"}:
         return _response(200, {"status": state, "message": "already in progress"})
 
-    item = _set_waking()
-    try:
-        _start_codebuild("wake")
-    except Exception:
-        logger.exception("CodeBuild start failed on wake")
-        return _response(500, {"detail": "Failed to start wake"})
+    item, started_wake = _set_waking()
+    if started_wake:
+        try:
+            _start_codebuild("wake")
+        except Exception:
+            logger.exception("CodeBuild start failed on wake")
+            return _response(500, {"detail": "Failed to start wake"})
     return _response(200, {"status": item.get("state") or "waking"})
-
 
 ROUTES = {
     ("GET", "/login"): handle_login,
