@@ -12,9 +12,11 @@ Always commit lockfiles. Do not commit `node_modules/`, `dist/`, `.terraform/`, 
 
 ## Scanning
 
-- **Dependabot** — `.github/dependabot.yml` for npm, pip, and GitHub Actions.
-- **CI** — `.github/workflows/supply-chain.yml` runs `npm audit` (frontend) and `pip-audit` when available.
+- **Dependabot** — `.github/dependabot.yml` for npm (`/frontend-react`), pip (`/`), and GitHub Actions (`/`); weekly, open-PR limit 5 each.
+- **CI** — `.github/workflows/supply-chain.yml` runs `npm audit --audit-level=high` and `pip-audit` (via `uv export` when `uv.lock` exists).
 - **ECR** — image scanning on push enabled for API/UI (and web when provisioned).
+
+Actions bump review notes (including `actions/checkout` major versions): [ci-workflows.md](ci-workflows.md).
 
 ## SBOM
 

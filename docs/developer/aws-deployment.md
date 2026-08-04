@@ -396,6 +396,8 @@ SQLite is for local dev only; AWS deploy uses PostgreSQL (`ALEMBIC_AUTO_UPGRADE=
 - [deferred_backlog.md](../planning/deferred_backlog.md) — prioritized deferred work (incl. ALB cutover / ops drills)
 - [product/core_tenets.md](../product/core_tenets.md) — durable product tenets
 - [aws-operations.md](aws-operations.md) — deploy / pause / Logs Insights
+- [auth-and-power.md](auth-and-power.md) — email OTP, ownership, idle wake/sleep
+- [ci-workflows.md](ci-workflows.md) — GitHub Actions map and Dependabot review notes
 - [../releases/v1.0.0.md](../releases/v1.0.0.md) — current release notes
 - [../archived/planning/executive_roadmap.md](../archived/planning/executive_roadmap.md) — completed program roadmap
 - [../archived/planning/bands/](../archived/planning/bands/) — completed / superseded band checklists
