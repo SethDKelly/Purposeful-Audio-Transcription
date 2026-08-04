@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { NavLink, Navigate, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Navigate, Outlet, useNavigate } from 'react-router'
 import { ApiError, api } from '../api/client'
 
 const requireSession =

@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router'
 import { api } from '../api/client'
 import { EvidencePanel } from '../components/EvidencePanel'
 import { FindingCard } from '../components/FindingCard'
