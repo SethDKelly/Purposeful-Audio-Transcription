@@ -226,3 +226,18 @@ def test_power_status_public(client: TestClient) -> None:
     r = client.get("/api/v1/ops/power/status")
     assert r.status_code == 200
     assert "state" in r.json() or "should_sleep" in r.json()
+
+
+def test_lambda_login_html_exchanges_handoff_for_session() -> None:
+    """Wake login must POST /handoff (set cookie) — not bounce via ?handoff= into a loop."""
+    from pathlib import Path
+
+    source = Path("infra/lambda/power_control/handler.py").read_text(encoding="utf-8")
+    start = source.index('LOGIN_HTML = """') + len('LOGIN_HTML = """')
+    end = source.index('"""', start)
+    html = source[start:end]
+    assert "/api/v1/ops/power/handoff" in html
+    assert "JSON.stringify({token: handoff})" in html
+    assert "searchParams.set('handoff'" not in html
+    # Accept verify payload shape (`status`) as well as Dynamo status (`state`).
+    assert "s.state || s.status" in html

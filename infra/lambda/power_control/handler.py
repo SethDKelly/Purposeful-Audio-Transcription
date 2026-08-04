@@ -217,19 +217,47 @@ const msg = document.getElementById('msg');
 const statusEl = document.getElementById('status');
 let handoff = sessionStorage.getItem('handoff_token') || '';
 let pollTimer = null;
+let completing = false;
 
 async function getStatus() {
   const r = await fetch('/api/v1/ops/power/status');
   return r.json();
 }
 
+async function completeHandoff() {
+  // Exchange wake token for a session cookie on the API, then enter the app.
+  // Do not put the token in the URL — React never consumed ?handoff= and /login
+  // is always served by this Lambda, which caused an auth redirect loop.
+  if (!handoff || completing) return;
+  completing = true;
+  statusEl.textContent = 'Signing you in…';
+  try {
+    const r = await fetch('/api/v1/ops/power/handoff', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      credentials: 'same-origin',
+      body: JSON.stringify({token: handoff})
+    });
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}));
+      msg.textContent = data.detail || 'Sign-in handoff failed. Waiting for API…';
+      completing = false;
+      return;
+    }
+    sessionStorage.removeItem('handoff_token');
+    handoff = '';
+    location.href = '/';
+  } catch (err) {
+    msg.textContent = 'Sign-in handoff failed. Waiting for API…';
+    completing = false;
+  }
+}
+
 function renderStatus(s) {
-  const state = s.state || 'unknown';
+  const state = s.state || s.status || 'unknown';
   statusEl.textContent = 'Power: ' + state + (s.active_jobs != null ? ' · jobs ' + s.active_jobs : '');
   if (state === 'awake' && handoff) {
-    const u = new URL('/', location.origin);
-    u.searchParams.set('handoff', handoff);
-    location.href = u.toString();
+    completeHandoff();
   }
 }
 
