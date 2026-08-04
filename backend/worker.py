@@ -18,8 +18,10 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+from sqlalchemy import text
+
 from backend.core.logging_config import configure_logging
-from backend.db.base import init_db
+from backend.db.base import engine, init_db
 from backend.domain.enums import WorkflowRunStatus
 from backend.services.workflow_job_service import workflow_job_service
 from config.settings import settings
@@ -58,6 +60,18 @@ class _WorkerHealthHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(payload)))
         self.end_headers()
         self.wfile.write(payload)
+
+
+def _wait_for_database(timeout_seconds: float = 90.0) -> bool:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            return True
+        except Exception:  # noqa: BLE001
+            time.sleep(1.0)
+    return False
 
 
 def _start_health_server(port: int) -> ThreadingHTTPServer:
@@ -101,9 +115,12 @@ def main() -> None:
     signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)
 
-    init_db()
     health_port = int(getattr(settings, "workflow_worker_health_port", 8080) or 8080)
     health_server = _start_health_server(health_port)
+
+    if not _wait_for_database():
+        logger.warning("Database not ready after wait; init_db may fail")
+    init_db()
 
     poll = max(0.5, float(settings.workflow_worker_poll_seconds or 2.0))
     logger.info(
