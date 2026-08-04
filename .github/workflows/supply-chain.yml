@@ -1,0 +1,53 @@
+name: Supply chain
+
+on:
+  push:
+    paths:
+      - "frontend-react/package-lock.json"
+      - "frontend-react/package.json"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/supply-chain.yml"
+  pull_request:
+    paths:
+      - "frontend-react/package-lock.json"
+      - "frontend-react/package.json"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/supply-chain.yml"
+  schedule:
+    - cron: "0 14 * * 1"
+
+jobs:
+  npm-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-react
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend-react/package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=high
+
+  pip-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Export and audit
+        run: |
+          pip install pip-audit uv
+          if [ -f uv.lock ]; then
+            uv export --no-dev -o /tmp/reqs.txt
+            pip-audit -r /tmp/reqs.txt
+          else
+            pip install -e .
+            pip-audit
+          fi

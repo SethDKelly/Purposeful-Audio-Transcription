@@ -47,8 +47,11 @@ async def upload_transcript_file(
 
 
 @router.get("/transcripts/{transcript_id}", response_model=TranscriptBundleResponse)
-def get_transcript(transcript_id: str) -> TranscriptBundleResponse:
-    bundle = transcript_service.get(transcript_id)
+def get_transcript(
+    transcript_id: str,
+    version_id: str | None = None,
+) -> TranscriptBundleResponse:
+    bundle = transcript_service.get_for_version(transcript_id, version_id)
     return bundle_to_response(bundle)
 
 

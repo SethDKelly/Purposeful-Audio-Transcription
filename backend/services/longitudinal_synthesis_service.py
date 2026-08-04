@@ -10,6 +10,7 @@ from backend.domain.finding import ModuleRun
 from backend.repositories.case_repository import CaseRepository
 from backend.services.exploration_service import ExplorationService, exploration_service
 from backend.services.module_runner import ModuleRunner, module_runner
+from backend.services.run_selection import select_latest_completed_run
 from backend.services.structured_graph_service import (
     StructuredGraphService,
     structured_graph_service,
@@ -40,9 +41,9 @@ class LongitudinalSynthesisService:
         sessions: list[dict] = []
         for transcript in detail.transcripts:
             runs = self._exploration.list_transcript_workflow_runs(transcript.id)
-            if not runs:
+            latest = select_latest_completed_run(runs)
+            if latest is None:
                 continue
-            latest = runs[-1]
             inventory = self._structured.synthesis_handoff(latest["id"])
             sessions.append(
                 {
@@ -52,6 +53,7 @@ class LongitudinalSynthesisService:
                     if transcript.session_date
                     else None,
                     "workflow_run_id": latest["id"],
+                    "transcript_version_id": latest.get("transcript_version_id"),
                     "inventory": inventory,
                 }
             )
@@ -72,8 +74,10 @@ class LongitudinalSynthesisService:
                 "sessions": sessions,
                 "comparison": comparison,
                 "guidance": (
-                    "Primary input is longitudinal_inventory. Cite session labels and "
-                    "finding/construct IDs. Contrast earliest vs latest sessions."
+                    "Primary input is longitudinal_inventory. Cite transcript_id and "
+                    "session_label for claims. Recurring claims need ≥2 sessions. "
+                    "Never treat the same quote_id from different transcripts as one "
+                    "evidence item. Contrast earliest vs latest sessions."
                 ),
             }
         }

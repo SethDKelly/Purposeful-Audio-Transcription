@@ -6,6 +6,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.responses import Response
 
 from backend.core.log_context import request_id_var
+from backend.services.auth_service import auth_service
 from config.settings import settings
 
 _PUBLIC_PATHS = {
@@ -18,31 +19,68 @@ _PUBLIC_PATHS = {
 }
 
 
+def _is_public(path: str) -> bool:
+    if path in _PUBLIC_PATHS or path.startswith("/docs/"):
+        return True
+    if path.startswith("/api/v1/auth/"):
+        return True
+    # Power status/handoff must work during wake without a prior session.
+    if path in {
+        "/api/v1/ops/power/status",
+        "/api/v1/ops/power/handoff",
+    }:
+        return True
+    return False
+
+
+def _unauthorized(request_id: str | None) -> JSONResponse:
+    payload: dict[str, object] = {"detail": "Invalid or missing credentials"}
+    if request_id:
+        payload["request_id"] = request_id
+    return JSONResponse(status_code=401, content=payload)
+
+
 class APIKeyMiddleware(BaseHTTPMiddleware):
+    """Gate requests when API key and/or session auth is required.
+
+    - Auth endpoints under ``/api/v1/auth/`` are always public.
+    - Valid ``X-API-Key`` (when configured) or session cookie satisfies the gate.
+    - When neither auth mode is enabled, all routes pass (local/pytest default).
+    """
+
     async def dispatch(
         self,
         request: Request,
         call_next: RequestResponseEndpoint,
     ) -> Response:
-        if not settings.api_auth_enabled:
+        path = request.url.path
+        if _is_public(path):
             return await call_next(request)
 
-        path = request.url.path
-        if path in _PUBLIC_PATHS or path.startswith("/docs/"):
+        api_enabled = settings.api_auth_enabled
+        session_required = settings.session_auth_required
+        if not api_enabled and not session_required:
             return await call_next(request)
 
         provided = request.headers.get("X-API-Key")
-        if provided != settings.api_key:
-            payload: dict[str, object] = {"detail": "Invalid or missing API key"}
-            request_id = request_id_var.get()
-            if request_id:
-                payload["request_id"] = request_id
-            return JSONResponse(
-                status_code=401,
-                content=payload,
-            )
+        api_ok = bool(api_enabled and provided and provided == settings.api_key)
 
-        return await call_next(request)
+        raw_cookie = request.cookies.get(settings.session_cookie_name)
+        session_ok = auth_service.resolve_session_token(raw_cookie) is not None
+
+        if api_ok or session_ok:
+            # Touch idle activity clock for authenticated traffic.
+            try:
+                from backend.services.power_service import power_state_store
+
+                if session_ok or api_ok:
+                    power_state_store.touch_activity()
+            except Exception:  # noqa: BLE001
+                pass
+            return await call_next(request)
+
+        request_id = request_id_var.get()
+        return _unauthorized(request_id)
 
 
 class RequestContextMiddleware(BaseHTTPMiddleware):

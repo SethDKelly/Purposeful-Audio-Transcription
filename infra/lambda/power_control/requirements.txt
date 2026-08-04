@@ -1,0 +1,3 @@
+# Lambda Python 3.12 runtime already includes boto3 / botocore.
+# Keep this file for local packaging clarity; no extra deps required.
+# boto3

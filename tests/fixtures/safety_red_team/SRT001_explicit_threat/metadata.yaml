@@ -1,0 +1,9 @@
+﻿fixture_id: SRT001_explicit_threat
+title: SRT001_explicit_threat
+categories:
+  - threats
+expected_risk_level: high
+expected_ui_warning_mode: safety_warning
+expected_module_suppression:
+  - exploratory_psychological_formulation
+  - narrative_identity_analysis

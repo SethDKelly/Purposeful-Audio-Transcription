@@ -12,7 +12,24 @@ from backend.core.exceptions import CaseValidationError
 from backend.db.models import FindingFeedbackRow, FindingRow
 
 
-_ALLOWED_RATINGS = frozenset({"helpful", "unhelpful", "unsure"})
+_ALLOWED_RATINGS = frozenset(
+    {
+        "helpful",
+        "unhelpful",
+        "unsure",
+        # v1.3 structured feedback labels
+        "not_helpful",
+        "unsupported",
+        "wrong_speaker",
+        "wrong_evidence",
+        "too_speculative",
+        "too_clinical",
+        "too_vague",
+        "actionably_useful",
+        "unsafe_framing",
+        "pinned",
+    }
+)
 
 
 class FindingFeedbackRepository:

@@ -1,18 +1,35 @@
-# Safety-Aware Report Mode (v1.0 Priority 5) — **Shipped in v1.0**
+# Safety-Aware Report Mode — **Shipped; phase 007 config-hardened**
 
-The app must not diagnose or adjudicate abuse, but it should respond carefully when transcripts contain high-risk content (threats, coercion, intimidation, self-harm, stalking, severe control, etc.). Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). Design: [../design/14_testing_evaluation_and_safety.md](../design/14_testing_evaluation_and_safety.md).
+The app must not diagnose or adjudicate abuse, but it should respond carefully when transcripts contain high-risk content (threats, coercion, intimidation, self-harm, stalking, severe control, etc.).
 
-## Capabilities (shipped)
+**Tenets:** Implements **safety-aware framing** and **non-diagnostic discipline** from [core_tenets.md](core_tenets.md). Policy config: [../planning/phases/007_v2_1_safety_policy_and_non_diagnostic_enforcement.md](../planning/phases/007_v2_1_safety_policy_and_non_diagnostic_enforcement.md). Evaluation: [../evaluation/tenet_compliance_evaluation_plan.md](../evaluation/tenet_compliance_evaluation_plan.md).
+
+## Config-driven policy
+
+`config/safety_policy.yaml` controls:
+
+| Setting | Default behavior |
+|---------|------------------|
+| `elevated_risk_triggers_safety_mode` | true — coercion/stalking/control recommend safety mode |
+| `high_risk_triggers_safety_mode` | true — threats/self-harm recommend safety mode |
+| `suppress_modules` | exploratory formulation + narrative identity |
+| `modify_modules` | trauma-informed + attachment matrix get safety overlays |
+| `prohibit_mutualizing_serious_concerns` | true |
+
+Loader: `backend/services/safety_policy.py`.
+
+## Capabilities
 
 - High-risk scan via `SafetyRiskScanner` (`GET /api/transcripts/{id}/safety-assessment`)
-- `safety_mode` on workflow runs (auto on high risk, or request flag)
-- Safety-aware UI banner
-- Synthesis framing shifts away from mutual coaching under safety mode
-- Skips exploratory modules (`exploratory_psychological_formulation`, `narrative_identity_analysis`) when safety mode is active
+- `safety_mode` on workflow runs (auto on elevated/high per policy, or request flag)
+- Safety-aware UI / report package banner (`safety_banner.md`)
+- Synthesis + module framing under safety mode
+- Skips suppress-list modules; overlays modify-list modules
+- Harder runtime `SafetyValidator` blocks definitive diagnostic/adjudicative/mutualizing claims (quoted evidence spans ignored)
 
 ## Acceptance
 
-High-risk transcripts trigger stronger caution language; reports stay evidence-limited and non-adjudicative; safety mode alters recommendations appropriately.
+Elevated and high-risk transcripts trigger safety-aware framing; reports stay evidence-limited and non-adjudicative; definitive diagnoses and mutualized serious concerns are blocked or repaired.
 
 ## Non-goals
 

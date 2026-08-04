@@ -1,6 +1,6 @@
 # Transcript Preparation Workspace (v0.7 Priority 2)
 
-**Status:** Shipped in **v0.7.0** (edit + exclude + ready gate; split/merge deferred). Roadmap: [../planning/roadmap_v0.7_to_v1.0.md](../planning/roadmap_v0.7_to_v1.0.md). UI: Streamlit prepare/analyze steps in `ui/streamlit_app.py`.
+**Status:** Shipped in **v0.7.0** (edit + exclude + ready gate; split/merge deferred). Roadmap: [../archived/planning/phases.md](../archived/planning/phases.md#phase-26--transcript-preparation-workspace). UI: Streamlit prepare/analyze steps in `ui/streamlit_app.py`.
 
 ## Problem
 
@@ -23,5 +23,5 @@ Edited approved transcript is the sole source for evidence index + workflow engi
 ## Out of scope here
 
 - Split/merge turns — deferred (edit + exclude cover the primary review path for v0.7).
-- Multi-file audio stitch → [../planning/future_considerations.md](../planning/future_considerations.md).
+- Multi-file audio stitch → [../planning/general_backlog.md](../planning/general_backlog.md).
 - Case attachment → v0.9.

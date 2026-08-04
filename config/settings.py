@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,21 +39,54 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     api_host: str = "127.0.0.1"
     api_port: int = 8000
-    rre_api_base_url: str = ""
+    # Preferred env: RRE_API_BASE_URL. BACKEND_API_URL accepted for React-readiness docs.
+    rre_api_base_url: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "RRE_API_BASE_URL",
+            "BACKEND_API_URL",
+            "rre_api_base_url",
+        ),
+    )
     streamlit_port: int = 8501
     prompts_dir: Path = Path("./config/prompts")
     modules_dir: Path = Path("./config/modules")
     framework_dir: Path = Path("./config/framework")
     workflows_dir: Path = Path("./config/workflows")
     ontology_dir: Path = Path("./config/ontology")
+    safety_policy_path: Path = Path("./config/safety_policy.yaml")
     # Legacy alias accepted for module/model resolution when BEDROCK default unused.
     default_ollama_model: str = ""
     database_url: str = "sqlite:///./data/rre.db"
     database_pool_size: int = 5
     alembic_auto_upgrade: bool = False
     api_key: str = ""
+    # When true, /api/v1 (except /auth/*) requires a valid session cookie or API key.
+    session_auth_required: bool = False
+    session_cookie_name: str = "rre_session"
+    session_ttl_hours: int = 168
+    login_code_ttl_minutes: int = 10
+    login_code_max_attempts: int = 5
+    login_code_rate_limit_per_hour: int = 10
+    auth_cookie_secure: bool = False
+    auth_cookie_samesite: str = "lax"
+    # dev_log | ses — AWS ECS should use ses.
+    email_delivery: str = "dev_log"
+    ses_from_email: str = ""
+    # Invite-only: only pre-seeded active users may request/verify codes.
+    auth_invite_only: bool = True
+    # Shared HMAC for Lambda→API session handoff after wake (hex or raw secret).
+    power_handoff_secret: str = ""
+    # Idle / kill-mode cost controls (see docs/developer/aws-operations.md).
+    kill_long_jobs_enabled: bool = True
+    kill_long_jobs_seconds: float = 10800.0
+    idle_sleep_after_seconds: float = 7200.0
+    power_state_table: str = ""
+    power_control_enabled: bool = False
     log_json: bool = False
     log_redact: bool | None = None
+    # api | worker | ui — set via RRE_PROCESS on ECS worker; defaults to api.
+    rre_process: str = "api"
     workflow_background_default: bool = False
     workflow_sync_module_limit: int = 6
     # Parallel transcript modules within a workflow (meta-synthesis stays sequential).
@@ -61,15 +95,36 @@ class Settings(BaseSettings):
     # Dedicated worker polls CREATED jobs when true; API does not run them inline.
     workflow_worker_enabled: bool = False
     workflow_worker_poll_seconds: float = 2.0
+    # Max CREATED jobs to claim in one poll_once() cycle.
+    workflow_worker_max_claim_per_poll: int = 1
+    # Max concurrent workflow jobs on a single worker process.
+    workflow_worker_max_in_flight: int = 2
+    # Local HTTP health port for ECS container checks (worker process only).
+    workflow_worker_health_port: int = 8080
     # Wall-clock timeout for a single workflow job attempt (0 = disabled).
     workflow_job_timeout_seconds: float = 7200.0
     # Requeue failed attempts up to this count (includes the first try).
     workflow_job_max_attempts: int = 2
+    # Requeue/fail RUNNING jobs abandoned after worker crash (seconds since claim).
+    workflow_job_stale_seconds: float = 7800.0
     # One repair attempt (2 Converse calls total) after structured-output hardening.
     module_run_max_retries: int = 1
+    # Bedrock ThrottlingException / TooManyRequests backoff.
+    bedrock_throttle_max_retries: int = 5
+    bedrock_throttle_base_seconds: float = 2.0
     evidence_prompt_max_quotes: int = 120
     evidence_prompt_head_quotes: int = 80
     evidence_prompt_tail_quotes: int = 40
+    # Evidence precision (phase 004) — cite smallest useful span.
+    evidence_atomic_quote_max_chars: int = 280
+    evidence_short_exchange_max_turns: int = 4
+    evidence_context_window_before_turns: int = 1
+    evidence_context_window_after_turns: int = 1
+    evidence_max_items_per_finding: int = 3
+    evidence_prefer_sentence_spans: bool = True
+    evidence_allow_paragraph_evidence: bool = False
+    evidence_warning_threshold_chars: int = 360
+    evidence_hard_max_chars: int = 600
     transcript_retention_days: int | None = None
     # Pytest-only convenience: auto-approve transcripts when workflows start.
     # Never enable on AWS ECS.
@@ -78,6 +133,15 @@ class Settings(BaseSettings):
     allowed_extensions: frozenset[str] = frozenset(
         {".mp3", ".wav", ".m4a", ".flac", ".ogg", ".webm", ".mp4"}
     )
+
+    @property
+    def resolved_service_name(self) -> str:
+        process = (self.rre_process or "api").strip().lower()
+        if process == "worker":
+            return "worker"
+        if process == "ui":
+            return "ui"
+        return "api"
 
     @property
     def max_upload_bytes(self) -> int:

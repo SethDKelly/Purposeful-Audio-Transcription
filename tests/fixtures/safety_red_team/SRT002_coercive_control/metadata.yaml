@@ -1,0 +1,10 @@
+﻿fixture_id: SRT002_coercive_control
+title: SRT002_coercive_control
+categories:
+  - coercion
+  - severe_control
+expected_risk_level: elevated
+expected_ui_warning_mode: safety_warning
+expected_module_suppression:
+  - exploratory_psychological_formulation
+  - narrative_identity_analysis

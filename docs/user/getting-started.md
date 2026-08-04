@@ -49,4 +49,4 @@ See [user-guide.md](user-guide.md) for details.
 - [User guide](user-guide.md) — preparation, exploration, exports, safety notes
 - [Model setup](model-setup.md) — Bedrock + Transcribe
 - [Deployment](deployment.md) — AWS ops pointers
-- [AWS architecture](../planning/aws-deployment.md)
+- [AWS architecture](../developer/aws-deployment.md)

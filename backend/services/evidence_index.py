@@ -1,6 +1,10 @@
 import uuid
 
 from backend.domain.transcript import EvidenceQuote, Speaker, TranscriptBundle
+from backend.services.evidence_precision import (
+    classify_evidence_type,
+    extract_primary_span,
+)
 from backend.services.transcript_parser import ParsedTurn
 from config.settings import settings
 
@@ -17,16 +21,24 @@ class EvidenceIndexService:
         bundle: TranscriptBundle,
         parsed_turns: list[ParsedTurn],
         speaker_id_by_label: dict[str, str],
+        *,
+        transcript_version_id: str | None = None,
     ) -> list[EvidenceQuote]:
         quotes: list[EvidenceQuote] = []
         turn_texts = [turn.text for turn in parsed_turns]
+        before_n = max(0, settings.evidence_context_window_before_turns)
+        after_n = max(0, settings.evidence_context_window_after_turns)
+        version_id = transcript_version_id or getattr(
+            bundle.transcript, "current_version_id", None
+        )
 
         for index, (parsed_turn, turn) in enumerate(
             zip(parsed_turns, bundle.turns, strict=True), start=1
         ):
             quote_id = f"Q{index:03d}"
-            context_before = turn_texts[index - 2] if index > 1 else None
-            context_after = turn_texts[index] if index < len(turn_texts) else None
+            context_before = _join_context(turn_texts, index - 1 - before_n, index - 1)
+            context_after = _join_context(turn_texts, index, index + after_n)
+            span_text = extract_primary_span(parsed_turn.text)
 
             quotes.append(
                 EvidenceQuote(
@@ -39,6 +51,9 @@ class EvidenceIndexService:
                     text=parsed_turn.text,
                     context_before=_truncate(context_before),
                     context_after=_truncate(context_after),
+                    evidence_type=classify_evidence_type(parsed_turn.text),
+                    span_text=span_text,
+                    transcript_version_id=version_id,
                 )
             )
 
@@ -50,6 +65,7 @@ class EvidenceIndexService:
         turns: list,
         *,
         include_excluded: bool = False,
+        transcript_version_id: str | None = None,
     ) -> list[EvidenceQuote]:
         """Rebuild quote IDs from current turn rows (skips excluded by default)."""
         from backend.domain.transcript import Turn
@@ -61,8 +77,13 @@ class EvidenceIndexService:
             if include_excluded or not getattr(turn, "excluded_from_analysis", False)
         ]
         turn_texts = [turn.text for turn in included]
+        before_n = max(0, settings.evidence_context_window_before_turns)
+        after_n = max(0, settings.evidence_context_window_after_turns)
         quotes: list[EvidenceQuote] = []
         for index, turn in enumerate(included, start=1):
+            context_before = _join_context(turn_texts, index - 1 - before_n, index - 1)
+            context_after = _join_context(turn_texts, index, index + after_n)
+            span_text = extract_primary_span(turn.text)
             quotes.append(
                 EvidenceQuote(
                     id=str(uuid.uuid4()),
@@ -72,10 +93,11 @@ class EvidenceIndexService:
                     quote_index=index,
                     quote_id=f"Q{index:03d}",
                     text=turn.text,
-                    context_before=_truncate(turn_texts[index - 2] if index > 1 else None),
-                    context_after=_truncate(
-                        turn_texts[index] if index < len(turn_texts) else None
-                    ),
+                    context_before=_truncate(context_before),
+                    context_after=_truncate(context_after),
+                    evidence_type=classify_evidence_type(turn.text),
+                    span_text=span_text,
+                    transcript_version_id=transcript_version_id,
                 )
             )
         return quotes
@@ -230,6 +252,18 @@ class EvidenceIndexService:
             else:
                 lines.append(omission_note)
         return "\n".join(lines)
+
+
+def _join_context(turn_texts: list[str], start: int, end: int) -> str | None:
+    """Join turns in [start, end) for a context window."""
+    if start < 0:
+        start = 0
+    if end > len(turn_texts):
+        end = len(turn_texts)
+    if start >= end:
+        return None
+    joined = " / ".join(t for t in turn_texts[start:end] if t)
+    return joined or None
 
 
 def _truncate(text: str | None, max_len: int = 200) -> str | None:

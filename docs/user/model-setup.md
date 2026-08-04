@@ -21,7 +21,7 @@ Resolution order (first non-empty wins):
 | Module | `model_id` / legacy `ollama_model` alias in module YAML |
 | Environment | `BEDROCK_MODEL_ID` / `DEFAULT_OLLAMA_MODEL` (legacy alias if still present in settings) |
 
-Evaluation notes: [../planning/llm-evaluation-bedrock.md](../planning/llm-evaluation-bedrock.md).
+Evaluation notes: [../evaluation/llm-evaluation-bedrock.md](../evaluation/llm-evaluation-bedrock.md).
 
 UI model list: `GET /api/models`.
 
@@ -35,7 +35,7 @@ Requires `UPLOADS_BUCKET` and IAM for StartTranscriptionJob / S3. Speaker labels
 | `UPLOADS_BUCKET` | Temp audio + job output (lifecycle on `temp/`) |
 | `TRANSCRIBE_LANGUAGE` | Optional, e.g. `en-US` |
 
-Evaluation notes: [../planning/asr-evaluation-transcribe.md](../planning/asr-evaluation-transcribe.md).
+Evaluation notes: [../evaluation/asr-evaluation-transcribe.md](../evaluation/asr-evaluation-transcribe.md).
 
 ## Long transcripts
 
