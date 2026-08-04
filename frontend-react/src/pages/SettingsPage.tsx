@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { ApiError, api } from '../api/client'
 import { getPrivacyPrefs, setPrivacyPrefs, type PrivacyPrefs } from '../prefs/localPrefs'
 
