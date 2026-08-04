@@ -241,3 +241,27 @@ def test_lambda_login_html_exchanges_handoff_for_session() -> None:
     assert "searchParams.set('handoff'" not in html
     # Accept verify payload shape (`status`) as well as Dynamo status (`state`).
     assert "s.state || s.status" in html
+
+
+def test_idle_status_probe_does_not_touch_activity(monkeypatch: pytest.MonkeyPatch) -> None:
+    """EventBridge idle-checker uses API key; must not reset last_activity_at."""
+    from unittest.mock import MagicMock
+
+    monkeypatch.setattr(settings, "api_key", "idle-probe-key")
+    touches = MagicMock()
+    monkeypatch.setattr(
+        "backend.services.power_service.power_state_store.touch_activity",
+        touches,
+    )
+
+    client = TestClient(app)
+    headers = {"X-API-Key": "idle-probe-key"}
+
+    idle = client.get("/api/v1/ops/power/idle-status", headers=headers)
+    assert idle.status_code == 200
+    assert touches.call_count == 0
+
+    # Ordinary authenticated traffic still refreshes the idle clock.
+    heartbeat = client.post("/api/v1/ops/power/heartbeat", headers=headers)
+    assert heartbeat.status_code == 200
+    assert touches.call_count == 1

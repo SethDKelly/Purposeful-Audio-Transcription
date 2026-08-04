@@ -18,6 +18,13 @@ _PUBLIC_PATHS = {
     "/api/live",
 }
 
+# Authenticated machine probes that must not reset the idle activity clock.
+# The EventBridge idle-checker calls /idle-status with the API key every 5 minutes;
+# counting that as activity permanently prevents should_sleep.
+_ACTIVITY_EXEMPT_PATHS = {
+    "/api/v1/ops/power/idle-status",
+}
+
 
 def _is_public(path: str) -> bool:
     if path in _PUBLIC_PATHS or path.startswith("/docs/"):
@@ -31,6 +38,10 @@ def _is_public(path: str) -> bool:
     }:
         return True
     return False
+
+
+def _counts_as_user_activity(path: str) -> bool:
+    return path not in _ACTIVITY_EXEMPT_PATHS
 
 
 def _unauthorized(request_id: str | None) -> JSONResponse:
@@ -69,14 +80,15 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         session_ok = auth_service.resolve_session_token(raw_cookie) is not None
 
         if api_ok or session_ok:
-            # Touch idle activity clock for authenticated traffic.
-            try:
-                from backend.services.power_service import power_state_store
+            # Touch idle activity clock for authenticated user traffic only.
+            # Skip machine probes (idle-checker); otherwise the stack never sleeps.
+            if _counts_as_user_activity(path):
+                try:
+                    from backend.services.power_service import power_state_store
 
-                if session_ok or api_ok:
                     power_state_store.touch_activity()
-            except Exception:  # noqa: BLE001
-                pass
+                except Exception:  # noqa: BLE001
+                    pass
             return await call_next(request)
 
         request_id = request_id_var.get()
