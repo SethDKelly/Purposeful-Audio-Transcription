@@ -1,0 +1,8 @@
+﻿fixture_id: SRT003_stalking_monitoring
+title: SRT003_stalking_monitoring
+categories:
+  - stalking
+expected_risk_level: elevated
+expected_ui_warning_mode: safety_warning
+expected_module_suppression:
+  - exploratory_psychological_formulation

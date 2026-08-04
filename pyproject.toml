@@ -55,6 +55,7 @@ packages = ["backend", "config", "ui"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 asyncio_mode = "auto"
 markers = [
     "integration: hits live AWS / external services (not default CI)",

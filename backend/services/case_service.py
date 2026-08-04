@@ -13,13 +13,23 @@ class CaseService:
     def __init__(self, repository: CaseRepository | None = None) -> None:
         self._repository = repository or CaseRepository()
 
-    def create(self, *, title: str, notes: str | None = None) -> Case:
+    def create(
+        self, *, title: str, notes: str | None = None, owner_user_id: str | None = None
+    ) -> Case:
         with get_session() as session:
-            return self._repository.create(session, title=title, notes=notes)
+            return self._repository.create(
+                session, title=title, notes=notes, owner_user_id=owner_user_id
+            )
 
-    def list(self) -> list[Case]:
+    def list(self, *, owner_user_id: str | None = None, filter_owner: bool = False) -> list[Case]:
         with get_session() as session:
-            return self._repository.list(session)
+            return self._repository.list(
+                session, owner_user_id=owner_user_id, filter_owner=filter_owner
+            )
+
+    def get_owner_user_id(self, case_id: str) -> str | None:
+        with get_session() as session:
+            return self._repository.get_owner_user_id(session, case_id)
 
     def get(self, case_id: str) -> Case:
         with get_session() as session:

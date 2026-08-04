@@ -68,7 +68,9 @@ class SynthesisEngine:
         report = self._build_report(workflow_run_id, completed_runs)
         report.created_at = utc_now()
 
-        safety_result = self._safety.validate_synthesis(report)
+        safety_result = self._safety.validate_synthesis(
+            report, safety_mode=bool(getattr(workflow_run, "safety_mode", False))
+        )
         if not safety_result.is_safe:
             raise SynthesisError(
                 "Synthesis report failed safety validation: "

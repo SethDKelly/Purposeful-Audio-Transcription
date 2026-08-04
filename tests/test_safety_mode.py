@@ -6,10 +6,8 @@ from fastapi.testclient import TestClient
 
 from backend.domain.enums import SourceType
 from backend.main import app
-from backend.services.safety_risk_scanner import (
-    SKIP_IN_SAFETY_MODE,
-    safety_risk_scanner,
-)
+from backend.services.safety_policy import get_safety_policy
+from backend.services.safety_risk_scanner import safety_risk_scanner
 from backend.core.module_registry import ModuleRegistry
 from backend.core.workflow_registry import workflow_registry
 from backend.services.module_runner import ModuleRunner
@@ -76,7 +74,7 @@ def test_safety_mode_skips_exploratory_modules(monkeypatch) -> None:
     modules = [
         "relationship_conversation_analysis",
         "nvc_analysis",
-        *sorted(SKIP_IN_SAFETY_MODE),
+        *sorted(get_safety_policy().suppress_modules),
         "meta_synthesis",
     ]
     _, workflow_id = custom_workflow_service.build_definition(
@@ -91,7 +89,7 @@ def test_safety_mode_skips_exploratory_modules(monkeypatch) -> None:
     )
     _, module_runs = engine.get_with_module_runs(run.id)
     executed = {module_run.module_id for module_run in module_runs}
-    assert SKIP_IN_SAFETY_MODE.isdisjoint(executed)
+    assert get_safety_policy().suppress_modules.isdisjoint(executed)
     assert run.safety_mode is True
 
 

@@ -20,6 +20,7 @@ class CaseRepository:
         *,
         title: str,
         notes: str | None = None,
+        owner_user_id: str | None = None,
     ) -> Case:
         now = datetime.now(UTC).replace(tzinfo=None)
         case = Case(
@@ -36,6 +37,7 @@ class CaseRepository:
                 notes=case.notes,
                 created_at=case.created_at,
                 updated_at=case.updated_at,
+                owner_user_id=owner_user_id,
             )
         )
         session.flush()
@@ -47,8 +49,23 @@ class CaseRepository:
             raise CaseNotFoundError(f"Case not found: {case_id}")
         return _from_row(row)
 
-    def list(self, session: Session) -> list[Case]:
-        rows = session.scalars(select(CaseRow).order_by(CaseRow.created_at.desc())).all()
+    def get_owner_user_id(self, session: Session, case_id: str) -> str | None:
+        row = session.get(CaseRow, case_id)
+        if row is None:
+            raise CaseNotFoundError(f"Case not found: {case_id}")
+        return row.owner_user_id
+
+    def list(
+        self,
+        session: Session,
+        *,
+        owner_user_id: str | None = None,
+        filter_owner: bool = False,
+    ) -> list[Case]:
+        query = select(CaseRow).order_by(CaseRow.created_at.desc())
+        if filter_owner and owner_user_id is not None:
+            query = query.where(CaseRow.owner_user_id == owner_user_id)
+        rows = session.scalars(query).all()
         return [_from_row(row) for row in rows]
 
     def update(

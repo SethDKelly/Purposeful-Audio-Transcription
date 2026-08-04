@@ -1,4 +1,4 @@
-"""Keyword/regex scan for high-risk transcript content (v1.0 P5)."""
+"""Keyword/regex scan for high-risk transcript content (v1.0 P5 / phase 007)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,14 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, Field
 
-# Exploratory modules skipped when safety_mode is active.
+from backend.services.safety_policy import get_safety_policy
+
+
+def _skip_in_safety_mode() -> frozenset[str]:
+    return get_safety_policy().suppress_modules
+
+
+# Backward-compatible alias used across engine/custom workflow imports.
 SKIP_IN_SAFETY_MODE: frozenset[str] = frozenset(
     {
         "exploratory_psychological_formulation",
@@ -15,15 +22,22 @@ SKIP_IN_SAFETY_MODE: frozenset[str] = frozenset(
     }
 )
 
-SAFETY_SYNTHESIS_FRAMING = (
-    "## Safety-aware framing\n\n"
-    "This analysis may involve high-risk dynamics (threats, coercion, control, "
-    "stalking, or self-harm cues). Stay evidence-limited and non-adjudicative.\n"
-    "- Do not pressure reconciliation, mutual compromise, or shared-responsibility framing.\n"
-    "- Do not coach both parties as equally accountable when control or threat cues dominate.\n"
-    "- Recommend professional or emergency support where appropriate without diagnosing.\n"
-    "- Avoid exploratory personality or identity interpretations; prioritize safety and boundaries."
-)
+
+def _refresh_skip_alias() -> None:
+    """Keep module-level SKIP_IN_SAFETY_MODE aligned with loaded policy."""
+    global SKIP_IN_SAFETY_MODE
+    SKIP_IN_SAFETY_MODE = _skip_in_safety_mode()
+
+
+_refresh_skip_alias()
+
+
+def get_safety_synthesis_framing() -> str:
+    return get_safety_policy().synthesis_framing
+
+
+# Backward-compatible name used by prompt_compiler / tests.
+SAFETY_SYNTHESIS_FRAMING = get_safety_synthesis_framing()
 
 
 class SafetyScanResult(BaseModel):
@@ -114,10 +128,11 @@ class SafetyRiskScanner:
                 elif highest != "high" and group.level == "elevated":
                     highest = "elevated"
 
+        policy = get_safety_policy()
         return SafetyScanResult(
             risk_level=highest,
             matched_categories=sorted(set(matched)),
-            safety_mode_recommended=highest == "high",
+            safety_mode_recommended=policy.should_enable_safety_mode(highest),
         )
 
 

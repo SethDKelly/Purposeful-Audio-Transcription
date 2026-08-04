@@ -6,11 +6,17 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from backend.db.base import get_session
-from backend.db.models import ConstructEvidenceQuoteRow, ConstructRow, ConstructSourceRow
+from backend.db.models import (
+    ConstructEvidenceQuoteRow,
+    ConstructRelationshipEvidenceQuoteRow,
+    ConstructRelationshipRow,
+    ConstructRow,
+    ConstructSourceRow,
+)
 from backend.domain.enums import Confidence
 
 _CONFIDENCE_RANK = {
@@ -50,6 +56,7 @@ class GraphMergeService:
             ).all()
         )
         if len(rows) < 2:
+            self._rewire_and_dedupe_relationships(session, workflow_run_id)
             return MergeResult(workflow_run_id, 0, 0)
 
         by_type: dict[str, list[ConstructRow]] = defaultdict(list)
@@ -70,6 +77,7 @@ class GraphMergeService:
                 absorbed += len(others)
 
         session.flush()
+        self._rewire_and_dedupe_relationships(session, workflow_run_id)
         return MergeResult(workflow_run_id, groups_merged, absorbed)
 
     def _absorb(
@@ -135,6 +143,134 @@ class GraphMergeService:
                 + " | merged labels: "
                 + "; ".join(sorted({label for label in labels if label != primary.label}))
             )
+
+    def _rewire_and_dedupe_relationships(
+        self, session: Session, workflow_run_id: str
+    ) -> None:
+        constructs = {
+            row.id: row
+            for row in session.scalars(
+                select(ConstructRow).where(ConstructRow.workflow_run_id == workflow_run_id)
+            ).all()
+        }
+        if not constructs:
+            return
+
+        relationships = list(
+            session.scalars(
+                select(ConstructRelationshipRow).where(
+                    ConstructRelationshipRow.workflow_run_id == workflow_run_id
+                )
+            ).all()
+        )
+        for rel in relationships:
+            new_source = _resolve_canonical_id(rel.source_construct_row_id, constructs)
+            new_target = _resolve_canonical_id(rel.target_construct_row_id, constructs)
+            if new_source and new_source != rel.source_construct_row_id:
+                rel.source_construct_row_id = new_source
+                primary = constructs.get(new_source)
+                if primary is not None:
+                    rel.source_construct_source_id = primary.source_id
+            if new_target and new_target != rel.target_construct_row_id:
+                rel.target_construct_row_id = new_target
+                primary = constructs.get(new_target)
+                if primary is not None:
+                    rel.target_construct_source_id = primary.source_id
+
+        session.flush()
+        self._dedupe_relationships(session, workflow_run_id)
+
+    def _dedupe_relationships(self, session: Session, workflow_run_id: str) -> None:
+        relationships = list(
+            session.scalars(
+                select(ConstructRelationshipRow).where(
+                    ConstructRelationshipRow.workflow_run_id == workflow_run_id
+                )
+            ).all()
+        )
+        groups: dict[tuple, list[ConstructRelationshipRow]] = defaultdict(list)
+        for rel in relationships:
+            key = (
+                rel.source_construct_row_id,
+                rel.target_construct_row_id,
+                rel.relationship_type,
+            )
+            groups[key].append(rel)
+
+        for group in groups.values():
+            if len(group) < 2:
+                continue
+            group.sort(
+                key=lambda row: (
+                    -_CONFIDENCE_RANK.get(row.confidence, 0),
+                    row.created_at,
+                    row.id,
+                )
+            )
+            primary = group[0]
+            duplicates = group[1:]
+
+            existing_quotes = {
+                q.quote_id
+                for q in session.scalars(
+                    select(ConstructRelationshipEvidenceQuoteRow).where(
+                        ConstructRelationshipEvidenceQuoteRow.relationship_id == primary.id
+                    )
+                ).all()
+            }
+            next_pos = len(existing_quotes)
+            for dup in duplicates:
+                if primary.rationale and dup.rationale:
+                    if dup.rationale not in primary.rationale:
+                        primary.rationale = f"{primary.rationale} | {dup.rationale}"
+                elif dup.rationale and not primary.rationale:
+                    primary.rationale = dup.rationale
+
+                for quote in session.scalars(
+                    select(ConstructRelationshipEvidenceQuoteRow).where(
+                        ConstructRelationshipEvidenceQuoteRow.relationship_id == dup.id
+                    )
+                ).all():
+                    if quote.quote_id in existing_quotes:
+                        continue
+                    session.add(
+                        ConstructRelationshipEvidenceQuoteRow(
+                            relationship_id=primary.id,
+                            quote_id=quote.quote_id,
+                            position=next_pos,
+                        )
+                    )
+                    existing_quotes.add(quote.quote_id)
+                    next_pos += 1
+
+            dup_ids = [dup.id for dup in duplicates]
+            session.execute(
+                delete(ConstructRelationshipEvidenceQuoteRow).where(
+                    ConstructRelationshipEvidenceQuoteRow.relationship_id.in_(dup_ids)
+                )
+            )
+            session.execute(
+                delete(ConstructRelationshipRow).where(
+                    ConstructRelationshipRow.id.in_(dup_ids)
+                )
+            )
+        session.flush()
+
+
+def _resolve_canonical_id(
+    row_id: str | None, constructs: dict[str, ConstructRow]
+) -> str | None:
+    if row_id is None:
+        return None
+    seen: set[str] = set()
+    current = row_id
+    while current and current not in seen:
+        seen.add(current)
+        row = constructs.get(current)
+        if row is None or not row.merged_into_id:
+            return current
+        current = row.merged_into_id
+    return current
 
 
 def _normalize_label(label: str) -> str:

@@ -10,7 +10,7 @@ from backend.domain.transcript import TranscriptBundle
 from backend.services.evidence_index import EvidenceIndexService
 from config.settings import settings
 
-COMPILER_VERSION = "1.2.0"
+COMPILER_VERSION = "1.3.0"
 _VERSION_PATTERN = re.compile(r"version:\s*([\d.]+)", re.IGNORECASE)
 
 
@@ -54,6 +54,8 @@ class PromptCompiler:
         self,
         module: AnalysisModule,
         bundle: TranscriptBundle,
+        *,
+        safety_mode: bool = False,
     ) -> CompiledPrompt:
         if module.config.input_type != "transcript":
             raise ValueError(
@@ -65,7 +67,7 @@ class PromptCompiler:
             bundle.speakers,
         )
         user_prefix = self._build_evidence_user_prefix(evidence_text)
-        user_suffix = self._build_transcript_user_task(module)
+        user_suffix = self._build_transcript_user_task(module, safety_mode=safety_mode)
         return self._compile(module, user_prefix=user_prefix, user_suffix=user_suffix)
 
     def compile_for_module_outputs(
@@ -166,6 +168,10 @@ class PromptCompiler:
             "general methodological limitation.\n"
             "- Inferred findings must include at least one alternative explanation.\n"
             "- Use only quote IDs provided in the evidence index.\n"
+            "- Cite the smallest useful span (atomic quote or short exchange); "
+            "do not cite paragraph-length evidence by default.\n"
+            f"- Prefer at most {settings.evidence_max_items_per_finding} "
+            "evidence quote IDs per finding.\n"
             "- Prefer structured `findings` / `constructs` over long prose; keep "
             "`raw_markdown_report` empty or under ~150 words."
         )
@@ -173,17 +179,29 @@ class PromptCompiler:
     def _build_evidence_user_prefix(self, evidence_text: str) -> str:
         return (
             "## Evidence Index\n\n"
-            "Each line is a quotable turn. Cite using the bracketed quote ID.\n\n"
+            "Each line is a quotable turn. Cite using the bracketed quote ID.\n"
+            "Prefer the smallest useful cite (one sentence/turn or a short exchange).\n\n"
             f"{evidence_text}"
         )
 
-    def _build_transcript_user_task(self, module: AnalysisModule) -> str:
-        return (
+    def _build_transcript_user_task(
+        self, module: AnalysisModule, *, safety_mode: bool = False
+    ) -> str:
+        sections = [
             f"Analyze the conversation using the **{module.config.name}** module.\n\n"
             "Return only one JSON object matching module_output_v1. "
             "Put primary analysis in structured fields. "
             "Leave `raw_markdown_report` empty unless a short prose note is essential."
-        )
+        ]
+        if safety_mode:
+            from backend.services.safety_policy import get_safety_policy
+
+            policy = get_safety_policy()
+            if policy.require_safety_framing:
+                sections.append(policy.synthesis_framing)
+            if policy.should_modify_module(module.config.id):
+                sections.append(policy.module_modify_framing)
+        return "\n\n".join(sections)
 
     def _build_module_outputs_user_prefix(self, module_outputs: str) -> str:
         return (
@@ -201,9 +219,11 @@ class PromptCompiler:
             "Prefer structured synthesis fields; keep `raw_markdown_report` brief or empty."
         ]
         if safety_mode:
-            from backend.services.safety_risk_scanner import SAFETY_SYNTHESIS_FRAMING
+            from backend.services.safety_policy import get_safety_policy
 
-            sections.append(SAFETY_SYNTHESIS_FRAMING)
+            policy = get_safety_policy()
+            if policy.require_safety_framing:
+                sections.append(policy.synthesis_framing)
         return "\n\n".join(sections)
 
 

@@ -1,6 +1,8 @@
 import uuid
 from datetime import UTC, datetime, timedelta
 
+from sqlalchemy.orm import Session
+
 from backend.core.audit import audit_event
 from backend.core.exceptions import (
     TranscriptNotFoundError,
@@ -9,7 +11,13 @@ from backend.core.exceptions import (
 )
 from backend.db.base import get_session
 from backend.domain.enums import SourceType
-from backend.domain.transcript import Speaker, Transcript, TranscriptBundle, Turn
+from backend.domain.transcript import (
+    Speaker,
+    Transcript,
+    TranscriptBundle,
+    TranscriptVersion,
+    Turn,
+)
 from backend.repositories.transcript_repository import (
     TranscriptRepository,
     new_transcript_id,
@@ -32,9 +40,12 @@ class TranscriptService:
         source_type: SourceType,
         title: str | None = None,
         language: str | None = None,
+        *,
+        owner_user_id: str | None = None,
     ) -> TranscriptBundle:
         parsed_turns = self._parser.parse(raw_text)
         transcript_id = new_transcript_id()
+        version_id = new_transcript_id()
         now = utc_now()
 
         transcript = Transcript(
@@ -47,6 +58,17 @@ class TranscriptService:
             analysis_ready=False,
             ready_at=None,
             skip_review=False,
+            current_version_id=version_id,
+            current_version_number=1,
+        )
+        version = TranscriptVersion(
+            id=version_id,
+            transcript_id=transcript_id,
+            version_number=1,
+            created_at=now,
+            source_type=source_type.value,
+            change_summary="Initial version",
+            is_current=True,
         )
 
         speaker_id_by_label: dict[str, str] = {}
@@ -81,13 +103,19 @@ class TranscriptService:
             speakers=speakers,
             turns=turns,
             evidence_quotes=[],
+            transcript_version=version,
         )
         bundle.evidence_quotes = self._evidence_index.build_index(
-            bundle, parsed_turns, speaker_id_by_label
+            bundle,
+            parsed_turns,
+            speaker_id_by_label,
+            transcript_version_id=version_id,
         )
 
         with get_session() as session:
-            self._repository.save_bundle(session, bundle)
+            self._repository.save_bundle(
+                session, bundle, owner_user_id=owner_user_id
+            )
 
         audit_event(
             "transcript.ingest",
@@ -95,12 +123,21 @@ class TranscriptService:
             source_type=source_type.value,
             turn_count=len(turns),
             quote_count=len(bundle.evidence_quotes),
+            transcript_version_id=version_id,
         )
         return bundle
 
     def get(self, transcript_id: str) -> TranscriptBundle:
         with get_session() as session:
             return self._repository.get_bundle(session, transcript_id)
+
+    def get_for_version(
+        self, transcript_id: str, version_id: str | None
+    ) -> TranscriptBundle:
+        with get_session() as session:
+            return self._repository.get_bundle(
+                session, transcript_id, version_id=version_id
+            )
 
     def delete(self, transcript_id: str) -> None:
         with get_session() as session:
@@ -151,20 +188,14 @@ class TranscriptService:
         with get_session() as session:
             self._repository.update_turns(session, transcript_id, patches)
             self._repository.sync_raw_text_from_turns(session, transcript_id)
-            bundle = self._repository.get_bundle(session, transcript_id)
-            quotes = self._evidence_index.build_index_from_turns(
-                transcript_id, bundle.turns
-            )
-            self._repository.replace_evidence_quotes(session, transcript_id, quotes)
+            self._rebuild_quotes(session, transcript_id, change_summary="Turn edits")
             return self._repository.get_bundle(session, transcript_id)
 
     def rebuild_evidence_index(self, transcript_id: str) -> TranscriptBundle:
         with get_session() as session:
-            bundle = self._repository.get_bundle(session, transcript_id)
-            quotes = self._evidence_index.build_index_from_turns(
-                transcript_id, bundle.turns
+            self._rebuild_quotes(
+                session, transcript_id, change_summary="Evidence index rebuild"
             )
-            self._repository.replace_evidence_quotes(session, transcript_id, quotes)
             self._repository.sync_raw_text_from_turns(session, transcript_id)
             # Edits already clear ready; rebuild alone does not approve.
             return self._repository.get_bundle(session, transcript_id)
@@ -182,10 +213,9 @@ class TranscriptService:
                 raise TranscriptValidationError(
                     "Cannot mark ready: no turns included for analysis"
                 )
-            quotes = self._evidence_index.build_index_from_turns(
-                transcript_id, bundle.turns
+            self._rebuild_quotes(
+                session, transcript_id, change_summary="Marked ready for analysis"
             )
-            self._repository.replace_evidence_quotes(session, transcript_id, quotes)
             self._repository.sync_raw_text_from_turns(session, transcript_id)
             self._repository.set_preparation_state(
                 session,
@@ -202,6 +232,56 @@ class TranscriptService:
             quote_count=len(ready.evidence_quotes),
         )
         return ready
+
+    def _rebuild_quotes(
+        self,
+        session: Session,
+        transcript_id: str,
+        change_summary: str,
+    ) -> None:
+        bundle = self._repository.get_bundle(session, transcript_id)
+        if self._repository.has_completed_workflow_runs(session, transcript_id):
+            version = self._repository.create_new_version(
+                session,
+                transcript_id,
+                change_summary=change_summary,
+                source_type=(
+                    bundle.transcript.source_type.value
+                    if hasattr(bundle.transcript.source_type, "value")
+                    else str(bundle.transcript.source_type)
+                ),
+            )
+            quotes = self._evidence_index.build_index_from_turns(
+                transcript_id,
+                bundle.turns,
+                transcript_version_id=version.id,
+            )
+            # Insert for the new version only; do not delete prior version quotes.
+            self._repository.replace_evidence_quotes(
+                session, transcript_id, quotes, version_id=version.id
+            )
+        else:
+            version_id = bundle.transcript.current_version_id
+            if version_id is None:
+                version = self._repository.create_new_version(
+                    session,
+                    transcript_id,
+                    change_summary=change_summary,
+                    source_type=(
+                        bundle.transcript.source_type.value
+                        if hasattr(bundle.transcript.source_type, "value")
+                        else str(bundle.transcript.source_type)
+                    ),
+                )
+                version_id = version.id
+            quotes = self._evidence_index.build_index_from_turns(
+                transcript_id,
+                bundle.turns,
+                transcript_version_id=version_id,
+            )
+            self._repository.replace_evidence_quotes(
+                session, transcript_id, quotes, version_id=version_id
+            )
 
     def quality_warnings(self, bundle: TranscriptBundle) -> list[str]:
         warnings: list[str] = []

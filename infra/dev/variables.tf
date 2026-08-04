@@ -50,6 +50,24 @@ variable "ui_desired_count" {
   default = 1
 }
 
+variable "web_cpu" {
+  description = "Fargate CPU units for React web task."
+  type        = number
+  default     = 256
+}
+
+variable "web_memory" {
+  description = "Fargate memory (MiB) for React web task."
+  type        = number
+  default     = 512
+}
+
+variable "web_desired_count" {
+  description = "React product UI tasks (0 until ALB cutover; see docs/planning/streamlit_role_decision.md)."
+  type        = number
+  default     = 0
+}
+
 variable "worker_desired_count" {
   type        = number
   default     = 1
@@ -107,9 +125,21 @@ variable "diarization_enabled" {
 }
 
 variable "enable_vpc_endpoints" {
-  description = "Create VPC endpoints (S3 gateway + interface endpoints for Bedrock, ECR, etc.). Safe with public IPs."
+  description = "Create VPC endpoints (S3 gateway + interface endpoints for Bedrock, ECR, etc.). Safe with public IPs. Pause/sleep may delete endpoints via CLI; deploy-dev terraform apply reconciles."
   type        = bool
   default     = true
+}
+
+variable "enable_power_control" {
+  description = "Provision DynamoDB power state, ALB→Lambda login/wake, CodeBuild wake/sleep orchestrator, and idle EventBridge rule."
+  type        = bool
+  default     = true
+}
+
+variable "ses_from_email" {
+  description = "Verified SES From address for login OTP email (required when power control / EMAIL_DELIVERY=ses is enabled)."
+  type        = string
+  default     = "ollioxenhomefree@gmail.com"
 }
 
 variable "enable_no_egress_networking" {

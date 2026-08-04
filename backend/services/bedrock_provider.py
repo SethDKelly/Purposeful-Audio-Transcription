@@ -256,7 +256,37 @@ class BedrockProvider:
         return content
 
     def _converse(self, request: dict[str, Any]) -> dict[str, Any]:
-        return self._runtime.converse(**request)
+        max_retries = max(0, int(settings.bedrock_throttle_max_retries or 0))
+        base = max(0.1, float(settings.bedrock_throttle_base_seconds or 2.0))
+        attempt = 0
+        while True:
+            try:
+                return self._runtime.converse(**request)
+            except ClientError as exc:
+                code = (exc.response.get("Error") or {}).get("Code", "")
+                if code not in {
+                    "ThrottlingException",
+                    "TooManyRequestsException",
+                    "ServiceQuotaExceededException",
+                }:
+                    raise
+                if attempt >= max_retries:
+                    raise
+                delay = base * (2**attempt)
+                logger.warning(
+                    "Bedrock throttled (%s); backing off %.1fs (attempt %s/%s)",
+                    code,
+                    delay,
+                    attempt + 1,
+                    max_retries,
+                    extra={
+                        "event": "bedrock.throttled",
+                        "error_type": code,
+                        "retry_count": attempt + 1,
+                    },
+                )
+                time.sleep(delay)
+                attempt += 1
 
 
 def _cache_point() -> dict[str, Any]:

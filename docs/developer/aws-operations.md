@@ -6,6 +6,7 @@ CloudWatch log groups for the dev stack:
 |---------|-----------|
 | API | `/rre/dev/api` |
 | UI | `/rre/dev/ui` |
+| Worker | `/rre/dev/worker` |
 
 Structured JSON logs (`LOG_JSON=true`) include correlation fields:
 
@@ -31,11 +32,26 @@ With `LOG_REDACT` auto-on for Bedrock / PostgreSQL (or `LOG_REDACT=true`):
 
 DB remains the store of record. Prefer Insights queries by ID, not free-text search on dialogue.
 
-Design: [log-redaction.md](../planning/log-redaction.md).
+Design: [log-redaction.md](log-redaction.md).
 
-## CloudWatch Logs Insights queries
+## Trace a workflow (API → job → worker → module)
 
-Run in **Logs Insights** against `/rre/dev/api`.
+1. Note `request_id` from the API response header `X-Request-ID` or error body.
+2. In Logs Insights (groups `/rre/dev/api` and `/rre/dev/worker`), filter on that ID or on `workflow_run_id`.
+3. JSON logs include `service` (`api` / `worker`), `event`, `module_id`, and `error_type`.
+4. Queue depth / oldest age: `GET /api/queue/stats` or CloudWatch namespace `RRE/Dev`.
+5. Dashboard: **`rre-dev-ops`** (queue metrics + ECS CPU/memory).
+
+### Cross-service failed runs
+
+```text
+fields @timestamp, service, event, workflow_run_id, module_id, error_type, message
+| filter event like /failed|retry_exhausted|stale_/
+| sort @timestamp desc
+| limit 50
+```
+
+Run against `/rre/dev/api` and `/rre/dev/worker` (multi-source query in the console).
 
 ### Failed module runs (last hour)
 
@@ -97,7 +113,7 @@ fields @timestamp, event, transcript_id, export_format, purged_count, message
 | `LLM_PROVIDER` | `bedrock` |
 | `BEDROCK_MODEL_ID` | `us.anthropic.claude-sonnet-4-5-20250929-v1:0` |
 
-Ensure the ECS task role includes Bedrock invoke + Marketplace subscribe-via-Bedrock (see `infra/dev/iam.tf`). Evaluation note: [llm-evaluation-bedrock.md](../planning/llm-evaluation-bedrock.md).
+Ensure the ECS task role includes Bedrock invoke + Marketplace subscribe-via-Bedrock (see `infra/dev/iam.tf`). Evaluation note: [llm-evaluation-bedrock.md](../evaluation/llm-evaluation-bedrock.md).
 
 ## Deploy wait pattern
 
@@ -136,13 +152,23 @@ Expect: `research_oriented` (6 modules) then `full_multidisciplinary` (13). Scri
 
 ## Pause / resume (when idle)
 
-**Standing practice:** Pause AWS when the stack is idle. **Deploy only for minor-version releases** — push of tag `v*.*.*` or manual **Deploy to AWS dev** (`workflow_dispatch`). Ordinary commits to `main` do **not** wake AWS. Resume via that same deploy workflow.
+**Preferred path — power control (middle idle depth):**
+
+| Mode | Behavior |
+|------|----------|
+| **Sleep** | ECS desired **0**, **delete** Interface (+ S3 gateway) VPC endpoints, **stop** RDS. **ALB kept** (~$16/mo). |
+| **Wake** | Sign in at `/login` (ALB → Lambda). OTP via SES; successful verify starts CodeBuild orchestrator (RDS start → recreate endpoints → scale ECS). Cold start often **5–15+ minutes**. |
+| **Idle timer** | After **2 hours** with no active jobs and no authenticated activity → automatic sleep (EventBridge). |
+| **Kill mode** | `KILL_LONG_JOBS_ENABLED=true` (default): if any job exceeds **3 hours**, **cancel all** jobs and start the idle timer. |
 
 | Action | How |
 |--------|-----|
-| **Pause** | GitHub Actions → **Pause AWS dev** → Run workflow (`workflow_dispatch` works once `pause-dev.yml` is on `main`) |
-| **Resume** | Actions → **Deploy to AWS dev** (`workflow_dispatch`), or push a `v*.*.*` tag |
+| **Wake** | Open ALB `/login`, complete email OTP (invite-only users) |
+| **Sleep (manual)** | GitHub Actions → **Pause AWS dev** (also deletes VPC endpoints) |
+| **Resume (break-glass)** | **Deploy to AWS dev** or push `v*.*.*` |
 
-Pause sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Full steps, residual costs (ALB, ECR, Secrets Manager, RDS storage), and CLI equivalents: [infra/dev/README.md](../../infra/dev/README.md).
+**Residual sleep cost:** ALB, ECR storage, Secrets Manager, RDS storage, DynamoDB power-state (negligible). VPC endpoint hourly charges should **not** continue while asleep.
 
-**Note:** Local `ops-admin` cannot update ECS/RDS; use the GitHub workflow (OIDC `dev-github-deploy`).
+**Auth:** SES email OTP; `SESSION_AUTH_REQUIRED=true`; invite-only. Seeded admin: `ollioxenhomefree@gmail.com` (`is_admin=true`, also a normal user). Set Terraform `ses_from_email` to a verified SES identity.
+
+**Note:** Local `ops-admin` cannot update ECS/RDS; use GitHub OIDC workflows or the login-wake path.

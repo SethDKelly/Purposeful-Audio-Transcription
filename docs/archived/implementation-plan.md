@@ -1,6 +1,6 @@
 # Pre-RRE implementation plan (archived)
 
-> **Archived.** Original Whisper + Ollama phased build before the RRE redesign. Canonical: [../planning/completed.md](../planning/completed.md) · [../planning/implementing.md](../planning/implementing.md). Prompt layout: [../../config/prompts/README.md](../../config/prompts/README.md).
+> **Archived.** Original Whisper + Ollama phased build before the RRE redesign. Canonical: [planning/phases.md](planning/phases.md) · [../planning/deferred_backlog.md](../planning/deferred_backlog.md). Prompt layout: [../../config/prompts/README.md](../../config/prompts/README.md).
 
 ---
 

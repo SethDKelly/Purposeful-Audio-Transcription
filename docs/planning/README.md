@@ -2,46 +2,35 @@
 
 Active planning for the **Relationship Reasoning Engine** after **v1.0.0**.
 
-## Canonical set
+The roadmap is guided by the [core product tenets](../product/core_tenets.md):
+
+- evidence traceability · confidence calibration · multi-lens analysis · non-diagnostic discipline
+- longitudinal case tracking · professional workflow fit · safety-aware framing · structured reasoning graph
+
+Prioritize work that strengthens these tenets. Stay **market-agnostic** (no clinician/couples/enterprise specialization in the core engine yet).
 
 | Document | Purpose |
 |----------|---------|
-| **[implementing.md](implementing.md)** | Active execution tracker (**post-v1.0**) |
-| **[roadmap_v0.7_to_v1.0.md](roadmap_v0.7_to_v1.0.md)** | Phased roadmap v0.7 → v1.0 (**complete**) |
-| **[future_considerations.md](future_considerations.md)** | Deferred / later backlog (do not delete ideas — defer them) |
-| **[golden_transcript_fixtures.md](golden_transcript_fixtures.md)** | Golden transcript layout, metadata/assertions, pytest expectations |
-| **[completed.md](completed.md)** | Shipped capabilities |
-| **[backlog.md](backlog.md)** | Index into future considerations |
+| **[phases/](phases/)** | **Active execution** — start at [001](phases/001_v2_1_phase_sequence_overview.md) → [009](phases/009_v2_1_react_api_contract_and_release_candidate_readiness.md) |
+| **[v2_readiness_assessment.md](v2_readiness_assessment.md)** | Why next work → v2 beta/RC, not yet GA |
+| **[v2_future_state_architecture.md](v2_future_state_architecture.md)** | v2 vision / north star |
+| **[auth_rbac_plan.md](auth_rbac_plan.md)** | Auth path — **email OTP first** (ADR 001); Cognito/SSO later |
+| **[react_frontend_plan.md](react_frontend_plan.md)** | React stack, screens, API client, deploy |
+| **[streamlit_role_decision.md](streamlit_role_decision.md)** | Streamlit admin/eval (ALB cutover deferred) |
+| **[deferred_backlog.md](deferred_backlog.md)** | Items not in `001`–`009` (or waiting on a dependency) |
+| **[general_backlog.md](general_backlog.md)** | Unprioritized ideas (no commitment) |
 
-**Do not** revive archived MVP plans as the task tracker.
+### Archive practice
 
-## Architecture / product / evaluation plans
+When a phase/band ships:
 
-| Document | Purpose |
-|----------|---------|
-| [../architecture/ontology_v1.md](../architecture/ontology_v1.md) | Canonical construct & relationship vocabulary (**shipped** v0.7) |
-| [../architecture/structured_persistence_plan.md](../architecture/structured_persistence_plan.md) | Normalized findings/constructs/graph (**shipped** v0.8) |
-| [../architecture/workflow_dag_plan.md](../architecture/workflow_dag_plan.md) | DAG workflow engine (**shipped** v1.0) |
-| [../product/transcript_preparation_workspace.md](../product/transcript_preparation_workspace.md) | Transcript review before analysis (**shipped** v0.7) |
-| [../product/safety_aware_report_mode.md](../product/safety_aware_report_mode.md) | High-risk report framing (**shipped** v1.0) |
-| [../evaluation/golden_fixture_evaluation_plan.md](../evaluation/golden_fixture_evaluation_plan.md) | Fixtures & eval loop (**shipped** foundation v0.7) |
-| [../evaluation/golden_manual_rubric.md](../evaluation/golden_manual_rubric.md) | Human review rubric |
+1. Append to [../archived/planning/phases.md](../archived/planning/phases.md) (next free number: **55**).
+2. Move detail checklists from `phases/` → [../archived/planning/bands/](../archived/planning/bands/).
+3. Refresh executive roadmap and backlog pointers.
+4. Keep `phases/` limited to unfinished work (+ README).
 
-## AWS & evaluations
-
-| Document | Purpose |
-|----------|---------|
-| **[aws-deployment.md](aws-deployment.md)** | AWS dev architecture, backbone, network, models |
-| **[llm-evaluation-bedrock.md](llm-evaluation-bedrock.md)** | Bedrock decision (AWS-1b) |
-| **[asr-evaluation-transcribe.md](asr-evaluation-transcribe.md)** | Transcribe decision (AWS-1c) |
-| **[log-redaction.md](log-redaction.md)** | CloudWatch redaction (P1-3c) |
-
-Ops: [../developer/aws-operations.md](../developer/aws-operations.md) · Terraform: [../../infra/dev/README.md](../../infra/dev/README.md) · **Pause AWS when idle**
-
-## History
-
-| Path | Purpose |
-|------|---------|
-| **[archived/](archived/)** | Superseded MVP / post-v0.3 plans (read-only) |
+Completed history: [../archived/planning/](../archived/planning/) (Phases **1–54**).
 
 **Design anchors:** [../design/01_product_vision_and_scope.md](../design/01_product_vision_and_scope.md) · [../design/04_knowledge_ontology.md](../design/04_knowledge_ontology.md) · [../design/03_domain_model.md](../design/03_domain_model.md)
+
+**AWS ops:** [../developer/aws-operations.md](../developer/aws-operations.md) · [../developer/aws-deployment.md](../developer/aws-deployment.md) · [../../infra/dev/README.md](../../infra/dev/README.md)

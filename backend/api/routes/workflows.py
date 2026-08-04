@@ -58,6 +58,7 @@ def _start_workflow_run(
     workflow_default_background: bool,
     module_count: int,
     safety_mode: bool,
+    owner_user_id: str | None = None,
 ) -> object:
     use_background = _resolve_background(
         request_background=background,
@@ -70,12 +71,14 @@ def _start_workflow_run(
             transcript_id=transcript_id,
             model=model,
             safety_mode=safety_mode,
+            owner_user_id=owner_user_id,
         )
     return workflow_engine.run(
         workflow_id=workflow_id,
         transcript_id=transcript_id,
         model=model,
         safety_mode=safety_mode,
+        owner_user_id=owner_user_id,
     )
 
 
@@ -129,6 +132,15 @@ def run_custom_workflow(request: RunCustomWorkflowRequest) -> WorkflowRunRespons
 
 @router.post("/workflows/{workflow_id}/run", response_model=WorkflowRunResponse)
 def run_workflow(workflow_id: str, request: RunWorkflowRequest) -> WorkflowRunResponse:
+    return run_workflow_for_user(workflow_id, request)
+
+
+def run_workflow_for_user(
+    workflow_id: str,
+    request: RunWorkflowRequest,
+    *,
+    owner_user_id: str | None = None,
+) -> WorkflowRunResponse:
     workflow = workflow_registry.get(workflow_id)
     safety_mode = workflow_safety_service.resolve_safety_mode(
         request.transcript_id,
@@ -142,6 +154,7 @@ def run_workflow(workflow_id: str, request: RunWorkflowRequest) -> WorkflowRunRe
         workflow_default_background=workflow.config.default_background,
         module_count=len(workflow.module_sequence),
         safety_mode=safety_mode,
+        owner_user_id=owner_user_id,
     )
     _, module_runs = workflow_engine.get_with_module_runs(workflow_run.id)
     return workflow_run_to_response(workflow_run, module_runs)
