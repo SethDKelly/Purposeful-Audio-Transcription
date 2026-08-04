@@ -4,9 +4,12 @@ RRE is an **AWS-only** product. Develop on a laptop; run the application on ECS.
 
 ## Prerequisites
 
-- Python 3.11+
+- Python 3.11+ (local tooling / pytest; CI Python jobs use **3.12**)
+- **Node.js 22** when working in `frontend-react/` (CI + `frontend-react/Dockerfile`)
 - GitHub access to deploy workflows
 - AWS operator access for integration checks (optional for most PRs)
+
+Frontend setup: [../../frontend-react/README.md](../../frontend-react/README.md). Supply chain / CI pins: [supply_chain.md](supply_chain.md).
 
 ## Setup (tests / tooling)
 
@@ -46,13 +49,14 @@ config/
   prompts/          # Markdown prompts
   framework/        # Shared compiler fragments
 ui/                 # Streamlit (ECS UI image)
+frontend-react/     # Vite + React product UI (Node 22; see package README)
 infra/dev/          # Terraform for AWS
 docs/               # Product and developer documentation
 tests/
   fixtures/
     golden_transcripts/
 Dockerfile.cloud    # API image
-Dockerfile.ui       # UI image
+Dockerfile.ui       # Streamlit UI image
 ```
 
 ## Tests

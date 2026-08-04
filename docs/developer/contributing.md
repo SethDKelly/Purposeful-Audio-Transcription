@@ -40,6 +40,14 @@ Promote `pre-production` → `main` only when intentionally shipping a productio
 
 Deploy CI also runs `validate_yaml` + `validate_config` before full pytest.
 
+### Path-filtered CI (frontend / supply chain)
+
+| Change under | Workflow | Expect |
+|--------------|----------|--------|
+| `frontend-react/**` | `frontend-react.yml` | Node 22, `npm ci`, Vitest, build, Playwright e2e |
+| Lockfiles / manifests (`package-lock.json`, `package.json`, `pyproject.toml`, `uv.lock`) | `supply-chain.yml` | `npm audit --audit-level=high`, `pip-audit` |
+| `.github/workflows/*` | Dependabot + `actionlint` | Review Actions major bumps per [supply_chain.md](supply_chain.md) |
+
 ## Branch naming
 
 Cut from `pre-production`:
