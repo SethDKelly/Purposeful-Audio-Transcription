@@ -136,13 +136,18 @@ Expect: `research_oriented` (6 modules) then `full_multidisciplinary` (13). Scri
 
 ## Pause / resume (when idle)
 
-**Standing practice:** Pause AWS when the stack is idle. **Deploy only for minor-version releases** — push of tag `v*.*.*` or manual **Deploy to AWS dev** (`workflow_dispatch`). Ordinary commits to `main` do **not** wake AWS. Resume via that same deploy workflow.
+**Standing practice:** Pause AWS when the stack is idle. **Deploy only for minor-version releases** — push of tag `v*.*.*` or manual **Deploy to AWS dev** (`workflow_dispatch`). Ordinary commits to `main` do **not** wake AWS.
+
+**v2.1 middle idle depth** (PR #16 / `pre-production`): keep ALB; scale ECS to **0**; **delete** `rre-dev-*` VPC endpoints; stop RDS. Wake via ALB **`/login`** (Lambda + SES OTP + CodeBuild) or break-glass Deploy. Full runbook: [auth-and-power.md](auth-and-power.md).
 
 | Action | How |
 |--------|-----|
-| **Pause** | GitHub Actions → **Pause AWS dev** → Run workflow (`workflow_dispatch` works once `pause-dev.yml` is on `main`) |
-| **Resume** | Actions → **Deploy to AWS dev** (`workflow_dispatch`), or push a `v*.*.*` tag |
+| **Wake** | Open ALB `/login`, complete invite-only email OTP; after ECS is awake the login page exchanges the handoff token for a session cookie then enters `/` |
+| **Pause / sleep** | GitHub Actions → **Pause AWS dev** (ECS 0 + VPC endpoints deleted + RDS stopped) |
+| **Resume (break-glass)** | Actions → **Deploy to AWS dev** (`workflow_dispatch`), or push a `v*.*.*` tag |
 
-Pause sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Full steps, residual costs (ALB, ECR, Secrets Manager, RDS storage), and CLI equivalents: [infra/dev/README.md](../../infra/dev/README.md).
+**Residual sleep cost:** ALB (~$16/mo), ECR, Secrets Manager, RDS storage, DynamoDB/Lambda (negligible). VPC endpoint hourly charges should **not** continue while asleep.
 
-**Note:** Local `ops-admin` cannot update ECS/RDS; use the GitHub workflow (OIDC `dev-github-deploy`).
+**Auth / SES:** `SESSION_AUTH_REQUIRED=true`; invite-only; Deploy wires `ses_from_email` from Actions variable `SES_FROM_EMAIL` (fallback `ollioxenhomefree@gmail.com`) — must be a verified SES identity. Seeded admin: `ollioxenhomefree@gmail.com`.
+
+**Note:** Local `ops-admin` cannot update ECS/RDS; use GitHub OIDC workflows or the login-wake path. Infra details: [infra/dev/README.md](../../infra/dev/README.md).

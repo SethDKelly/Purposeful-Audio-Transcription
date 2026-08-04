@@ -2,7 +2,16 @@
 
 Base URL: ALB DNS (AWS) or `http://127.0.0.1:8000` (local tooling). Interactive OpenAPI: `/docs`.
 
-When `API_KEY` is set, send header `X-API-Key: <value>` on protected routes. Public: `/`, `/api/live`, `/api/health`, `/docs`, `/openapi.json`.
+### Authentication
+
+| Mode | How |
+|------|-----|
+| Session (product) | HTTP-only cookie `rre_session` after email OTP (`/api/v1/auth/*`) — v2.1 / PR #16 |
+| Break-glass | Header `X-API-Key` when `API_KEY` is set (worker / ops) |
+
+When `SESSION_AUTH_REQUIRED=true` and/or `API_KEY` is configured, non-public routes require a valid session **or** API key. Always public: `/`, `/api/live`, `/api/health`, `/docs`, `/openapi.json`, `/api/v1/auth/*`, `/api/v1/ops/power/status`, `/api/v1/ops/power/handoff`.
+
+Full runbook: [auth-and-power.md](auth-and-power.md).
 
 Errors return a generic message plus `request_id` (also echoed as `X-Request-ID`).
 
@@ -14,6 +23,20 @@ Errors return a generic message plus `request_id` (also echoed as `X-Request-ID`
 | `GET` | `/api/health` | Bedrock, Transcribe, database status |
 | `GET` | `/api/models` | List configured Bedrock model IDs |
 | `GET` | `/api/models/ollama` | Deprecated alias of `/api/models` |
+
+## Auth and power (v2.1)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/auth/request-code` | Request OTP (`{ "email" }`); anti-enumeration OK |
+| `POST` | `/api/v1/auth/verify-code` | Verify OTP; sets session cookie; returns user |
+| `POST` | `/api/v1/auth/logout` | Revoke session; clear cookie |
+| `GET` | `/api/v1/auth/me` | Current user (`401` if anonymous) |
+| `GET` | `/api/v1/ops/power/status` | Power state + idle fields (public) |
+| `POST` | `/api/v1/ops/power/heartbeat` | Touch activity clock (authenticated) |
+| `POST` | `/api/v1/ops/power/handoff` | Body `{ "token" }` — exchange wake handoff → `rre_session` cookie (public; signed token) |
+
+When the stack is **asleep**, ALB routes `/login` and `/api/v1/ops/power/auth/*` to Lambda (not the API process). After wake, Lambda `/login` posts `/handoff` (sets the cookie) then navigates to `/` — do not rely on `?handoff=` in the URL. See [auth-and-power.md](auth-and-power.md).
 
 ## Transcripts
 
