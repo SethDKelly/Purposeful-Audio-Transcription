@@ -85,10 +85,15 @@ def _route_table_ids(ec2, vpc_id: str) -> list[str]:
     return [rt["RouteTableId"] for rt in resp.get("RouteTables") or []]
 
 
-def _set_power_state(ddb, state: str, **extra: Any) -> None:
+def _get_power_state(ddb) -> dict[str, Any]:
     table = ddb.Table(TABLE)
     resp = table.get_item(Key={"pk": POWER_STATE_PK})
-    item = dict(resp.get("Item") or {})
+    return dict(resp.get("Item") or {})
+
+
+def _set_power_state(ddb, state: str, **extra: Any) -> None:
+    table = ddb.Table(TABLE)
+    item = _get_power_state(ddb)
     item["pk"] = POWER_STATE_PK
     item["state"] = state
     item.update(extra)
@@ -273,12 +278,28 @@ def wake(clients: dict[str, Any]) -> None:
 
 def sleep(clients: dict[str, Any]) -> None:
     print(f"MODE=sleep region={REGION} name={NAME}", flush=True)
+    current = str(_get_power_state(clients["ddb"]).get("state") or "")
+    # Idle Lambda sets sleeping before StartBuild; if a wake won the race and
+    # moved state to waking/awake, abort before tearing the stack down.
+    if current in {"waking", "awake"}:
+        print(f"Abort sleep; state={current} (wake in progress or complete)", flush=True)
+        return
     _set_power_state(clients["ddb"], "sleeping")
     _update_ecs_desired(clients["ecs"], 0)
     # Allow tasks to drain briefly before cutting VPC endpoints.
     time.sleep(20)
+    current = str(_get_power_state(clients["ddb"]).get("state") or "")
+    if current == "waking":
+        print("Abort sleep before endpoint/RDS teardown; state=waking", flush=True)
+        # Best-effort restore ECS so a concurrent wake is not left at 0.
+        _update_ecs_desired(clients["ecs"], 1)
+        return
     _delete_managed_endpoints(clients["ec2"])
     _stop_rds(clients["rds"])
+    current = str(_get_power_state(clients["ddb"]).get("state") or "")
+    if current == "waking":
+        print("Abort sleep finalization; state=waking after teardown started", flush=True)
+        return
     _set_power_state(
         clients["ddb"],
         "asleep",
