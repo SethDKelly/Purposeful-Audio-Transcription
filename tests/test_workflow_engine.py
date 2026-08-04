@@ -187,7 +187,13 @@ def test_workflow_parallel_wave_bounded_concurrency(monkeypatch) -> None:
     max_active = 0
     lock = threading.Lock()
 
-    def fake_run(module_id, transcript_id, model=None, workflow_run_id=None):
+    def fake_run(
+        module_id,
+        transcript_id,
+        model=None,
+        workflow_run_id=None,
+        safety_mode=False,
+    ):
         nonlocal active, max_active
         with lock:
             active += 1

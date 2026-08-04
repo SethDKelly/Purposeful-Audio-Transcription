@@ -1,5 +1,5 @@
-import { FormEvent, useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router'
 import { api } from '../api/client'
 
 type PowerStatus = {

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router'
 import { api, type KnowledgeGraphEdge, type KnowledgeGraphNode } from '../api/client'
 
 function confidenceColor(c?: string | null) {
