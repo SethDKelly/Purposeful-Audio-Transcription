@@ -10,12 +10,12 @@
 
 ## Quick start (operators)
 
-1. Deploy the stack: GitHub Actions **Deploy to AWS dev** (`workflow_dispatch`, or push of a `v*.*.*` tag).
+1. If the stack is asleep, open ALB **`/login`** and complete email OTP (or run **Deploy to AWS dev** / push a `v*.*.*` tag).
 2. Open the ALB UI URL from the workflow summary / Terraform outputs.
 3. Paste a transcript or upload audio → **Prepare** (review/edit turns) → **Ready to Analyze** → run **Quick Review** (Bedrock).
-4. When idle: **Pause AWS dev** to avoid cost.
+4. When idle: automatic sleep or **Pause AWS dev** (ECS/RDS/VPC endpoints down; ALB kept for `/login`).
 
-Full walkthrough: [docs/user/getting-started.md](docs/user/getting-started.md) · Ops: [docs/developer/aws-operations.md](docs/developer/aws-operations.md)
+Full walkthrough: [docs/user/getting-started.md](docs/user/getting-started.md) · Auth/power: [docs/developer/auth-and-power.md](docs/developer/auth-and-power.md) · Ops: [docs/developer/aws-operations.md](docs/developer/aws-operations.md)
 
 ## Developer loop
 
@@ -55,7 +55,7 @@ Tests use SQLite. There is **no** supported local Whisper/Ollama server — inte
 - Evidence quote IDs (`Q001…`); golden transcript fixtures
 - Per-module / workflow telemetry
 - **LLM:** Amazon Bedrock · **ASR:** Amazon Transcribe
-- Stage B VPC; shared API key auth; optional HTTPS via ACM
+- Stage B VPC; invite-only email OTP sessions + API-key break-glass; idle power control (v2.1); optional HTTPS via ACM
 - Streamlit report + Explore + Cases + custom workflow builder
 - RDS PostgreSQL, background jobs / worker queue
 
