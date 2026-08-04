@@ -72,19 +72,20 @@ terraform output api_log_group
 - **VPC endpoints (default on):** S3 gateway (all VPC route tables) + interface endpoints for Bedrock, Transcribe, Secrets Manager, CloudWatch Logs, ECR, STS, monitoring.
 - **No-egress mode (default on — Stage B):** Tasks have no public IP; SGs allow HTTPS to VPC endpoints + S3 prefix list, DNS/Postgres in-VPC, and UI→API via Cloud Map (`http://api.rre-dev.local:8000`). Rollback: set `enable_no_egress_networking = false`.
 - RDS PostgreSQL is private; credentials in Secrets Manager (`rre-dev/database`).
-- **API auth:** Shared `API_KEY` in Secrets Manager (`rre-dev/api-key`) is injected into API + UI tasks. UI sends `X-API-Key` on backend calls.
+- **API auth:** Shared `API_KEY` in Secrets Manager (`rre-dev/api-key`) is break-glass for UI/worker. Product sessions use invite-only email OTP (`SESSION_AUTH_REQUIRED`); see [auth-and-power.md](../../docs/developer/auth-and-power.md).
+- **Power control (v2.1):** DynamoDB power state, ALB `/login` → Lambda OTP wake, CodeBuild orchestrator. Set `ses_from_email` to a verified SES identity (Deploy also accepts Actions var `SES_FROM_EMAIL`).
 - **HTTPS (optional):** Set `acm_certificate_arn` to an ACM cert in this region to enable ALB `:443` and HTTP→HTTPS redirect. Default remains HTTP-only on the ALB DNS name (no cert without a domain you control).
 - See [aws-deployment.md](../../docs/planning/aws-deployment.md) for the full network model.
 
 ## Pause / resume (avoid Fargate + RDS compute charges)
 
-**Standing practice:** After each minor-version deploy, pause when the stack sits idle (between coding sessions, overnight). Resume only when you need AWS again.
+**Standing practice:** After each minor-version deploy, pause when the stack sits idle (between coding sessions, overnight). Resume only when you need AWS again. Runbook: [auth-and-power.md](../../docs/developer/auth-and-power.md).
 
 **Pause** — GitHub Actions → **Pause AWS dev** → Run workflow.
 
-This sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Terraform state stays in sync.
+This sets ECS desired count to **0**, deletes `rre-dev-*` VPC endpoints (v2.1), and stops RDS `rre-dev-postgres`. Endpoint deletion drifts from Terraform until the next wake/deploy recreates them.
 
-**Resume** — **Deploy to AWS dev** (`workflow_dispatch`) or push a `v*.*.*` tag. The deploy workflow starts RDS if stopped, **clears any lingering ECS tasks**, then scales ECS with the new image.
+**Resume** — open **`/login`** (Lambda OTP → CodeBuild wake) or **Deploy to AWS dev** (`workflow_dispatch`) / push a `v*.*.*` tag.
 
 **Task size (P1-2d):** Slim API defaults — `api_cpu=1024`, `api_memory=2048` (was 1024/4096). Tried 512/2048; ALB `/api/live` timed out during cutover. UI remains `256` / `512`.
 

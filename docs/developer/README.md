@@ -7,6 +7,7 @@
 | [api-reference.md](api-reference.md) | REST endpoints (prep, ready, telemetry) |
 | [contributing.md](contributing.md) | Conventions and PR workflow |
 | [aws-operations.md](aws-operations.md) | AWS CloudWatch, deploy smoke, pause/resume |
+| [auth-and-power.md](auth-and-power.md) | Email OTP sessions, ownership RBAC, idle wake/sleep |
 | [cursor-workflow.md](cursor-workflow.md) | AI-assisted development |
 
 **Design:** [../design/](../design/) · **Planning:** [../planning/](../planning/) · **AWS architecture:** [../planning/aws-deployment.md](../planning/aws-deployment.md) · **Release:** [../releases/v1.0.0.md](../releases/v1.0.0.md)

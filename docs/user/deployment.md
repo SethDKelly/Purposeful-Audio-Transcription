@@ -22,10 +22,11 @@ The Relationship Reasoning Engine runs on **AWS ECS** (API + UI), **RDS PostgreS
 
 ## Operator checklist
 
-- [ ] Deploy for minor-version releases (tag or manual); **Pause** when idle
+- [ ] Deploy for minor-version releases (tag or manual); wake via **`/login`** when asleep (v2.1)
+- [ ] Confirm SES OTP arrives (verified `ses_from_email` / Actions var `SES_FROM_EMAIL`)
 - [ ] Confirm `/api/live` then `/api/health` → Bedrock + Transcribe + database available
 - [ ] Prepare transcript → Ready to Analyze → trial Quick Review
-- [ ] Restrict IAM / ALB access for sensitive dialogue (API key required when configured)
+- [ ] Pause / idle sleep when done (ECS 0 + VPC endpoints deleted + RDS stopped; ALB kept)
 - [ ] Prefer Insights by `module_run_id` (log redaction on)
 
 ## Runtime configuration (ECS)
@@ -42,8 +43,13 @@ Set in Terraform / task definitions (see `infra/dev/`). Common variables:
 | `LOG_JSON` / `LOG_REDACT` | Structured, scrubbed CloudWatch logs |
 | `TRANSCRIPT_RETENTION_DAYS` | Optional startup purge |
 | `WORKFLOW_SYNC_MODULE_LIMIT` | Default `6` — longer suites background |
-| `API_KEY` | Shared `X-API-Key` (Secrets Manager on ECS) |
+| `SESSION_AUTH_REQUIRED` | `true` — product session cookie gate (v2.1) |
+| `EMAIL_DELIVERY` / `SES_FROM_EMAIL` | `ses` + verified From identity for OTP |
+| `API_KEY` | Break-glass `X-API-Key` (Secrets Manager on ECS) |
+| `POWER_CONTROL_ENABLED` / `POWER_STATE_TABLE` | Idle power plane |
 | `ACM_CERTIFICATE_ARN` | Optional — enables ALB HTTPS when set in Terraform |
+
+Auth / wake runbook: [../developer/auth-and-power.md](../developer/auth-and-power.md).
 
 Developer `.env` / SQLite are for **pytest and tooling only**, not a supported local server.
 
