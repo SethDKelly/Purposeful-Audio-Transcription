@@ -385,7 +385,30 @@ class TranscriptRepository:
         session.flush()
         return _version_from_row(version_row)
 
+    def should_version_on_edit(self, session: Session, transcript_id: str) -> bool:
+        """True when edits must snapshot a new transcript version.
+
+        Any non-cancelled workflow run bound to the current version (queued,
+        in-flight, failed, or completed) has already pinned that version's
+        evidence. Replacing quotes in-place would silently rewrite the text
+        those runs cite (e.g. Q001 pointing at different words mid-analysis).
+        """
+        transcript = session.get(TranscriptRow, transcript_id)
+        if transcript is None or transcript.current_version_id is None:
+            return False
+        row = session.scalars(
+            select(WorkflowRunRow.id)
+            .where(WorkflowRunRow.transcript_id == transcript_id)
+            .where(
+                WorkflowRunRow.transcript_version_id == transcript.current_version_id
+            )
+            .where(WorkflowRunRow.status != WorkflowRunStatus.CANCELLED.value)
+            .limit(1)
+        ).first()
+        return row is not None
+
     def has_completed_workflow_runs(self, session: Session, transcript_id: str) -> bool:
+        """Backward-compatible helper; prefer should_version_on_edit for edits."""
         row = session.scalars(
             select(WorkflowRunRow.id)
             .where(WorkflowRunRow.transcript_id == transcript_id)
