@@ -173,6 +173,20 @@ jobs:
             -var="image_tag=${IMAGE_TAG}" \
             -var="ses_from_email=${SES_FROM_EMAIL}"
 
+      - name: Force ECS redeploy (latest task definitions)
+        env:
+          DEPLOY_COMPONENT: ${{ env.DEPLOY_COMPONENT }}
+        run: |
+          set -euo pipefail
+          SERVICES=()
+          case "$DEPLOY_COMPONENT" in
+            all) SERVICES=(rre-dev-api rre-dev-ui rre-dev-worker) ;;
+            api) SERVICES=(rre-dev-api) ;;
+            ui) SERVICES=(rre-dev-ui) ;;
+            worker) SERVICES=(rre-dev-worker) ;;
+          esac
+          python3 scripts/ecs-force-deploy.py rre-dev-cluster "${SERVICES[@]}"
+
       - name: Wait for ECS services stable
         env:
           ECS_WAIT_MAX_ATTEMPTS: "80"
