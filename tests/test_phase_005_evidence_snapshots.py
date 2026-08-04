@@ -153,6 +153,101 @@ def test_old_report_evidence_survives_transcript_edit(monkeypatch) -> None:
         assert any("Original quote text" in q.text for q in v1_quotes)
 
 
+def test_edit_during_queued_run_preserves_bound_version_evidence(monkeypatch) -> None:
+    """Queued/in-flight runs bind a version; edits must not rewrite that evidence."""
+    monkeypatch.setattr(settings, "auto_mark_transcript_ready", True)
+    client = TestClient(app)
+    created = client.post(
+        "/api/transcripts",
+        json={
+            "raw_text": "Person A: Bound quote text.\nPerson B: Reply.",
+            "source_type": "paste",
+        },
+    )
+    assert created.status_code == 200
+    data = created.json()
+    transcript_id = data["transcript"]["id"]
+    version_v1 = data["transcript"]["current_version_id"]
+    q001_v1 = next(q for q in data["evidence_quotes"] if q["quote_id"] == "Q001")
+    assert "Bound quote text" in q001_v1["text"]
+
+    # Create a queued run bound to V1 (no completion yet — the prior bug path).
+    run = workflow_engine.create_run("quick_review", transcript_id, queued=True)
+    assert run.status == WorkflowRunStatus.CREATED.value
+    assert run.transcript_version_id == version_v1
+
+    turn_a = next(t for t in data["turns"] if "Bound quote text" in t["text"])
+    patched = client.patch(
+        f"/api/transcripts/{transcript_id}/turns",
+        json={
+            "turns": [
+                {"id": turn_a["id"], "text": "Rewritten while analysis still queued."}
+            ]
+        },
+    )
+    assert patched.status_code == 200
+    current = patched.json()
+    assert current["transcript"]["current_version_number"] == 2
+    assert current["transcript"]["current_version_id"] != version_v1
+
+    historical = client.get(
+        f"/api/transcripts/{transcript_id}",
+        params={"version_id": version_v1},
+    )
+    assert historical.status_code == 200
+    q001_hist = next(
+        q for q in historical.json()["evidence_quotes"] if q["quote_id"] == "Q001"
+    )
+    assert q001_hist["text"] == q001_v1["text"]
+    assert "Bound quote text" in q001_hist["text"]
+
+    with get_session() as session:
+        row = session.get(WorkflowRunRow, run.id)
+        assert row is not None
+        assert row.transcript_version_id == version_v1
+        v1_quotes = (
+            session.query(EvidenceQuoteRow)
+            .filter_by(transcript_version_id=version_v1)
+            .all()
+        )
+        assert any("Bound quote text" in q.text for q in v1_quotes)
+
+
+def test_edit_during_running_run_preserves_bound_version_evidence(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "auto_mark_transcript_ready", True)
+    client = TestClient(app)
+    created = client.post(
+        "/api/transcripts",
+        json={
+            "raw_text": "Person A: Running quote text.\nPerson B: Reply.",
+            "source_type": "paste",
+        },
+    )
+    data = created.json()
+    transcript_id = data["transcript"]["id"]
+    version_v1 = data["transcript"]["current_version_id"]
+    q001_v1 = next(q for q in data["evidence_quotes"] if q["quote_id"] == "Q001")
+
+    run = workflow_engine.create_run("quick_review", transcript_id, queued=False)
+    assert run.status == WorkflowRunStatus.RUNNING_MODULES.value
+    assert run.transcript_version_id == version_v1
+
+    turn_a = next(t for t in data["turns"] if "Running quote text" in t["text"])
+    patched = client.patch(
+        f"/api/transcripts/{transcript_id}/turns",
+        json={
+            "turns": [
+                {"id": turn_a["id"], "text": "Rewritten while modules still running."}
+            ]
+        },
+    )
+    assert patched.status_code == 200
+    assert patched.json()["transcript"]["current_version_id"] != version_v1
+
+    hist = transcript_service.get_for_version(transcript_id, version_v1)
+    assert hist.evidence_quotes[0].text == q001_v1["text"]
+
+
 def test_reanalysis_binds_latest_version(monkeypatch) -> None:
     monkeypatch.setattr(settings, "auto_mark_transcript_ready", True)
     client = TestClient(app)
