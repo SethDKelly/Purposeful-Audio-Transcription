@@ -77,7 +77,10 @@ CI and pre-commit use `python -m pytest` / `python scripts/run_venv.py -m pytest
 - **Unit** — parsers, validators, ontology, exploration logic
 - **Integration** — API via `TestClient` with mocked Bedrock / Transcribe
 - **Golden** — `tests/fixtures/golden_transcripts/` signal-based regression
+- **Auth / power** — `tests/test_phase_003_email_auth.py`, `tests/test_auth_rbac_and_power.py` (see [auth-and-power.md](auth-and-power.md))
 - **Fixtures** — `tests/fixtures/golden_transcript.txt`, `sample_module_output.json`
+
+CI workflow map (eval gates, frontend, supply chain, Deploy/Pause): [ci-workflows.md](ci-workflows.md).
 ## Database
 
 | Context | Engine |

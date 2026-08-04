@@ -344,7 +344,7 @@ aws ecs update-service --cluster rre-dev-cluster --service rre-dev-api \
 
 Or re-run **Deploy to AWS dev** with `component=api|ui|worker` after fixing the image/tag. Worker shares the API image digest; rolling worker alone redeploys the last pushed `rre-dev-api` image with `RRE_PROCESS=worker`.
 
-**Cost control:** When the stack is idle, run **Pause AWS dev** (`pause-dev.yml`) to scale ECS (api/ui/worker) to 0 and stop RDS. Resume with **Deploy to AWS dev**. Standing practice: [deferred_backlog.md](../planning/deferred_backlog.md) and [aws-operations.md](aws-operations.md).
+**Cost control (middle idle depth):** Prefer idle sleep or **Pause AWS dev** (`pause-dev.yml`): scale ECS to 0, **delete** `rre-dev-*` VPC endpoints, stop RDS, keep ALB. Wake via ALB **`/login`** or break-glass **Deploy to AWS dev**. See [auth-and-power.md](auth-and-power.md), [ci-workflows.md](ci-workflows.md), and [aws-operations.md](aws-operations.md).
 
 ---
 
@@ -353,7 +353,9 @@ Or re-run **Deploy to AWS dev** with `component=api|ui|worker` after fixing the 
 | Secret / config | Store | Notes |
 |-----------------|-------|-------|
 | `DATABASE_URL` | Secrets Manager | RDS PostgreSQL in AWS |
-| `API_KEY` | Secrets Manager | Optional auth |
+| `API_KEY` | Secrets Manager | Break-glass `X-API-Key` (product auth is email OTP sessions) |
+| `SES_FROM_EMAIL` / `ses_from_email` | Terraform + optional Actions var | Verified SES From identity for OTP |
+| `SESSION_AUTH_REQUIRED` | ECS env | `true` on API for product sessions |
 | `BEDROCK_MODEL_ID` | Env / SSM | Non-secret |
 | `HF_TOKEN` | Not used in AWS | Transcribe replaces pyannote |
 | Upload storage | S3 | Pre-signed or API proxy; lifecycle expiration |

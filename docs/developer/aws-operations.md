@@ -163,12 +163,12 @@ Expect: `research_oriented` (6 modules) then `full_multidisciplinary` (13). Scri
 
 | Action | How |
 |--------|-----|
-| **Wake** | Open ALB `/login`, complete email OTP (invite-only users) |
+| **Wake** | Open ALB `/login`, complete invite-only email OTP; after ECS is awake the login page exchanges the handoff token for a session cookie then enters `/` |
 | **Sleep (manual)** | GitHub Actions → **Pause AWS dev** (also deletes VPC endpoints) |
 | **Resume (break-glass)** | **Deploy to AWS dev** or push `v*.*.*` |
 
 **Residual sleep cost:** ALB, ECR storage, Secrets Manager, RDS storage, DynamoDB power-state (negligible). VPC endpoint hourly charges should **not** continue while asleep.
 
-**Auth:** SES email OTP; `SESSION_AUTH_REQUIRED=true`; invite-only. Seeded admin: `ollioxenhomefree@gmail.com` (`is_admin=true`, also a normal user). Set Terraform `ses_from_email` to a verified SES identity.
+**Auth / SES:** `SESSION_AUTH_REQUIRED=true`; invite-only; Deploy wires `ses_from_email` from Actions variable `SES_FROM_EMAIL` (fallback `ollioxenhomefree@gmail.com`) — must be a verified SES identity. Seeded admin: `ollioxenhomefree@gmail.com`. Infinite `/login` loops mean handoff never became a cookie — see [auth-and-power.md](auth-and-power.md).
 
-**Note:** Local `ops-admin` cannot update ECS/RDS; use GitHub OIDC workflows or the login-wake path.
+**Note:** Local `ops-admin` cannot update ECS/RDS; use GitHub OIDC workflows or the login-wake path. Workflow map: [ci-workflows.md](ci-workflows.md).
