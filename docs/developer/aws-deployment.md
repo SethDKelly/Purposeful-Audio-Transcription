@@ -346,7 +346,7 @@ Or re-run **Deploy to AWS dev** with `component=api|ui|worker` after fixing the 
 
 **Cost control:** When the stack is idle, run **Pause AWS dev** (`pause-dev.yml`) to scale ECS (api/ui/worker) to 0 and stop RDS. Resume with **Deploy to AWS dev** or ALB `/login` wake when power control is enabled. Standing practice: [deferred_backlog.md](../planning/deferred_backlog.md) and [aws-operations.md](aws-operations.md).
 
-**Power Lambdas:** Terraform `local.power_lambda_env` must omit reserved keys such as `AWS_REGION` (runtime-injected). Deploy apply failures on `rre-dev-power-control` / `rre-dev-power-idle` usually mean a reserved env key slipped back into `infra/dev/power.tf` — see [aws-operations.md](aws-operations.md#power-lambda-env-terraform-pitfall).
+**Power Lambdas:** Terraform `local.power_lambda_env` must omit reserved keys such as `AWS_REGION` / `AWS_DEFAULT_REGION` (runtime-injected). Deploy apply failures on `rre-dev-power-control` / `rre-dev-power-idle` usually mean a reserved env key slipped back into `infra/dev/power.tf` — see [aws-operations.md](aws-operations.md#power-lambda-env-terraform-pitfall).
 
 ---
 

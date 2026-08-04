@@ -187,10 +187,10 @@ Expect: `research_oriented` (6 modules) then `full_multidisciplinary` (13). Scri
 | `API_BASE_URL` | ALB base (merged per function) |
 | `API_KEY` | Idle checker → API (idle Lambda only) |
 
-**Constraint:** Do **not** put `AWS_REGION` (or other [Lambda reserved keys](https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html)) in that map. The runtime already injects `AWS_REGION`; handlers use `os.environ.get("AWS_REGION") or … or "us-east-2"`. Setting it in Terraform causes create/update to fail for both power Lambdas.
+**Constraint:** Do **not** put `AWS_REGION`, `AWS_DEFAULT_REGION`, or other [Lambda reserved keys](https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html#configuration-envvars-runtime) in that map. The runtime already injects both region variables; handlers use `os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION") or "us-east-2"`. Setting either in Terraform causes create/update to fail for both power Lambdas.
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Deploy terraform apply fails creating/updating `*-power-control` / `*-power-idle` with a reserved environment key error | `AWS_REGION` (or another reserved key) in `power_lambda_env` | Remove it from `infra/dev/power.tf`; rely on the Lambda runtime; re-run **Deploy to AWS dev** |
+| Deploy terraform apply fails creating/updating `*-power-control` / `*-power-idle` with a reserved environment key error | `AWS_REGION` / `AWS_DEFAULT_REGION` (or another reserved key) in `power_lambda_env` | Remove it from `infra/dev/power.tf`; rely on the Lambda runtime; re-run **Deploy to AWS dev** |
 
-ECS task defs may still set `AWS_REGION` / `AWS_DEFAULT_REGION` (containers are not subject to the Lambda reserved-key list). CodeBuild orchestrator uses `AWS_DEFAULT_REGION`.
+ECS task defs may still set `AWS_REGION` / `AWS_DEFAULT_REGION` (containers are not subject to the Lambda reserved-key list). CodeBuild orchestrator sets `AWS_DEFAULT_REGION` (not a Lambda function).
