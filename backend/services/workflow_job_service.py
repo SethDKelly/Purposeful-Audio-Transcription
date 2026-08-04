@@ -293,37 +293,26 @@ class WorkflowJobService:
             if age < stale_after:
                 continue
             with get_session() as session:
-                current = self._engine._repository.get(session, run.id)
-                if current.status == WorkflowRunStatus.CREATED.value:
-                    continue
-                if current.attempt_count < max_attempts:
-                    current.status = WorkflowRunStatus.CREATED.value
-                    current.completed_at = None
-                    current.error_log = (
-                        f"Requeued after stale recovery (age={int(age)}s, "
-                        f"attempt {current.attempt_count}/{max_attempts})"
-                    )
-                    self._engine._repository.save(session, current)
-                    logger.warning(
-                        "Stale run %s requeued (age=%ss)",
-                        run.id,
-                        int(age),
-                        extra={"event": "workflow.run.stale_requeued", "run_id": run.id},
-                    )
-                else:
-                    current.status = WorkflowRunStatus.FAILED.value
-                    current.completed_at = utc_now()
-                    current.error_log = (
-                        f"Stale recovery exhausted retries after {int(age)}s "
-                        f"({max_attempts} attempt(s))"
-                    )
-                    self._engine._repository.save(session, current)
-                    logger.warning(
-                        "Stale run %s failed after exhausted retries",
-                        run.id,
-                        extra={"event": "workflow.run.stale_failed", "run_id": run.id},
-                    )
+                action = self._engine._repository.requeue_stale(
+                    session,
+                    run.id,
+                    expected_started_at=run.started_at,
+                    max_attempts=max_attempts,
+                    age_seconds=int(age),
+                )
+            if action is None:
+                continue
             recovered += 1
+            logger.warning(
+                "Stale run %s %s (age=%ss)",
+                run.id,
+                action,
+                int(age),
+                extra={
+                    "event": f"workflow.run.stale_{action}",
+                    "run_id": run.id,
+                },
+            )
         return recovered
 
     def _run_claimed(

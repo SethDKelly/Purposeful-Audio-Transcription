@@ -47,10 +47,16 @@ def heartbeat(request: Request) -> dict[str, str]:
 @router.post("/handoff", response_model=UserMeResponse)
 def handoff(body: HandoffBody, request: Request, response: Response) -> UserMeResponse:
     """Exchange Lambda wake handoff token for a Postgres session cookie."""
+    from backend.services.power_service import consume_handoff_nonce
+
     try:
         payload = parse_handoff_token(body.token)
     except ValueError as exc:
         raise AuthenticationError(str(exc)) from exc
+
+    nonce = str(payload.get("nonce") or "").strip()
+    if not consume_handoff_nonce(nonce):
+        raise AuthenticationError("Handoff token already used or invalid")
 
     email = str(payload.get("email") or "").strip().lower()
     user_id = str(payload.get("user_id") or "").strip()

@@ -33,11 +33,29 @@ def _is_public(path: str) -> bool:
     return False
 
 
+def _is_legacy_admin_api(path: str) -> bool:
+    """Legacy ``/api/*`` (non-v1) is Streamlit admin/eval — not multi-user product."""
+    if not path.startswith("/api/"):
+        return False
+    if path.startswith("/api/v1/"):
+        return False
+    if path in {"/api/health", "/api/live"}:
+        return False
+    return True
+
+
 def _unauthorized(request_id: str | None) -> JSONResponse:
     payload: dict[str, object] = {"detail": "Invalid or missing credentials"}
     if request_id:
         payload["request_id"] = request_id
     return JSONResponse(status_code=401, content=payload)
+
+
+def _forbidden(request_id: str | None) -> JSONResponse:
+    payload: dict[str, object] = {"detail": "Admin access required for legacy API routes"}
+    if request_id:
+        payload["request_id"] = request_id
+    return JSONResponse(status_code=403, content=payload)
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
@@ -46,6 +64,8 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
     - Auth endpoints under ``/api/v1/auth/`` are always public.
     - Valid ``X-API-Key`` (when configured) or session cookie satisfies the gate.
     - When neither auth mode is enabled, all routes pass (local/pytest default).
+    - Legacy ``/api/*`` (non-v1) requires admin (API key or session admin) when
+      auth is enabled, so ownership cannot be bypassed via Streamlit-era routes.
     """
 
     async def dispatch(
@@ -66,21 +86,29 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         api_ok = bool(api_enabled and provided and provided == settings.api_key)
 
         raw_cookie = request.cookies.get(settings.session_cookie_name)
-        session_ok = auth_service.resolve_session_token(raw_cookie) is not None
+        session_user = auth_service.resolve_session_token(raw_cookie)
+        session_ok = session_user is not None
 
-        if api_ok or session_ok:
-            # Touch idle activity clock for authenticated traffic.
-            try:
-                from backend.services.power_service import power_state_store
+        if not (api_ok or session_ok):
+            request_id = request_id_var.get()
+            return _unauthorized(request_id)
 
-                if session_ok or api_ok:
-                    power_state_store.touch_activity()
-            except Exception:  # noqa: BLE001
-                pass
-            return await call_next(request)
+        # Non-admin session users must use /api/v1 (ownership-enforced).
+        if (
+            _is_legacy_admin_api(path)
+            and not api_ok
+            and not (session_user and session_user.is_admin)
+        ):
+            return _forbidden(request_id_var.get())
 
-        request_id = request_id_var.get()
-        return _unauthorized(request_id)
+        # Touch idle activity clock for authenticated traffic.
+        try:
+            from backend.services.power_service import power_state_store
+
+            power_state_store.touch_activity()
+        except Exception:  # noqa: BLE001
+            pass
+        return await call_next(request)
 
 
 class RequestContextMiddleware(BaseHTTPMiddleware):

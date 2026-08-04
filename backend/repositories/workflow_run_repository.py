@@ -147,6 +147,112 @@ class WorkflowRunRepository:
             return None
         return _enrich_run(session, _from_row(row))
 
+    def claim_in_flight_for_resume(
+        self,
+        session: Session,
+        run_id: str,
+        expected_started_at: datetime,
+    ) -> WorkflowRun | None:
+        """Atomically fence an in-flight run for resume after worker restart.
+
+        Uses optimistic locking on ``started_at`` so two workers during a rolling
+        deploy cannot both resume the same run (second CAS loses).
+        """
+        in_flight = (
+            WorkflowRunStatus.PREPROCESSING.value,
+            WorkflowRunStatus.RUNNING_MODULES.value,
+            WorkflowRunStatus.SYNTHESIZING.value,
+        )
+        row = session.get(WorkflowRunRow, run_id)
+        if row is None:
+            return None
+        if row.status not in in_flight or row.cancel_requested:
+            return None
+        if _naive_utc(row.started_at) != _naive_utc(expected_started_at):
+            return None
+
+        now = _naive_utc(utc_now())
+        # WHERE uses the row's exact started_at value to avoid tz naive/aware mismatch.
+        result = session.execute(
+            update(WorkflowRunRow)
+            .where(
+                WorkflowRunRow.id == run_id,
+                WorkflowRunRow.status == row.status,
+                WorkflowRunRow.cancel_requested.is_(False),
+                WorkflowRunRow.started_at == row.started_at,
+            )
+            .values(started_at=now)
+        )
+        if result.rowcount != 1:
+            return None
+        session.expire_all()
+        row = session.get(WorkflowRunRow, run_id)
+        if row is None:
+            return None
+        return _enrich_run(session, _from_row(row))
+
+    def requeue_stale(
+        self,
+        session: Session,
+        run_id: str,
+        *,
+        expected_started_at: datetime,
+        max_attempts: int,
+        age_seconds: int,
+    ) -> str | None:
+        """Atomically requeue or fail a stale in-flight run. Returns action or None.
+
+        Conditional on status + ``started_at`` so concurrent recoveries cannot both
+        mutate the same abandoned run (and cannot steal a run another worker just
+        fenced via ``claim_in_flight_for_resume``).
+        """
+        row = session.get(WorkflowRunRow, run_id)
+        if row is None or row.status == WorkflowRunStatus.CREATED.value:
+            return None
+        if row.status not in _INCOMPLETE_STATUSES:
+            return None
+        if _naive_utc(row.started_at) != _naive_utc(expected_started_at):
+            return None
+
+        attempt = int(row.attempt_count or 0)
+        if attempt < max_attempts:
+            result = session.execute(
+                update(WorkflowRunRow)
+                .where(
+                    WorkflowRunRow.id == run_id,
+                    WorkflowRunRow.status == row.status,
+                    WorkflowRunRow.started_at == row.started_at,
+                    WorkflowRunRow.cancel_requested.is_(False),
+                )
+                .values(
+                    status=WorkflowRunStatus.CREATED.value,
+                    completed_at=None,
+                    error_log=(
+                        f"Requeued after stale recovery (age={age_seconds}s, "
+                        f"attempt {attempt}/{max_attempts})"
+                    ),
+                )
+            )
+            return "requeued" if result.rowcount == 1 else None
+
+        result = session.execute(
+            update(WorkflowRunRow)
+            .where(
+                WorkflowRunRow.id == run_id,
+                WorkflowRunRow.status == row.status,
+                WorkflowRunRow.started_at == row.started_at,
+            )
+            .values(
+                status=WorkflowRunStatus.FAILED.value,
+                completed_at=_naive_utc(utc_now()),
+                error_log=(
+                    f"Stale recovery exhausted retries after {age_seconds}s "
+                    f"({max_attempts} attempt(s))"
+                ),
+            )
+        )
+        return "failed" if result.rowcount == 1 else None
+
     def list_by_transcript_id(
         self,
         session: Session,
@@ -167,6 +273,14 @@ def new_workflow_run_id() -> str:
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
+
+
+def _naive_utc(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is not None:
+        return value.astimezone(UTC).replace(tzinfo=None)
+    return value
 
 
 def _to_row(run: WorkflowRun, *, owner_user_id: str | None = None) -> WorkflowRunRow:

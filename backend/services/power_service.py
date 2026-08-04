@@ -88,35 +88,86 @@ class PowerStateStore:
     def touch_activity(self, *, reset_idle_timer: bool = True) -> None:
         if not self.enabled:
             return
-        item = self.get_raw()
-        item["last_activity_at"] = _iso()
+        # Atomic attribute updates avoid lost writes vs idle-checker / set_active_jobs.
+        expr = "SET last_activity_at = :la"
+        values: dict[str, Any] = {":la": _iso()}
         if reset_idle_timer:
-            item["idle_timer_started_at"] = None
-        self.put_raw(item)
+            expr += " REMOVE idle_timer_started_at"
+        try:
+            self._table().update_item(
+                Key={"pk": POWER_STATE_PK},
+                UpdateExpression=expr,
+                ExpressionAttributeValues=values,
+            )
+        except Exception:  # noqa: BLE001
+            # Table may be empty on first boot — fall back to put.
+            item = self.get_raw()
+            item["last_activity_at"] = values[":la"]
+            if reset_idle_timer:
+                item["idle_timer_started_at"] = None
+            self.put_raw(item)
 
     def start_idle_timer(self) -> None:
         if not self.enabled:
             return
-        item = self.get_raw()
-        if not item.get("idle_timer_started_at"):
-            item["idle_timer_started_at"] = _iso()
-            item["last_activity_at"] = item.get("last_activity_at") or _iso()
-            self.put_raw(item)
+        now = _iso()
+        try:
+            self._table().update_item(
+                Key={"pk": POWER_STATE_PK},
+                UpdateExpression=(
+                    "SET idle_timer_started_at = if_not_exists(idle_timer_started_at, :now), "
+                    "last_activity_at = if_not_exists(last_activity_at, :now)"
+                ),
+                ExpressionAttributeValues={":now": now},
+            )
+        except Exception:  # noqa: BLE001
+            item = self.get_raw()
+            if not item.get("idle_timer_started_at"):
+                item["idle_timer_started_at"] = now
+                item["last_activity_at"] = item.get("last_activity_at") or now
+                self.put_raw(item)
 
     def set_state(self, state: str, **extra: Any) -> None:
         if not self.enabled:
             return
-        item = self.get_raw()
-        item["state"] = state
-        item.update(extra)
-        self.put_raw(item)
+        names: dict[str, str] = {"#s": "state"}
+        values: dict[str, Any] = {":s": state}
+        parts = ["#s = :s"]
+        for idx, (key, value) in enumerate(extra.items()):
+            # Allow only simple attribute keys (no path injection).
+            if not str(key).replace("_", "").isalnum():
+                continue
+            nk = f"#k{idx}"
+            vk = f":v{idx}"
+            names[nk] = str(key)
+            values[vk] = value
+            parts.append(f"{nk} = {vk}")
+        try:
+            self._table().update_item(
+                Key={"pk": POWER_STATE_PK},
+                UpdateExpression="SET " + ", ".join(parts),
+                ExpressionAttributeNames=names,
+                ExpressionAttributeValues=values,
+            )
+        except Exception:  # noqa: BLE001
+            item = self.get_raw()
+            item["state"] = state
+            item.update(extra)
+            self.put_raw(item)
 
     def set_active_jobs(self, count: int) -> None:
         if not self.enabled:
             return
-        item = self.get_raw()
-        item["active_jobs"] = int(count)
-        self.put_raw(item)
+        try:
+            self._table().update_item(
+                Key={"pk": POWER_STATE_PK},
+                UpdateExpression="SET active_jobs = :n",
+                ExpressionAttributeValues={":n": int(count)},
+            )
+        except Exception:  # noqa: BLE001
+            item = self.get_raw()
+            item["active_jobs"] = int(count)
+            self.put_raw(item)
 
 
 power_state_store = PowerStateStore()
@@ -152,6 +203,51 @@ def parse_handoff_token(token: str) -> dict[str, Any]:
     if int(payload.get("exp", 0)) < int(time.time()):
         raise ValueError("Handoff token expired")
     return payload
+
+
+# Process-local fallback when DynamoDB power control is disabled (pytest / local).
+_consumed_handoff_nonces: set[str] = set()
+
+
+def consume_handoff_nonce(nonce: str, *, ttl_seconds: int = 900) -> bool:
+    """Mark a handoff nonce as used. Returns False on replay.
+
+    When power control DynamoDB is enabled, uses a conditional PutItem so
+    concurrent API tasks cannot both exchange the same wake token.
+    """
+    cleaned = (nonce or "").strip()
+    if not cleaned:
+        return False
+
+    if power_state_store.enabled:
+        try:
+            from botocore.exceptions import ClientError
+
+            table = power_state_store._table()
+            expires = int(time.time()) + max(60, int(ttl_seconds))
+            table.put_item(
+                Item={
+                    "pk": f"HANDOFF#{cleaned}",
+                    "consumed_at": _iso(),
+                    "ttl": expires,
+                },
+                ConditionExpression="attribute_not_exists(pk)",
+            )
+            return True
+        except ClientError as exc:
+            code = (exc.response or {}).get("Error", {}).get("Code", "")
+            if code == "ConditionalCheckFailedException":
+                return False
+            logger.exception("Handoff nonce consume failed; rejecting token")
+            return False
+        except Exception:  # noqa: BLE001
+            logger.exception("Handoff nonce consume failed; rejecting token")
+            return False
+
+    if cleaned in _consumed_handoff_nonces:
+        return False
+    _consumed_handoff_nonces.add(cleaned)
+    return True
 
 
 def count_active_jobs() -> int:

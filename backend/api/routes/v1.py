@@ -11,7 +11,7 @@ import hashlib
 from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel, Field
 
-from backend.api.deps import resolve_auth_context
+from backend.api.deps import require_admin, resolve_auth_context
 from backend.api import ownership as ownership_api
 from backend.api.routes import cases as cases_routes
 from backend.api.routes import exploration as exploration_routes
@@ -269,7 +269,11 @@ def submit_finding_feedback_v1(
     finding_key: str,
     request: FindingFeedbackRequest,
     workflow_run_id: str,
+    http_request: Request,
 ) -> FindingFeedbackResponse:
+    ownership_api.assert_run_access(
+        workflow_run_id, resolve_auth_context(http_request)
+    )
     return feedback_routes.submit_finding_feedback(workflow_run_id, finding_key, request)
 
 
@@ -436,8 +440,14 @@ def update_case(
     response_model=AssignTranscriptCaseResponse,
 )
 def assign_transcript_case(
-    transcript_id: str, request: AssignTranscriptCaseRequest
+    transcript_id: str,
+    request: AssignTranscriptCaseRequest,
+    http_request: Request,
 ) -> AssignTranscriptCaseResponse:
+    ctx = resolve_auth_context(http_request)
+    ownership_api.assert_transcript_access(transcript_id, ctx)
+    if request.case_id is not None:
+        ownership_api.assert_case_access(request.case_id, ctx)
     return cases_routes.assign_transcript_case(transcript_id, request)
 
 
@@ -448,7 +458,10 @@ def delete_case(case_id: str, http_request: Request) -> Response:
 
 
 @router.post("/cases/{case_id}/longitudinal-synthesis")
-def run_longitudinal_synthesis(case_id: str, model: str | None = None) -> dict:
+def run_longitudinal_synthesis(
+    case_id: str, http_request: Request, model: str | None = None
+) -> dict:
+    ownership_api.assert_case_access(case_id, resolve_auth_context(http_request))
     payload = cases_routes.run_longitudinal_synthesis(case_id, model=model)
     return {"schema_version": SCHEMA_VERSION, **payload}
 
@@ -484,7 +497,8 @@ def module_lifecycle() -> ModuleLifecycleResponse:
     "/workflow-runs/{run_id}/knowledge-graph",
     response_model=KnowledgeGraphResponse,
 )
-def get_knowledge_graph(run_id: str) -> KnowledgeGraphResponse:
+def get_knowledge_graph(run_id: str, http_request: Request) -> KnowledgeGraphResponse:
+    ownership_api.assert_run_access(run_id, resolve_auth_context(http_request))
     return exploration_routes.get_knowledge_graph(run_id)
 
 
@@ -492,7 +506,10 @@ def get_knowledge_graph(run_id: str) -> KnowledgeGraphResponse:
     "/workflow-runs/{run_id}/structured-graph",
     response_model=StructuredGraphResponse,
 )
-def get_structured_graph(run_id: str) -> StructuredGraphResponse:
+def get_structured_graph(
+    run_id: str, http_request: Request
+) -> StructuredGraphResponse:
+    ownership_api.assert_run_access(run_id, resolve_auth_context(http_request))
     return exploration_routes.get_structured_graph(run_id)
 
 
@@ -501,8 +518,11 @@ def get_structured_graph(run_id: str) -> StructuredGraphResponse:
     response_model=CompareCaseTranscriptsResponse,
 )
 def compare_case_transcripts(
-    request: CompareCaseTranscriptsRequest,
+    request: CompareCaseTranscriptsRequest, http_request: Request
 ) -> CompareCaseTranscriptsResponse:
+    ownership_api.assert_case_access(
+        request.case_id, resolve_auth_context(http_request)
+    )
     return exploration_routes.compare_case_transcripts(request)
 
 
@@ -510,7 +530,12 @@ def compare_case_transcripts(
     "/transcripts/{transcript_id}/workflow-runs",
     response_model=TranscriptWorkflowRunsResponse,
 )
-def list_transcript_workflow_runs(transcript_id: str) -> TranscriptWorkflowRunsResponse:
+def list_transcript_workflow_runs(
+    transcript_id: str, http_request: Request
+) -> TranscriptWorkflowRunsResponse:
+    ownership_api.assert_transcript_access(
+        transcript_id, resolve_auth_context(http_request)
+    )
     return exploration_routes.list_transcript_workflow_runs(transcript_id)
 
 
@@ -519,19 +544,26 @@ def list_transcript_workflow_runs(transcript_id: str) -> TranscriptWorkflowRunsR
     response_model=TranscriptSafetyAssessmentResponse,
 )
 def get_transcript_safety_assessment(
-    transcript_id: str,
+    transcript_id: str, http_request: Request
 ) -> TranscriptSafetyAssessmentResponse:
+    ownership_api.assert_transcript_access(
+        transcript_id, resolve_auth_context(http_request)
+    )
     return workflows_routes.get_transcript_safety_assessment(transcript_id)
 
 
 @router.get("/transcripts/{transcript_id}/safety-events")
-def list_transcript_safety_events(transcript_id: str) -> dict:
+def list_transcript_safety_events(transcript_id: str, http_request: Request) -> dict:
+    ownership_api.assert_transcript_access(
+        transcript_id, resolve_auth_context(http_request)
+    )
     events = workflow_safety_service.list_events(transcript_id=transcript_id)
     return {"schema_version": SCHEMA_VERSION, "transcript_id": transcript_id, "events": events}
 
 
 @router.get("/workflow-runs/{run_id}/safety-events")
-def list_run_safety_events(run_id: str) -> dict:
+def list_run_safety_events(run_id: str, http_request: Request) -> dict:
+    ownership_api.assert_run_access(run_id, resolve_auth_context(http_request))
     events = workflow_safety_service.list_events(workflow_run_id=run_id)
     return {"schema_version": SCHEMA_VERSION, "workflow_run_id": run_id, "events": events}
 
@@ -540,7 +572,10 @@ def list_run_safety_events(run_id: str) -> dict:
     "/workflow-runs/{run_id}/findings",
     response_model=ExplorationFindingsResponse,
 )
-def list_run_findings(run_id: str) -> ExplorationFindingsResponse:
+def list_run_findings(
+    run_id: str, http_request: Request
+) -> ExplorationFindingsResponse:
+    ownership_api.assert_run_access(run_id, resolve_auth_context(http_request))
     return exploration_routes.list_exploration_findings(run_id)
 
 
@@ -548,12 +583,16 @@ def list_run_findings(run_id: str) -> ExplorationFindingsResponse:
     "/workflow-runs/{run_id}/findings/{finding_key:path}",
     response_model=FindingDrilldownResponse,
 )
-def get_finding_drilldown(run_id: str, finding_key: str) -> FindingDrilldownResponse:
+def get_finding_drilldown(
+    run_id: str, finding_key: str, http_request: Request
+) -> FindingDrilldownResponse:
+    ownership_api.assert_run_access(run_id, resolve_auth_context(http_request))
     return exploration_routes.get_finding_drilldown(run_id, finding_key)
 
 
 @router.get("/evaluations")
-def list_evaluations(limit: int = 50) -> dict:
+def list_evaluations(http_request: Request, limit: int = 50) -> dict:
+    require_admin(http_request)
     return {
         "schema_version": SCHEMA_VERSION,
         "runs": evaluation_run_service.list_recent(limit=limit),
@@ -561,9 +600,10 @@ def list_evaluations(limit: int = 50) -> dict:
 
 
 @router.get("/evaluations/{run_id}")
-def get_evaluation(run_id: str) -> dict:
+def get_evaluation(run_id: str, http_request: Request) -> dict:
     from fastapi import HTTPException
 
+    require_admin(http_request)
     row = evaluation_run_service.get(run_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Evaluation run not found")
@@ -571,7 +611,10 @@ def get_evaluation(run_id: str) -> dict:
 
 
 @router.post("/evaluations/runs")
-def create_evaluation_run(request: OfflineEvalRequest) -> dict:
+def create_evaluation_run(
+    request: OfflineEvalRequest, http_request: Request
+) -> dict:
+    require_admin(http_request)
     row = evaluation_run_service.run_offline_fixture(
         fixture_id=request.fixture_id,
         module_id=request.module_id,
@@ -581,7 +624,8 @@ def create_evaluation_run(request: OfflineEvalRequest) -> dict:
 
 
 @router.get("/cases/{case_id}/pinned-findings")
-def list_case_pinned_findings(case_id: str) -> dict:
+def list_case_pinned_findings(case_id: str, http_request: Request) -> dict:
+    ownership_api.assert_case_access(case_id, resolve_auth_context(http_request))
     detail = cases_routes.get_case(case_id)
     transcript_ids = {t.id for t in detail.transcripts}
     pinned: list[dict] = []

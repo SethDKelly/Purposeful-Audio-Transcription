@@ -126,13 +126,25 @@ def main() -> None:
                 extra={"event": "worker.resume.capped"},
             )
             break
+        # CAS on started_at so overlapping workers (ECS max 200% deploy) cannot
+        # both resume the same in-flight run.
+        claimed = workflow_job_service._engine.claim_in_flight_for_resume(
+            run.id, run.started_at
+        )
+        if claimed is None:
+            logger.info(
+                "Skip resume of run %s; another worker holds the fence",
+                run.id,
+                extra={"event": "worker.resume.lost_race", "run_id": run.id},
+            )
+            continue
         workflow_job_service._submit_tracked(
             workflow_job_service._run_claimed,
-            run.id,
-            run.workflow_id,
-            run.transcript_id,
-            run.model_used,
-            track_run_id=run.id,
+            claimed.id,
+            claimed.workflow_id,
+            claimed.transcript_id,
+            claimed.model_used,
+            track_run_id=claimed.id,
         )
         resumed += 1
     if resumed:

@@ -177,6 +177,14 @@ class WorkflowEngine:
         with get_session() as session:
             return self._repository.claim_queued(session, run_id)
 
+    def claim_in_flight_for_resume(
+        self, run_id: str, expected_started_at
+    ) -> WorkflowRun | None:
+        with get_session() as session:
+            return self._repository.claim_in_flight_for_resume(
+                session, run_id, expected_started_at
+            )
+
     def _module_concurrency(self) -> int:
         # SQLite write contention makes parallel module runs unsafe in pytest/local DB.
         if settings.is_sqlite:
