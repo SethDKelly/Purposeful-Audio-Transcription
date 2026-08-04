@@ -222,6 +222,47 @@ def test_idle_status_payload_shape() -> None:
     assert payload["kill_long_jobs_enabled"] is True
 
 
+def test_count_active_jobs_includes_running_modules(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Idle sleep must see claimed runs (running_modules), not only 'created'."""
+    from backend.db.models import TranscriptRow
+    from backend.services.power_service import count_active_jobs, idle_status_payload
+
+    tid = str(uuid.uuid4())
+    run_id = str(uuid.uuid4())
+    with get_session() as session:
+        session.add(
+            TranscriptRow(
+                id=tid,
+                title="active",
+                raw_text="A: hi",
+                source_type="paste",
+                created_at=utc_now(),
+            )
+        )
+        session.add(
+            WorkflowRunRow(
+                id=run_id,
+                workflow_id="quick_review",
+                transcript_id=tid,
+                status="running_modules",
+                started_at=utc_now() - timedelta(hours=3),
+                cancel_requested=False,
+                attempt_count=1,
+                safety_mode=False,
+            )
+        )
+        session.flush()
+
+    assert count_active_jobs() >= 1
+
+    monkeypatch.setattr(settings, "idle_sleep_after_seconds", 1.0)
+    payload = idle_status_payload()
+    assert payload["active_jobs"] >= 1
+    assert payload["should_sleep"] is False
+
+
 def test_power_status_public(client: TestClient) -> None:
     r = client.get("/api/v1/ops/power/status")
     assert r.status_code == 200
