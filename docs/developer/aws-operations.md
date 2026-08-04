@@ -172,3 +172,25 @@ Expect: `research_oriented` (6 modules) then `full_multidisciplinary` (13). Scri
 **Auth:** SES email OTP; `SESSION_AUTH_REQUIRED=true`; invite-only. Seeded admin: `ollioxenhomefree@gmail.com` (`is_admin=true`, also a normal user). Set Terraform `ses_from_email` to a verified SES identity.
 
 **Note:** Local `ops-admin` cannot update ECS/RDS; use GitHub OIDC workflows or the login-wake path.
+
+### Power Lambda env (Terraform pitfall)
+
+`rre-dev-power-control` and `rre-dev-power-idle` share `local.power_lambda_env` in `infra/dev/power.tf`:
+
+| Key | Purpose |
+|-----|---------|
+| `POWER_STATE_TABLE` | DynamoDB power-state table |
+| `SES_FROM_EMAIL` | OTP From address |
+| `POWER_HANDOFF_SECRET` | Wake handoff HMAC (must match API task) |
+| `CODEBUILD_PROJECT_NAME` | Orchestrator project |
+| `NAME_PREFIX` | Resource name prefix (`rre-dev`) |
+| `API_BASE_URL` | ALB base (merged per function) |
+| `API_KEY` | Idle checker → API (idle Lambda only) |
+
+**Constraint:** Do **not** put `AWS_REGION` (or other [Lambda reserved keys](https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html)) in that map. The runtime already injects `AWS_REGION`; handlers use `os.environ.get("AWS_REGION") or … or "us-east-2"`. Setting it in Terraform causes create/update to fail for both power Lambdas.
+
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| Deploy terraform apply fails creating/updating `*-power-control` / `*-power-idle` with a reserved environment key error | `AWS_REGION` (or another reserved key) in `power_lambda_env` | Remove it from `infra/dev/power.tf`; rely on the Lambda runtime; re-run **Deploy to AWS dev** |
+
+ECS task defs may still set `AWS_REGION` / `AWS_DEFAULT_REGION` (containers are not subject to the Lambda reserved-key list). CodeBuild orchestrator uses `AWS_DEFAULT_REGION`.

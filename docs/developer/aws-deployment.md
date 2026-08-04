@@ -198,7 +198,7 @@ AmazonTranscribeProvider  ← S3 uploads bucket
 | `BEDROCK_MODEL_ID` | e.g. `us.anthropic.claude-sonnet-4-5-20250929-v1:0` |
 | `TRANSCRIPTION_PROVIDER` | `transcribe` |
 | `UPLOADS_BUCKET` | `rre-dev-uploads-…` |
-| `AWS_REGION` | `us-east-2` |
+| `AWS_REGION` | `us-east-2` (set on **ECS** tasks; **not** on power Lambdas — reserved by the Lambda runtime; see [aws-operations.md](aws-operations.md#power-lambda-env-terraform-pitfall)) |
 
 Formal notes: [../evaluation/llm-evaluation-bedrock.md](../evaluation/llm-evaluation-bedrock.md) · [../evaluation/asr-evaluation-transcribe.md](../evaluation/asr-evaluation-transcribe.md).
 
@@ -344,7 +344,9 @@ aws ecs update-service --cluster rre-dev-cluster --service rre-dev-api \
 
 Or re-run **Deploy to AWS dev** with `component=api|ui|worker` after fixing the image/tag. Worker shares the API image digest; rolling worker alone redeploys the last pushed `rre-dev-api` image with `RRE_PROCESS=worker`.
 
-**Cost control:** When the stack is idle, run **Pause AWS dev** (`pause-dev.yml`) to scale ECS (api/ui/worker) to 0 and stop RDS. Resume with **Deploy to AWS dev**. Standing practice: [deferred_backlog.md](../planning/deferred_backlog.md) and [aws-operations.md](aws-operations.md).
+**Cost control:** When the stack is idle, run **Pause AWS dev** (`pause-dev.yml`) to scale ECS (api/ui/worker) to 0 and stop RDS. Resume with **Deploy to AWS dev** or ALB `/login` wake when power control is enabled. Standing practice: [deferred_backlog.md](../planning/deferred_backlog.md) and [aws-operations.md](aws-operations.md).
+
+**Power Lambdas:** Terraform `local.power_lambda_env` must omit reserved keys such as `AWS_REGION` (runtime-injected). Deploy apply failures on `rre-dev-power-control` / `rre-dev-power-idle` usually mean a reserved env key slipped back into `infra/dev/power.tf` — see [aws-operations.md](aws-operations.md#power-lambda-env-terraform-pitfall).
 
 ---
 
