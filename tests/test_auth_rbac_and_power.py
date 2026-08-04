@@ -262,6 +262,6 @@ def test_idle_status_probe_does_not_touch_activity(monkeypatch: pytest.MonkeyPat
     assert touches.call_count == 0
 
     # Ordinary authenticated traffic still refreshes the idle clock.
-    heartbeat = client.post("/api/v1/ops/power/heartbeat", headers=headers)
-    assert heartbeat.status_code == 200
+    workflows = client.get("/api/workflows", headers=headers)
+    assert workflows.status_code == 200
     assert touches.call_count == 1
