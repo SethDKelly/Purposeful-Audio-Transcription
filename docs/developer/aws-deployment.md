@@ -198,7 +198,7 @@ AmazonTranscribeProvider  ← S3 uploads bucket
 | `BEDROCK_MODEL_ID` | e.g. `us.anthropic.claude-sonnet-4-5-20250929-v1:0` |
 | `TRANSCRIPTION_PROVIDER` | `transcribe` |
 | `UPLOADS_BUCKET` | `rre-dev-uploads-…` |
-| `AWS_REGION` | `us-east-2` (set on **ECS** tasks; **not** on power Lambdas — reserved by the Lambda runtime; see [aws-operations.md](aws-operations.md#power-lambda-env-terraform-pitfall)) |
+| `AWS_REGION` | `us-east-2` on **ECS** tasks (`AWS_DEFAULT_REGION` too). Do **not** set either on power Lambdas (reserved); see [aws-operations.md](aws-operations.md#power-lambda-env-terraform-pitfall) |
 
 Formal notes: [../evaluation/llm-evaluation-bedrock.md](../evaluation/llm-evaluation-bedrock.md) · [../evaluation/asr-evaluation-transcribe.md](../evaluation/asr-evaluation-transcribe.md).
 
