@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Navigate, Outlet, useNavigate } from 'react-router-dom'
 import { ApiError, api } from '../api/client'
+
+const requireSession =
+  import.meta.env.VITE_SESSION_AUTH_REQUIRED === 'true' ||
+  import.meta.env.PROD
 
 export function AppShell() {
   const navigate = useNavigate()
@@ -20,6 +24,11 @@ export function AppShell() {
   }
 
   const signedIn = me.data && !(me.error instanceof ApiError && me.error.status === 401)
+  const isAdmin = Boolean(signedIn && me.data?.is_admin)
+
+  if (requireSession && me.isFetched && !signedIn) {
+    return <Navigate to="/login" replace />
+  }
 
   return (
     <div className="app-shell">
@@ -31,10 +40,12 @@ export function AppShell() {
         <NavLink to="/ingest">Ingest</NavLink>
         <NavLink to="/cases">Cases</NavLink>
         <NavLink to="/modules">Modules</NavLink>
-        <NavLink to="/evaluations">Evals</NavLink>
+        {isAdmin && <NavLink to="/evaluations">Evals</NavLink>}
         <NavLink to="/settings">Settings</NavLink>
         <span className="muted" style={{ marginLeft: 'auto', fontSize: '0.85rem' }}>
-          {signedIn ? me.data?.email : 'Not signed in'}
+          {signedIn
+            ? `${me.data?.email}${isAdmin ? ' (admin)' : ''}`
+            : 'Not signed in'}
         </span>
         {signedIn ? (
           <button type="button" onClick={onLogout} style={{ marginLeft: '0.75rem' }}>

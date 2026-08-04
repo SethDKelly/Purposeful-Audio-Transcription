@@ -27,40 +27,64 @@ resource "aws_ecs_task_definition" "api" {
       protocol      = "tcp"
     }]
 
-    environment = [
-      { name = "LOG_JSON", value = "true" },
-      { name = "LOG_LEVEL", value = "INFO" },
-      { name = "PYTHONUNBUFFERED", value = "1" },
-      { name = "LLM_PROVIDER", value = var.llm_provider },
-      { name = "BEDROCK_MODEL_ID", value = var.bedrock_model_id },
-      { name = "UPLOADS_BUCKET", value = aws_s3_bucket.uploads.bucket },
-      { name = "TRANSCRIPTION_PROVIDER", value = var.transcription_provider },
-      { name = "TRANSCRIBE_TIMEOUT_SECONDS", value = "3600" },
-      { name = "WORKFLOW_MODULE_CONCURRENCY", value = "3" },
-      { name = "BEDROCK_PROMPT_CACHE", value = "true" },
-      { name = "BEDROCK_PROMPT_CACHE_TTL", value = "1h" },
-      { name = "BEDROCK_MAX_TOKENS", value = "8192" },
-      { name = "MODULE_RUN_MAX_RETRIES", value = "1" },
-      { name = "WORKFLOW_WORKER_ENABLED", value = "true" },
-      { name = "WORKFLOW_JOB_TIMEOUT_SECONDS", value = "7200" },
-      { name = "WORKFLOW_JOB_MAX_ATTEMPTS", value = "2" },
-      { name = "DIARIZATION_ENABLED", value = var.diarization_enabled ? "true" : "false" },
-      { name = "ALEMBIC_AUTO_UPGRADE", value = "true" },
-      { name = "TEMP_DIR", value = "/tmp/rre" },
-      { name = "AWS_REGION", value = var.aws_region },
-      { name = "AWS_DEFAULT_REGION", value = var.aws_region },
-    ]
+    environment = concat(
+      [
+        { name = "LOG_JSON", value = "true" },
+        { name = "LOG_LEVEL", value = "INFO" },
+        { name = "PYTHONUNBUFFERED", value = "1" },
+        { name = "LLM_PROVIDER", value = var.llm_provider },
+        { name = "BEDROCK_MODEL_ID", value = var.bedrock_model_id },
+        { name = "UPLOADS_BUCKET", value = aws_s3_bucket.uploads.bucket },
+        { name = "TRANSCRIPTION_PROVIDER", value = var.transcription_provider },
+        { name = "TRANSCRIBE_TIMEOUT_SECONDS", value = "3600" },
+        { name = "WORKFLOW_MODULE_CONCURRENCY", value = "3" },
+        { name = "BEDROCK_PROMPT_CACHE", value = "true" },
+        { name = "BEDROCK_PROMPT_CACHE_TTL", value = "1h" },
+        { name = "BEDROCK_MAX_TOKENS", value = "8192" },
+        { name = "MODULE_RUN_MAX_RETRIES", value = "1" },
+        { name = "WORKFLOW_WORKER_ENABLED", value = "true" },
+        { name = "WORKFLOW_JOB_TIMEOUT_SECONDS", value = "10800" },
+        { name = "WORKFLOW_JOB_STALE_SECONDS", value = "11400" },
+        { name = "WORKFLOW_JOB_MAX_ATTEMPTS", value = "2" },
+        { name = "DIARIZATION_ENABLED", value = var.diarization_enabled ? "true" : "false" },
+        { name = "ALEMBIC_AUTO_UPGRADE", value = "true" },
+        { name = "TEMP_DIR", value = "/tmp/rre" },
+        { name = "AWS_REGION", value = var.aws_region },
+        { name = "AWS_DEFAULT_REGION", value = var.aws_region },
+        { name = "SESSION_AUTH_REQUIRED", value = "true" },
+        { name = "AUTH_INVITE_ONLY", value = "true" },
+        { name = "EMAIL_DELIVERY", value = "ses" },
+        { name = "SES_FROM_EMAIL", value = var.ses_from_email },
+        { name = "KILL_LONG_JOBS_ENABLED", value = "true" },
+        { name = "KILL_LONG_JOBS_SECONDS", value = "10800" },
+        { name = "IDLE_SLEEP_AFTER_SECONDS", value = "7200" },
+        { name = "POWER_CONTROL_ENABLED", value = var.enable_power_control ? "true" : "false" },
+        {
+          name  = "POWER_STATE_TABLE"
+          value = var.enable_power_control ? aws_dynamodb_table.power_state[0].name : ""
+        },
+      ],
+      local.https_enabled ? [{ name = "AUTH_COOKIE_SECURE", value = "true" }] : [],
+    )
 
-    secrets = [
-      {
-        name      = "DATABASE_URL"
-        valueFrom = "${aws_secretsmanager_secret.database.arn}:database_url::"
-      },
-      {
-        name      = "API_KEY"
-        valueFrom = "${aws_secretsmanager_secret.api_key.arn}:api_key::"
-      },
-    ]
+    secrets = concat(
+      [
+        {
+          name      = "DATABASE_URL"
+          valueFrom = "${aws_secretsmanager_secret.database.arn}:database_url::"
+        },
+        {
+          name      = "API_KEY"
+          valueFrom = "${aws_secretsmanager_secret.api_key.arn}:api_key::"
+        },
+      ],
+      var.enable_power_control ? [
+        {
+          name      = "POWER_HANDOFF_SECRET"
+          valueFrom = "${aws_secretsmanager_secret.power_handoff[0].arn}:power_handoff_secret::"
+        },
+      ] : [],
+    )
 
     logConfiguration = {
       logDriver = "awslogs"
@@ -310,13 +334,13 @@ resource "aws_ecs_task_definition" "worker" {
       { name = "BEDROCK_PROMPT_CACHE_TTL", value = "1h" },
       { name = "BEDROCK_MAX_TOKENS", value = "8192" },
       { name = "MODULE_RUN_MAX_RETRIES", value = "1" },
-      { name = "WORKFLOW_JOB_TIMEOUT_SECONDS", value = "7200" },
+      { name = "WORKFLOW_JOB_TIMEOUT_SECONDS", value = "10800" },
       { name = "WORKFLOW_JOB_MAX_ATTEMPTS", value = "2" },
       { name = "WORKFLOW_WORKER_POLL_SECONDS", value = "2" },
       { name = "WORKFLOW_WORKER_MAX_CLAIM_PER_POLL", value = "1" },
       { name = "WORKFLOW_WORKER_MAX_IN_FLIGHT", value = "2" },
       { name = "WORKFLOW_WORKER_HEALTH_PORT", value = "8080" },
-      { name = "WORKFLOW_JOB_STALE_SECONDS", value = "7800" },
+      { name = "WORKFLOW_JOB_STALE_SECONDS", value = "11400" },
       { name = "BEDROCK_THROTTLE_MAX_RETRIES", value = "5" },
       { name = "BEDROCK_THROTTLE_BASE_SECONDS", value = "2" },
       { name = "DIARIZATION_ENABLED", value = var.diarization_enabled ? "true" : "false" },
@@ -324,6 +348,14 @@ resource "aws_ecs_task_definition" "worker" {
       { name = "TEMP_DIR", value = "/tmp/rre" },
       { name = "AWS_REGION", value = var.aws_region },
       { name = "AWS_DEFAULT_REGION", value = var.aws_region },
+      { name = "KILL_LONG_JOBS_ENABLED", value = "true" },
+      { name = "KILL_LONG_JOBS_SECONDS", value = "10800" },
+      { name = "IDLE_SLEEP_AFTER_SECONDS", value = "7200" },
+      { name = "POWER_CONTROL_ENABLED", value = var.enable_power_control ? "true" : "false" },
+      {
+        name  = "POWER_STATE_TABLE"
+        value = var.enable_power_control ? aws_dynamodb_table.power_state[0].name : ""
+      },
     ]
 
     secrets = [

@@ -18,6 +18,7 @@ from backend.api.routes import (
     models,
     module_stream,
     modules,
+    power,
     process,
     purposes,
     queue,
@@ -176,6 +177,7 @@ app.add_middleware(RequestContextMiddleware)
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(power.router)
 app.include_router(queue.router)
 app.include_router(models.router)
 app.include_router(transcribe.router)

@@ -147,6 +147,13 @@ def main() -> None:
                     recovered,
                     extra={"event": "worker.stale_recovered", "count": recovered},
                 )
+            killed = workflow_job_service.enforce_kill_mode()
+            if killed:
+                logger.warning(
+                    "Kill mode cancelled %s job(s)",
+                    killed,
+                    extra={"event": "worker.kill_mode", "count": killed},
+                )
             started = workflow_job_service.poll_once()
             if started:
                 logger.info("Worker claimed %s job(s)", started)

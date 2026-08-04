@@ -6,30 +6,20 @@ Living access-model plan. **Near-term implementation:** [phases/003](phases/003_
 
 | Layer | Mechanism |
 |-------|-----------|
-| Edge | Optional ACM HTTPS on ALB |
-| API | Shared `X-API-Key` from Secrets Manager |
-| React | `VITE_API_KEY` at build/runtime (same key) |
-| Streamlit admin | Same API key via env / Secrets |
+| Edge | Optional ACM HTTPS on ALB; power-control Lambda for `/login` + OTP wake when asleep |
+| API | Session cookie (invite-only email OTP via SES on AWS) + shared `X-API-Key` break-glass for worker/admin |
+| RBAC | `user` (ownership) and `admin` (`is_admin=true` ⊆ user capabilities). Seeded admin: `ollioxenhomefree@gmail.com` |
+| React | Session cookies; admin-gated evals nav |
 
-This is a **single shared secret**, not per-user identity. Adequate for private UAT; **not** for external multi-user or shared practice workspaces.
+## Near-term target — shipped
 
-## Near-term target (v2.1 phase 003) — email OTP first
-
-Per **ADR 001**, implement passwordless email login before Cognito/enterprise SSO:
+Passwordless email OTP + ownership + session admin RBAC. SES delivery on AWS (`EMAIL_DELIVERY=ses`). Invite-only (`AUTH_INVITE_ONLY=true`).
 
 ```text
-email → one-time code → secure session cookie → authenticated API
+email → one-time code (SES) → secure session cookie → authenticated API
 ```
 
-| Concern | Choice |
-|---------|--------|
-| Identity | `User` row keyed by email |
-| Ownership field | `owner_user_id` on transcripts, cases, runs, reports, exports |
-| Product UI auth | Session cookie (HttpOnly); no shared key in user-facing React |
-| Break-glass | Keep API key for worker/admin/dev only |
-| Audit | Login / logout / ownership denials |
-
-Do **not** start with Cognito, Google, Okta, SAML, or OIDC for this phase.
+Do **not** start with Cognito, Google, Okta, SAML, or OIDC yet (ADR 001).
 
 ## Longer-term access models (evaluate in order after 003)
 

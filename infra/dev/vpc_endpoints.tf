@@ -65,7 +65,8 @@ resource "aws_vpc_endpoint" "s3" {
   route_table_ids   = local.s3_route_table_ids
 
   tags = {
-    Name = "${local.name}-s3"
+    Name    = "${local.name}-s3"
+    Project = "rre"
   }
 }
 
@@ -80,6 +81,7 @@ resource "aws_vpc_endpoint" "interface" {
   private_dns_enabled = true
 
   tags = {
-    Name = "${local.name}-${replace(each.value, ".", "-")}"
+    Name    = "${local.name}-${replace(each.value, ".", "-")}"
+    Project = "rre"
   }
 }

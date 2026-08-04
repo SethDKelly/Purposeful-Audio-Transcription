@@ -16,3 +16,7 @@
 # Rollback to Stage A if ECR pulls fail:
 # enable_no_egress_networking = false
 # enable_vpc_endpoints = true
+
+# Power control (ALB→Lambda login/wake + CodeBuild sleep/wake). Requires verified SES identity.
+ses_from_email = "ollioxenhomefree@gmail.com"
+# enable_power_control = true

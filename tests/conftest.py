@@ -13,6 +13,11 @@ os.environ["DATABASE_URL"] = f"sqlite:///{_TEST_DB.as_posix()}"
 os.environ["ALEMBIC_AUTO_UPGRADE"] = "false"
 os.environ["API_KEY"] = ""
 os.environ["AUTO_MARK_TRANSCRIPT_READY"] = "true"
+# Open registration in unit tests; AWS ECS sets AUTH_INVITE_ONLY=true.
+os.environ["AUTH_INVITE_ONLY"] = "false"
+os.environ["EMAIL_DELIVERY"] = "dev_log"
+os.environ["KILL_LONG_JOBS_ENABLED"] = "true"
+os.environ["POWER_CONTROL_ENABLED"] = "false"
 
 
 @pytest.fixture(autouse=True)

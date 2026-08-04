@@ -152,13 +152,23 @@ Expect: `research_oriented` (6 modules) then `full_multidisciplinary` (13). Scri
 
 ## Pause / resume (when idle)
 
-**Standing practice:** Pause AWS when the stack is idle. **Deploy only for minor-version releases** — push of tag `v*.*.*` or manual **Deploy to AWS dev** (`workflow_dispatch`). Ordinary commits to `main` do **not** wake AWS. Resume via that same deploy workflow.
+**Preferred path — power control (middle idle depth):**
+
+| Mode | Behavior |
+|------|----------|
+| **Sleep** | ECS desired **0**, **delete** Interface (+ S3 gateway) VPC endpoints, **stop** RDS. **ALB kept** (~$16/mo). |
+| **Wake** | Sign in at `/login` (ALB → Lambda). OTP via SES; successful verify starts CodeBuild orchestrator (RDS start → recreate endpoints → scale ECS). Cold start often **5–15+ minutes**. |
+| **Idle timer** | After **2 hours** with no active jobs and no authenticated activity → automatic sleep (EventBridge). |
+| **Kill mode** | `KILL_LONG_JOBS_ENABLED=true` (default): if any job exceeds **3 hours**, **cancel all** jobs and start the idle timer. |
 
 | Action | How |
 |--------|-----|
-| **Pause** | GitHub Actions → **Pause AWS dev** → Run workflow (`workflow_dispatch` works once `pause-dev.yml` is on `main`) |
-| **Resume** | Actions → **Deploy to AWS dev** (`workflow_dispatch`), or push a `v*.*.*` tag |
+| **Wake** | Open ALB `/login`, complete email OTP (invite-only users) |
+| **Sleep (manual)** | GitHub Actions → **Pause AWS dev** (also deletes VPC endpoints) |
+| **Resume (break-glass)** | **Deploy to AWS dev** or push `v*.*.*` |
 
-Pause sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Full steps, residual costs (ALB, ECR, Secrets Manager, RDS storage), and CLI equivalents: [infra/dev/README.md](../../infra/dev/README.md).
+**Residual sleep cost:** ALB, ECR storage, Secrets Manager, RDS storage, DynamoDB power-state (negligible). VPC endpoint hourly charges should **not** continue while asleep.
 
-**Note:** Local `ops-admin` cannot update ECS/RDS; use the GitHub workflow (OIDC `dev-github-deploy`).
+**Auth:** SES email OTP; `SESSION_AUTH_REQUIRED=true`; invite-only. Seeded admin: `ollioxenhomefree@gmail.com` (`is_admin=true`, also a normal user). Set Terraform `ses_from_email` to a verified SES identity.
+
+**Note:** Local `ops-admin` cannot update ECS/RDS; use GitHub OIDC workflows or the login-wake path.

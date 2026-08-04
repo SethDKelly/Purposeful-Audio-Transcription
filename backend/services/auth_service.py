@@ -53,6 +53,18 @@ class AuthService:
             raise AuthValidationError("Enter a valid email address")
 
         with get_session() as session:
+            user = session.scalars(
+                select(UserRow).where(UserRow.email == normalized)
+            ).first()
+            if settings.auth_invite_only:
+                # Anti-enumeration: same outward behavior for unknown emails.
+                if user is None or not user.is_active:
+                    logger.info(
+                        "Login code skipped (invite-only / inactive)",
+                        extra={"event": "auth.request_code.skipped", "email": normalized},
+                    )
+                    return
+
             hour_ago = _utc_now() - timedelta(hours=1)
             recent = session.scalar(
                 select(func.count())
@@ -125,6 +137,8 @@ class AuthService:
                 select(UserRow).where(UserRow.email == normalized)
             ).first()
             if user is None:
+                if settings.auth_invite_only:
+                    raise AuthenticationError("Account is not registered")
                 user = UserRow(
                     id=str(uuid.uuid4()),
                     email=normalized,

@@ -195,6 +195,8 @@ class WorkflowEngine:
             raise WorkflowRunCancelled(f"Workflow run {workflow_run.id} cancelled")
 
         timeout = float(settings.workflow_job_timeout_seconds or 0)
+        if settings.kill_long_jobs_enabled:
+            timeout = float(settings.kill_long_jobs_seconds or timeout)
         if timeout > 0 and (time.monotonic() - started) > timeout:
             workflow_run.status = WorkflowRunStatus.FAILED.value
             workflow_run.completed_at = utc_now()

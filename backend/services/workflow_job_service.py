@@ -377,6 +377,91 @@ class WorkflowJobService:
             )
         return len(incomplete)
 
+    def enforce_kill_mode(self) -> int:
+        """If kill mode is on and any active job exceeds the limit, cancel all jobs.
+
+        Returns number of jobs cancelled/failed. Starts the idle timer afterward.
+        """
+        if not settings.kill_long_jobs_enabled:
+            return 0
+        limit = float(settings.kill_long_jobs_seconds or 0)
+        if limit <= 0:
+            return 0
+
+        from datetime import UTC
+
+        now = utc_now()
+        offender = False
+        runs = self._engine.list_incomplete()
+        for run in runs:
+            started = run.started_at
+            if started.tzinfo is None:
+                started = started.replace(tzinfo=UTC)
+            age = (now - started).total_seconds()
+            if age >= limit:
+                offender = True
+                break
+        if not offender:
+            return 0
+
+        # Also treat status "running" rows as incomplete even if list filter differs
+        from sqlalchemy import select
+
+        from backend.db.models import WorkflowRunRow
+
+        with get_session() as session:
+            extra = session.scalars(
+                select(WorkflowRunRow).where(
+                    WorkflowRunRow.status.in_(
+                        (
+                            WorkflowRunStatus.CREATED.value,
+                            WorkflowRunStatus.RUNNING_MODULES.value,
+                            "running",
+                            "queued",
+                            "pending",
+                        )
+                    )
+                )
+            ).all()
+            run_ids = {r.id for r in runs} | {r.id for r in extra}
+
+        cancelled = 0
+        for run_id in run_ids:
+            with get_session() as session:
+                current = self._engine._repository.get(session, run_id)
+                if current is None:
+                    continue
+                if current.status in {
+                    WorkflowRunStatus.COMPLETED.value,
+                    WorkflowRunStatus.FAILED.value,
+                    WorkflowRunStatus.CANCELLED.value,
+                }:
+                    continue
+                current.cancel_requested = True
+                current.status = WorkflowRunStatus.CANCELLED.value
+                current.completed_at = utc_now()
+                current.error_log = (
+                    f"Kill mode: cancelled all jobs after a run exceeded "
+                    f"{int(limit)}s"
+                )
+                self._engine._repository.save(session, current)
+                cancelled += 1
+
+        try:
+            from backend.services.power_service import power_state_store
+
+            power_state_store.start_idle_timer()
+            power_state_store.set_active_jobs(0)
+        except Exception:  # noqa: BLE001
+            logger.exception("Failed to start idle timer after kill mode")
+
+        logger.warning(
+            "Kill mode terminated %s job(s); idle timer started",
+            cancelled,
+            extra={"event": "workflow.kill_mode", "cancelled": cancelled},
+        )
+        return cancelled
+
     def shutdown(self) -> None:
         self._executor.shutdown(wait=False, cancel_futures=True)
 

@@ -24,8 +24,14 @@ User enters email
 Preferred initial implementation:
 
 ```text
-email + one-time code
+email + one-time code (SES on AWS; dev_log locally)
 ```
+
+**Invite-only:** codes are only issued for active pre-seeded `users` rows (anti-enumeration: unknown emails still get a generic OK). Seeded admin: `ollioxenhomefree@gmail.com` with `is_admin=true` (admin is also a standard user).
+
+**RBAC:** Session admins bypass ownership checks (same as API-key admin). Standard users remain ownership-scoped.
+
+**Power / sleep:** When the stack is asleep, ALB routes `/login` and `/api/v1/ops/power/auth/*` to Lambda + DynamoDB + SES so sign-on and wake still work without RDS/ECS.
 
 ---
 

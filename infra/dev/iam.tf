@@ -37,7 +37,7 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
   name = "${local.name}-ecs-execution-secrets"
   role = aws_iam_role.ecs_execution.id
 
-  # API + worker may inject DB and API key.
+  # API + worker may inject DB and API key (+ power handoff when enabled).
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -45,10 +45,13 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
       Action = [
         "secretsmanager:GetSecretValue",
       ]
-      Resource = [
-        aws_secretsmanager_secret.database.arn,
-        aws_secretsmanager_secret.api_key.arn,
-      ]
+      Resource = concat(
+        [
+          aws_secretsmanager_secret.database.arn,
+          aws_secretsmanager_secret.api_key.arn,
+        ],
+        var.enable_power_control ? [aws_secretsmanager_secret.power_handoff[0].arn] : [],
+      )
     }]
   })
 }
@@ -144,6 +147,30 @@ data "aws_iam_policy_document" "ecs_task_api" {
     actions = [
       "logs:CreateLogStream",
       "logs:PutLogEvents",
+    ]
+    resources = ["*"]
+  }
+
+  dynamic "statement" {
+    for_each = var.enable_power_control ? [1] : []
+    content {
+      sid    = "DynamoPowerState"
+      effect = "Allow"
+      actions = [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+      ]
+      resources = [aws_dynamodb_table.power_state[0].arn]
+    }
+  }
+
+  statement {
+    sid    = "SesSend"
+    effect = "Allow"
+    actions = [
+      "ses:SendEmail",
+      "ses:SendRawEmail",
     ]
     resources = ["*"]
   }
@@ -252,6 +279,20 @@ data "aws_iam_policy_document" "ecs_task_worker" {
       test     = "StringEquals"
       variable = "cloudwatch:namespace"
       values   = ["RRE/Dev"]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = var.enable_power_control ? [1] : []
+    content {
+      sid    = "DynamoPowerState"
+      effect = "Allow"
+      actions = [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+      ]
+      resources = [aws_dynamodb_table.power_state[0].arn]
     }
   }
 }

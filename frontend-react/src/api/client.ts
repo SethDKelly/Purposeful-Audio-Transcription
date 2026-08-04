@@ -63,6 +63,27 @@ export const api = {
     request<{ id: string; email: string; display_name?: string | null; is_admin: boolean }>(
       '/api/v1/auth/me',
     ),
+  powerStatus: () =>
+    request<Record<string, unknown>>('/api/v1/ops/power/status'),
+  powerRequestCode: (email: string) =>
+    request<{ status: string; message?: string }>('/api/v1/ops/power/auth/request-code', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  powerVerifyCode: (email: string, code: string) =>
+    request<{
+      status: string
+      handoff_token?: string
+      user?: { id: string; email: string; is_admin?: boolean }
+    }>('/api/v1/ops/power/auth/verify-code', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    }),
+  powerHandoff: (token: string) =>
+    request<{ id: string; email: string; display_name?: string | null; is_admin: boolean }>(
+      '/api/v1/ops/power/handoff',
+      { method: 'POST', body: JSON.stringify({ token }) },
+    ),
   createTranscript: (raw_text: string, title?: string) =>
     request<{ transcript: { id: string; title?: string }; turns: Turn[]; speakers: Speaker[]; evidence_quotes: EvidenceQuote[] }>(
       '/api/v1/transcripts',

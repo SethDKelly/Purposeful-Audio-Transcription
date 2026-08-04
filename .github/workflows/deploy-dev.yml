@@ -165,7 +165,13 @@ jobs:
 
       - name: Terraform apply
         working-directory: ${{ env.TF_WORKING_DIR }}
-        run: terraform apply -input=false -auto-approve -var="image_tag=${IMAGE_TAG}"
+        env:
+          # Optional repo Variable override; defaults to verified pilot From address.
+          SES_FROM_EMAIL: ${{ vars.SES_FROM_EMAIL || 'ollioxenhomefree@gmail.com' }}
+        run: |
+          terraform apply -input=false -auto-approve \
+            -var="image_tag=${IMAGE_TAG}" \
+            -var="ses_from_email=${SES_FROM_EMAIL}"
 
       - name: Wait for ECS services stable
         env:

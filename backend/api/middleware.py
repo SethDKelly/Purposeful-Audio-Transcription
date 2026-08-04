@@ -24,6 +24,12 @@ def _is_public(path: str) -> bool:
         return True
     if path.startswith("/api/v1/auth/"):
         return True
+    # Power status/handoff must work during wake without a prior session.
+    if path in {
+        "/api/v1/ops/power/status",
+        "/api/v1/ops/power/handoff",
+    }:
+        return True
     return False
 
 
@@ -63,6 +69,14 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         session_ok = auth_service.resolve_session_token(raw_cookie) is not None
 
         if api_ok or session_ok:
+            # Touch idle activity clock for authenticated traffic.
+            try:
+                from backend.services.power_service import power_state_store
+
+                if session_ok or api_ok:
+                    power_state_store.touch_activity()
+            except Exception:  # noqa: BLE001
+                pass
             return await call_next(request)
 
         request_id = request_id_var.get()

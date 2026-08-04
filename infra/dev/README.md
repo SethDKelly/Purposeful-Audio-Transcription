@@ -70,10 +70,11 @@ terraform output api_log_group
 
 ## Notes
 
-- **VPC endpoints (default on):** S3 gateway (all VPC route tables) + interface endpoints for Bedrock, Transcribe, Secrets Manager, CloudWatch Logs, ECR, STS, monitoring.
+- **VPC endpoints (default on):** S3 gateway (all VPC route tables) + interface endpoints for Bedrock, Transcribe, Secrets Manager, CloudWatch Logs, ECR, STS, monitoring. Tagged `Name=rre-dev-*` / `Project=rre` so pause/sleep can delete them via CLI.
+- **Power control (default on):** DynamoDB `rre-dev-power-state`, ALB rules priority 5–6 → Lambda (`/api/v1/ops/power/{status,auth,wake}`, `/login`), CodeBuild `rre-dev-power-orchestrator` (boto3 wake/sleep — no terraform in CodeBuild). Set `ses_from_email` to a verified SES identity. Sleep/pause may delete VPC endpoints; the next **Deploy to AWS dev** terraform apply reconciles `enable_vpc_endpoints`.
 - **No-egress mode (default on — Stage B):** Tasks have no public IP; SGs allow HTTPS to VPC endpoints + S3 prefix list, DNS/Postgres in-VPC, and UI→API via Cloud Map (`http://api.rre-dev.local:8000`). Rollback: set `enable_no_egress_networking = false`.
 - RDS PostgreSQL is private; credentials in Secrets Manager (`rre-dev/database`).
-- **API auth:** Shared `API_KEY` in Secrets Manager (`rre-dev/api-key`) is injected into API + UI tasks. UI sends `X-API-Key` on backend calls.
+- **API auth:** Shared `API_KEY` in Secrets Manager (`rre-dev/api-key`) is injected into API + UI tasks. UI sends `X-API-Key` on backend calls. Session auth + invite-only + SES email delivery are enabled on API tasks when power control is configured.
 - **HTTPS (optional):** Set `acm_certificate_arn` to an ACM cert in this region to enable ALB `:443` and HTTP→HTTPS redirect. Default remains HTTP-only on the ALB DNS name (no cert without a domain you control).
 - See [aws-deployment.md](../../docs/developer/aws-deployment.md) for the full network model.
 
@@ -83,15 +84,15 @@ terraform output api_log_group
 
 **Pause** — GitHub Actions → **Pause AWS dev** → Run workflow.
 
-This sets ECS desired count to **0** and stops RDS `rre-dev-postgres`. Terraform state stays in sync.
+This sets ECS desired count to **0**, deletes `rre-dev-*` VPC endpoints via AWS CLI, and stops RDS `rre-dev-postgres`. Endpoint deletion drifts from Terraform until the next full deploy apply.
 
-**Resume** — **Deploy to AWS dev** (`workflow_dispatch`) or push a `v*.*.*` tag. The deploy workflow starts RDS if stopped, **clears any lingering ECS tasks**, then scales ECS with the new image.
+**Resume** — open **`/login`** (power wake via CodeBuild) or **Deploy to AWS dev** (`workflow_dispatch`) / push a `v*.*.*` tag.
 
 **Task size (P1-2d):** Slim API defaults — `api_cpu=1024`, `api_memory=2048` (was 1024/4096). Tried 512/2048; ALB `/api/live` timed out during cutover. UI remains `256` / `512`.
 
 **API serving (burn-in resilience):** Cloud image runs **2 uvicorn workers** so `/api/live` stays responsive during Bedrock Converse. ALB unhealthy_threshold is **10** (was 5). Deploy clears tasks to desired 0 before apply (clean slate for single-task Fargate + ALB).
 
-**Costs while paused:** ALB (~$16/mo), ECR image storage, Secrets Manager, RDS storage (no compute while stopped). RDS auto-restarts after ~7 days if not resumed.
+**Costs while paused/asleep:** ALB (~$16/mo), ECR image storage, Secrets Manager, RDS storage (no compute while stopped). **VPC Interface endpoints are deleted** on sleep/pause (recreated on wake/deploy). RDS auto-restarts after ~7 days if not resumed — re-run Pause or rely on idle sleep after wake.
 
 Manual pause (with AWS CLI):
 

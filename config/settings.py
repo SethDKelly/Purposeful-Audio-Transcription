@@ -70,6 +70,19 @@ class Settings(BaseSettings):
     login_code_rate_limit_per_hour: int = 10
     auth_cookie_secure: bool = False
     auth_cookie_samesite: str = "lax"
+    # dev_log | ses — AWS ECS should use ses.
+    email_delivery: str = "dev_log"
+    ses_from_email: str = ""
+    # Invite-only: only pre-seeded active users may request/verify codes.
+    auth_invite_only: bool = True
+    # Shared HMAC for Lambda→API session handoff after wake (hex or raw secret).
+    power_handoff_secret: str = ""
+    # Idle / kill-mode cost controls (see docs/developer/aws-operations.md).
+    kill_long_jobs_enabled: bool = True
+    kill_long_jobs_seconds: float = 10800.0
+    idle_sleep_after_seconds: float = 7200.0
+    power_state_table: str = ""
+    power_control_enabled: bool = False
     log_json: bool = False
     log_redact: bool | None = None
     # api | worker | ui — set via RRE_PROCESS on ECS worker; defaults to api.

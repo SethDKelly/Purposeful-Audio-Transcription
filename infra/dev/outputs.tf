@@ -92,3 +92,20 @@ output "ui_api_base_url" {
   description = "Server-side API URL used by the Streamlit container."
   value       = local.ui_api_base_url
 }
+
+output "power_control_enabled" {
+  value = var.enable_power_control
+}
+
+output "power_state_table" {
+  value = var.enable_power_control ? aws_dynamodb_table.power_state[0].name : null
+}
+
+output "power_codebuild_project" {
+  value = var.enable_power_control ? aws_codebuild_project.power_orchestrator[0].name : null
+}
+
+output "login_url" {
+  description = "Power-control login path on the ALB (Lambda) when enable_power_control."
+  value       = var.enable_power_control ? "${local.alb_scheme}://${aws_lb.main.dns_name}/login" : null
+}

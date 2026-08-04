@@ -26,6 +26,7 @@ export function SettingsPage() {
         <p>
           Signed in as <strong>{me.data?.email}</strong>
           {me.data?.display_name ? ` (${me.data.display_name})` : ''}
+          {me.data?.is_admin ? ' — role: admin (also standard user)' : ' — role: user'}
         </p>
       ) : (
         <p className="muted">

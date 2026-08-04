@@ -20,6 +20,15 @@ class AuthContext:
     def user_id(self) -> str | None:
         return self.user.id if self.user else None
 
+    @property
+    def is_session_admin(self) -> bool:
+        return bool(self.user and self.user.is_admin)
+
+    @property
+    def is_admin(self) -> bool:
+        """API-key break-glass or session admin."""
+        return self.is_api_key_admin or self.is_session_admin
+
 
 def _client_ip(request: Request) -> str | None:
     forwarded = request.headers.get("X-Forwarded-For")
@@ -49,9 +58,16 @@ def require_auth_context(request: Request) -> AuthContext:
     return ctx
 
 
+def require_admin(request: Request) -> AuthContext:
+    ctx = require_auth_context(request)
+    if not ctx.is_admin:
+        raise AuthorizationError("Admin access required")
+    return ctx
+
+
 def assert_resource_owner(owner_user_id: str | None, ctx: AuthContext) -> None:
-    """Enforce ownership for session users. API-key admin bypasses. Legacy null owner allowed."""
-    if ctx.is_api_key_admin:
+    """Enforce ownership for session users. Admins bypass. Legacy null owner allowed."""
+    if ctx.is_admin:
         return
     if owner_user_id is None:
         return
