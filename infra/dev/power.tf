@@ -12,8 +12,8 @@ locals {
     SES_FROM_EMAIL         = var.ses_from_email
     POWER_HANDOFF_SECRET   = local.power_enabled ? random_password.power_handoff[0].result : ""
     CODEBUILD_PROJECT_NAME = local.power_enabled ? aws_codebuild_project.power_orchestrator[0].name : ""
-    AWS_REGION             = var.aws_region
-    NAME_PREFIX            = local.name
+    # Do not set AWS_REGION — reserved by the Lambda runtime.
+    NAME_PREFIX = local.name
   }
 
   power_buildspec = <<-EOF
