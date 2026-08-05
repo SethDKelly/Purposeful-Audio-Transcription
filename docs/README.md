@@ -6,7 +6,7 @@
 |----------|------------|
 | **Operators / users** | [user/getting-started.md](user/getting-started.md) → [user/user-guide.md](user/user-guide.md) |
 | **Developers** | [developer/development.md](developer/development.md) → [developer/architecture.md](developer/architecture.md) |
-| **AWS ops** | [developer/aws-operations.md](developer/aws-operations.md) · [developer/aws-deployment.md](developer/aws-deployment.md) · [../infra/dev/README.md](../infra/dev/README.md) |
+| **AWS ops** | [developer/aws-operations.md](developer/aws-operations.md) · [developer/auth-and-power.md](developer/auth-and-power.md) · [developer/ci-workflows.md](developer/ci-workflows.md) · [developer/aws-deployment.md](developer/aws-deployment.md) · [../infra/dev/README.md](../infra/dev/README.md) |
 | **Active plan** | [planning/phases/001](planning/phases/001_v2_1_phase_sequence_overview.md) (**v2.1** `001`–`009`) · [planning/deferred_backlog.md](planning/deferred_backlog.md) · [product/core_tenets.md](product/core_tenets.md) |
 
 > Documentation lives under **`docs/`** (renamed from `doc/` in v0.7.0).
@@ -31,6 +31,8 @@
 | [developer/api-reference.md](developer/api-reference.md) | REST API summary |
 | [developer/contributing.md](developer/contributing.md) | Conventions, PRs, adding modules |
 | [developer/aws-operations.md](developer/aws-operations.md) | CloudWatch Insights, deploy smoke, pause/resume |
+| [developer/auth-and-power.md](developer/auth-and-power.md) | Email OTP, ownership, idle power wake/sleep |
+| [developer/ci-workflows.md](developer/ci-workflows.md) | GitHub Actions map, eval/frontend gates, Dependabot |
 | [developer/cursor-workflow.md](developer/cursor-workflow.md) | AI-assisted development notes |
 | [developer/aws-deployment.md](developer/aws-deployment.md) | AWS architecture and backbone integration |
 | [developer/log-redaction.md](developer/log-redaction.md) | CloudWatch redaction design |

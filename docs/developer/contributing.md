@@ -40,6 +40,8 @@ Promote `pre-production` → `main` only when intentionally shipping a productio
 
 Deploy CI also runs `validate_yaml` + `validate_config` before full pytest.
 
+PR/push CI map (eval release gates, frontend path filters, Dependabot): [ci-workflows.md](ci-workflows.md).
+
 ## Branch naming
 
 Cut from `pre-production`:
