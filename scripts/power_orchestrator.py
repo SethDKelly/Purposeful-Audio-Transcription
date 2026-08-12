@@ -7,7 +7,7 @@ drift of VPC endpoints vs infra/dev is expected: the next deploy-dev
 terraform apply (enable_vpc_endpoints=true) reconciles TF-managed endpoints.
 
 Usage:
-  python power_orchestrator.py wake|sleep
+  python power_orchestrator.py wake|sleep|wake-infra
 """
 
 from __future__ import annotations
@@ -222,6 +222,44 @@ def _ensure_s3_gateway(ec2) -> None:
     )
 
 
+def _ensure_dynamodb_gateway(ec2) -> None:
+    vpc_id = _default_vpc_id(ec2)
+    service_name = f"com.amazonaws.{REGION}.dynamodb"
+    existing = _existing_endpoints(ec2, vpc_id)
+    for ep in existing:
+        if (
+            ep.get("VpcEndpointType") == "Gateway"
+            and ep.get("ServiceName") == service_name
+            and ep.get("State") not in ("deleting", "deleted")
+        ):
+            print(f"DynamoDB gateway endpoint exists: {ep.get('VpcEndpointId')}", flush=True)
+            return
+
+    rt_ids = _route_table_ids(ec2, vpc_id)
+    print(f"Creating DynamoDB gateway endpoint on {len(rt_ids)} route tables", flush=True)
+    ec2.create_vpc_endpoint(
+        VpcId=vpc_id,
+        ServiceName=service_name,
+        VpcEndpointType="Gateway",
+        RouteTableIds=rt_ids,
+        TagSpecifications=[
+            {
+                "ResourceType": "vpc-endpoint",
+                "Tags": [
+                    {"Key": "Name", "Value": f"{NAME}-dynamodb"},
+                    {"Key": "Project", "Value": VPC_TAG_PROJECT},
+                ],
+            }
+        ],
+    )
+
+
+def _ensure_network_infra(ec2) -> None:
+    _ensure_s3_gateway(ec2)
+    _ensure_dynamodb_gateway(ec2)
+    _ensure_interface_endpoints(ec2)
+
+
 def _delete_managed_endpoints(ec2) -> None:
     """Delete interface endpoints named rre-dev-* and S3 gateway named rre-dev-s3."""
     vpc_id = _default_vpc_id(ec2)
@@ -255,8 +293,7 @@ def wake(clients: dict[str, Any]) -> None:
         idle_timer_started_at=None,
     )
     _start_rds(clients["rds"])
-    _ensure_s3_gateway(clients["ec2"])
-    _ensure_interface_endpoints(clients["ec2"])
+    _ensure_network_infra(clients["ec2"])
     # Brief pause so private DNS / ENIs settle before ECS tasks start.
     time.sleep(15)
     _update_ecs_desired(clients["ecs"], 1)
@@ -288,13 +325,34 @@ def sleep(clients: dict[str, Any]) -> None:
     print("Sleep complete", flush=True)
 
 
+def wake_infra(clients: dict[str, Any]) -> None:
+    """Restore VPC endpoints and mark awake without changing ECS desired counts."""
+    print(f"MODE=wake-infra region={REGION} name={NAME}", flush=True)
+    _ensure_network_infra(clients["ec2"])
+    time.sleep(15)
+    _set_power_state(
+        clients["ddb"],
+        "awake",
+        last_activity_at=_iso(),
+        idle_timer_started_at=None,
+        active_jobs=0,
+        wake_requested_at=None,
+    )
+    print("Wake-infra complete", flush=True)
+
+
 def main(argv: list[str]) -> int:
-    if len(argv) != 2 or argv[1] not in ("wake", "sleep"):
-        print("Usage: python power_orchestrator.py wake|sleep", file=sys.stderr)
+    if len(argv) != 2 or argv[1] not in ("wake", "sleep", "wake-infra"):
+        print(
+            "Usage: python power_orchestrator.py wake|sleep|wake-infra",
+            file=sys.stderr,
+        )
         return 2
     clients = _clients()
     if argv[1] == "wake":
         wake(clients)
+    elif argv[1] == "wake-infra":
+        wake_infra(clients)
     else:
         sleep(clients)
     return 0
