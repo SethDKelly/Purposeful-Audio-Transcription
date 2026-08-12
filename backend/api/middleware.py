@@ -1,5 +1,7 @@
 from uuid import uuid4
 
+import asyncio
+
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -69,12 +71,11 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         session_ok = auth_service.resolve_session_token(raw_cookie) is not None
 
         if api_ok or session_ok:
-            # Touch idle activity clock for authenticated traffic.
+            # Do not block request handling on DynamoDB power-state I/O.
             try:
                 from backend.services.power_service import power_state_store
 
-                if session_ok or api_ok:
-                    power_state_store.touch_activity()
+                asyncio.create_task(asyncio.to_thread(power_state_store.touch_activity))
             except Exception:  # noqa: BLE001
                 pass
             return await call_next(request)
