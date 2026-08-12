@@ -20,7 +20,7 @@ moved {
 locals {
   s3_route_table_ids = var.enable_vpc_endpoints ? data.aws_route_tables.vpc.ids : []
 
-  interface_endpoint_services = var.enable_vpc_endpoints ? toset([
+  interface_endpoint_services = var.enable_vpc_endpoints ? toset(concat([
     "bedrock-runtime",
     "bedrock",
     "transcribe",
@@ -30,7 +30,7 @@ locals {
     "ecr.dkr",
     "sts",
     "monitoring",
-  ]) : toset([])
+  ], var.enable_power_control ? ["dynamodb"] : [])) : toset([])
 }
 
 resource "aws_security_group" "vpc_endpoints" {
