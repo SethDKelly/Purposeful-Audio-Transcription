@@ -12,6 +12,8 @@ COPY backend ./backend
 COPY config ./config
 COPY alembic ./alembic
 COPY alembic.ini ./
+COPY tests/helpers ./tests/helpers
+COPY tests/fixtures/golden_transcripts ./tests/fixtures/golden_transcripts
 
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -e .

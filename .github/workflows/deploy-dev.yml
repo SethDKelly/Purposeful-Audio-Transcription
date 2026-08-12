@@ -173,6 +173,9 @@ jobs:
             -var="image_tag=${IMAGE_TAG}" \
             -var="ses_from_email=${SES_FROM_EMAIL}"
 
+      - name: Run database migrations (Alembic)
+        run: python3 scripts/ecs-run-migration.py rre-dev-cluster rre-dev-api
+
       - name: Force ECS redeploy (latest task definitions)
         env:
           DEPLOY_COMPONENT: ${{ env.DEPLOY_COMPONENT }}
