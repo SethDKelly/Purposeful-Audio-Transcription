@@ -7,6 +7,10 @@ __pycache__
 .mypy_cache
 .ruff_cache
 tests
+!tests/helpers
+!tests/helpers/**
+!tests/fixtures/golden_transcripts
+!tests/fixtures/golden_transcripts/**
 doc
 *.md
 !README.md
