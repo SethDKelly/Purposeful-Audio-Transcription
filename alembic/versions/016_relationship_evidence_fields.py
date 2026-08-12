@@ -3,6 +3,8 @@
 from alembic import op
 import sqlalchemy as sa
 
+from alembic.idempotent import column_exists
+
 revision = "016_relationship_evidence_fields"
 down_revision = "015_evidence_snapshots_and_versioning"
 branch_labels = None
@@ -10,14 +12,16 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "construct_relationships",
-        sa.Column("rationale", sa.Text(), nullable=True),
-    )
-    op.add_column(
-        "construct_relationships",
-        sa.Column("alternative_explanations_json", sa.Text(), nullable=True),
-    )
+    if not column_exists("construct_relationships", "rationale"):
+        op.add_column(
+            "construct_relationships",
+            sa.Column("rationale", sa.Text(), nullable=True),
+        )
+    if not column_exists("construct_relationships", "alternative_explanations_json"):
+        op.add_column(
+            "construct_relationships",
+            sa.Column("alternative_explanations_json", sa.Text(), nullable=True),
+        )
 
 
 def downgrade() -> None:
