@@ -345,7 +345,7 @@ resource "aws_ecs_task_definition" "worker" {
       { name = "BEDROCK_THROTTLE_MAX_RETRIES", value = "5" },
       { name = "BEDROCK_THROTTLE_BASE_SECONDS", value = "2" },
       { name = "DIARIZATION_ENABLED", value = var.diarization_enabled ? "true" : "false" },
-      { name = "ALEMBIC_AUTO_UPGRADE", value = "true" },
+      { name = "ALEMBIC_AUTO_UPGRADE", value = "false" },
       { name = "TEMP_DIR", value = "/tmp/rre" },
       { name = "AWS_REGION", value = var.aws_region },
       { name = "AWS_DEFAULT_REGION", value = var.aws_region },

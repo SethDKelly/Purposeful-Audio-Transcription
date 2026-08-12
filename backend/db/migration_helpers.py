@@ -1,4 +1,4 @@
-"""Helpers for idempotent Alembic migrations on drifted Postgres dev databases."""
+"""Helpers for idempotent Alembic migrations on drifted Postgres databases."""
 
 from __future__ import annotations
 

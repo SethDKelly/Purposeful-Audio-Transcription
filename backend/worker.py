@@ -141,7 +141,12 @@ def _run_worker() -> None:
 
     resumed = 0
     max_in_flight = max(1, int(settings.workflow_worker_max_in_flight or 1))
-    for run in workflow_job_service._engine.list_incomplete():
+    try:
+        incomplete_runs = workflow_job_service._engine.list_incomplete()
+    except Exception:  # noqa: BLE001
+        logger.exception("Worker startup resume skipped; will retry in poll loop")
+        incomplete_runs = []
+    for run in incomplete_runs:
         if run.status == WorkflowRunStatus.CREATED.value:
             continue
         if workflow_job_service.in_flight_count >= max_in_flight:

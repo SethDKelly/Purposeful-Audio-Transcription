@@ -12,6 +12,7 @@ COPY backend ./backend
 COPY config ./config
 COPY alembic ./alembic
 COPY alembic.ini ./
+COPY scripts/check_migration_imports.py ./scripts/
 COPY tests/helpers ./tests/helpers
 COPY tests/fixtures/golden_transcripts ./tests/fixtures/golden_transcripts
 

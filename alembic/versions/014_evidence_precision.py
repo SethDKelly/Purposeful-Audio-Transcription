@@ -3,7 +3,7 @@
 from alembic import op
 import sqlalchemy as sa
 
-from alembic.idempotent import column_exists
+from backend.db.migration_helpers import column_exists
 
 revision = "014_evidence_precision"
 down_revision = "013_email_auth_and_ownership"

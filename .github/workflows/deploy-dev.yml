@@ -57,6 +57,9 @@ jobs:
       - name: Guard UI/API boundary
         run: python scripts/check_ui_api_boundary.py
 
+      - name: Verify Alembic revision modules import
+        run: python scripts/check_migration_imports.py
+
       - name: Run tests
         run: python -m pytest tests/ -q
 
@@ -131,6 +134,7 @@ jobs:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
           docker build -t "$ECR_REGISTRY/rre-dev-api:${IMAGE_TAG}" -f Dockerfile.cloud .
+          docker run --rm --entrypoint python "$ECR_REGISTRY/rre-dev-api:${IMAGE_TAG}" scripts/check_migration_imports.py
           docker push "$ECR_REGISTRY/rre-dev-api:${IMAGE_TAG}"
           docker tag "$ECR_REGISTRY/rre-dev-api:${IMAGE_TAG}" "$ECR_REGISTRY/rre-dev-api:latest"
           docker push "$ECR_REGISTRY/rre-dev-api:latest"
@@ -163,18 +167,55 @@ jobs:
           esac
           python3 scripts/ecs-clear-before-deploy.py rre-dev-cluster "${SERVICES[@]}"
 
-      - name: Terraform apply
+      - name: Terraform apply (task defs; API/worker scaled to 0)
         working-directory: ${{ env.TF_WORKING_DIR }}
         env:
-          # Optional repo Variable override; defaults to verified pilot From address.
           SES_FROM_EMAIL: ${{ vars.SES_FROM_EMAIL || 'ollioxenhomefree@gmail.com' }}
+          DEPLOY_COMPONENT: ${{ env.DEPLOY_COMPONENT }}
         run: |
+          set -euo pipefail
+          API_COUNT=0
+          WORKER_COUNT=0
+          UI_COUNT=0
+          case "$DEPLOY_COMPONENT" in
+            all) ;;
+            api) ;;
+            ui) UI_COUNT=1 ;;
+            worker) ;;
+          esac
           terraform apply -input=false -auto-approve \
             -var="image_tag=${IMAGE_TAG}" \
-            -var="ses_from_email=${SES_FROM_EMAIL}"
+            -var="ses_from_email=${SES_FROM_EMAIL}" \
+            -var="api_desired_count=${API_COUNT}" \
+            -var="worker_desired_count=${WORKER_COUNT}" \
+            -var="ui_desired_count=${UI_COUNT}"
 
       - name: Run database migrations (Alembic)
+        if: env.DEPLOY_COMPONENT == 'all' || env.DEPLOY_COMPONENT == 'api' || env.DEPLOY_COMPONENT == 'worker'
         run: python3 scripts/ecs-run-migration.py rre-dev-cluster rre-dev-api
+
+      - name: Terraform apply (scale services up)
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          SES_FROM_EMAIL: ${{ vars.SES_FROM_EMAIL || 'ollioxenhomefree@gmail.com' }}
+          DEPLOY_COMPONENT: ${{ env.DEPLOY_COMPONENT }}
+        run: |
+          set -euo pipefail
+          API_COUNT=0
+          WORKER_COUNT=0
+          UI_COUNT=0
+          case "$DEPLOY_COMPONENT" in
+            all) API_COUNT=1; WORKER_COUNT=1; UI_COUNT=1 ;;
+            api) API_COUNT=1 ;;
+            ui) UI_COUNT=1 ;;
+            worker) WORKER_COUNT=1 ;;
+          esac
+          terraform apply -input=false -auto-approve \
+            -var="image_tag=${IMAGE_TAG}" \
+            -var="ses_from_email=${SES_FROM_EMAIL}" \
+            -var="api_desired_count=${API_COUNT}" \
+            -var="worker_desired_count=${WORKER_COUNT}" \
+            -var="ui_desired_count=${UI_COUNT}"
 
       - name: Force ECS redeploy (latest task definitions)
         env:
