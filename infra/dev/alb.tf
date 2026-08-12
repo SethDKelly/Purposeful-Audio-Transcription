@@ -48,6 +48,17 @@ resource "aws_security_group" "ecs_tasks" {
   dynamic "ingress" {
     for_each = var.enable_no_egress_networking ? [1] : []
     content {
+      description     = "From ALB"
+      from_port       = 0
+      to_port         = 65535
+      protocol        = "tcp"
+      security_groups = [aws_security_group.alb.id]
+    }
+  }
+
+  dynamic "ingress" {
+    for_each = var.enable_no_egress_networking ? [1] : []
+    content {
       description = "UI to API via Cloud Map"
       from_port   = 8000
       to_port     = 8000
@@ -143,18 +154,6 @@ resource "aws_security_group_rule" "alb_egress_to_ecs" {
   protocol                 = "tcp"
   security_group_id        = aws_security_group.alb.id
   source_security_group_id = aws_security_group.ecs_tasks.id
-}
-
-resource "aws_security_group_rule" "ecs_ingress_from_alb" {
-  count = var.enable_no_egress_networking ? 1 : 0
-
-  type                     = "ingress"
-  description              = "From ALB"
-  from_port                = 0
-  to_port                  = 65535
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.ecs_tasks.id
-  source_security_group_id = aws_security_group.alb.id
 }
 
 resource "aws_security_group_rule" "ecs_ingress_from_alb_legacy" {
