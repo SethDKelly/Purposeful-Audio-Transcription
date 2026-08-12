@@ -70,7 +70,7 @@ def upgrade() -> None:
                     "(id, transcript_id, version_number, created_at, created_by_user_id, "
                     "source_type, change_summary, is_current) "
                     "VALUES (:id, :transcript_id, 1, :created_at, NULL, :source_type, "
-                    ":change_summary, 1)"
+                    ":change_summary, true)"
                 ),
                 {
                     "id": version_id,
