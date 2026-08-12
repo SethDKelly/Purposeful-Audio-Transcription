@@ -119,6 +119,7 @@ def test_claim_respects_cancel_requested_flag() -> None:
 
 def test_retry_exhaustion_marks_failed(monkeypatch) -> None:
     monkeypatch.setattr(settings, "workflow_job_max_attempts", 2)
+    monkeypatch.setattr(settings, "workflow_worker_enabled", True)
     mock_llm = MagicMock()
     engine = _build_engine(mock_llm)
     jobs = WorkflowJobService(engine=engine, max_workers=1)
