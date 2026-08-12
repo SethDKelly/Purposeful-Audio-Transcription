@@ -285,6 +285,8 @@ class WorkflowJobService:
             if run.status == WorkflowRunStatus.CREATED.value:
                 continue
             started = run.started_at
+            if started is None:
+                continue
             if started.tzinfo is None:
                 from datetime import UTC
 
@@ -395,6 +397,8 @@ class WorkflowJobService:
         runs = self._engine.list_incomplete()
         for run in runs:
             started = run.started_at
+            if started is None:
+                continue
             if started.tzinfo is None:
                 started = started.replace(tzinfo=UTC)
             age = (now - started).total_seconds()
