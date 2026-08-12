@@ -20,6 +20,7 @@ def upgrade() -> None:
         sa.Column("categories_json", sa.Text(), nullable=True),
         sa.Column("details_json", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
+        if_not_exists=True,
     )
     op.create_table(
         "evaluation_runs",
@@ -30,6 +31,7 @@ def upgrade() -> None:
         sa.Column("gate_passed", sa.Boolean(), nullable=False, server_default=sa.false()),
         sa.Column("summary_json", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
+        if_not_exists=True,
     )
 
 
