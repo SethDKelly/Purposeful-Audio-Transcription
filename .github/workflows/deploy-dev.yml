@@ -119,7 +119,7 @@ jobs:
             exit 0
           fi
           export POWER_STATE_TABLE="$(terraform output -raw power_state_table)"
-          python3 ../scripts/power_orchestrator.py wake-infra
+          python3 ../../scripts/power_orchestrator.py wake-infra
 
       - name: Ensure ECR repositories exist
         working-directory: ${{ env.TF_WORKING_DIR }}
