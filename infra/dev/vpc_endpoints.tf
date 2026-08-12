@@ -20,7 +20,7 @@ moved {
 locals {
   s3_route_table_ids = var.enable_vpc_endpoints ? data.aws_route_tables.vpc.ids : []
 
-  interface_endpoint_services = var.enable_vpc_endpoints ? toset(concat([
+  interface_endpoint_services = var.enable_vpc_endpoints ? toset([
     "bedrock-runtime",
     "bedrock",
     "transcribe",
@@ -30,7 +30,7 @@ locals {
     "ecr.dkr",
     "sts",
     "monitoring",
-  ], var.enable_power_control ? ["dynamodb"] : [])) : toset([])
+  ]) : toset([])
 }
 
 resource "aws_security_group" "vpc_endpoints" {
@@ -66,6 +66,20 @@ resource "aws_vpc_endpoint" "s3" {
 
   tags = {
     Name    = "${local.name}-s3"
+    Project = "rre"
+  }
+}
+
+resource "aws_vpc_endpoint" "dynamodb" {
+  count = var.enable_vpc_endpoints && var.enable_power_control ? 1 : 0
+
+  vpc_id            = data.aws_vpc.default.id
+  service_name      = "com.amazonaws.${var.aws_region}.dynamodb"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = local.s3_route_table_ids
+
+  tags = {
+    Name    = "${local.name}-dynamodb"
     Project = "rre"
   }
 }
