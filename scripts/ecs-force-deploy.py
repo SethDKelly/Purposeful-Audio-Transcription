@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Force ECS services onto the latest task definition revision after terraform apply.
+"""Force ECS services onto the latest task definition after terraform apply.
 
-After an IAM task-role split, circuit-breaker rollback can leave a service
-deploying a pre-split revision whose taskRoleArn (rre-dev-ecs-task) no longer
-exists. Terraform registers new revisions but may not start a fresh deployment
-while the service is rolled back — this script forces one.
+Only runs when recovery is needed: legacy IAM task role, failed rollout, or a
+stale task-definition revision. Skips the common case so we do not stack a
+second deployment on top of terraform's own service update.
 """
 
 from __future__ import annotations
@@ -66,6 +65,42 @@ def task_def_role_arn(task_def_arn: str) -> str | None:
     return role
 
 
+def latest_task_def_arn(family: str) -> str:
+    result = run_aws(
+        [
+            "ecs",
+            "describe-task-definition",
+            "--task-definition",
+            family,
+            "--query",
+            "taskDefinition.taskDefinitionArn",
+            "--output",
+            "text",
+        ]
+    )
+    return (result.stdout or "").strip()
+
+
+def needs_force_deploy(service: str, svc: dict) -> tuple[bool, str]:
+    current_arn = (svc.get("taskDefinition") or "").strip()
+    if not current_arn:
+        return False, "no task definition registered"
+
+    latest_arn = latest_task_def_arn(service)
+    if latest_arn and current_arn != latest_arn:
+        return True, f"stale task def ({current_arn} -> {latest_arn})"
+
+    role_arn = task_def_role_arn(current_arn)
+    if role_arn and role_arn.endswith(_LEGACY_TASK_ROLE_SUFFIX):
+        return True, f"legacy task role {role_arn}"
+
+    for dep in svc.get("deployments") or []:
+        if dep.get("rolloutState") == "FAILED":
+            return True, "failed rollout on service"
+
+    return False, "already on latest revision"
+
+
 def force_service(cluster: str, service: str) -> None:
     data = describe_services(cluster, [service])
     svcs = data.get("services") or []
@@ -73,16 +108,13 @@ def force_service(cluster: str, service: str) -> None:
         log(f"{service}: inactive or missing; skip force deploy")
         return
 
-    current_arn = (svcs[0].get("taskDefinition") or "").strip()
-    role_arn = task_def_role_arn(current_arn) if current_arn else None
-    if role_arn and role_arn.endswith(_LEGACY_TASK_ROLE_SUFFIX):
-        log(
-            f"{service}: current task def uses legacy role {role_arn}; "
-            "forcing latest revision"
-        )
+    svc = svcs[0]
+    needed, reason = needs_force_deploy(service, svc)
+    if not needed:
+        log(f"{service}: skip force deploy ({reason})")
+        return
 
-    # Family name resolves to the newest ACTIVE revision for this stack.
-    log(f"{service}: force-new-deployment (task-definition family={service})")
+    log(f"{service}: force-new-deployment ({reason})")
     run_aws(
         [
             "ecs",
@@ -108,10 +140,10 @@ def main() -> int:
         log("ECS_FORCE_DEPLOY=0; skipping force deploy")
         return 0
 
-    log(f"Forcing ECS redeploy: cluster={cluster} services={services}")
+    log(f"Checking ECS services for force deploy: cluster={cluster} services={services}")
     for name in services:
         force_service(cluster, name)
-    log("ECS force deploy requested for all services")
+    log("ECS force deploy check complete")
     return 0
 
 

@@ -111,6 +111,14 @@ def _publish_queue_metrics(stats: dict[str, object]) -> None:
 
 
 def main() -> None:
+    try:
+        _run_worker()
+    except Exception:  # noqa: BLE001
+        logger.exception("Worker fatal startup/runtime error")
+        raise
+
+
+def _run_worker() -> None:
     configure_logging()
     signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)

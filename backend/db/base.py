@@ -39,7 +39,8 @@ def init_db() -> None:
         from backend.db.migrations import upgrade_head
 
         upgrade_head()
-    else:
+    elif settings.is_sqlite:
+        # Local pytest/dev only — production Postgres schema is Alembic-managed.
         Base.metadata.create_all(bind=engine)
 
 
