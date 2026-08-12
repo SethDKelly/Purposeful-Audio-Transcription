@@ -103,24 +103,24 @@ def upgrade() -> None:
             )
 
     if not index_exists("ix_evidence_quotes_transcript_version_id"):
-        with op.batch_alter_table("evidence_quotes") as batch:
-            batch.create_index(
-                "ix_evidence_quotes_transcript_version_id",
-                ["transcript_version_id"],
-            )
+        op.create_index(
+            "ix_evidence_quotes_transcript_version_id",
+            "evidence_quotes",
+            ["transcript_version_id"],
+        )
     if not index_exists("uq_evidence_quotes_version_quote_id"):
-        with op.batch_alter_table("evidence_quotes") as batch:
-            batch.create_index(
-                "uq_evidence_quotes_version_quote_id",
-                ["transcript_version_id", "quote_id"],
-                unique=True,
-            )
+        op.create_index(
+            "uq_evidence_quotes_version_quote_id",
+            "evidence_quotes",
+            ["transcript_version_id", "quote_id"],
+            unique=True,
+        )
     if not index_exists("ix_workflow_runs_transcript_version_id"):
-        with op.batch_alter_table("workflow_runs") as batch:
-            batch.create_index(
-                "ix_workflow_runs_transcript_version_id",
-                ["transcript_version_id"],
-            )
+        op.create_index(
+            "ix_workflow_runs_transcript_version_id",
+            "workflow_runs",
+            ["transcript_version_id"],
+        )
 
 
 def downgrade() -> None:

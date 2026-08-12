@@ -8,11 +8,8 @@ import subprocess
 import sys
 import time
 
-MIGRATION_COMMAND = [
-    "python",
-    "-c",
-    "from backend.db.migrations import upgrade_head; upgrade_head(); print('alembic upgrade head OK')",
-]
+MIGRATION_COMMAND = ["python", "scripts/run_migration.py"]
+LOG_GROUP = "/rre/dev/api"
 
 
 def log(msg: str) -> None:
@@ -127,10 +124,36 @@ def main() -> int:
             return 0
 
         log(f"Migration task {task_id} failed: exitCode={exit_code} reason={reason}")
+        _print_task_logs(task_id)
         return 1
 
     log(f"Migration task {task_id} timed out after {max_attempts} polls")
     return 1
+
+
+def _print_task_logs(task_id: str) -> None:
+    stream = f"api/api/{task_id}"
+    log(f"--- CloudWatch logs ({LOG_GROUP}/{stream}) ---")
+    result = run_aws(
+        [
+            "logs",
+            "get-log-events",
+            "--log-group-name",
+            LOG_GROUP,
+            "--log-stream-name",
+            stream,
+            "--start-from-head",
+            "--output",
+            "json",
+        ],
+        check=False,
+    )
+    if result.returncode != 0:
+        log(f"(could not fetch logs: {result.stderr.strip()})")
+        return
+    payload = json.loads(result.stdout or "{}")
+    for event in payload.get("events") or []:
+        log(event.get("message", ""))
 
 
 if __name__ == "__main__":
