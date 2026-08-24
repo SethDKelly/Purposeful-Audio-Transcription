@@ -155,17 +155,30 @@ def parse_handoff_token(token: str) -> dict[str, Any]:
 
 
 def count_active_jobs() -> int:
+    """Count in-flight workflow runs that must block idle sleep.
+
+    Must match ``WorkflowRunRepository`` incomplete statuses. Using module-level
+    labels like ``running`` / ``queued`` misses real run states
+    (``running_modules``, ``preprocessing``, ``synthesizing``) and can let the
+    idle checker sleep the stack mid-job.
+    """
     from sqlalchemy import func, select
 
     from backend.db.base import get_session
     from backend.db.models import WorkflowRunRow
+    from backend.domain.enums import WorkflowRunStatus
 
-    active = {"created", "queued", "running", "pending"}
+    active = (
+        WorkflowRunStatus.CREATED.value,
+        WorkflowRunStatus.PREPROCESSING.value,
+        WorkflowRunStatus.RUNNING_MODULES.value,
+        WorkflowRunStatus.SYNTHESIZING.value,
+    )
     with get_session() as session:
         n = session.scalar(
             select(func.count())
             .select_from(WorkflowRunRow)
-            .where(WorkflowRunRow.status.in_(tuple(active)))
+            .where(WorkflowRunRow.status.in_(active))
         )
         return int(n or 0)
 
