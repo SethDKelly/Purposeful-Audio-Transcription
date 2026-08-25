@@ -48,8 +48,8 @@ Key accepted decisions:
 |---|---|---|
 | 002-A — Documentation Authority and Terminology Inventory | Complete | Identify current authority surfaces, stale wording, and terminology mapping |
 | 002-B — Concept-to-Domain Model Mapping | Complete | Map accepted concepts to current entities, schemas, services, and gaps |
-| 002-C — Data Lifecycle and Retention Architecture Plan | Next | Translate lifecycle/retention decisions into architecture requirements |
-| 002-D — Privacy Boundary and Encryption Architecture Plan | Planned | Define owner scope, access, encryption, redaction, and deletion architecture |
+| 002-C — Data Lifecycle and Retention Architecture Plan | Complete | Translate lifecycle/retention decisions into architecture requirements |
+| 002-D — Privacy Boundary and Encryption Architecture Plan | Next | Define owner scope, access, encryption, redaction, and deletion architecture |
 | 002-E — Analysis Boundary, Hypothesis, and Safety Architecture Plan | Planned | Map non-diagnostic hypothesis reasoning and safety override into schemas/prompts/validators |
 | 002-F — Cost State and Personal Deployment Architecture Plan | Planned | Map sleep/wake and personal-mode cost posture into deployment architecture |
 | 002-G — UI/UX Concept Alignment Plan | Planned | Align user-facing concepts, labels, flows, and report language |
@@ -79,6 +79,7 @@ The exit review must consolidate:
 |---|---|
 | 002-A | `docs/planning/inventories/002a_documentation_authority_inventory.md`, `docs/planning/inventories/002a_terminology_inventory.md` |
 | 002-B | `docs/planning/inventories/002b_concept_domain_model_mapping.md`, `docs/planning/inventories/002b_domain_gap_register.md` |
+| 002-C | `docs/planning/architecture/002c_data_lifecycle_retention_architecture_plan.md`, `docs/planning/inventories/002c_artifact_retention_matrix.md` |
 
 ---
 
