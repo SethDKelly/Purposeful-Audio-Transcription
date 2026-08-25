@@ -28,8 +28,8 @@ Older v2.1 numeric phase files remain in this folder as reference material until
 | [002e_analysis_boundary_hypothesis_safety_architecture_plan.md](002e_analysis_boundary_hypothesis_safety_architecture_plan.md) | Complete | Analysis boundary, hypothesis, and safety architecture plan |
 | [002f_cost_state_personal_deployment_architecture_plan.md](002f_cost_state_personal_deployment_architecture_plan.md) | Complete | Cost state and personal deployment architecture plan |
 | [002g_ui_ux_concept_alignment_plan.md](002g_ui_ux_concept_alignment_plan.md) | Complete | UI/UX concept alignment plan |
-| 002h_refactor_backlog_sequencing_acceptance_gates.md | Next | Refactor backlog, sequencing, and acceptance gates |
-| 002i_phase_exit_review_consolidation.md | Mandatory gate | Phase 002 exit review and consolidation |
+| [002h_refactor_backlog_sequencing_acceptance_gates.md](002h_refactor_backlog_sequencing_acceptance_gates.md) | Complete | Refactor backlog, sequencing, and acceptance gates |
+| 002i_phase_exit_review_consolidation.md | Next mandatory gate | Phase 002 exit review and consolidation |
 
 ---
 
