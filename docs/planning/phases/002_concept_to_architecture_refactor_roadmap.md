@@ -53,8 +53,8 @@ Key accepted decisions:
 | 002-E — Analysis Boundary, Hypothesis, and Safety Architecture Plan | Complete | Map non-diagnostic hypothesis reasoning, corpus-aware confidence, and safety override into schemas/prompts/validators |
 | 002-F — Cost State and Personal Deployment Architecture Plan | Complete | Map sleep/wake and personal-mode cost posture into deployment architecture |
 | 002-G — UI/UX Concept Alignment Plan | Complete | Align user-facing concepts, labels, flows, and report language |
-| 002-H — Refactor Backlog, Sequencing, and Acceptance Gates | Next | Build the implementation backlog and gates |
-| 002-I — Phase 002 Exit Review and Consolidation | Mandatory gate | Consolidate Phase 002 and authorize or block Phase 003 |
+| 002-H — Refactor Backlog, Sequencing, and Acceptance Gates | Complete | Build the implementation backlog and gates |
+| 002-I — Phase 002 Exit Review and Consolidation | Next mandatory gate | Consolidate Phase 002 and authorize or block Phase 003 |
 
 ---
 
@@ -84,6 +84,7 @@ The exit review must consolidate:
 | 002-E | `docs/planning/architecture/002e_analysis_boundary_hypothesis_safety_architecture_plan.md`, `docs/planning/inventories/002e_analysis_boundary_contracts.md`, `docs/planning/inventories/002e_validation_gate_matrix.md` |
 | 002-F | `docs/planning/architecture/002f_cost_state_personal_deployment_architecture_plan.md`, `docs/planning/inventories/002f_cost_state_transition_matrix.md`, `docs/planning/inventories/002f_personal_deployment_control_requirements.md` |
 | 002-G | `docs/planning/architecture/002g_ui_ux_concept_alignment_plan.md`, `docs/planning/inventories/002g_ui_ux_language_matrix.md`, `docs/planning/inventories/002g_user_flow_alignment_inventory.md` |
+| 002-H | `docs/planning/architecture/002h_refactor_backlog_sequencing_acceptance_gates.md`, `docs/planning/inventories/002h_refactor_backlog.md`, `docs/planning/inventories/002h_acceptance_gate_matrix.md` |
 
 ---
 
