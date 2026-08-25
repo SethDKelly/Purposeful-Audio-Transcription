@@ -56,57 +56,6 @@ The following concepts are accepted as the current design foundation:
 
 ---
 
-# Accepted Decision Areas
-
-## 001-A — Product Identity, Naming, and Conceptual Boundary
-
-Accepted.
-
-The product is not conceptually an audio transcription application.
-
-Audio transcription is an input capability.
-
-## 001-B — Data Lifecycle, Retention, and Encryption Decisions
-
-Accepted.
-
-Audio is ephemeral. Transcript drafts are temporary. Saved and case-promoted transcripts are durable. Retained sensitive content should move toward application-level encryption.
-
-## 001-C — Hypothesis-Aware Reflection and Non-Diagnostic Boundary
-
-Accepted.
-
-Hypothesis-aware reflection is allowed. Diagnosis, labeling, adjudication, hidden-intent certainty, and treatment authority are not allowed.
-
-Therapeutic and diagnostic-framework-informed traditions may inform reasoning, but product output must remain evidence-limited and non-diagnostic.
-
-## 001-D — Personal Operating Model, User Role, and Cost State
-
-Accepted.
-
-The near-term product is personal and owner-operated. Cost State is first-class. Enterprise is a future policy/deployment layer.
-
----
-
-# Deferred Decisions
-
-Deferred decisions include:
-
-- final brand name
-- repository rename
-- exact encryption implementation
-- exact retention scheduler
-- enterprise identity/RBAC/SSO
-- compliance framework
-- long-term audio retention
-- professional/clinician workflows
-- detailed UI copy
-- detailed implementation acceptance tests
-
-These should be addressed in later phases only when they become necessary.
-
----
-
 # Refactor Readiness Decision
 
 The concept foundation is accepted.
@@ -114,6 +63,18 @@ The concept foundation is accepted.
 The project is ready for refactor planning.
 
 The project is not ready for direct implementation refactoring without a concept-to-architecture roadmap.
+
+---
+
+# Mandatory Exit Gate Policy Added
+
+All future phases must include a final exit review and consolidation subgroup.
+
+This requirement is now formalized in:
+
+```text
+../phase_exit_gate_policy.md
+```
 
 ---
 
@@ -125,7 +86,7 @@ Proceed to:
 Phase 002 — Concept-to-Architecture Refactor Roadmap
 ```
 
-Recommended subgroups:
+Updated required subgroups:
 
 ```text
 002-A — Documentation Authority and Terminology Inventory
@@ -136,6 +97,7 @@ Recommended subgroups:
 002-F — Cost State and Personal Deployment Architecture Plan
 002-G — UI/UX Concept Alignment Plan
 002-H — Refactor Backlog, Sequencing, and Acceptance Gates
+002-I — Phase 002 Exit Review and Consolidation
 ```
 
 ---
@@ -150,5 +112,6 @@ Phase 001-E is complete when:
 - deferred questions are listed
 - next phase is named
 - implementation is explicitly deferred until refactor planning is complete
+- the mandatory phase exit gate policy is applied to the Phase 002 sequence
 
 All criteria are satisfied.

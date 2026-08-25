@@ -52,69 +52,30 @@ Avoid starting unrelated implementation work until the refactor roadmap maps cur
 
 # Refactor Planning Principles
 
-## 1. Concepts Before Code
+1. Every refactor task should name the concept it serves.
+2. The existing implementation should be mapped, retained, revised, or retired deliberately.
+3. Old names should not reassert authority through stale docs, UI labels, or deployment notes.
+4. Privacy, retention, encryption, deletion, and redacted logs are architecture drivers.
+5. The first refactor target is the personal owner-operated app.
+6. Analysis must remain evidence-limited, confidence-calibrated, non-diagnostic, and safety-aware.
 
-Every refactor task should name the concept it serves.
+---
 
-Example:
+# Mandatory Phase Exit Gate
+
+All future phases must include a final exit review and consolidation subgroup before the next phase begins.
+
+For Phase 002, this required gate is:
 
 ```text
-Transcript Version
-Evidence Quote
-Retention Rule
-Cost State
-Psychological Hypothesis
-Privacy Boundary
+002-I — Phase 002 Exit Review and Consolidation
 ```
 
-## 2. Preserve Working Prototype Value
+See:
 
-The existing application should not be discarded blindly.
-
-The current implementation has useful assets:
-
-- transcription flow
-- transcript preparation
-- evidence quote indexing
-- analysis modules
-- workflow execution
-- reports
-- cases
-- graph/ontology work
-- React UI work
-- AWS sleep/wake mechanism
-- security improvements
-- deployment artifacts
-
-These should be mapped, retained, revised, or retired deliberately.
-
-## 3. Do Not Let Old Names Reassert Authority
-
-Implementation packages, old README wording, old screenshots, and old deployment docs may still use legacy terminology.
-
-Those should be updated only after the roadmap identifies a safe sequence.
-
-## 4. Security and Retention Are Not Optional Polish
-
-Because the product handles sensitive conversations, privacy, encryption, retention, deletion, and redacted logs are core concepts.
-
-They should be treated as architecture drivers.
-
-## 5. Personal Mode Comes First
-
-The first refactor target is the personal owner-operated app.
-
-Enterprise capability should be preserved through clean policy boundaries, not implemented prematurely.
-
-## 6. Analysis Must Remain Evidence-Limited
-
-Refactoring prompts, schemas, validators, UI labels, and report language should all preserve:
-
-- evidence traceability
-- confidence calibration
-- non-diagnostic discipline
-- hypothesis boundaries
-- safety-aware override behavior
+```text
+docs/planning/phase_exit_gate_policy.md
+```
 
 ---
 
@@ -122,7 +83,7 @@ Refactoring prompts, schemas, validators, UI labels, and report language should 
 
 Phase 002 should be split into subgroups rather than one-shotted.
 
-Recommended subphases:
+Required subphases:
 
 ```text
 002-A — Documentation Authority and Terminology Inventory
@@ -133,61 +94,16 @@ Recommended subphases:
 002-F — Cost State and Personal Deployment Architecture Plan
 002-G — UI/UX Concept Alignment Plan
 002-H — Refactor Backlog, Sequencing, and Acceptance Gates
+002-I — Phase 002 Exit Review and Consolidation
 ```
-
-## Why Not One-Shot Phase 002
-
-The current application contains many implementation areas. A single large refactor plan would risk becoming vague or mixing unrelated concerns.
-
-The accepted concepts are separable enough to support iterative refactor planning.
-
----
-
-# First Implementation Targets After Phase 002
-
-The likely first implementation targets are:
-
-1. documentation authority and terminology cleanup
-2. transcript/recording/data lifecycle alignment
-3. retention state fields and policies
-4. transcript version/evidence binding hardening
-5. privacy boundary and encryption design
-6. hypothesis-aware reflection objects and output schema
-7. safety-aware gating and report behavior
-8. cost state visibility and operational invariants
-9. UI copy and navigation alignment
-
-These are not Phase 001 implementation tasks. They are candidates for Phase 003+ after Phase 002 planning.
-
----
-
-# Refactor Readiness Checklist
-
-Before implementation begins, Phase 002 should produce:
-
-- concept-to-code inventory
-- terminology migration plan
-- accepted domain model changes
-- accepted data lifecycle architecture
-- accepted privacy/encryption architecture
-- accepted analysis boundary architecture
-- accepted cost state architecture
-- UI alignment plan
-- test/evaluation gate plan
-- refactor sequence
-- explicit non-goals
 
 ---
 
 # Current Recommendation
 
-Proceed to:
+Proceed through Phase 002 in order.
 
-```text
-Phase 002 — Concept-to-Architecture Refactor Roadmap
-```
-
-Do not proceed directly to code refactoring without that roadmap.
+Do not proceed directly to code refactoring without completing the Phase 002 exit review.
 
 ---
 

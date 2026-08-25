@@ -1,114 +1,118 @@
-# Documentation index
+# Documentation Index
 
-**Relationship Reasoning Engine (RRE)** — AWS-only (Bedrock + Transcribe + ECS + RDS). Canonical release **v1.0.0** on `main`.
+## Current documentation authority
 
-| Audience | Start here |
-|----------|------------|
-| **Operators / users** | [user/getting-started.md](user/getting-started.md) → [user/user-guide.md](user/user-guide.md) |
-| **Developers** | [developer/development.md](developer/development.md) → [developer/architecture.md](developer/architecture.md) |
-| **AWS ops** | [developer/aws-operations.md](developer/aws-operations.md) · [developer/aws-deployment.md](developer/aws-deployment.md) · [../infra/dev/README.md](../infra/dev/README.md) |
-| **Active plan** | [planning/phases/001](planning/phases/001_v2_1_phase_sequence_overview.md) (**v2.1** `001`–`009`) · [planning/deferred_backlog.md](planning/deferred_backlog.md) · [product/core_tenets.md](product/core_tenets.md) |
+The current design authority is the concept foundation:
 
-> Documentation lives under **`docs/`** (renamed from `doc/` in v0.7.0).
+```text
+concept design
+→ product philosophy
+→ domain model
+→ security/privacy model
+→ analysis philosophy
+→ implementation architecture
+→ code
+```
 
----
+Start here:
+
+| Area | Document |
+|---|---|
+| Concept foundation | [concepts/README.md](concepts/README.md) |
+| Phase 001 acceptance | [concepts/021_concept_acceptance_summary.md](concepts/021_concept_acceptance_summary.md) |
+| Refactor readiness | [concepts/022_refactor_readiness_decision.md](concepts/022_refactor_readiness_decision.md) |
+| Planning index | [planning/README.md](planning/README.md) |
+| Active phase sequence | [planning/phases/README.md](planning/phases/README.md) |
+| Mandatory exit gate policy | [planning/phase_exit_gate_policy.md](planning/phase_exit_gate_policy.md) |
+
+## Current active plan
+
+The current active plan is:
+
+```text
+Phase 002 — Concept-to-Architecture Refactor Roadmap
+```
+
+Phase 002 starts with:
+
+```text
+002-A — Documentation Authority and Terminology Inventory
+```
+
+It must end with:
+
+```text
+002-I — Phase 002 Exit Review and Consolidation
+```
+
+## Product identity
+
+| Name | Current role |
+|---|---|
+| Purposeful Audio Transcription | Historical repository name / legacy shell |
+| Secure Conversation Analysis and Reflection System | Current concept-level product identity |
+| Relationship Reasoning Engine (RRE) | Internal analysis-engine identity |
+| Audio transcription | Input capability, not product identity |
 
 ## User documentation
 
+Existing user documentation remains useful, but may contain legacy product names or workflow assumptions. It should be reconciled during Phase 002 and later refactor phases.
+
 | Document | Description |
-|----------|-------------|
-| [user/getting-started.md](user/getting-started.md) | Deploy, prepare transcript, first AWS workflow |
-| [user/user-guide.md](user/user-guide.md) | Streamlit workflow, preparation, exploration, exports |
-| [user/deployment.md](user/deployment.md) | AWS-only deployment pointers |
-| [user/model-setup.md](user/model-setup.md) | Bedrock + Transcribe |
+|---|---|
+| [user/getting-started.md](user/getting-started.md) | Legacy getting-started path |
+| [user/user-guide.md](user/user-guide.md) | Legacy application guide |
+| [user/deployment.md](user/deployment.md) | AWS deployment pointers |
+| [user/model-setup.md](user/model-setup.md) | Bedrock / Transcribe setup |
 
 ## Developer documentation
 
+Developer documentation remains useful as implementation reference material, but it is not product authority when it conflicts with accepted concept decisions.
+
 | Document | Description |
-|----------|-------------|
-| [developer/development.md](developer/development.md) | pytest / tooling setup, project layout |
-| [developer/architecture.md](developer/architecture.md) | Services, data flow, ontology, telemetry |
-| [developer/api-reference.md](developer/api-reference.md) | REST API summary |
-| [developer/contributing.md](developer/contributing.md) | Conventions, PRs, adding modules |
-| [developer/aws-operations.md](developer/aws-operations.md) | CloudWatch Insights, deploy smoke, pause/resume |
-| [developer/cursor-workflow.md](developer/cursor-workflow.md) | AI-assisted development notes |
-| [developer/aws-deployment.md](developer/aws-deployment.md) | AWS architecture and backbone integration |
-| [developer/log-redaction.md](developer/log-redaction.md) | CloudWatch redaction design |
+|---|---|
+| [developer/development.md](developer/development.md) | Development setup |
+| [developer/architecture.md](developer/architecture.md) | Existing service/data-flow reference |
+| [developer/api-reference.md](developer/api-reference.md) | Existing REST API summary |
+| [developer/aws-operations.md](developer/aws-operations.md) | Existing AWS operation notes |
+| [developer/aws-deployment.md](developer/aws-deployment.md) | Existing AWS architecture notes |
+| [developer/log-redaction.md](developer/log-redaction.md) | Existing redaction design |
 
 ## Design package
 
-Stable product/technical design (not a task tracker):
+The older design package is reference material. Phase 002 should determine which parts are accepted, superseded, renamed, or deferred.
 
-| Doc | Topic |
-|-----|-------|
-| [design/01_product_vision_and_scope.md](design/01_product_vision_and_scope.md) | Vision, users, use cases |
-| [design/02_system_architecture.md](design/02_system_architecture.md) | System boundaries |
-| [design/03_domain_model.md](design/03_domain_model.md) | Core entities |
-| [design/04_knowledge_ontology.md](design/04_knowledge_ontology.md) | Constructs and relationships |
-| [design/05_data_model_and_schemas.md](design/05_data_model_and_schemas.md) | JSON and DB schemas |
-| [design/06_analysis_modules.md](design/06_analysis_modules.md) | Module definitions |
-| [design/07_prompt_compiler.md](design/07_prompt_compiler.md) | Prompt compilation |
-| [design/08_workflow_engine.md](design/08_workflow_engine.md) | Workflow orchestration |
-| [design/09_evidence_confidence_and_citations.md](design/09_evidence_confidence_and_citations.md) | Evidence model |
-| [design/10_synthesis_engine.md](design/10_synthesis_engine.md) | Cross-module synthesis |
-| [design/11_ui_ux_design.md](design/11_ui_ux_design.md) | UI patterns |
-| [design/14_testing_evaluation_and_safety.md](design/14_testing_evaluation_and_safety.md) | Testing and safety |
-| [design/16_additional_thoughts.md](design/16_additional_thoughts.md) | Design principles |
+| Document | Topic |
+|---|---|
+| [design/01_product_vision_and_scope.md](design/01_product_vision_and_scope.md) | Legacy product vision / scope |
+| [design/03_domain_model.md](design/03_domain_model.md) | Existing domain model |
+| [design/04_knowledge_ontology.md](design/04_knowledge_ontology.md) | Existing ontology |
+| [design/09_evidence_confidence_and_citations.md](design/09_evidence_confidence_and_citations.md) | Evidence model reference |
+| [design/11_ui_ux_design.md](design/11_ui_ux_design.md) | Existing UI reference |
+| [design/14_testing_evaluation_and_safety.md](design/14_testing_evaluation_and_safety.md) | Testing/safety reference |
 
 ## Planning
 
 | Document | Description |
-|----------|-------------|
-| [planning/README.md](planning/README.md) | Planning index |
-| [planning/phases/](planning/phases/) | **Active** v2.1 numeric sequence (`001`–`009`) |
-| [planning/v2_readiness_assessment.md](planning/v2_readiness_assessment.md) | v2 beta / RC / GA labeling |
-| [planning/v2_future_state_architecture.md](planning/v2_future_state_architecture.md) | v2 vision / north star |
-| [planning/auth_rbac_plan.md](planning/auth_rbac_plan.md) | Email-first auth; Cognito later |
-| [planning/deferred_backlog.md](planning/deferred_backlog.md) | Prioritized deferred / dependency-gated work |
-| [planning/general_backlog.md](planning/general_backlog.md) | Unprioritized ideas (no commitment) |
-| [archived/planning/](archived/planning/) | Completed Phases 1–54 + retired supporting plans |
-| [archived/planning/bands/](archived/planning/bands/) | Completed / superseded band checklists |
-
-## Architecture / product / evaluation / security
-
-| Document | Description |
-|----------|-------------|
-| [product/core_tenets.md](product/core_tenets.md) | Durable product tenets (guides all v2.1 work) |
-| [product/transcript_preparation_workspace.md](product/transcript_preparation_workspace.md) | Transcript prep (**shipped** in v0.7) |
-| [product/safety_aware_report_mode.md](product/safety_aware_report_mode.md) | v1.0 safety-aware reports |
-| [security/simple_email_auth_plan.md](security/simple_email_auth_plan.md) | Passwordless email auth design (phase **003**) |
-| [developer/architecture_decisions/](developer/architecture_decisions/) | ADRs (email auth before SSO; concise evidence) |
-| [developer/evidence_precision_design.md](developer/evidence_precision_design.md) | Concise evidence spans (phase **004**) |
-| [developer/evidence_snapshot_versioning_design.md](developer/evidence_snapshot_versioning_design.md) | Transcript/evidence versioning (phase **005**) |
-| [developer/pr_review_tenet_checklist.md](developer/pr_review_tenet_checklist.md) | PR review against tenets |
-| [architecture/ontology_v1.md](architecture/ontology_v1.md) | Ontology vocabulary v1 (**shipped** in v0.7) |
-| [architecture/structured_persistence_plan.md](architecture/structured_persistence_plan.md) | v0.8 persistence |
-| [architecture/workflow_dag_plan.md](architecture/workflow_dag_plan.md) | v1.0 DAG workflows |
-| [evaluation/tenet_compliance_evaluation_plan.md](evaluation/tenet_compliance_evaluation_plan.md) | Tenet compliance metrics / gates |
-| [evaluation/golden_fixture_evaluation_plan.md](evaluation/golden_fixture_evaluation_plan.md) | Golden fixtures |
-| [evaluation/golden_transcript_fixtures.md](evaluation/golden_transcript_fixtures.md) | Golden fixture layout |
-| [evaluation/golden_manual_rubric.md](evaluation/golden_manual_rubric.md) | Human review rubric |
-| [evaluation/llm-evaluation-bedrock.md](evaluation/llm-evaluation-bedrock.md) | Bedrock LLM decision |
-| [evaluation/asr-evaluation-transcribe.md](evaluation/asr-evaluation-transcribe.md) | Whisper vs Transcribe |
+|---|---|
+| [planning/README.md](planning/README.md) | Planning authority index |
+| [planning/phases/](planning/phases/) | Active phase sequence |
+| [planning/inventories/](planning/inventories/) | Phase inventories |
+| [planning/deferred_backlog.md](planning/deferred_backlog.md) | Existing deferred backlog reference |
+| [planning/general_backlog.md](planning/general_backlog.md) | Existing general backlog reference |
+| [archived/planning/](archived/planning/) | Historical planning archive |
 
 ## Releases
 
+Release documents remain historical. They should not be edited to match current status unless explicitly marked as retrospective notes.
+
 | Document | Description |
-|----------|-------------|
-| [releases/v1.0.0.md](releases/v1.0.0.md) | **Canonical** — worker, DAG, custom workflows, safety mode |
-| [releases/v0.9.0.md](releases/v0.9.0.md) | Cases, longitudinal, feedback, report package |
-| [releases/v0.8.0.md](releases/v0.8.0.md) | Structured persistence + graph |
-| [releases/v0.7.0.md](releases/v0.7.0.md) | Trust UAT, transcript prep, ontology, telemetry |
-| [releases/v0.6.0.md](releases/v0.6.0.md) | Trust + workflows + AWS-only |
-| [releases/v0.5.1.md](releases/v0.5.1.md) | AWS cloud cutover |
-| [releases/v0.3.0.md](releases/v0.3.0.md) | Post-MVP release |
-| [releases/v0.2.0.md](releases/v0.2.0.md) | MVP release |
+|---|---|
+| [releases/v1.0.0.md](releases/v1.0.0.md) | Historical release note |
+| [releases/v0.9.0.md](releases/v0.9.0.md) | Historical release note |
+| [releases/v0.8.0.md](releases/v0.8.0.md) | Historical release note |
+| [releases/v0.7.0.md](releases/v0.7.0.md) | Historical release note |
 
-## History
+## Status rule
 
-| Path | Role |
-|------|------|
-| [archived/](archived/) | Pre-RRE / early backlog history |
-| [archived/planning/](archived/planning/) | Executive roadmap + completed phases **1–54** + retired supporting plans |
-
-**Do not** add new tasks to archived files — use [planning/deferred_backlog.md](planning/deferred_backlog.md) or [planning/general_backlog.md](planning/general_backlog.md).
+Living indexes, contributor instructions, and planning docs must not carry independently maintained stale status. Current status should point to the active phase sequence and the mandatory exit review for the current phase.

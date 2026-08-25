@@ -2,32 +2,33 @@
 
 ## Purpose
 
-This folder is the new conceptual design foundation for the conversation analysis application.
+This folder is the current conceptual design authority for the conversation analysis application.
 
 The application began from a plausible product idea and then moved quickly into implementation. That produced useful code, but implementation details began to become the design authority.
 
-This folder resets the design from ground zero.
+This folder resets the design from ground zero and now governs refactor planning.
 
-## Design Method
-
-The documents use a concept-design approach inspired by Daniel Jackson’s software design work:
-
-- identify the concepts users and designers must understand
-- give each concept a clear purpose
-- define each concept’s operational principle
-- describe how concepts compose
-- identify tensions, misfits, and invariants
-- only then map concepts back to implementation
-
-## Core Premise
+## Core premise
 
 The application is a secure conversation analysis and reflection system.
 
 It analyzes transcripts, which may be derived from recordings, using evidence-based psychological, behavioral, therapeutic, cognitive, and relational lenses. It supports reflection and longitudinal understanding.
 
-The application may consider psychological or diagnostic hypotheses as reflection contexts, but it must not diagnose, label, adjudicate, or claim clinical certainty.
+The application may consider psychological or diagnostic-framework-informed hypotheses as reflection contexts, but it must not diagnose, label, adjudicate, or claim clinical certainty.
 
-## Foundation Read Order
+## Authority order
+
+```text
+Concept design
+→ Product philosophy
+→ Domain model
+→ Security/privacy model
+→ Analysis philosophy
+→ Implementation architecture
+→ Code
+```
+
+## Foundation read order
 
 1. `000_concept_reset_charter.md`
 2. `001_product_premise.md`
@@ -41,9 +42,7 @@ The application may consider psychological or diagnostic hypotheses as reflectio
 10. `009_refactor_mapping.md`
 11. `010_open_questions.md`
 
-## Phase 001 Decision Closure
-
-Phase 001 converts concept exploration into accepted design authority.
+## Phase 001 decision closure
 
 | Subphase | Status | Decision Docs |
 |---|---|---|
@@ -53,78 +52,40 @@ Phase 001 converts concept exploration into accepted design authority.
 | 001-D — Personal Operating Model, User Role, and Cost State | Accepted | `018_personal_operating_model_decision.md`, `019_cost_state_decision.md`, `020_future_enterprise_posture_decision.md` |
 | 001-E — Concept Acceptance and Refactor Readiness | Complete | `021_concept_acceptance_summary.md`, `022_refactor_readiness_decision.md` |
 
-## Current Working Identity
+## Phase 002 refactor roadmap
+
+| Subphase | Status | Planning Doc |
+|---|---|---|
+| 002-A — Documentation Authority and Terminology Inventory | Complete | `../planning/phases/002a_documentation_authority_terminology_inventory.md` |
+| 002-B — Concept-to-Domain Model Mapping | Next | TBD |
+| 002-I — Phase 002 Exit Review and Consolidation | Mandatory gate | TBD |
+
+## Current working identity
 
 ```text
 Secure Conversation Analysis and Reflection System
 ```
 
-## Name Roles
-
-| Name | Role |
-|---|---|
-| Purposeful Audio Transcription | Historical repository name / legacy shell |
-| Relationship Reasoning Engine (RRE) | Internal analysis-engine identity |
-| Secure Conversation Analysis and Reflection System | Current concept-level product identity |
-| Audio transcription | Input capability, not product identity |
-
-## Current Lifecycle Defaults
-
-| Artifact | Default |
-|---|---|
-| Audio recording | Ephemeral; delete after successful transcription |
-| Failed transcription audio | Short retry/debug TTL; max 24 hours |
-| Transcript draft | Temporary; recommended 7-day expiration unless saved/promoted |
-| Saved transcript | Durable until user deletion |
-| Case transcript | Durable; case assignment implies retention |
-| Analysis output | Inherits retention from evidence basis |
-| Export | Explicit user action; download-oriented by default |
-
-## Current Analysis Boundary Defaults
+## Current terminology defaults
 
 | Area | Decision |
 |---|---|
-| Psychological hypotheses | Allowed as evidence-limited reflection contexts |
-| User-provided diagnoses | Context only; never validated or diagnosed by the system |
-| Therapeutic concepts | Framed as therapeutic reflection lenses |
-| Diagnostic-framework-informed concepts | Allowed as reasoning references, not clinical authority |
-| CBT/DBT/psychodynamic concepts | Allowed for reflection, not treatment or clinical authority |
-| Diagnosis / labeling | Out of scope |
-| Intent as fact | Out of scope unless directly evidenced |
-| Safety-aware framing | Overrides ordinary coaching and mutual-improvement framing |
-
-## Current Operating Defaults
-
-| Area | Decision |
-|---|---|
+| Product concept | Secure Conversation Analysis and Reflection System |
+| Repository shell | Purposeful Audio Transcription |
+| Internal engine | Relationship Reasoning Engine / RRE |
+| Input capability | Audio transcription |
+| Therapeutic concepts | Therapeutic reflection lenses |
+| Diagnostic frameworks | Reasoning references, not clinical authority |
 | User model | Personal owner/operator |
-| Administrator | Same person as owner in near-term mode |
-| Data owner | Same person as owner in near-term mode |
-| Cost operator | Same person as owner in near-term mode |
-| Cost state | First-class personal-mode concept |
-| Availability posture | Aggressive sleep/wake for personal mode |
+| Cost posture | Cost State; aggressive sleep/wake in personal mode |
 | Enterprise | Future policy/deployment layer |
 
-## Accepted Concept Authority
-
-The intended authority order is:
-
-```text
-Concept design
-→ Product philosophy
-→ Domain model
-→ Security/privacy model
-→ Analysis philosophy
-→ Implementation architecture
-→ Code
-```
-
-## Next Phase
+## Next phase
 
 Proceed to:
 
 ```text
-Phase 002 — Concept-to-Architecture Refactor Roadmap
+002-B — Concept-to-Domain Model Mapping
 ```
 
-Phase 002 should map accepted concepts to the current implementation before code refactoring begins.
+Do not begin implementation refactoring until Phase 002 reaches its mandatory exit review and consolidation gate.

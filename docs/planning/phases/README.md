@@ -1,35 +1,41 @@
-# Relationship Reasoning Engine — Active roadmap
+# Active Phase Sequence
 
-This folder holds **only unfinished execution phases** for the current band.
+## Current active sequence
 
-Completed history: [../../archived/planning/phases.md](../../archived/planning/phases.md) (Phases **1–54**) · detail checklists in [../../archived/planning/bands/](../../archived/planning/bands/).  
-Living plans (not phases): [../](../) — vision, auth, React, backlogs, readiness.
+The active planning sequence is now:
 
-## Active sequence — v2.1 (numeric)
+```text
+Phase 002 — Concept-to-Architecture Refactor Roadmap
+```
 
-Start at **[001](001_v2_1_phase_sequence_overview.md)**. Implement in order:
+Phase 002 maps the accepted concept foundation to architecture and refactor planning. It is not an implementation phase.
 
-| File | Role |
-|------|------|
-| [001_v2_1_phase_sequence_overview.md](001_v2_1_phase_sequence_overview.md) | Sequence overview + dependency map |
-| [002_v2_1_core_tenets_and_governance.md](002_v2_1_core_tenets_and_governance.md) | Tenets + PR/eval governance |
-| [003_v2_1_simple_email_auth_and_ownership.md](003_v2_1_simple_email_auth_and_ownership.md) | Passwordless email auth + ownership |
-| [004_v2_1_evidence_precision.md](004_v2_1_evidence_precision.md) | Concise evidence spans |
-| [005_v2_1_evidence_snapshots_and_versioning.md](005_v2_1_evidence_snapshots_and_versioning.md) | Transcript/evidence version binding |
-| [006_v2_1_worker_atomicity_and_operational_safety.md](006_v2_1_worker_atomicity_and_operational_safety.md) | Atomic job claim (remaining gap) |
-| [007_v2_1_safety_policy_and_non_diagnostic_enforcement.md](007_v2_1_safety_policy_and_non_diagnostic_enforcement.md) | Config-driven safety / non-diagnostic |
-| [008_v2_1_graph_relationship_evidence_and_case_correctness.md](008_v2_1_graph_relationship_evidence_and_case_correctness.md) | Graph edge evidence + case identity |
-| [009_v2_1_react_api_contract_and_release_candidate_readiness.md](009_v2_1_react_api_contract_and_release_candidate_readiness.md) | OpenAPI client + v2 RC gates |
+## Phase 002 subgroups
 
-**Guiding tenets:** [../product/core_tenets.md](../../product/core_tenets.md) · Auth decision: [ADR 001](../../developer/architecture_decisions/adr_001_simple_email_auth_before_enterprise_sso.md)
+| Subphase | Status | Document |
+|---|---|---|
+| 002-A — Documentation Authority and Terminology Inventory | Complete | [002a_documentation_authority_terminology_inventory.md](002a_documentation_authority_terminology_inventory.md) |
+| 002-B — Concept-to-Domain Model Mapping | Next | TBD |
+| 002-C — Data Lifecycle and Retention Architecture Plan | Planned | TBD |
+| 002-D — Privacy Boundary and Encryption Architecture Plan | Planned | TBD |
+| 002-E — Analysis Boundary, Hypothesis, and Safety Architecture Plan | Planned | TBD |
+| 002-F — Cost State and Personal Deployment Architecture Plan | Planned | TBD |
+| 002-G — UI/UX Concept Alignment Plan | Planned | TBD |
+| 002-H — Refactor Backlog, Sequencing, and Acceptance Gates | Planned | TBD |
+| 002-I — Phase 002 Exit Review and Consolidation | Mandatory gate | TBD |
 
-Superseded combined band (cutover / Cognito-first): [../../archived/planning/bands/10_v2_1_cutover_auth_and_graph_depth_superseded.md](../../archived/planning/bands/10_v2_1_cutover_auth_and_graph_depth_superseded.md) — leftovers live in [../deferred_backlog.md](../deferred_backlog.md).
+## Mandatory exit gate
 
-## When the sequence ships
+All future phases must end with an exit review and consolidation subgroup before the next phase begins.
 
-1. Append **Phase 55** (and/or per-sub-phase notes) to [../../archived/planning/phases.md](../../archived/planning/phases.md).
-2. Move completed checklists → [../../archived/planning/bands/](../../archived/planning/bands/).
-3. Update [../../archived/planning/executive_roadmap.md](../../archived/planning/executive_roadmap.md) and deferred backlog.
-4. Leave only unfinished work (and this README) here.
+See:
 
-Do **not** add analysis modules for breadth. Prefer evidence, confidence, safety, ownership, and graph correctness.
+```text
+../phase_exit_gate_policy.md
+```
+
+## Superseded planning material
+
+Older v2.1 numeric plans remain repository history/reference material. They are not the active phase sequence unless explicitly carried forward by Phase 002.
+
+Do not begin code refactoring from old phase files without reconciling them against the accepted concept foundation.

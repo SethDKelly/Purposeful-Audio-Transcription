@@ -1,68 +1,52 @@
 # Purposeful Audio Transcription
 
-**Relationship Reasoning Engine (RRE)** — evidence-linked, multi-module transcript analysis on **AWS** (Bedrock + Amazon Transcribe + ECS + RDS).
+This repository currently contains the prototype/reference implementation for the working product concept:
 
-| | |
-|--|--|
-| **Canonical release** | [v1.0.0](https://github.com/SethDKelly/Purposeful-Audio-Transcription/releases/tag/v1.0.0) |
-| **Runtime** | AWS only (account `521018312783`, `us-east-2`) |
-| **Active work** | [docs/planning/phases/](docs/planning/phases/) (**v1.1**) · [docs/planning/deferred_backlog.md](docs/planning/deferred_backlog.md) |
-
-## Quick start (operators)
-
-1. Deploy the stack: GitHub Actions **Deploy to AWS dev** (`workflow_dispatch`, or push of a `v*.*.*` tag).
-2. Open the ALB UI URL from the workflow summary / Terraform outputs.
-3. Paste a transcript or upload audio → **Prepare** (review/edit turns) → **Ready to Analyze** → run **Quick Review** (Bedrock).
-4. When idle: **Pause AWS dev** to avoid cost.
-
-Full walkthrough: [docs/user/getting-started.md](docs/user/getting-started.md) · Ops: [docs/developer/aws-operations.md](docs/developer/aws-operations.md)
-
-## Developer loop
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
-pre-commit install
-pytest tests/ -q
+```text
+Secure Conversation Analysis and Reflection System
 ```
 
-Tests use SQLite. There is **no** supported local Whisper/Ollama server — integrate and validate on AWS after green pytest. Pre-commit runs YAML/config checks, ruff, actionlint, and a targeted pytest slice. See [docs/developer/development.md](docs/developer/development.md).
+The original repository name, **Purposeful Audio Transcription**, is historical. Audio transcription remains an input capability, but the accepted product concept is private, evidence-linked conversation analysis and reflection over transcripts.
 
-## Documentation
+## Current status
 
-| Audience | Guide |
-|----------|-------|
-| **Operators / users** | [docs/user/](docs/user/) — getting started, guide, AWS deployment, models |
-| **Developers** | [docs/developer/](docs/developer/) — architecture, API, contributing, AWS ops |
-| **Architecture** | [docs/developer/aws-deployment.md](docs/developer/aws-deployment.md) |
-| **Planning** | [docs/planning/](docs/planning/) — deferred backlog · general backlog |
-| **Index** | [docs/README.md](docs/README.md) |
+The repository is in concept-to-architecture refactor planning.
 
-## Capabilities (v1.0.0)
+The current design authority is:
 
-- 14 analysis modules · 7 workflows · DAG `steps` (e.g. `full_mvp`) · custom suites
-- Dedicated ECS workflow worker — cancel, job timeout, retries
-- **Cases** — group transcripts; longitudinal compare + synthesis
-- Normalized persistence: findings, constructs, relationships
-- Graph merge + deterministic convergence scores
-- Table-first structured inventory + knowledge graph
-- Safety-aware report mode (risk scan, banner, framing, exploratory skip)
-- Long-transcript balanced quote sampling (explicit strategy, not silent truncation)
-- Finding feedback + report package ZIP
-- Transcript preparation workspace (edit turns, exclude, Ready to Analyze)
-- Ontology vocabulary v1 + `expected_constructs` soft coverage warnings
-- Evidence quote IDs (`Q001…`); golden transcript fixtures
-- Per-module / workflow telemetry
-- **LLM:** Amazon Bedrock · **ASR:** Amazon Transcribe
-- Stage B VPC; shared API key auth; optional HTTPS via ACM
-- Streamlit report + Explore + Cases + custom workflow builder
-- RDS PostgreSQL, background jobs / worker queue
+```text
+docs/concepts/
+```
 
+Active planning is:
 
-## Deploy policy
+```text
+docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md
+```
 
-Deploy on **minor-version releases** (git tag `v*.*.*` or manual **Deploy to AWS dev**). Ordinary commits to `main` do not wake AWS. Pause when idle.
+GitHub Actions workflows have been intentionally cleared. New workflows should be introduced only after the refactor roadmap defines the new pipeline and gate model.
+
+## Product concept
+
+The product is a secure conversation analysis and reflection system that uses evidence-linked transcripts, psychological and behavioral reflection lenses, confidence calibration, and longitudinal case memory to help a user examine communication patterns without diagnosing people or making clinical/legal determinations.
+
+## Entry points
+
+| Area | Start here |
+|---|---|
+| Concept authority | [docs/concepts/README.md](docs/concepts/README.md) |
+| Planning authority | [docs/planning/README.md](docs/planning/README.md) |
+| Phase sequence | [docs/planning/phases/README.md](docs/planning/phases/README.md) |
+| Documentation index | [docs/README.md](docs/README.md) |
+| Phase exit gate policy | [docs/planning/phase_exit_gate_policy.md](docs/planning/phase_exit_gate_policy.md) |
+
+## Important boundary
+
+The application may use therapeutic, psychological, behavioral, and diagnostic-framework-informed concepts as evidence-limited reasoning references. It must not present itself as a clinician, therapist, diagnostic tool, treatment system, adjudicator, or workplace surveillance tool.
+
+## Legacy implementation
+
+The existing implementation remains valuable as a prototype/reference implementation. It should be mapped to the accepted concepts before broad code refactoring resumes.
 
 ## License
 
