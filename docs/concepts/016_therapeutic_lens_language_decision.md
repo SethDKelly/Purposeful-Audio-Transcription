@@ -2,9 +2,9 @@
 
 ## Status
 
-Accepted as the current language decision for therapeutic, psychological, behavioral, CBT, DBT, psychodynamic, and related analysis lenses.
+Accepted as the current language decision for therapeutic, psychological, behavioral, CBT, DBT, psychodynamic, diagnostic-framework-informed, and related analysis lenses.
 
-This document defines how the product should name and frame therapeutic lenses without implying clinical treatment, diagnosis, or professional authority.
+This document defines how the product should name and frame these lenses without implying clinical treatment, diagnosis, or professional authority.
 
 ---
 
@@ -16,23 +16,40 @@ Use the phrase:
 therapeutic reflection lenses
 ```
 
-Do not use the default phrase:
+Do not use the default product-facing phrase:
 
 ```text
 clinical lenses
 ```
 
-The product may use therapeutic concepts as reflection frameworks, but it is not a therapy provider, clinical tool, diagnostic instrument, or treatment-planning system.
+The product may use therapeutic, diagnostic-framework-informed, behavioral, cognitive, psychodynamic, and related concepts as reasoning references, but it is not a therapy provider, clinician, diagnostic instrument, treatment-planning system, or professional authority.
 
 ---
 
-# Rationale
+# Clarification — Authority vs Reasoning Utility
 
-The application may analyze transcripts using concepts inspired by CBT, DBT, behavioral analysis, psychodynamic thinking, attachment-informed communication, trauma-informed communication, mediation, NVC, and systems thinking.
+Avoiding phrases such as `clinical lenses`, `diagnostic lenses`, `treatment lenses`, and `pathology lenses` does **not** mean the underlying traditions are useless or prohibited.
 
-These frameworks are valuable for reflection, but the current product is for personal evidence-backed conversation analysis.
+The reason to avoid those terms is authority management.
 
-The language must preserve this distinction.
+The application lacks clinical authority. It should not present itself as diagnosing, treating, or pathologizing anyone.
+
+However, these frameworks may still help the reasoning engine by supplying:
+
+- concepts to check against transcript evidence
+- possible explanatory hypotheses
+- patterns to compare over time
+- alternative explanations
+- reflection prompts
+- safety cautions
+- confidence limits
+
+The distinction is:
+
+```text
+Allowed: use source frameworks to reason cautiously from evidence.
+Forbidden: present the output as clinical authority, diagnosis, pathology detection, treatment, or settled truth.
+```
 
 ---
 
@@ -54,8 +71,10 @@ This phrase communicates that the app borrows reflective concepts from therapeut
 - relational reflection lenses
 - safety-aware reflection lenses
 - hypothesis-aware reflection lenses
+- diagnostic-framework-informed reflection references
+- clinical-framework-informed reasoning references, internal/developer context only
 
-## Avoid as Default
+## Avoid as Product-Facing Defaults
 
 - clinical lenses
 - diagnostic lenses
@@ -64,6 +83,8 @@ This phrase communicates that the app borrows reflective concepts from therapeut
 - disorder detection
 - personality disorder analysis
 - mental health assessment
+
+These terms may appear in internal design discussions only when explicitly marked as source-framework or rationale references rather than product authority.
 
 ---
 
@@ -77,21 +98,9 @@ Allowed framing:
 CBT-style thought pattern reflection
 ```
 
-The product may examine:
+The product may examine automatic thoughts, assumptions, interpretations, cognitive distortions, evidence for and against interpretations, alternative interpretations, and behavior-impact links.
 
-- automatic thoughts
-- assumptions
-- interpretations
-- cognitive distortions
-- evidence for and against interpretations
-- alternative interpretations
-- behavior-impact links
-
-Avoid:
-
-- CBT treatment plan
-- cognitive restructuring prescription
-- clinical CBT intervention
+Avoid treatment plans, cognitive restructuring prescriptions, or clinical CBT interventions.
 
 ## DBT-Style Reflection
 
@@ -101,20 +110,9 @@ Allowed framing:
 DBT-style emotion regulation and interpersonal effectiveness reflection
 ```
 
-The product may examine:
+The product may examine escalation signals, validation opportunities, emotion regulation cues, distress tolerance reflection points, interpersonal effectiveness opportunities, repair language, and boundary language.
 
-- escalation signals
-- validation opportunities
-- emotion regulation cues
-- distress tolerance reflection points
-- interpersonal effectiveness opportunities
-- repair and boundary language
-
-Avoid:
-
-- DBT treatment plan
-- skills coaching as therapy
-- clinical DBT intervention
+Avoid DBT treatment plans, skills coaching as therapy, or clinical DBT interventions.
 
 ## Behavioral Analysis Reflection
 
@@ -124,19 +122,9 @@ Allowed framing:
 behavioral pattern reflection
 ```
 
-The product may examine:
+The product may examine antecedents, observable behaviors, consequences, reinforcement-like loops, avoidance patterns, and approach/withdrawal patterns.
 
-- antecedents
-- observable behaviors
-- consequences
-- reinforcement-like loops
-- avoidance patterns
-- approach/withdrawal patterns
-
-Avoid:
-
-- behavior diagnosis
-- clinical functional analysis unless future professional mode explicitly supports it
+Avoid behavior diagnosis or clinical functional analysis unless a future professional mode explicitly supports it.
 
 ## Psychodynamic / Psychoanalytic Reflection
 
@@ -146,21 +134,23 @@ Allowed framing:
 psychodynamic hypothesis-aware reflection
 ```
 
-The product may examine possible evidence for:
+The product may examine possible evidence for defenses, shame responses, distancing, projection-like interpretations, emotional protection strategies, identity threat, and attachment-related meaning.
 
-- defenses
-- shame responses
-- distancing
-- projection-like interpretations
-- emotional protection strategies
-- identity threat
-- attachment-related meaning
+Avoid psychoanalytic diagnosis, claims about unconscious motive as fact, or fixed personality conclusions.
 
-Avoid:
+## Diagnostic-Framework-Informed Reflection
 
-- psychoanalytic diagnosis
-- claims about unconscious motive as fact
-- fixed personality conclusions
+Allowed framing:
+
+```text
+diagnostic-framework-informed reflection reference
+```
+
+This may be used internally or in advanced user-facing contexts when a user has provided diagnostic context or a reflective hypothesis.
+
+The system may ask whether transcript evidence is consistent with, inconsistent with, or insufficient for that hypothesis.
+
+Avoid saying the system has diagnosed, confirmed, ruled out, detected, or clinically assessed a condition.
 
 ## Attachment-Informed Reflection
 
@@ -170,19 +160,9 @@ Allowed framing:
 attachment-informed interaction reflection
 ```
 
-The product may examine:
+The product may examine bids for closeness, pursuit/withdrawal cycles, reassurance seeking, distancing, fear-of-abandonment hypotheses, and fear-of-engulfment hypotheses.
 
-- bids for closeness
-- pursuit/withdrawal cycles
-- reassurance seeking
-- distancing
-- fear of abandonment hypotheses
-- fear of engulfment hypotheses
-
-Avoid:
-
-- assigning attachment style as identity
-- saying a speaker is avoidant/anxious/disorganized as a fixed label
+Avoid assigning attachment style as identity.
 
 ## Trauma-Informed Communication Reflection
 
@@ -192,19 +172,9 @@ Allowed framing:
 trauma-informed communication reflection
 ```
 
-The product may examine:
+The product may examine safety/threat language, dysregulation cues, shutdown/escalation cues, shame activation hypotheses, and control/predictability needs.
 
-- safety/threat language
-- dysregulation cues
-- shutdown/escalation cues
-- shame activation hypotheses
-- control and predictability needs
-
-Avoid:
-
-- concluding trauma history
-- treating trauma as confirmed
-- providing trauma therapy
+Avoid concluding trauma history, treating trauma as confirmed, or providing trauma therapy.
 
 ---
 
@@ -213,94 +183,20 @@ Avoid:
 Every therapeutic reflection lens should conceptually follow this disclaimer:
 
 ```text
-This lens uses therapeutic concepts for evidence-based reflection. It does not diagnose, treat, or determine clinical conditions. Findings should be interpreted as reflection prompts, not professional conclusions.
+This lens uses therapeutic or psychological concepts for evidence-based reflection. It does not diagnose, treat, or determine clinical conditions. Findings should be interpreted as reflection prompts and evidence-limited hypotheses, not professional conclusions.
 ```
 
 This disclaimer does not need to appear verbatim in every UI surface, but the design should preserve the meaning.
 
 ---
 
-# Reflection Output Style
-
-Therapeutic reflection outputs should use:
-
-- evidence-linked observations
-- cautious hypotheses
-- confidence levels
-- alternative explanations
-- reflection questions
-- self-awareness prompts
-- safety-aware caveats when relevant
-
-They should avoid:
-
-- instructions framed as treatment
-- clinical conclusions
-- pathology-centered labels
-- personality judgments
-- prescriptions
-- certainty about motive
-- certainty about diagnosis
-
----
-
-# User-Facing Examples
-
-## Preferred
-
-```text
-CBT-style reflection: This statement may involve mind-reading because it assumes the other person’s intent without direct evidence. A useful reflection question is: what evidence supports that interpretation, and what other explanation might fit?
-```
-
-## Avoid
-
-```text
-CBT diagnosis: The speaker has a distorted thinking pattern that needs restructuring.
-```
-
-## Preferred
-
-```text
-DBT-style reflection: The exchange shows a possible validation gap. The speaker answers the facts of the complaint before acknowledging the emotion.
-```
-
-## Avoid
-
-```text
-The speaker needs DBT skills training.
-```
-
-## Preferred
-
-```text
-Psychodynamic reflection: One possible hypothesis is that the speaker’s withdrawal protects against feeling criticized. The transcript supports this only weakly; fatigue or overwhelm may also explain the response.
-```
-
-## Avoid
-
-```text
-The speaker withdraws because of unconscious schizoid defenses.
-```
-
----
-
-# Therapy Session Context
-
-The product may analyze personal therapy session transcripts only when legally and ethically appropriate.
-
-In that context, the product should still frame output as reflection, not supervision, diagnosis, or clinical documentation.
-
-Future professional versions may add clinician-specific workflows, but those are out of scope for the current personal-mode concept design.
-
----
-
 # Decision
 
-Therapeutic concepts are allowed as reflection lenses.
+Therapeutic, psychological, behavioral, diagnostic-framework-informed, and related concepts are allowed as reasoning references and reflection lenses.
 
 The product should frame them as evidence-based reflection aids, not clinical authority.
 
-The preferred phrase is:
+The preferred product-facing phrase is:
 
 ```text
 therapeutic reflection lenses
