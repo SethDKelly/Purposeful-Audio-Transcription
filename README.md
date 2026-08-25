@@ -10,21 +10,33 @@ The original repository name, **Purposeful Audio Transcription**, is historical.
 
 ## Current status
 
-The repository is in concept-to-architecture refactor planning.
+The repository has completed concept-to-architecture refactor planning.
 
-The current design authority is:
+Current design authority remains:
 
 ```text
 docs/concepts/
 ```
 
-Active planning is:
+Completed architecture/refactor planning:
 
 ```text
 docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md
 ```
 
-GitHub Actions workflows have been intentionally cleared. New workflows should be introduced only after the refactor roadmap defines the new pipeline and gate model.
+The next authorized phase is:
+
+```text
+Phase 003 — Foundation Refactor Planning and Authority Cleanup
+```
+
+Recommended next subgroup:
+
+```text
+003-A — Documentation Authority Cleanup and Historical Material Reconciliation
+```
+
+GitHub Actions workflows have been intentionally cleared. New workflows should be introduced only after the refactor roadmap and cost-state/control-plane planning define the new pipeline and gate model.
 
 ## Product concept
 
@@ -37,6 +49,8 @@ The product is a secure conversation analysis and reflection system that uses ev
 | Concept authority | [docs/concepts/README.md](docs/concepts/README.md) |
 | Planning authority | [docs/planning/README.md](docs/planning/README.md) |
 | Phase sequence | [docs/planning/phases/README.md](docs/planning/phases/README.md) |
+| Completed Phase 002 roadmap | [docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md](docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md) |
+| Phase 002 exit review | [docs/planning/phases/002i_phase_exit_review_consolidation.md](docs/planning/phases/002i_phase_exit_review_consolidation.md) |
 | Documentation index | [docs/README.md](docs/README.md) |
 | Phase exit gate policy | [docs/planning/phase_exit_gate_policy.md](docs/planning/phase_exit_gate_policy.md) |
 
