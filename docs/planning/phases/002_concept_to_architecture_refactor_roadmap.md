@@ -49,8 +49,8 @@ Key accepted decisions:
 | 002-A — Documentation Authority and Terminology Inventory | Complete | Identify current authority surfaces, stale wording, and terminology mapping |
 | 002-B — Concept-to-Domain Model Mapping | Complete | Map accepted concepts to current entities, schemas, services, and gaps |
 | 002-C — Data Lifecycle and Retention Architecture Plan | Complete | Translate lifecycle/retention decisions into architecture requirements |
-| 002-D — Privacy Boundary and Encryption Architecture Plan | Next | Define owner scope, access, encryption, redaction, and deletion architecture |
-| 002-E — Analysis Boundary, Hypothesis, and Safety Architecture Plan | Planned | Map non-diagnostic hypothesis reasoning and safety override into schemas/prompts/validators |
+| 002-D — Privacy Boundary and Encryption Architecture Plan | Complete | Define owner scope, access, encryption, redaction, deletion, and corpus-scope architecture |
+| 002-E — Analysis Boundary, Hypothesis, and Safety Architecture Plan | Next | Map non-diagnostic hypothesis reasoning, corpus-aware confidence, and safety override into schemas/prompts/validators |
 | 002-F — Cost State and Personal Deployment Architecture Plan | Planned | Map sleep/wake and personal-mode cost posture into deployment architecture |
 | 002-G — UI/UX Concept Alignment Plan | Planned | Align user-facing concepts, labels, flows, and report language |
 | 002-H — Refactor Backlog, Sequencing, and Acceptance Gates | Planned | Build the implementation backlog and gates |
@@ -80,6 +80,7 @@ The exit review must consolidate:
 | 002-A | `docs/planning/inventories/002a_documentation_authority_inventory.md`, `docs/planning/inventories/002a_terminology_inventory.md` |
 | 002-B | `docs/planning/inventories/002b_concept_domain_model_mapping.md`, `docs/planning/inventories/002b_domain_gap_register.md` |
 | 002-C | `docs/planning/architecture/002c_data_lifecycle_retention_architecture_plan.md`, `docs/planning/inventories/002c_artifact_retention_matrix.md` |
+| 002-D | `docs/planning/architecture/002d_privacy_boundary_encryption_architecture_plan.md`, `docs/planning/inventories/002d_artifact_privacy_encryption_matrix.md`, `docs/planning/inventories/002d_corpus_reasoning_scope_rules.md` |
 
 ---
 
