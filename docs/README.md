@@ -22,27 +22,25 @@ Start here:
 | Phase 001 acceptance | [concepts/021_concept_acceptance_summary.md](concepts/021_concept_acceptance_summary.md) |
 | Refactor readiness | [concepts/022_refactor_readiness_decision.md](concepts/022_refactor_readiness_decision.md) |
 | Planning index | [planning/README.md](planning/README.md) |
-| Active phase sequence | [planning/phases/README.md](planning/phases/README.md) |
+| Phase sequence | [planning/phases/README.md](planning/phases/README.md) |
+| Completed Phase 002 roadmap | [planning/phases/002_concept_to_architecture_refactor_roadmap.md](planning/phases/002_concept_to_architecture_refactor_roadmap.md) |
+| Phase 002 exit review | [planning/phases/002i_phase_exit_review_consolidation.md](planning/phases/002i_phase_exit_review_consolidation.md) |
 | Mandatory exit gate policy | [planning/phase_exit_gate_policy.md](planning/phase_exit_gate_policy.md) |
 
-## Current active plan
+## Current plan status
 
-The current active plan is:
+Phase 002 is complete.
+
+The next authorized phase is:
 
 ```text
-Phase 002 — Concept-to-Architecture Refactor Roadmap
+Phase 003 — Foundation Refactor Planning and Authority Cleanup
 ```
 
-Phase 002 starts with:
+The recommended next subgroup is:
 
 ```text
-002-A — Documentation Authority and Terminology Inventory
-```
-
-It must end with:
-
-```text
-002-I — Phase 002 Exit Review and Consolidation
+003-A — Documentation Authority Cleanup and Historical Material Reconciliation
 ```
 
 ## Product identity
@@ -56,7 +54,7 @@ It must end with:
 
 ## User documentation
 
-Existing user documentation remains useful, but may contain legacy product names or workflow assumptions. It should be reconciled during Phase 002 and later refactor phases.
+Existing user documentation remains useful, but may contain legacy product names or workflow assumptions. It should be reconciled during Phase 003 and later refactor phases.
 
 | Document | Description |
 |---|---|
@@ -80,7 +78,7 @@ Developer documentation remains useful as implementation reference material, but
 
 ## Design package
 
-The older design package is reference material. Phase 002 should determine which parts are accepted, superseded, renamed, or deferred.
+The older design package is reference material. Phase 003 should determine which parts are accepted, superseded, renamed, or deferred for implementation refactor planning.
 
 | Document | Topic |
 |---|---|
@@ -96,7 +94,8 @@ The older design package is reference material. Phase 002 should determine which
 | Document | Description |
 |---|---|
 | [planning/README.md](planning/README.md) | Planning authority index |
-| [planning/phases/](planning/phases/) | Active phase sequence |
+| [planning/phases/](planning/phases/) | Phase sequence |
+| [planning/architecture/](planning/architecture/) | Phase architecture plans |
 | [planning/inventories/](planning/inventories/) | Phase inventories |
 | [planning/deferred_backlog.md](planning/deferred_backlog.md) | Existing deferred backlog reference |
 | [planning/general_backlog.md](planning/general_backlog.md) | Existing general backlog reference |
@@ -115,4 +114,4 @@ Release documents remain historical. They should not be edited to match current 
 
 ## Status rule
 
-Living indexes, contributor instructions, and planning docs must not carry independently maintained stale status. Current status should point to the active phase sequence and the mandatory exit review for the current phase.
+Living indexes, contributor instructions, and planning docs must not carry independently maintained stale status. Current status should point to the phase sequence and mandatory exit review for the current phase.
