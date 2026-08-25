@@ -4,7 +4,7 @@
 
 Complete.
 
-This phase closes the concept-level decisions for psychological hypotheses, therapeutic reflection lens language, and safety-aware override behavior.
+This phase closes the concept-level decisions for psychological hypotheses, therapeutic reflection lens language, framework terminology, and safety-aware override behavior.
 
 ---
 
@@ -28,7 +28,7 @@ Phase 001-C resolves that boundary.
 | Decision | Document |
 |---|---|
 | Hypothesis-aware reflection boundary | `../../concepts/015_hypothesis_reflection_boundary.md` |
-| Therapeutic lens language | `../../concepts/016_therapeutic_lens_language_decision.md` |
+| Therapeutic lens language and source-framework terminology | `../../concepts/016_therapeutic_lens_language_decision.md` |
 | Safety boundary and override behavior | `../../concepts/017_safety_boundary_decision.md` |
 
 ---
@@ -66,7 +66,7 @@ Use the phrase:
 therapeutic reflection lenses
 ```
 
-Avoid default framing such as:
+Avoid default product-facing framing such as:
 
 ```text
 clinical lenses
@@ -75,13 +75,26 @@ treatment lenses
 pathology lenses
 ```
 
-## 4. CBT/DBT/Psychodynamic Concepts Are Allowed With Boundaries
+## 4. Restricted Framework Terms May Still Inform Reasoning
 
-The product may use CBT-style, DBT-style, behavioral, psychodynamic, attachment-informed, trauma-informed, and related concepts as reflection frameworks.
+Avoiding product-facing terms such as clinical, diagnostic, treatment, or pathology lenses is not a rejection of those bodies of knowledge.
+
+Those frameworks may still help the reasoning engine by providing source concepts, hypotheses, alternative explanations, reflection prompts, and confidence limits.
+
+The distinction is:
+
+```text
+Allowed: use source frameworks to reason cautiously from evidence.
+Forbidden: present the output as clinical authority, diagnosis, pathology detection, treatment, or settled truth.
+```
+
+## 5. CBT/DBT/Psychodynamic Concepts Are Allowed With Boundaries
+
+The product may use CBT-style, DBT-style, behavioral, psychodynamic, attachment-informed, trauma-informed, diagnostic-framework-informed, and related concepts as reflection frameworks.
 
 It must not provide treatment plans, clinical conclusions, diagnosis, or professional authority.
 
-## 5. Safety-Aware Framing Overrides Ordinary Reflection
+## 6. Safety-Aware Framing Overrides Ordinary Reflection
 
 When transcripts include safety-relevant indicators, safety-aware framing takes priority over ordinary coaching, therapeutic reflection, hypothesis exploration, and mutual improvement language.
 
@@ -111,6 +124,7 @@ Phase 001-C is complete when:
 - user-provided diagnoses are handled only as context
 - allowed and prohibited hypothesis language is documented
 - therapeutic lens language is reflection-oriented
+- restricted framework terms are allowed only as source-framework reasoning references
 - safety-aware framing has concept-level override authority
 - ordinary mutual-improvement framing is prohibited in serious safety contexts
 
