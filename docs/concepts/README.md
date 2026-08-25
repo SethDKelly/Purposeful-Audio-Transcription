@@ -50,8 +50,8 @@ Phase 001 converts concept exploration into accepted design authority.
 | 001-A — Product Identity, Naming, and Conceptual Boundary | Accepted | `011_product_identity_decision.md`, `012_concept_boundary_decision.md` |
 | 001-B — Data Lifecycle, Retention, and Encryption Decisions | Accepted | `013_data_lifecycle_decision.md`, `014_retention_and_encryption_decision.md` |
 | 001-C — Hypothesis-Aware Reflection and Non-Diagnostic Boundary | Accepted | `015_hypothesis_reflection_boundary.md`, `016_therapeutic_lens_language_decision.md`, `017_safety_boundary_decision.md` |
-| 001-D — Personal Operating Model, User Role, and Cost State | Next | TBD |
-| 001-E — Concept Acceptance and Refactor Readiness | Planned | TBD |
+| 001-D — Personal Operating Model, User Role, and Cost State | Accepted | `018_personal_operating_model_decision.md`, `019_cost_state_decision.md`, `020_future_enterprise_posture_decision.md` |
+| 001-E — Concept Acceptance and Refactor Readiness | Next | TBD |
 
 ## Current Working Identity
 
@@ -87,10 +87,22 @@ Secure Conversation Analysis and Reflection System
 | Psychological hypotheses | Allowed as evidence-limited reflection contexts |
 | User-provided diagnoses | Context only; never validated or diagnosed by the system |
 | Therapeutic concepts | Framed as therapeutic reflection lenses |
+| Restricted framework terms | May inform reasoning as source-framework references, not product authority |
 | CBT/DBT/psychodynamic concepts | Allowed for reflection, not treatment or clinical authority |
 | Diagnosis / labeling | Out of scope |
 | Intent as fact | Out of scope unless directly evidenced |
 | Safety-aware framing | Overrides ordinary coaching and mutual-improvement framing |
+
+## Current Operating Model Defaults
+
+| Area | Decision |
+|---|---|
+| Design center | Personal owner-operated mode |
+| Current actor model | Same person may be user, admin, data owner, cost operator, and product evaluator |
+| Security posture | Single-user still requires authentication, session control, owner scoping, redacted logs, and explicit export/delete behavior |
+| Cost state | First-class product concept for personal mode |
+| Availability states | Asleep, Waking, Active, IdlePending, ShuttingDown, FailedWake, Maintenance |
+| Enterprise posture | Future policy/deployment expansion, not near-term design center |
 
 ## Design Authority
 
