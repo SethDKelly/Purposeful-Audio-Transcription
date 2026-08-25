@@ -2,19 +2,19 @@
 
 ## Status
 
-Active.
+Complete.
 
-This phase translates the accepted concept foundation into architecture and refactor planning.
+This phase translated the accepted concept foundation into architecture and refactor planning.
 
-It is not an implementation phase.
+It was not an implementation phase.
 
 ---
 
 # Purpose
 
-Phase 002 maps accepted concepts to current implementation areas, identifies terminology drift, defines architecture plans, and creates a safe refactor sequence.
+Phase 002 mapped accepted concepts to current implementation areas, identified terminology drift, defined architecture plans, and created a safe refactor sequence.
 
-The goal is to prevent the old implementation from reasserting product authority while preserving useful prototype work.
+The goal was to prevent the old implementation from reasserting product authority while preserving useful prototype work.
 
 ---
 
@@ -42,7 +42,7 @@ Key accepted decisions:
 
 ---
 
-# Required subgroups
+# Completed subgroups
 
 | Subphase | Status | Purpose |
 |---|---|---|
@@ -54,26 +54,30 @@ Key accepted decisions:
 | 002-F — Cost State and Personal Deployment Architecture Plan | Complete | Map sleep/wake and personal-mode cost posture into deployment architecture |
 | 002-G — UI/UX Concept Alignment Plan | Complete | Align user-facing concepts, labels, flows, and report language |
 | 002-H — Refactor Backlog, Sequencing, and Acceptance Gates | Complete | Build the implementation backlog and gates |
-| 002-I — Phase 002 Exit Review and Consolidation | Next mandatory gate | Consolidate Phase 002 and authorize or block Phase 003 |
+| 002-I — Phase 002 Exit Review and Consolidation | Complete | Consolidate Phase 002 and authorize Phase 003 |
 
 ---
 
-# Mandatory exit gate
+# Mandatory exit gate result
 
-Phase 002 cannot be considered complete until `002-I` is complete.
+Phase 002 completed its mandatory exit review:
 
-The exit review must consolidate:
+```text
+002-I — Phase 002 Exit Review and Consolidation
+```
 
-- accepted architecture decisions
-- terminology changes
-- stale/superseded docs
-- deferred questions
-- refactor sequence
-- implementation readiness result
+Exit decision:
+
+```text
+Phase 002 passes exit review.
+Phase 002 is complete.
+Phase 003 is authorized with explicit scope.
+Broad implementation rewrite remains blocked.
+```
 
 ---
 
-# Current accepted outputs
+# Accepted outputs
 
 | Subphase | Outputs |
 |---|---|
@@ -85,12 +89,44 @@ The exit review must consolidate:
 | 002-F | `docs/planning/architecture/002f_cost_state_personal_deployment_architecture_plan.md`, `docs/planning/inventories/002f_cost_state_transition_matrix.md`, `docs/planning/inventories/002f_personal_deployment_control_requirements.md` |
 | 002-G | `docs/planning/architecture/002g_ui_ux_concept_alignment_plan.md`, `docs/planning/inventories/002g_ui_ux_language_matrix.md`, `docs/planning/inventories/002g_user_flow_alignment_inventory.md` |
 | 002-H | `docs/planning/architecture/002h_refactor_backlog_sequencing_acceptance_gates.md`, `docs/planning/inventories/002h_refactor_backlog.md`, `docs/planning/inventories/002h_acceptance_gate_matrix.md` |
+| 002-I | `docs/planning/architecture/002i_phase_002_exit_review_consolidation.md`, `docs/planning/inventories/002i_phase_002_output_inventory.md`, `docs/planning/inventories/002i_phase_003_authorized_scope.md` |
 
 ---
 
-# Non-goals
+# Consolidated gates carried forward
 
-Phase 002 does not:
+Phase 002 carries forward these gates for Phase 003 and later implementation planning:
+
+- documentation authority gate
+- terminology drift gate
+- domain mapping gate
+- retention gate
+- deletion cascade gate
+- privacy boundary gate
+- encryption baseline gate
+- log redaction gate
+- export boundary gate
+- analysis boundary gate
+- hypothesis boundary gate
+- confidence calibration gate
+- safety override gate
+- corpus reasoning gate
+- corpus staleness gate
+- reflection point gate
+- report scope gate
+- UI language gate
+- cost state gate
+- job-safe shutdown gate
+- workflow replacement gate
+- evaluation gate
+- regression gate
+- release readiness gate
+
+---
+
+# Non-goals preserved
+
+Phase 002 did not:
 
 - modify production behavior
 - implement encryption
@@ -100,17 +136,31 @@ Phase 002 does not:
 - restore GitHub Actions
 - deploy infrastructure
 
-Those belong after the Phase 002 exit review.
+Those remain governed by Phase 003 and later gate decisions.
 
 ---
 
-# Exit criteria
+# Exit criteria result
 
-Phase 002 is complete only when:
+Phase 002 exit criteria are satisfied:
 
 - all subgroups 002-A through 002-H are complete
 - 002-I exit review is complete
 - accepted architecture decisions are consolidated
-- stale documentation has been updated, marked historical, or placed in a migration list
+- stale documentation handling is identified for Phase 003
 - the next phase is explicitly named
-- implementation readiness is decided yes/no
+- implementation readiness is decided
+
+---
+
+# Next authorized phase
+
+```text
+Phase 003 — Foundation Refactor Planning and Authority Cleanup
+```
+
+Recommended next subgroup:
+
+```text
+003-A — Documentation Authority Cleanup and Historical Material Reconciliation
+```
