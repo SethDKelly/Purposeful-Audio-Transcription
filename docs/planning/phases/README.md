@@ -23,8 +23,8 @@ Older v2.1 numeric phase files remain in this folder as reference material until
 | [002_concept_to_architecture_refactor_roadmap.md](002_concept_to_architecture_refactor_roadmap.md) | Active | Phase 002 overview and sequence |
 | [002a_documentation_authority_terminology_inventory.md](002a_documentation_authority_terminology_inventory.md) | Complete | Documentation authority and terminology inventory |
 | [002b_concept_to_domain_model_mapping.md](002b_concept_to_domain_model_mapping.md) | Complete | Concept-to-domain model mapping |
-| 002c_data_lifecycle_retention_architecture_plan.md | Next | Data lifecycle and retention architecture plan |
-| 002d_privacy_boundary_encryption_architecture_plan.md | Planned | Privacy boundary and encryption architecture plan |
+| [002c_data_lifecycle_retention_architecture_plan.md](002c_data_lifecycle_retention_architecture_plan.md) | Complete | Data lifecycle and retention architecture plan |
+| 002d_privacy_boundary_encryption_architecture_plan.md | Next | Privacy boundary and encryption architecture plan |
 | 002e_analysis_boundary_hypothesis_safety_architecture_plan.md | Planned | Analysis boundary, hypothesis, and safety architecture plan |
 | 002f_cost_state_personal_deployment_architecture_plan.md | Planned | Cost state and personal deployment architecture plan |
 | 002g_ui_ux_concept_alignment_plan.md | Planned | UI/UX concept alignment plan |
