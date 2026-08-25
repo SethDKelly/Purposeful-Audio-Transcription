@@ -240,7 +240,7 @@ class TranscriptService:
         change_summary: str,
     ) -> None:
         bundle = self._repository.get_bundle(session, transcript_id)
-        if self._repository.has_completed_workflow_runs(session, transcript_id):
+        if self._repository.should_version_on_edit(session, transcript_id):
             version = self._repository.create_new_version(
                 session,
                 transcript_id,
