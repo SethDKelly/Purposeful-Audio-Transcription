@@ -49,8 +49,8 @@ Phase 001 converts concept exploration into accepted design authority.
 |---|---|---|
 | 001-A — Product Identity, Naming, and Conceptual Boundary | Accepted | `011_product_identity_decision.md`, `012_concept_boundary_decision.md` |
 | 001-B — Data Lifecycle, Retention, and Encryption Decisions | Accepted | `013_data_lifecycle_decision.md`, `014_retention_and_encryption_decision.md` |
-| 001-C — Hypothesis-Aware Reflection and Non-Diagnostic Boundary | Next | TBD |
-| 001-D — Personal Operating Model, User Role, and Cost State | Planned | TBD |
+| 001-C — Hypothesis-Aware Reflection and Non-Diagnostic Boundary | Accepted | `015_hypothesis_reflection_boundary.md`, `016_therapeutic_lens_language_decision.md`, `017_safety_boundary_decision.md` |
+| 001-D — Personal Operating Model, User Role, and Cost State | Next | TBD |
 | 001-E — Concept Acceptance and Refactor Readiness | Planned | TBD |
 
 ## Current Working Identity
@@ -79,6 +79,18 @@ Secure Conversation Analysis and Reflection System
 | Case transcript | Durable; case assignment implies retention |
 | Analysis output | Inherits retention from evidence basis |
 | Export | Explicit user action; download-oriented by default |
+
+## Current Analysis Boundary Defaults
+
+| Area | Decision |
+|---|---|
+| Psychological hypotheses | Allowed as evidence-limited reflection contexts |
+| User-provided diagnoses | Context only; never validated or diagnosed by the system |
+| Therapeutic concepts | Framed as therapeutic reflection lenses |
+| CBT/DBT/psychodynamic concepts | Allowed for reflection, not treatment or clinical authority |
+| Diagnosis / labeling | Out of scope |
+| Intent as fact | Out of scope unless directly evidenced |
+| Safety-aware framing | Overrides ordinary coaching and mutual-improvement framing |
 
 ## Design Authority
 
