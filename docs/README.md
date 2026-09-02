@@ -27,6 +27,7 @@ Start here:
 | Completed 003-A summary | [planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md](planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md) |
 | Completed 003-B summary | [planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md](planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md) |
 | Completed 003-C summary | [planning/phases/003c_data_lifecycle_retention_foundation_implementation_plan.md](planning/phases/003c_data_lifecycle_retention_foundation_implementation_plan.md) |
+| Completed 003-D summary | [planning/phases/003d_privacy_boundary_encryption_baseline_implementation_plan.md](planning/phases/003d_privacy_boundary_encryption_baseline_implementation_plan.md) |
 | Completed Phase 002 roadmap | [planning/phases/002_concept_to_architecture_refactor_roadmap.md](planning/phases/002_concept_to_architecture_refactor_roadmap.md) |
 | Phase 002 exit review | [planning/phases/002i_phase_exit_review_consolidation.md](planning/phases/002i_phase_exit_review_consolidation.md) |
 | Mandatory exit gate policy | [planning/phase_exit_gate_policy.md](planning/phase_exit_gate_policy.md) |
@@ -47,7 +48,8 @@ Current subgroup status:
 003-A complete
 003-B complete
 003-C complete
-003-D next
+003-D complete
+003-E next
 ```
 
 ## Product identity
@@ -71,43 +73,24 @@ Current subgroup status:
 | Lifecycle artifact matrix | [planning/inventories/003c_lifecycle_artifact_implementation_matrix.md](planning/inventories/003c_lifecycle_artifact_implementation_matrix.md) |
 | Retention/deletion work packages | [planning/inventories/003c_retention_deletion_work_packages.md](planning/inventories/003c_retention_deletion_work_packages.md) |
 | Deletion cascade checklist | [planning/inventories/003c_deletion_cascade_gate_checklist.md](planning/inventories/003c_deletion_cascade_gate_checklist.md) |
+| Privacy/encryption implementation plan | [planning/architecture/003d_privacy_boundary_encryption_baseline_implementation_plan.md](planning/architecture/003d_privacy_boundary_encryption_baseline_implementation_plan.md) |
+| Privacy/encryption surface matrix | [planning/inventories/003d_privacy_encryption_surface_matrix.md](planning/inventories/003d_privacy_encryption_surface_matrix.md) |
+| Privacy/encryption work packages | [planning/inventories/003d_privacy_encryption_work_packages.md](planning/inventories/003d_privacy_encryption_work_packages.md) |
+| Encryption/access gate checklist | [planning/inventories/003d_encryption_and_access_gate_checklist.md](planning/inventories/003d_encryption_and_access_gate_checklist.md) |
 
 ## User documentation
 
 Existing user documentation remains useful, but may contain legacy product names or workflow assumptions. It should be reconciled during Phase 003 and later refactor phases.
 
-| Document | Description |
-|---|---|
-| [user/getting-started.md](user/getting-started.md) | Legacy getting-started path; reference pending reconciliation |
-| [user/user-guide.md](user/user-guide.md) | Legacy application guide; reference pending reconciliation |
-| [user/deployment.md](user/deployment.md) | AWS deployment pointers; reference pending reconciliation |
-| [user/model-setup.md](user/model-setup.md) | Bedrock / Transcribe setup; reference pending reconciliation |
-
 ## Developer documentation
 
 Developer documentation remains useful as implementation reference material, but it is not product authority when it conflicts with accepted concept decisions.
 
-| Document | Description |
-|---|---|
-| [developer/development.md](developer/development.md) | Development setup; implementation reference |
-| [developer/architecture.md](developer/architecture.md) | Existing service/data-flow reference; pending reconciliation |
-| [developer/api-reference.md](developer/api-reference.md) | Existing REST API summary; implementation reference |
-| [developer/aws-operations.md](developer/aws-operations.md) | Existing AWS operation notes; pending cost-state reconciliation |
-| [developer/aws-deployment.md](developer/aws-deployment.md) | Existing AWS architecture notes; pending workflow/control-plane reconciliation |
-| [developer/log-redaction.md](developer/log-redaction.md) | Existing redaction design; pending verification against current content-free log requirements |
+Key developer references include development setup, architecture, API reference, AWS operations/deployment notes, and log-redaction notes. These remain pending reconciliation unless a Phase 003 subgroup explicitly accepts them.
 
 ## Design package
 
 The older design package is reference material. Phase 003 should determine which parts are accepted, superseded, renamed, or deferred for implementation refactor planning.
-
-| Document | Topic |
-|---|---|
-| [design/01_product_vision_and_scope.md](design/01_product_vision_and_scope.md) | Legacy product vision / scope; reference pending reconciliation |
-| [design/03_domain_model.md](design/03_domain_model.md) | Existing domain model; reconciled at planning level by 003-B |
-| [design/04_knowledge_ontology.md](design/04_knowledge_ontology.md) | Existing ontology; feed 003-B / 003-E |
-| [design/09_evidence_confidence_and_citations.md](design/09_evidence_confidence_and_citations.md) | Evidence model reference; feed 003-E |
-| [design/11_ui_ux_design.md](design/11_ui_ux_design.md) | Existing UI reference; feed 003-G |
-| [design/14_testing_evaluation_and_safety.md](design/14_testing_evaluation_and_safety.md) | Testing/safety reference; feed 003-E / later evaluation |
 
 ## Planning
 
@@ -125,13 +108,6 @@ The older design package is reference material. Phase 003 should determine which
 
 Release documents remain historical. They should not be edited to match current status unless explicitly marked as retrospective notes.
 
-| Document | Description |
-|---|---|
-| [releases/v1.0.0.md](releases/v1.0.0.md) | Historical release note |
-| [releases/v0.9.0.md](releases/v0.9.0.md) | Historical release note |
-| [releases/v0.8.0.md](releases/v0.8.0.md) | Historical release note |
-| [releases/v0.7.0.md](releases/v0.7.0.md) | Historical release note |
-
 ## Status rule
 
 Living indexes, contributor instructions, and planning docs must not carry independently maintained stale status. Current status should point to the phase sequence and mandatory exit review for the current phase.
@@ -139,5 +115,5 @@ Living indexes, contributor instructions, and planning docs must not carry indep
 Next subgroup:
 
 ```text
-003-D — Privacy Boundary / Encryption Baseline Implementation Plan
+003-E — Analysis Boundary / Validation Implementation Plan
 ```
