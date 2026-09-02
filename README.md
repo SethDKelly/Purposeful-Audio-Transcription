@@ -12,29 +12,34 @@ The original repository name, **Purposeful Audio Transcription**, is historical.
 
 The repository has completed concept-to-architecture refactor planning and foundation refactor implementation planning.
 
+Phase 004 is now active as controlled, gate-driven foundation implementation.
+
 Current design authority remains:
 
 ```text
 docs/concepts/
 ```
 
-Completed architecture/refactor planning:
+Current implementation guardrails:
 
 ```text
-docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md
-docs/planning/phases/003h_phase_exit_review_consolidation.md
+AGENTS.md
+.cursor/rules/concept-refactor-guardrails.mdc
+docs/planning/implementation_guardrails.md
 ```
 
-The next authorized phase is:
+Current phase:
 
 ```text
 Phase 004 — Controlled Foundation Refactor Implementation
 ```
 
-Current next subgroup:
+Current subgroup status:
 
 ```text
-004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails
+004-A complete
+004-B next
+004-I mandatory exit gate
 ```
 
 Phase 004 is authorized with controlled, gate-driven implementation scope. Broad implementation rewrite remains blocked.
@@ -49,15 +54,17 @@ The product is a secure conversation analysis and reflection system that uses ev
 
 | Area | Start here |
 |---|---|
+| Agent/contributor rules | [AGENTS.md](AGENTS.md) |
+| Cursor guardrail rule | [.cursor/rules/concept-refactor-guardrails.mdc](.cursor/rules/concept-refactor-guardrails.mdc) |
+| Implementation guardrails | [docs/planning/implementation_guardrails.md](docs/planning/implementation_guardrails.md) |
 | Concept authority | [docs/concepts/README.md](docs/concepts/README.md) |
 | Planning authority | [docs/planning/README.md](docs/planning/README.md) |
 | Phase sequence | [docs/planning/phases/README.md](docs/planning/phases/README.md) |
-| Completed Phase 003 overview | [docs/planning/phases/003_foundation_refactor_planning_authority_cleanup.md](docs/planning/phases/003_foundation_refactor_planning_authority_cleanup.md) |
-| Phase 003 exit review | [docs/planning/phases/003h_phase_exit_review_consolidation.md](docs/planning/phases/003h_phase_exit_review_consolidation.md) |
+| Phase 004 overview | [docs/planning/phases/004_controlled_foundation_refactor_implementation.md](docs/planning/phases/004_controlled_foundation_refactor_implementation.md) |
+| Completed 004-A summary | [docs/planning/phases/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md](docs/planning/phases/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md) |
+| Phase 004 division verification | [docs/planning/inventories/004_phase_division_verification.md](docs/planning/inventories/004_phase_division_verification.md) |
 | Phase 004 authorized scope | [docs/planning/inventories/003h_phase_004_authorized_scope.md](docs/planning/inventories/003h_phase_004_authorized_scope.md) |
-| Completed Phase 002 roadmap | [docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md](docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md) |
-| Phase 002 exit review | [docs/planning/phases/002i_phase_exit_review_consolidation.md](docs/planning/phases/002i_phase_exit_review_consolidation.md) |
-| Documentation index | [docs/README.md](docs/README.md) |
+| Phase 003 exit review | [docs/planning/phases/003h_phase_exit_review_consolidation.md](docs/planning/phases/003h_phase_exit_review_consolidation.md) |
 | Phase exit gate policy | [docs/planning/phase_exit_gate_policy.md](docs/planning/phase_exit_gate_policy.md) |
 
 ## Important boundary
@@ -68,7 +75,7 @@ The application may use therapeutic, psychological, behavioral, and diagnostic-f
 
 The existing implementation remains valuable as a prototype/reference implementation. It should be mapped to the accepted concepts before broad code refactoring resumes.
 
-Legacy user, developer, design, release, planning, code, and infrastructure materials remain reference, historical, or implementation-reference material unless explicitly reconciled by Phase 003 or a later accepted phase.
+Legacy user, developer, design, release, planning, code, and infrastructure materials remain reference, historical, or implementation-reference material unless explicitly reconciled by Phase 003, Phase 004, or a later accepted phase.
 
 ## License
 
