@@ -30,10 +30,12 @@ Start here:
 | Cursor guardrail rule | [../.cursor/rules/concept-refactor-guardrails.mdc](../.cursor/rules/concept-refactor-guardrails.mdc) |
 | Implementation guardrails | [planning/implementation_guardrails.md](planning/implementation_guardrails.md) |
 | Concept foundation | [concepts/README.md](concepts/README.md) |
+| Domain terminology compatibility guide | [domain/README.md](domain/README.md) |
 | Planning index | [planning/README.md](planning/README.md) |
 | Phase sequence | [planning/phases/README.md](planning/phases/README.md) |
 | Phase 004 overview | [planning/phases/004_controlled_foundation_refactor_implementation.md](planning/phases/004_controlled_foundation_refactor_implementation.md) |
 | Completed 004-A summary | [planning/phases/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md](planning/phases/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md) |
+| Completed 004-B summary | [planning/phases/004b_domain_terminology_compatibility_concept_contract_implementation.md](planning/phases/004b_domain_terminology_compatibility_concept_contract_implementation.md) |
 | Phase 004 division verification | [planning/inventories/004_phase_division_verification.md](planning/inventories/004_phase_division_verification.md) |
 | Phase 004 authorized scope | [planning/inventories/003h_phase_004_authorized_scope.md](planning/inventories/003h_phase_004_authorized_scope.md) |
 | Phase 003 exit review | [planning/phases/003h_phase_exit_review_consolidation.md](planning/phases/003h_phase_exit_review_consolidation.md) |
@@ -53,7 +55,8 @@ Current subgroup status:
 
 ```text
 004-A complete
-004-B next
+004-B complete
+004-C next
 004-I mandatory exit gate
 ```
 
@@ -68,9 +71,9 @@ Phase 004 is authorized with controlled, gate-driven implementation scope. Broad
 | Relationship Reasoning Engine (RRE) | Internal analysis-engine identity |
 | Audio transcription | Input capability, not product identity |
 
-## Phase 004 planning and guardrail outputs
+## Phase 004 implementation outputs
 
-| Area | Document |
+| Area | Document / Surface |
 |---|---|
 | Phase 004 overview | [planning/phases/004_controlled_foundation_refactor_implementation.md](planning/phases/004_controlled_foundation_refactor_implementation.md) |
 | Phase 004 division verification | [planning/inventories/004_phase_division_verification.md](planning/inventories/004_phase_division_verification.md) |
@@ -79,6 +82,13 @@ Phase 004 is authorized with controlled, gate-driven implementation scope. Broad
 | 004-A guardrail surface inventory | [planning/inventories/004a_guardrail_surface_inventory.md](planning/inventories/004a_guardrail_surface_inventory.md) |
 | 004-A agent rule checklist | [planning/inventories/004a_agent_rule_checklist.md](planning/inventories/004a_agent_rule_checklist.md) |
 | 004-A phase summary | [planning/phases/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md](planning/phases/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md) |
+| 004-B domain contract implementation record | [planning/architecture/004b_domain_terminology_compatibility_concept_contract_implementation.md](planning/architecture/004b_domain_terminology_compatibility_concept_contract_implementation.md) |
+| 004-B domain contract surface inventory | [planning/inventories/004b_domain_contract_surface_inventory.md](planning/inventories/004b_domain_contract_surface_inventory.md) |
+| 004-B domain compatibility gate checklist | [planning/inventories/004b_domain_compatibility_gate_checklist.md](planning/inventories/004b_domain_compatibility_gate_checklist.md) |
+| 004-B phase summary | [planning/phases/004b_domain_terminology_compatibility_concept_contract_implementation.md](planning/phases/004b_domain_terminology_compatibility_concept_contract_implementation.md) |
+| Domain terminology guide | [domain/README.md](domain/README.md) |
+| Runtime concept contracts | `../backend/domain/concept_contracts.py` |
+| Domain contract tests | `../tests/test_domain_concept_contracts.py` |
 
 ## Completed Phase 003 planning outputs
 
@@ -132,5 +142,5 @@ Living indexes, contributor instructions, and planning docs must not carry indep
 Next subgroup:
 
 ```text
-004-B — Domain Terminology Compatibility and Concept Contract Implementation
+004-C — Lifecycle, Retention, SourceArtifact, and Deletion-Cascade Foundation
 ```
