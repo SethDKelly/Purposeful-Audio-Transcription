@@ -30,6 +30,7 @@ Start here:
 | Completed 003-D summary | [planning/phases/003d_privacy_boundary_encryption_baseline_implementation_plan.md](planning/phases/003d_privacy_boundary_encryption_baseline_implementation_plan.md) |
 | Completed 003-E summary | [planning/phases/003e_analysis_boundary_validation_implementation_plan.md](planning/phases/003e_analysis_boundary_validation_implementation_plan.md) |
 | Completed 003-F summary | [planning/phases/003f_cost_state_control_plane_implementation_plan.md](planning/phases/003f_cost_state_control_plane_implementation_plan.md) |
+| Completed 003-G summary | [planning/phases/003g_ui_report_alignment_implementation_plan.md](planning/phases/003g_ui_report_alignment_implementation_plan.md) |
 | Completed Phase 002 roadmap | [planning/phases/002_concept_to_architecture_refactor_roadmap.md](planning/phases/002_concept_to_architecture_refactor_roadmap.md) |
 | Phase 002 exit review | [planning/phases/002i_phase_exit_review_consolidation.md](planning/phases/002i_phase_exit_review_consolidation.md) |
 | Mandatory exit gate policy | [planning/phase_exit_gate_policy.md](planning/phase_exit_gate_policy.md) |
@@ -53,7 +54,8 @@ Current subgroup status:
 003-D complete
 003-E complete
 003-F complete
-003-G next
+003-G complete
+003-H next mandatory exit gate
 ```
 
 ## Product identity
@@ -89,6 +91,10 @@ Current subgroup status:
 | Cost-state control surface matrix | [planning/inventories/003f_cost_state_control_surface_matrix.md](planning/inventories/003f_cost_state_control_surface_matrix.md) |
 | Cost-state work packages | [planning/inventories/003f_cost_state_work_packages.md](planning/inventories/003f_cost_state_work_packages.md) |
 | Job-safe shutdown gate checklist | [planning/inventories/003f_job_safe_shutdown_gate_checklist.md](planning/inventories/003f_job_safe_shutdown_gate_checklist.md) |
+| UI/report alignment implementation plan | [planning/architecture/003g_ui_report_alignment_implementation_plan.md](planning/architecture/003g_ui_report_alignment_implementation_plan.md) |
+| UI/report surface matrix | [planning/inventories/003g_ui_report_surface_matrix.md](planning/inventories/003g_ui_report_surface_matrix.md) |
+| UI/report work packages | [planning/inventories/003g_ui_report_work_packages.md](planning/inventories/003g_ui_report_work_packages.md) |
+| UI/report gate checklist | [planning/inventories/003g_ui_report_gate_checklist.md](planning/inventories/003g_ui_report_gate_checklist.md) |
 
 ## User documentation
 
@@ -127,5 +133,5 @@ Living indexes, contributor instructions, and planning docs must not carry indep
 Next subgroup:
 
 ```text
-003-G — UI/Report Alignment Implementation Plan
+003-H — Phase 003 Exit Review and Consolidation
 ```
