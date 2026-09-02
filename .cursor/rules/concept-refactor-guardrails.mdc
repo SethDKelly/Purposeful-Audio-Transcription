@@ -1,0 +1,89 @@
+---
+description: Guardrails for controlled foundation refactor implementation
+alwaysApply: true
+---
+
+# Concept Refactor Guardrails
+
+This repository is in:
+
+```text
+Phase 004 — Controlled Foundation Refactor Implementation
+```
+
+## Required read order
+
+Before implementation changes, read:
+
+```text
+docs/planning/implementation_guardrails.md
+docs/planning/phases/README.md
+docs/planning/phases/004_controlled_foundation_refactor_implementation.md
+```
+
+Then read the current subgroup summary and directly relevant Phase 003 work packages/gates.
+
+## Authority order
+
+```text
+docs/concepts/
+→ Phase 003 exit review and Phase 004 authorized scope
+→ Phase 004 overview and current subgroup summary
+→ directly relevant Phase 003 gates and work packages
+→ reconciled implementation docs
+→ code
+→ legacy/reference/historical docs
+```
+
+## Current product identity
+
+Use `Secure Conversation Analysis and Reflection System` as the product concept.
+
+`Purposeful Audio Transcription` is the historical repository shell.
+
+`Relationship Reasoning Engine / RRE` is the internal analysis-engine identity.
+
+Audio transcription is an input capability.
+
+## Implementation header
+
+For non-trivial changes, record:
+
+```text
+Phase 004 subgroup:
+Phase 003 work packages executed:
+Applicable gates:
+Compatibility posture:
+Migration posture:
+Tests / verification:
+Deferred or explicitly not touched:
+```
+
+## Do not do these without explicit subgroup authorization and gates
+
+- broad backend rewrite
+- broad frontend rewrite
+- destructive class/table/route/API renames
+- production schema/data migration execution
+- prompt replacement without analysis validation gates
+- report renderer rewrite without ReportScope and validation gates
+- corpus expansion without privacy/retention/scope/staleness gates
+- export expansion without export-readiness/privacy gates
+- GitHub Actions restoration
+- cloud infrastructure automation changes
+- enterprise org/workspace/RBAC/SSO/compliance/billing
+- always-on enterprise availability
+
+## Analysis boundary
+
+The app may use therapeutic, psychological, behavioral, cognitive, relational, and diagnostic-framework-informed concepts as evidence-limited reasoning references.
+
+It must not diagnose, confirm diagnosis, label a person as having a disorder, provide treatment authority, adjudicate misconduct, prove hidden intent, or pressure reconciliation in high-risk contexts.
+
+## Sensitive content rule
+
+Do not add logs, telemetry, lifecycle events, error text, debug output, or status messages containing transcript bodies, audio, prompts, raw completions, report bodies, exports, secrets, session tokens, or login codes.
+
+## Compatibility posture
+
+Prefer aliases, adapters, compatibility layers, and additive contracts before physical renames or destructive changes.
