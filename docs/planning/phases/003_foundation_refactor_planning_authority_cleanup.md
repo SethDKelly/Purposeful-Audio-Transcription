@@ -70,8 +70,8 @@ Proceed with 003-A.
 | 003-B — Domain Terminology and Concept Mapping Implementation Plan | Complete | Convert accepted concept/domain mappings into implementation-ready planning targets |
 | 003-C — Data Lifecycle / Retention Foundation Implementation Plan | Complete | Prepare lifecycle, retention, deletion, and artifact-state implementation plan |
 | 003-D — Privacy Boundary / Encryption Baseline Implementation Plan | Complete | Prepare owner scope, log redaction, service access, encryption baseline, and encryption target plan |
-| 003-E — Analysis Boundary / Validation Implementation Plan | Next | Prepare analysis scopes, lens contracts, hypotheses, safety posture, validators, prompts, reports, corpus reasoning, and evaluation plan |
-| 003-F — Cost-State Control Plane Implementation Plan | Planned | Prepare sleep/wake, job safety, workflow replacement, and control-plane implementation plan |
+| 003-E — Analysis Boundary / Validation Implementation Plan | Complete | Prepare analysis scopes, lens contracts, hypotheses, safety posture, validators, prompts, reports, corpus reasoning, and evaluation plan |
+| 003-F — Cost-State Control Plane Implementation Plan | Next | Prepare sleep/wake, job safety, workflow replacement, and control-plane implementation plan |
 | 003-G — UI/Report Alignment Implementation Plan | Planned | Prepare UI/report terminology, evidence scope, safety, retention, corpus, export, and cost-state implementation plan |
 | 003-H — Phase 003 Exit Review and Consolidation | Mandatory gate | Consolidate Phase 003 and authorize or block the next numbered phase |
 
@@ -102,6 +102,7 @@ The exit review must consolidate:
 | 003-B | `docs/planning/architecture/003b_domain_terminology_concept_mapping_implementation_plan.md`, `docs/planning/inventories/003b_domain_concept_mapping_inventory.md`, `docs/planning/inventories/003b_domain_terminology_migration_work_packages.md` |
 | 003-C | `docs/planning/architecture/003c_data_lifecycle_retention_foundation_implementation_plan.md`, `docs/planning/inventories/003c_lifecycle_artifact_implementation_matrix.md`, `docs/planning/inventories/003c_retention_deletion_work_packages.md`, `docs/planning/inventories/003c_deletion_cascade_gate_checklist.md` |
 | 003-D | `docs/planning/architecture/003d_privacy_boundary_encryption_baseline_implementation_plan.md`, `docs/planning/inventories/003d_privacy_encryption_surface_matrix.md`, `docs/planning/inventories/003d_privacy_encryption_work_packages.md`, `docs/planning/inventories/003d_encryption_and_access_gate_checklist.md` |
+| 003-E | `docs/planning/architecture/003e_analysis_boundary_validation_implementation_plan.md`, `docs/planning/inventories/003e_analysis_validation_surface_matrix.md`, `docs/planning/inventories/003e_analysis_validation_work_packages.md`, `docs/planning/inventories/003e_analysis_validation_gate_checklist.md` |
 
 ---
 
