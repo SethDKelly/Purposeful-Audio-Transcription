@@ -79,8 +79,8 @@ Proceed with 004-A.
 | Subphase | Status | Purpose |
 |---|---|---|
 | 004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails | Complete | Install contributor/agent guardrails before code implementation begins |
-| 004-B — Domain Terminology Compatibility and Concept Contract Implementation | Next | Add aliases/contracts/DTO posture for accepted domain language without destructive rename-first refactor |
-| 004-C — Lifecycle, Retention, SourceArtifact, and Deletion-Cascade Foundation | Planned | Implement lifecycle/retention foundations and deletion cascade contracts incrementally |
+| 004-B — Domain Terminology Compatibility and Concept Contract Implementation | Complete | Add aliases/contracts/DTO posture for accepted domain language without destructive rename-first refactor |
+| 004-C — Lifecycle, Retention, SourceArtifact, and Deletion-Cascade Foundation | Next | Implement lifecycle/retention foundations and deletion cascade contracts incrementally |
 | 004-D — Privacy Boundary, Owner Scope, Route, Redaction, and Encryption Baseline | Planned | Harden owner scope, route access, redaction, lifecycle events, and baseline encryption verification |
 | 004-E — AnalysisScope, ValidationResult, SafetyPosture, Hypothesis, and Corpus Gates | Planned | Implement analysis-boundary contracts and validators before expanding reports/corpus/export behavior |
 | 004-F — Cost-State Control Plane, Blocking Jobs, Idle, Wake, and Shutdown Safety | Planned | Implement or reconcile control-plane contracts and job-safe shutdown behavior |
@@ -112,6 +112,7 @@ Subgroups may implement only their accepted scope.
 |---|---|
 | Phase 004 division verification | `docs/planning/inventories/004_phase_division_verification.md` |
 | 004-A | `AGENTS.md`, `.cursor/rules/concept-refactor-guardrails.mdc`, `docs/planning/implementation_guardrails.md`, `docs/planning/architecture/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md`, `docs/planning/inventories/004a_guardrail_surface_inventory.md`, `docs/planning/inventories/004a_agent_rule_checklist.md` |
+| 004-B | `backend/domain/concept_contracts.py`, `backend/domain/__init__.py`, `tests/test_domain_concept_contracts.py`, `docs/domain/README.md`, `docs/planning/architecture/004b_domain_terminology_compatibility_concept_contract_implementation.md`, `docs/planning/inventories/004b_domain_contract_surface_inventory.md`, `docs/planning/inventories/004b_domain_compatibility_gate_checklist.md` |
 
 ---
 
@@ -172,5 +173,5 @@ Phase 004 is complete only when:
 Proceed to:
 
 ```text
-004-B — Domain Terminology Compatibility and Concept Contract Implementation
+004-C — Lifecycle, Retention, SourceArtifact, and Deletion-Cascade Foundation
 ```
