@@ -26,12 +26,16 @@ docs/planning/phases/004_controlled_foundation_refactor_implementation.md
 
 Then read the accepted Phase 004 subgroup summary and the directly relevant Phase 003 plan/checklist for the work.
 
-For current 004-B work, read:
+For current 004-C work, read:
 
 ```text
-docs/planning/architecture/003b_domain_terminology_concept_mapping_implementation_plan.md
-docs/planning/inventories/003b_domain_concept_mapping_inventory.md
-docs/planning/inventories/003b_domain_terminology_migration_work_packages.md
+docs/planning/architecture/003c_data_lifecycle_retention_foundation_implementation_plan.md
+docs/planning/inventories/003c_lifecycle_artifact_implementation_matrix.md
+docs/planning/inventories/003c_retention_deletion_work_packages.md
+docs/planning/inventories/003c_deletion_cascade_gate_checklist.md
+docs/planning/architecture/004b_domain_terminology_compatibility_concept_contract_implementation.md
+backend/domain/concept_contracts.py
+docs/domain/README.md
 ```
 
 ---
@@ -84,12 +88,13 @@ Completed:
 
 ```text
 004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails
+004-B — Domain Terminology Compatibility and Concept Contract Implementation
 ```
 
 Next:
 
 ```text
-004-B — Domain Terminology Compatibility and Concept Contract Implementation
+004-C — Lifecycle, Retention, SourceArtifact, and Deletion-Cascade Foundation
 ```
 
 Mandatory exit:
