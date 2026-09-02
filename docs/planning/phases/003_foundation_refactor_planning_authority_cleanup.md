@@ -2,19 +2,19 @@
 
 ## Status
 
-Active.
+Complete.
 
-Phase 003 is authorized by the Phase 002 exit review.
+Phase 003 was authorized by the Phase 002 exit review and completed by the 003-H exit review.
 
-This phase converts Phase 002 architecture decisions into implementation-ready foundation plans while cleaning up documentation authority and historical material.
+This phase converted Phase 002 architecture decisions into implementation-ready foundation plans while cleaning up documentation authority and historical material.
 
-It is not a broad implementation rewrite.
+It did not authorize or perform a broad implementation rewrite.
 
 ---
 
 # Purpose
 
-Phase 003 prepares the project for safe implementation refactoring by ensuring that accepted concepts, architecture decisions, terminology, lifecycle rules, privacy boundaries, analysis boundaries, cost-state rules, UI/report language, and acceptance gates are packaged into actionable implementation plans.
+Phase 003 prepared the project for safe implementation refactoring by ensuring that accepted concepts, architecture decisions, terminology, lifecycle rules, privacy boundaries, analysis boundaries, cost-state rules, UI/report language, and acceptance gates were packaged into actionable implementation plans.
 
 Phase 003 exists to prevent implementation work from being driven by stale prototype assumptions, old v2.1 planning material, or transcription-only product framing.
 
@@ -45,7 +45,7 @@ docs/planning/architecture/002h_refactor_backlog_sequencing_acceptance_gates.md
 
 # Phase Division Verification
 
-Phase 003 has been verified as appropriately divided.
+Phase 003 was verified as appropriately divided.
 
 Verification record:
 
@@ -62,7 +62,7 @@ Proceed with 003-A.
 
 ---
 
-# Required Subgroups
+# Completed Subgroups
 
 | Subphase | Status | Purpose |
 |---|---|---|
@@ -73,27 +73,35 @@ Proceed with 003-A.
 | 003-E — Analysis Boundary / Validation Implementation Plan | Complete | Prepare analysis scopes, lens contracts, hypotheses, safety posture, validators, prompts, reports, corpus reasoning, and evaluation plan |
 | 003-F — Cost-State Control Plane Implementation Plan | Complete | Prepare sleep/wake, job safety, workflow replacement, and control-plane implementation plan |
 | 003-G — UI/Report Alignment Implementation Plan | Complete | Prepare UI/report terminology, evidence scope, safety, retention, corpus, export, and cost-state implementation plan |
-| 003-H — Phase 003 Exit Review and Consolidation | Next mandatory gate | Consolidate Phase 003 and authorize or block the next numbered phase |
+| 003-H — Phase 003 Exit Review and Consolidation | Complete | Consolidate Phase 003 and authorize Phase 004 with controlled implementation scope |
 
 ---
 
-# Mandatory Exit Gate
+# Phase 003 Exit Result
 
-Phase 003 cannot be considered complete until 003-H is complete.
+```text
+Phase 003 passes exit review.
+Phase 003 is complete.
+Phase 004 is authorized with controlled implementation scope.
+Broad implementation rewrite remains blocked.
+```
 
-The exit review must consolidate:
+Exit review:
 
-- accepted Phase 003 plans
-- authority cleanup results
-- historical material reconciliation status
-- implementation work packages
-- mandatory gates attached to work packages
-- deferred questions
-- next phase readiness
+```text
+docs/planning/phases/003h_phase_exit_review_consolidation.md
+docs/planning/architecture/003h_phase_003_exit_review_consolidation.md
+```
+
+Phase 004 authorization:
+
+```text
+docs/planning/inventories/003h_phase_004_authorized_scope.md
+```
 
 ---
 
-# Current Accepted Outputs
+# Accepted Outputs
 
 | Subphase | Outputs |
 |---|---|
@@ -105,12 +113,13 @@ The exit review must consolidate:
 | 003-E | `docs/planning/architecture/003e_analysis_boundary_validation_implementation_plan.md`, `docs/planning/inventories/003e_analysis_validation_surface_matrix.md`, `docs/planning/inventories/003e_analysis_validation_work_packages.md`, `docs/planning/inventories/003e_analysis_validation_gate_checklist.md` |
 | 003-F | `docs/planning/architecture/003f_cost_state_control_plane_implementation_plan.md`, `docs/planning/inventories/003f_cost_state_control_surface_matrix.md`, `docs/planning/inventories/003f_cost_state_work_packages.md`, `docs/planning/inventories/003f_job_safe_shutdown_gate_checklist.md` |
 | 003-G | `docs/planning/architecture/003g_ui_report_alignment_implementation_plan.md`, `docs/planning/inventories/003g_ui_report_surface_matrix.md`, `docs/planning/inventories/003g_ui_report_work_packages.md`, `docs/planning/inventories/003g_ui_report_gate_checklist.md` |
+| 003-H | `docs/planning/architecture/003h_phase_003_exit_review_consolidation.md`, `docs/planning/inventories/003h_phase_003_output_inventory.md`, `docs/planning/inventories/003h_phase_004_authorized_scope.md` |
 
 ---
 
 # Non-goals
 
-Phase 003 does not automatically authorize:
+Phase 003 did not automatically authorize:
 
 - broad backend refactor
 - schema migration execution
@@ -125,13 +134,13 @@ Phase 003 does not automatically authorize:
 - encryption implementation
 - production data migration
 
-Any such work must be planned, gated, and authorized by later subgroup or phase decisions.
+Any such work must be planned, gated, and authorized by Phase 004 or a later accepted phase decision.
 
 ---
 
 # Exit Criteria
 
-Phase 003 is complete only when:
+Phase 003 is complete because:
 
 - all accepted subgroups 003-A through 003-G are complete
 - 003-H exit review is complete
@@ -140,4 +149,14 @@ Phase 003 is complete only when:
 - mandatory gates are attached to work packages
 - deferred decisions are explicit
 - the next phase is named
-- implementation authorization is accepted, modified, or blocked
+- implementation authorization is accepted with controlled scope
+
+---
+
+# Next Phase
+
+Proceed to:
+
+```text
+004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails
+```
