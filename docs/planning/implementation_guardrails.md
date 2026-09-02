@@ -60,22 +60,39 @@ This may be recorded in the subgroup phase summary, pull request body, commit no
 Phase 004 — Controlled Foundation Refactor Implementation
 ```
 
-Current completed subgroup:
+Completed subgroups:
 
 ```text
 004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails
+004-B — Domain Terminology Compatibility and Concept Contract Implementation
 ```
 
 Next subgroup:
 
 ```text
-004-B — Domain Terminology Compatibility and Concept Contract Implementation
+004-C — Lifecycle, Retention, SourceArtifact, and Deletion-Cascade Foundation
 ```
 
 Mandatory exit gate:
 
 ```text
 004-I — Phase 004 Exit Review and Consolidation
+```
+
+---
+
+# Current 004-C Read Set
+
+Before 004-C implementation work, read:
+
+```text
+docs/planning/architecture/003c_data_lifecycle_retention_foundation_implementation_plan.md
+docs/planning/inventories/003c_lifecycle_artifact_implementation_matrix.md
+docs/planning/inventories/003c_retention_deletion_work_packages.md
+docs/planning/inventories/003c_deletion_cascade_gate_checklist.md
+docs/planning/architecture/004b_domain_terminology_compatibility_concept_contract_implementation.md
+backend/domain/concept_contracts.py
+docs/domain/README.md
 ```
 
 ---
@@ -205,6 +222,13 @@ It must not:
 Prefer compatibility layers, aliases, adapters, and additive contracts before destructive renames.
 
 Physical class/table/API field renames require explicit compatibility, migration, regression, and release-readiness gates.
+
+004-B added the initial concept-safe domain compatibility surface at:
+
+```text
+backend/domain/concept_contracts.py
+docs/domain/README.md
+```
 
 ---
 
