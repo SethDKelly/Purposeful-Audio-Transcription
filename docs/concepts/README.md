@@ -6,7 +6,7 @@ This folder is the current conceptual design authority for the conversation anal
 
 The application began from a plausible product idea and then moved quickly into implementation. That produced useful code, but implementation details began to become the design authority.
 
-This folder resets the design from ground zero and now governs refactor planning.
+This folder resets the design from ground zero and governs refactor planning.
 
 ## Core premise
 
@@ -26,6 +26,16 @@ Concept design
 → Analysis philosophy
 → Implementation architecture
 → Code
+```
+
+Current planning authority flows through:
+
+```text
+docs/concepts/
+→ Phase 002 exit review and architecture outputs
+→ Phase 003 overview and accepted subgroup outputs
+→ reconciled implementation plans
+→ code
 ```
 
 ## Foundation read order
@@ -54,11 +64,26 @@ Concept design
 
 ## Phase 002 refactor roadmap
 
+Phase 002 is complete and consolidated.
+
+Key outputs:
+
+| Area | Planning Doc |
+|---|---|
+| Phase 002 roadmap | `../planning/phases/002_concept_to_architecture_refactor_roadmap.md` |
+| Phase 002 exit review | `../planning/phases/002i_phase_exit_review_consolidation.md` |
+| Phase 003 authorization | `../planning/inventories/002i_phase_003_authorized_scope.md` |
+
+## Phase 003 foundation refactor planning
+
+Phase 003 is active.
+
 | Subphase | Status | Planning Doc |
 |---|---|---|
-| 002-A — Documentation Authority and Terminology Inventory | Complete | `../planning/phases/002a_documentation_authority_terminology_inventory.md` |
-| 002-B — Concept-to-Domain Model Mapping | Next | TBD |
-| 002-I — Phase 002 Exit Review and Consolidation | Mandatory gate | TBD |
+| 003-A — Documentation Authority Cleanup and Historical Material Reconciliation | Complete | `../planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md` |
+| 003-B — Domain Terminology and Concept Mapping Implementation Plan | Complete | `../planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md` |
+| 003-C — Data Lifecycle / Retention Foundation Implementation Plan | Next | TBD |
+| 003-H — Phase 003 Exit Review and Consolidation | Mandatory gate | TBD |
 
 ## Current working identity
 
@@ -79,13 +104,16 @@ Secure Conversation Analysis and Reflection System
 | User model | Personal owner/operator |
 | Cost posture | Cost State; aggressive sleep/wake in personal mode |
 | Enterprise | Future policy/deployment layer |
+| Workflow/module execution | Reflection Run / Reflection Lens product language with implementation aliases |
+| Report guidance | Reflection Point, not recommendation/intervention by default |
+| Multi-transcript reasoning | Case Evidence Corpus or explicit selected transcript scope |
 
 ## Next phase
 
 Proceed to:
 
 ```text
-002-B — Concept-to-Domain Model Mapping
+003-C — Data Lifecycle / Retention Foundation Implementation Plan
 ```
 
-Do not begin implementation refactoring until Phase 002 reaches its mandatory exit review and consolidation gate.
+Do not begin broad implementation refactoring until Phase 003 reaches its mandatory exit review and consolidation gate.

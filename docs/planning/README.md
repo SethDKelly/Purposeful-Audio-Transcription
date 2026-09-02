@@ -12,7 +12,7 @@ Phase 001 accepted the concept foundation and declared the project ready for ref
 
 Phase 002 translated that concept foundation into architecture, backlog, sequencing, gates, and Phase 003 authorization.
 
-Phase 003 is now active and begins with authority cleanup and historical material reconciliation.
+Phase 003 is now active and begins with authority cleanup, historical reconciliation, and implementation-ready foundation planning.
 
 ## Current status
 
@@ -26,7 +26,8 @@ Current subgroup status:
 
 ```text
 003-A complete
-003-B next
+003-B complete
+003-C next
 ```
 
 ## Start here
@@ -37,10 +38,14 @@ Current subgroup status:
 | [phases/README.md](phases/README.md) | Phase sequence and current next subgroup |
 | [phases/003_foundation_refactor_planning_authority_cleanup.md](phases/003_foundation_refactor_planning_authority_cleanup.md) | Active Phase 003 overview |
 | [phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md](phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md) | Completed 003-A summary |
+| [phases/003b_domain_terminology_concept_mapping_implementation_plan.md](phases/003b_domain_terminology_concept_mapping_implementation_plan.md) | Completed 003-B summary |
 | [architecture/003a_documentation_authority_cleanup_plan.md](architecture/003a_documentation_authority_cleanup_plan.md) | Documentation authority cleanup plan |
+| [architecture/003b_domain_terminology_concept_mapping_implementation_plan.md](architecture/003b_domain_terminology_concept_mapping_implementation_plan.md) | Domain terminology and concept mapping implementation plan |
 | [inventories/003_phase_division_verification.md](inventories/003_phase_division_verification.md) | Phase 003 division verification |
 | [inventories/003a_living_authority_surface_audit.md](inventories/003a_living_authority_surface_audit.md) | Living authority surface audit |
 | [inventories/003a_historical_material_reconciliation_inventory.md](inventories/003a_historical_material_reconciliation_inventory.md) | Historical material reconciliation inventory |
+| [inventories/003b_domain_concept_mapping_inventory.md](inventories/003b_domain_concept_mapping_inventory.md) | Domain concept mapping inventory |
+| [inventories/003b_domain_terminology_migration_work_packages.md](inventories/003b_domain_terminology_migration_work_packages.md) | Domain terminology migration work packages |
 | [phases/002i_phase_exit_review_consolidation.md](phases/002i_phase_exit_review_consolidation.md) | Phase 002 exit review summary |
 | [inventories/002i_phase_003_authorized_scope.md](inventories/002i_phase_003_authorized_scope.md) | Phase 003 authorization |
 
@@ -67,5 +72,5 @@ Older user, developer, design, release, archived, planning, code, and infrastruc
 Next subgroup:
 
 ```text
-003-B — Domain Terminology and Concept Mapping Implementation Plan
+003-C — Data Lifecycle / Retention Foundation Implementation Plan
 ```

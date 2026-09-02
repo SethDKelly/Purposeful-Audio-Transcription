@@ -34,7 +34,8 @@ Current subgroup status:
 
 ```text
 003-A complete
-003-B next
+003-B complete
+003-C next
 ```
 
 GitHub Actions workflows have been intentionally cleared. New workflows should be introduced only after the refactor roadmap and cost-state/control-plane planning define the new pipeline and gate model.
@@ -52,6 +53,7 @@ The product is a secure conversation analysis and reflection system that uses ev
 | Phase sequence | [docs/planning/phases/README.md](docs/planning/phases/README.md) |
 | Active Phase 003 overview | [docs/planning/phases/003_foundation_refactor_planning_authority_cleanup.md](docs/planning/phases/003_foundation_refactor_planning_authority_cleanup.md) |
 | Completed 003-A summary | [docs/planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md](docs/planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md) |
+| Completed 003-B summary | [docs/planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md](docs/planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md) |
 | Completed Phase 002 roadmap | [docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md](docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md) |
 | Phase 002 exit review | [docs/planning/phases/002i_phase_exit_review_consolidation.md](docs/planning/phases/002i_phase_exit_review_consolidation.md) |
 | Documentation index | [docs/README.md](docs/README.md) |

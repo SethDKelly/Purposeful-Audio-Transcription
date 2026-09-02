@@ -22,7 +22,8 @@ Current status:
 
 ```text
 003-A complete
-003-B next
+003-B complete
+003-C next
 003-H mandatory exit gate
 ```
 
@@ -64,8 +65,8 @@ Broad implementation rewrite remains blocked.
 |---|---|---|
 | [003_foundation_refactor_planning_authority_cleanup.md](003_foundation_refactor_planning_authority_cleanup.md) | Active | Phase 003 overview and sequence |
 | [003a_documentation_authority_cleanup_historical_material_reconciliation.md](003a_documentation_authority_cleanup_historical_material_reconciliation.md) | Complete | Documentation authority cleanup and historical material reconciliation |
-| 003b_domain_terminology_concept_mapping_implementation_plan.md | Next | Domain terminology and concept mapping implementation plan |
-| 003c_data_lifecycle_retention_foundation_implementation_plan.md | Planned | Data lifecycle / retention foundation implementation plan |
+| [003b_domain_terminology_concept_mapping_implementation_plan.md](003b_domain_terminology_concept_mapping_implementation_plan.md) | Complete | Domain terminology and concept mapping implementation plan |
+| 003c_data_lifecycle_retention_foundation_implementation_plan.md | Next | Data lifecycle / retention foundation implementation plan |
 | 003d_privacy_boundary_encryption_baseline_implementation_plan.md | Planned | Privacy boundary / encryption baseline implementation plan |
 | 003e_analysis_boundary_validation_implementation_plan.md | Planned | Analysis boundary / validation implementation plan |
 | 003f_cost_state_control_plane_implementation_plan.md | Planned | Cost-state control plane implementation plan |

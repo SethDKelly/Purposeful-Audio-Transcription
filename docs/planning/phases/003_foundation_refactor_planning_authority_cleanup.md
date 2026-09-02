@@ -67,8 +67,8 @@ Proceed with 003-A.
 | Subphase | Status | Purpose |
 |---|---|---|
 | 003-A — Documentation Authority Cleanup and Historical Material Reconciliation | Complete | Reconcile stale docs, mark historical/reference material, and lock current authority |
-| 003-B — Domain Terminology and Concept Mapping Implementation Plan | Next | Convert accepted concept/domain mappings into implementation-ready planning targets |
-| 003-C — Data Lifecycle / Retention Foundation Implementation Plan | Planned | Prepare lifecycle, retention, deletion, and artifact-state implementation plan |
+| 003-B — Domain Terminology and Concept Mapping Implementation Plan | Complete | Convert accepted concept/domain mappings into implementation-ready planning targets |
+| 003-C — Data Lifecycle / Retention Foundation Implementation Plan | Next | Prepare lifecycle, retention, deletion, and artifact-state implementation plan |
 | 003-D — Privacy Boundary / Encryption Baseline Implementation Plan | Planned | Prepare owner scope, log redaction, service access, encryption baseline, and encryption target plan |
 | 003-E — Analysis Boundary / Validation Implementation Plan | Planned | Prepare analysis scopes, lens contracts, hypotheses, safety posture, validators, prompts, reports, corpus reasoning, and evaluation plan |
 | 003-F — Cost-State Control Plane Implementation Plan | Planned | Prepare sleep/wake, job safety, workflow replacement, and control-plane implementation plan |
@@ -99,6 +99,7 @@ The exit review must consolidate:
 |---|---|
 | Phase 003 division verification | `docs/planning/inventories/003_phase_division_verification.md` |
 | 003-A | `docs/planning/architecture/003a_documentation_authority_cleanup_plan.md`, `docs/planning/inventories/003a_living_authority_surface_audit.md`, `docs/planning/inventories/003a_historical_material_reconciliation_inventory.md` |
+| 003-B | `docs/planning/architecture/003b_domain_terminology_concept_mapping_implementation_plan.md`, `docs/planning/inventories/003b_domain_concept_mapping_inventory.md`, `docs/planning/inventories/003b_domain_terminology_migration_work_packages.md` |
 
 ---
 

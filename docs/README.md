@@ -25,6 +25,7 @@ Start here:
 | Phase sequence | [planning/phases/README.md](planning/phases/README.md) |
 | Active Phase 003 overview | [planning/phases/003_foundation_refactor_planning_authority_cleanup.md](planning/phases/003_foundation_refactor_planning_authority_cleanup.md) |
 | Completed 003-A summary | [planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md](planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md) |
+| Completed 003-B summary | [planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md](planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md) |
 | Completed Phase 002 roadmap | [planning/phases/002_concept_to_architecture_refactor_roadmap.md](planning/phases/002_concept_to_architecture_refactor_roadmap.md) |
 | Phase 002 exit review | [planning/phases/002i_phase_exit_review_consolidation.md](planning/phases/002i_phase_exit_review_consolidation.md) |
 | Mandatory exit gate policy | [planning/phase_exit_gate_policy.md](planning/phase_exit_gate_policy.md) |
@@ -43,7 +44,8 @@ Current subgroup status:
 
 ```text
 003-A complete
-003-B next
+003-B complete
+003-C next
 ```
 
 ## Product identity
@@ -54,6 +56,15 @@ Current subgroup status:
 | Secure Conversation Analysis and Reflection System | Current concept-level product identity |
 | Relationship Reasoning Engine (RRE) | Internal analysis-engine identity |
 | Audio transcription | Input capability, not product identity |
+
+## Current Phase 003 planning outputs
+
+| Area | Document |
+|---|---|
+| Authority cleanup | [planning/architecture/003a_documentation_authority_cleanup_plan.md](planning/architecture/003a_documentation_authority_cleanup_plan.md) |
+| Domain terminology mapping | [planning/architecture/003b_domain_terminology_concept_mapping_implementation_plan.md](planning/architecture/003b_domain_terminology_concept_mapping_implementation_plan.md) |
+| Domain concept mapping inventory | [planning/inventories/003b_domain_concept_mapping_inventory.md](planning/inventories/003b_domain_concept_mapping_inventory.md) |
+| Domain terminology work packages | [planning/inventories/003b_domain_terminology_migration_work_packages.md](planning/inventories/003b_domain_terminology_migration_work_packages.md) |
 
 ## User documentation
 
@@ -86,7 +97,7 @@ The older design package is reference material. Phase 003 should determine which
 | Document | Topic |
 |---|---|
 | [design/01_product_vision_and_scope.md](design/01_product_vision_and_scope.md) | Legacy product vision / scope; reference pending reconciliation |
-| [design/03_domain_model.md](design/03_domain_model.md) | Existing domain model; feed 003-B |
+| [design/03_domain_model.md](design/03_domain_model.md) | Existing domain model; reconciled at planning level by 003-B |
 | [design/04_knowledge_ontology.md](design/04_knowledge_ontology.md) | Existing ontology; feed 003-B / 003-E |
 | [design/09_evidence_confidence_and_citations.md](design/09_evidence_confidence_and_citations.md) | Evidence model reference; feed 003-E |
 | [design/11_ui_ux_design.md](design/11_ui_ux_design.md) | Existing UI reference; feed 003-G |
@@ -122,5 +133,5 @@ Living indexes, contributor instructions, and planning docs must not carry indep
 Next subgroup:
 
 ```text
-003-B — Domain Terminology and Concept Mapping Implementation Plan
+003-C — Data Lifecycle / Retention Foundation Implementation Plan
 ```
