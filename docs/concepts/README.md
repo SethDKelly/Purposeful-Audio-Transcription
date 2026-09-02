@@ -82,7 +82,8 @@ Phase 003 is active.
 |---|---|---|
 | 003-A — Documentation Authority Cleanup and Historical Material Reconciliation | Complete | `../planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md` |
 | 003-B — Domain Terminology and Concept Mapping Implementation Plan | Complete | `../planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md` |
-| 003-C — Data Lifecycle / Retention Foundation Implementation Plan | Next | TBD |
+| 003-C — Data Lifecycle / Retention Foundation Implementation Plan | Complete | `../planning/phases/003c_data_lifecycle_retention_foundation_implementation_plan.md` |
+| 003-D — Privacy Boundary / Encryption Baseline Implementation Plan | Next | TBD |
 | 003-H — Phase 003 Exit Review and Consolidation | Mandatory gate | TBD |
 
 ## Current working identity
@@ -107,13 +108,14 @@ Secure Conversation Analysis and Reflection System
 | Workflow/module execution | Reflection Run / Reflection Lens product language with implementation aliases |
 | Report guidance | Reflection Point, not recommendation/intervention by default |
 | Multi-transcript reasoning | Case Evidence Corpus or explicit selected transcript scope |
+| Lifecycle and retention | Audio ephemeral; drafts temporary; saved/case transcripts durable until deletion; derived artifacts inherit evidence-basis retention |
 
 ## Next phase
 
 Proceed to:
 
 ```text
-003-C — Data Lifecycle / Retention Foundation Implementation Plan
+003-D — Privacy Boundary / Encryption Baseline Implementation Plan
 ```
 
 Do not begin broad implementation refactoring until Phase 003 reaches its mandatory exit review and consolidation gate.

@@ -26,6 +26,7 @@ Start here:
 | Active Phase 003 overview | [planning/phases/003_foundation_refactor_planning_authority_cleanup.md](planning/phases/003_foundation_refactor_planning_authority_cleanup.md) |
 | Completed 003-A summary | [planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md](planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md) |
 | Completed 003-B summary | [planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md](planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md) |
+| Completed 003-C summary | [planning/phases/003c_data_lifecycle_retention_foundation_implementation_plan.md](planning/phases/003c_data_lifecycle_retention_foundation_implementation_plan.md) |
 | Completed Phase 002 roadmap | [planning/phases/002_concept_to_architecture_refactor_roadmap.md](planning/phases/002_concept_to_architecture_refactor_roadmap.md) |
 | Phase 002 exit review | [planning/phases/002i_phase_exit_review_consolidation.md](planning/phases/002i_phase_exit_review_consolidation.md) |
 | Mandatory exit gate policy | [planning/phase_exit_gate_policy.md](planning/phase_exit_gate_policy.md) |
@@ -45,7 +46,8 @@ Current subgroup status:
 ```text
 003-A complete
 003-B complete
-003-C next
+003-C complete
+003-D next
 ```
 
 ## Product identity
@@ -65,6 +67,10 @@ Current subgroup status:
 | Domain terminology mapping | [planning/architecture/003b_domain_terminology_concept_mapping_implementation_plan.md](planning/architecture/003b_domain_terminology_concept_mapping_implementation_plan.md) |
 | Domain concept mapping inventory | [planning/inventories/003b_domain_concept_mapping_inventory.md](planning/inventories/003b_domain_concept_mapping_inventory.md) |
 | Domain terminology work packages | [planning/inventories/003b_domain_terminology_migration_work_packages.md](planning/inventories/003b_domain_terminology_migration_work_packages.md) |
+| Lifecycle / retention implementation plan | [planning/architecture/003c_data_lifecycle_retention_foundation_implementation_plan.md](planning/architecture/003c_data_lifecycle_retention_foundation_implementation_plan.md) |
+| Lifecycle artifact matrix | [planning/inventories/003c_lifecycle_artifact_implementation_matrix.md](planning/inventories/003c_lifecycle_artifact_implementation_matrix.md) |
+| Retention/deletion work packages | [planning/inventories/003c_retention_deletion_work_packages.md](planning/inventories/003c_retention_deletion_work_packages.md) |
+| Deletion cascade checklist | [planning/inventories/003c_deletion_cascade_gate_checklist.md](planning/inventories/003c_deletion_cascade_gate_checklist.md) |
 
 ## User documentation
 
@@ -133,5 +139,5 @@ Living indexes, contributor instructions, and planning docs must not carry indep
 Next subgroup:
 
 ```text
-003-C — Data Lifecycle / Retention Foundation Implementation Plan
+003-D — Privacy Boundary / Encryption Baseline Implementation Plan
 ```
