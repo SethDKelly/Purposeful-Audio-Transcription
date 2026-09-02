@@ -86,8 +86,8 @@ Phase 003 is active.
 | 003-D — Privacy Boundary / Encryption Baseline Implementation Plan | Complete | `../planning/phases/003d_privacy_boundary_encryption_baseline_implementation_plan.md` |
 | 003-E — Analysis Boundary / Validation Implementation Plan | Complete | `../planning/phases/003e_analysis_boundary_validation_implementation_plan.md` |
 | 003-F — Cost-State Control Plane Implementation Plan | Complete | `../planning/phases/003f_cost_state_control_plane_implementation_plan.md` |
-| 003-G — UI/Report Alignment Implementation Plan | Next | TBD |
-| 003-H — Phase 003 Exit Review and Consolidation | Mandatory gate | TBD |
+| 003-G — UI/Report Alignment Implementation Plan | Complete | `../planning/phases/003g_ui_report_alignment_implementation_plan.md` |
+| 003-H — Phase 003 Exit Review and Consolidation | Next mandatory gate | TBD |
 
 ## Current working identity
 
@@ -115,13 +115,14 @@ Secure Conversation Analysis and Reflection System
 | Privacy and encryption | Owner-scoped retained artifacts; content-free logs; infrastructure encryption baseline; application/field-level encryption target |
 | Analysis validation | Explicit analysis scope; evidence-linked output; bounded hypotheses; structured safety posture; corpus lineage and staleness gates |
 | Cost-state control plane | Explicit owner-visible sleep/wake; job-safe shutdown; content-free power events; GitHub Actions restoration gated |
+| UI/report alignment | Reflection-first navigation; ReportScope display; hypothesis/support separation; safety/corpus/export/deletion/cost-state UI gates |
 
 ## Next phase
 
 Proceed to:
 
 ```text
-003-G — UI/Report Alignment Implementation Plan
+003-H — Phase 003 Exit Review and Consolidation
 ```
 
 Do not begin broad implementation refactoring until Phase 003 reaches its mandatory exit review and consolidation gate.
