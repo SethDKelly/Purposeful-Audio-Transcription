@@ -14,21 +14,29 @@ concept design
 → code
 ```
 
+Phase 004 adds implementation guardrails before controlled foundation implementation proceeds:
+
+```text
+AGENTS.md
+.cursor/rules/concept-refactor-guardrails.mdc
+docs/planning/implementation_guardrails.md
+```
+
 Start here:
 
 | Area | Document |
 |---|---|
+| Agent/contributor rules | [../AGENTS.md](../AGENTS.md) |
+| Cursor guardrail rule | [../.cursor/rules/concept-refactor-guardrails.mdc](../.cursor/rules/concept-refactor-guardrails.mdc) |
+| Implementation guardrails | [planning/implementation_guardrails.md](planning/implementation_guardrails.md) |
 | Concept foundation | [concepts/README.md](concepts/README.md) |
-| Phase 001 acceptance | [concepts/021_concept_acceptance_summary.md](concepts/021_concept_acceptance_summary.md) |
-| Refactor readiness | [concepts/022_refactor_readiness_decision.md](concepts/022_refactor_readiness_decision.md) |
 | Planning index | [planning/README.md](planning/README.md) |
 | Phase sequence | [planning/phases/README.md](planning/phases/README.md) |
-| Completed Phase 003 overview | [planning/phases/003_foundation_refactor_planning_authority_cleanup.md](planning/phases/003_foundation_refactor_planning_authority_cleanup.md) |
-| Phase 003 exit review | [planning/phases/003h_phase_exit_review_consolidation.md](planning/phases/003h_phase_exit_review_consolidation.md) |
-| Phase 003 output inventory | [planning/inventories/003h_phase_003_output_inventory.md](planning/inventories/003h_phase_003_output_inventory.md) |
+| Phase 004 overview | [planning/phases/004_controlled_foundation_refactor_implementation.md](planning/phases/004_controlled_foundation_refactor_implementation.md) |
+| Completed 004-A summary | [planning/phases/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md](planning/phases/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md) |
+| Phase 004 division verification | [planning/inventories/004_phase_division_verification.md](planning/inventories/004_phase_division_verification.md) |
 | Phase 004 authorized scope | [planning/inventories/003h_phase_004_authorized_scope.md](planning/inventories/003h_phase_004_authorized_scope.md) |
-| Completed Phase 002 roadmap | [planning/phases/002_concept_to_architecture_refactor_roadmap.md](planning/phases/002_concept_to_architecture_refactor_roadmap.md) |
-| Phase 002 exit review | [planning/phases/002i_phase_exit_review_consolidation.md](planning/phases/002i_phase_exit_review_consolidation.md) |
+| Phase 003 exit review | [planning/phases/003h_phase_exit_review_consolidation.md](planning/phases/003h_phase_exit_review_consolidation.md) |
 | Mandatory exit gate policy | [planning/phase_exit_gate_policy.md](planning/phase_exit_gate_policy.md) |
 
 ## Current plan status
@@ -39,16 +47,14 @@ Phase 002 is complete.
 
 Phase 003 is complete.
 
-The next authorized phase is:
+Phase 004 is active.
+
+Current subgroup status:
 
 ```text
-Phase 004 — Controlled Foundation Refactor Implementation
-```
-
-Current next subgroup:
-
-```text
-004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails
+004-A complete
+004-B next
+004-I mandatory exit gate
 ```
 
 Phase 004 is authorized with controlled, gate-driven implementation scope. Broad implementation rewrite remains blocked.
@@ -62,37 +68,32 @@ Phase 004 is authorized with controlled, gate-driven implementation scope. Broad
 | Relationship Reasoning Engine (RRE) | Internal analysis-engine identity |
 | Audio transcription | Input capability, not product identity |
 
-## Current Phase 003 planning outputs
+## Phase 004 planning and guardrail outputs
 
 | Area | Document |
 |---|---|
-| Authority cleanup | [planning/architecture/003a_documentation_authority_cleanup_plan.md](planning/architecture/003a_documentation_authority_cleanup_plan.md) |
-| Domain terminology mapping | [planning/architecture/003b_domain_terminology_concept_mapping_implementation_plan.md](planning/architecture/003b_domain_terminology_concept_mapping_implementation_plan.md) |
-| Domain concept mapping inventory | [planning/inventories/003b_domain_concept_mapping_inventory.md](planning/inventories/003b_domain_concept_mapping_inventory.md) |
-| Domain terminology work packages | [planning/inventories/003b_domain_terminology_migration_work_packages.md](planning/inventories/003b_domain_terminology_migration_work_packages.md) |
-| Lifecycle / retention implementation plan | [planning/architecture/003c_data_lifecycle_retention_foundation_implementation_plan.md](planning/architecture/003c_data_lifecycle_retention_foundation_implementation_plan.md) |
-| Lifecycle artifact matrix | [planning/inventories/003c_lifecycle_artifact_implementation_matrix.md](planning/inventories/003c_lifecycle_artifact_implementation_matrix.md) |
-| Retention/deletion work packages | [planning/inventories/003c_retention_deletion_work_packages.md](planning/inventories/003c_retention_deletion_work_packages.md) |
-| Deletion cascade checklist | [planning/inventories/003c_deletion_cascade_gate_checklist.md](planning/inventories/003c_deletion_cascade_gate_checklist.md) |
-| Privacy/encryption implementation plan | [planning/architecture/003d_privacy_boundary_encryption_baseline_implementation_plan.md](planning/architecture/003d_privacy_boundary_encryption_baseline_implementation_plan.md) |
-| Privacy/encryption surface matrix | [planning/inventories/003d_privacy_encryption_surface_matrix.md](planning/inventories/003d_privacy_encryption_surface_matrix.md) |
-| Privacy/encryption work packages | [planning/inventories/003d_privacy_encryption_work_packages.md](planning/inventories/003d_privacy_encryption_work_packages.md) |
-| Encryption/access gate checklist | [planning/inventories/003d_encryption_and_access_gate_checklist.md](planning/inventories/003d_encryption_and_access_gate_checklist.md) |
-| Analysis boundary / validation implementation plan | [planning/architecture/003e_analysis_boundary_validation_implementation_plan.md](planning/architecture/003e_analysis_boundary_validation_implementation_plan.md) |
-| Analysis validation surface matrix | [planning/inventories/003e_analysis_validation_surface_matrix.md](planning/inventories/003e_analysis_validation_surface_matrix.md) |
-| Analysis validation work packages | [planning/inventories/003e_analysis_validation_work_packages.md](planning/inventories/003e_analysis_validation_work_packages.md) |
-| Analysis validation gate checklist | [planning/inventories/003e_analysis_validation_gate_checklist.md](planning/inventories/003e_analysis_validation_gate_checklist.md) |
-| Cost-state control-plane implementation plan | [planning/architecture/003f_cost_state_control_plane_implementation_plan.md](planning/architecture/003f_cost_state_control_plane_implementation_plan.md) |
-| Cost-state control surface matrix | [planning/inventories/003f_cost_state_control_surface_matrix.md](planning/inventories/003f_cost_state_control_surface_matrix.md) |
-| Cost-state work packages | [planning/inventories/003f_cost_state_work_packages.md](planning/inventories/003f_cost_state_work_packages.md) |
-| Job-safe shutdown gate checklist | [planning/inventories/003f_job_safe_shutdown_gate_checklist.md](planning/inventories/003f_job_safe_shutdown_gate_checklist.md) |
-| UI/report alignment implementation plan | [planning/architecture/003g_ui_report_alignment_implementation_plan.md](planning/architecture/003g_ui_report_alignment_implementation_plan.md) |
-| UI/report surface matrix | [planning/inventories/003g_ui_report_surface_matrix.md](planning/inventories/003g_ui_report_surface_matrix.md) |
-| UI/report work packages | [planning/inventories/003g_ui_report_work_packages.md](planning/inventories/003g_ui_report_work_packages.md) |
-| UI/report gate checklist | [planning/inventories/003g_ui_report_gate_checklist.md](planning/inventories/003g_ui_report_gate_checklist.md) |
+| Phase 004 overview | [planning/phases/004_controlled_foundation_refactor_implementation.md](planning/phases/004_controlled_foundation_refactor_implementation.md) |
+| Phase 004 division verification | [planning/inventories/004_phase_division_verification.md](planning/inventories/004_phase_division_verification.md) |
+| Implementation guardrails | [planning/implementation_guardrails.md](planning/implementation_guardrails.md) |
+| 004-A authority plan | [planning/architecture/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md](planning/architecture/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md) |
+| 004-A guardrail surface inventory | [planning/inventories/004a_guardrail_surface_inventory.md](planning/inventories/004a_guardrail_surface_inventory.md) |
+| 004-A agent rule checklist | [planning/inventories/004a_agent_rule_checklist.md](planning/inventories/004a_agent_rule_checklist.md) |
+| 004-A phase summary | [planning/phases/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md](planning/phases/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md) |
+
+## Completed Phase 003 planning outputs
+
+| Area | Document |
+|---|---|
 | Phase 003 exit review | [planning/architecture/003h_phase_003_exit_review_consolidation.md](planning/architecture/003h_phase_003_exit_review_consolidation.md) |
 | Phase 003 output inventory | [planning/inventories/003h_phase_003_output_inventory.md](planning/inventories/003h_phase_003_output_inventory.md) |
 | Phase 004 authorized scope | [planning/inventories/003h_phase_004_authorized_scope.md](planning/inventories/003h_phase_004_authorized_scope.md) |
+| Authority cleanup | [planning/architecture/003a_documentation_authority_cleanup_plan.md](planning/architecture/003a_documentation_authority_cleanup_plan.md) |
+| Domain terminology mapping | [planning/architecture/003b_domain_terminology_concept_mapping_implementation_plan.md](planning/architecture/003b_domain_terminology_concept_mapping_implementation_plan.md) |
+| Lifecycle / retention implementation plan | [planning/architecture/003c_data_lifecycle_retention_foundation_implementation_plan.md](planning/architecture/003c_data_lifecycle_retention_foundation_implementation_plan.md) |
+| Privacy/encryption implementation plan | [planning/architecture/003d_privacy_boundary_encryption_baseline_implementation_plan.md](planning/architecture/003d_privacy_boundary_encryption_baseline_implementation_plan.md) |
+| Analysis boundary / validation implementation plan | [planning/architecture/003e_analysis_boundary_validation_implementation_plan.md](planning/architecture/003e_analysis_boundary_validation_implementation_plan.md) |
+| Cost-state control-plane implementation plan | [planning/architecture/003f_cost_state_control_plane_implementation_plan.md](planning/architecture/003f_cost_state_control_plane_implementation_plan.md) |
+| UI/report alignment implementation plan | [planning/architecture/003g_ui_report_alignment_implementation_plan.md](planning/architecture/003g_ui_report_alignment_implementation_plan.md) |
 
 ## User documentation
 
@@ -131,5 +132,5 @@ Living indexes, contributor instructions, and planning docs must not carry indep
 Next subgroup:
 
 ```text
-004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails
+004-B — Domain Terminology Compatibility and Concept Contract Implementation
 ```
