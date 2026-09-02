@@ -31,7 +31,8 @@ Current subgroup status:
 003-D complete
 003-E complete
 003-F complete
-003-G next
+003-G complete
+003-H next mandatory exit gate
 ```
 
 ## Start here
@@ -47,12 +48,14 @@ Current subgroup status:
 | [phases/003d_privacy_boundary_encryption_baseline_implementation_plan.md](phases/003d_privacy_boundary_encryption_baseline_implementation_plan.md) | Completed 003-D summary |
 | [phases/003e_analysis_boundary_validation_implementation_plan.md](phases/003e_analysis_boundary_validation_implementation_plan.md) | Completed 003-E summary |
 | [phases/003f_cost_state_control_plane_implementation_plan.md](phases/003f_cost_state_control_plane_implementation_plan.md) | Completed 003-F summary |
+| [phases/003g_ui_report_alignment_implementation_plan.md](phases/003g_ui_report_alignment_implementation_plan.md) | Completed 003-G summary |
 | [architecture/003a_documentation_authority_cleanup_plan.md](architecture/003a_documentation_authority_cleanup_plan.md) | Documentation authority cleanup plan |
 | [architecture/003b_domain_terminology_concept_mapping_implementation_plan.md](architecture/003b_domain_terminology_concept_mapping_implementation_plan.md) | Domain terminology and concept mapping implementation plan |
 | [architecture/003c_data_lifecycle_retention_foundation_implementation_plan.md](architecture/003c_data_lifecycle_retention_foundation_implementation_plan.md) | Lifecycle and retention foundation implementation plan |
 | [architecture/003d_privacy_boundary_encryption_baseline_implementation_plan.md](architecture/003d_privacy_boundary_encryption_baseline_implementation_plan.md) | Privacy boundary and encryption baseline implementation plan |
 | [architecture/003e_analysis_boundary_validation_implementation_plan.md](architecture/003e_analysis_boundary_validation_implementation_plan.md) | Analysis boundary and validation implementation plan |
 | [architecture/003f_cost_state_control_plane_implementation_plan.md](architecture/003f_cost_state_control_plane_implementation_plan.md) | Cost-state control-plane implementation plan |
+| [architecture/003g_ui_report_alignment_implementation_plan.md](architecture/003g_ui_report_alignment_implementation_plan.md) | UI/report alignment implementation plan |
 | [inventories/003_phase_division_verification.md](inventories/003_phase_division_verification.md) | Phase 003 division verification |
 | [inventories/003a_living_authority_surface_audit.md](inventories/003a_living_authority_surface_audit.md) | Living authority surface audit |
 | [inventories/003a_historical_material_reconciliation_inventory.md](inventories/003a_historical_material_reconciliation_inventory.md) | Historical material reconciliation inventory |
@@ -70,6 +73,9 @@ Current subgroup status:
 | [inventories/003f_cost_state_control_surface_matrix.md](inventories/003f_cost_state_control_surface_matrix.md) | Cost-state control surface matrix |
 | [inventories/003f_cost_state_work_packages.md](inventories/003f_cost_state_work_packages.md) | Cost-state control-plane work packages |
 | [inventories/003f_job_safe_shutdown_gate_checklist.md](inventories/003f_job_safe_shutdown_gate_checklist.md) | Job-safe shutdown gate checklist |
+| [inventories/003g_ui_report_surface_matrix.md](inventories/003g_ui_report_surface_matrix.md) | UI/report surface matrix |
+| [inventories/003g_ui_report_work_packages.md](inventories/003g_ui_report_work_packages.md) | UI/report alignment work packages |
+| [inventories/003g_ui_report_gate_checklist.md](inventories/003g_ui_report_gate_checklist.md) | UI/report alignment gate checklist |
 | [phases/002i_phase_exit_review_consolidation.md](phases/002i_phase_exit_review_consolidation.md) | Phase 002 exit review summary |
 | [inventories/002i_phase_003_authorized_scope.md](inventories/002i_phase_003_authorized_scope.md) | Phase 003 authorization |
 
@@ -96,5 +102,5 @@ Older user, developer, design, release, archived, planning, code, and infrastruc
 Next subgroup:
 
 ```text
-003-G — UI/Report Alignment Implementation Plan
+003-H — Phase 003 Exit Review and Consolidation
 ```
