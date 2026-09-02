@@ -28,13 +28,13 @@ Concept design
 → Code
 ```
 
-Current planning authority flows through:
+Current planning and implementation authority flows through:
 
 ```text
 docs/concepts/
 → Phase 002 exit review and architecture outputs
-→ Phase 003 overview and accepted subgroup outputs
-→ reconciled implementation plans
+→ Phase 003 exit review and accepted subgroup outputs
+→ Phase 004 authorized scope and implementation guardrails
 → code
 ```
 
@@ -76,7 +76,7 @@ Key outputs:
 
 ## Phase 003 foundation refactor planning
 
-Phase 003 is active.
+Phase 003 is complete and consolidated.
 
 | Subphase | Status | Planning Doc |
 |---|---|---|
@@ -87,7 +87,23 @@ Phase 003 is active.
 | 003-E — Analysis Boundary / Validation Implementation Plan | Complete | `../planning/phases/003e_analysis_boundary_validation_implementation_plan.md` |
 | 003-F — Cost-State Control Plane Implementation Plan | Complete | `../planning/phases/003f_cost_state_control_plane_implementation_plan.md` |
 | 003-G — UI/Report Alignment Implementation Plan | Complete | `../planning/phases/003g_ui_report_alignment_implementation_plan.md` |
-| 003-H — Phase 003 Exit Review and Consolidation | Next mandatory gate | TBD |
+| 003-H — Phase 003 Exit Review and Consolidation | Complete | `../planning/phases/003h_phase_exit_review_consolidation.md` |
+
+## Phase 004 authorization
+
+Phase 004 is authorized as:
+
+```text
+Phase 004 — Controlled Foundation Refactor Implementation
+```
+
+Phase 004 begins with:
+
+```text
+004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails
+```
+
+Broad implementation rewrite remains blocked. Implementation must follow Phase 003 gates and Phase 004 subgroup authorization.
 
 ## Current working identity
 
@@ -122,7 +138,7 @@ Secure Conversation Analysis and Reflection System
 Proceed to:
 
 ```text
-003-H — Phase 003 Exit Review and Consolidation
+004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails
 ```
 
-Do not begin broad implementation refactoring until Phase 003 reaches its mandatory exit review and consolidation gate.
+Do not begin broad implementation refactoring outside the Phase 004 authorized controlled foundation scope.
