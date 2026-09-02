@@ -10,7 +10,7 @@ The original repository name, **Purposeful Audio Transcription**, is historical.
 
 ## Current status
 
-The repository has completed concept-to-architecture refactor planning.
+The repository has completed concept-to-architecture refactor planning and foundation refactor implementation planning.
 
 Current design authority remains:
 
@@ -22,28 +22,24 @@ Completed architecture/refactor planning:
 
 ```text
 docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md
+docs/planning/phases/003h_phase_exit_review_consolidation.md
 ```
 
-The current active phase is:
+The next authorized phase is:
 
 ```text
-Phase 003 — Foundation Refactor Planning and Authority Cleanup
+Phase 004 — Controlled Foundation Refactor Implementation
 ```
 
-Current subgroup status:
+Current next subgroup:
 
 ```text
-003-A complete
-003-B complete
-003-C complete
-003-D complete
-003-E complete
-003-F complete
-003-G complete
-003-H next mandatory exit gate
+004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails
 ```
 
-GitHub Actions workflows have been intentionally cleared. New workflows should be introduced only after the refactor roadmap and cost-state/control-plane planning define the new pipeline and gate model.
+Phase 004 is authorized with controlled, gate-driven implementation scope. Broad implementation rewrite remains blocked.
+
+GitHub Actions workflows have been intentionally cleared. New workflows should be introduced only after the refactor roadmap and cost-state/control-plane planning define the new pipeline and gate model, and only after the applicable Phase 004 gates are satisfied.
 
 ## Product concept
 
@@ -56,14 +52,9 @@ The product is a secure conversation analysis and reflection system that uses ev
 | Concept authority | [docs/concepts/README.md](docs/concepts/README.md) |
 | Planning authority | [docs/planning/README.md](docs/planning/README.md) |
 | Phase sequence | [docs/planning/phases/README.md](docs/planning/phases/README.md) |
-| Active Phase 003 overview | [docs/planning/phases/003_foundation_refactor_planning_authority_cleanup.md](docs/planning/phases/003_foundation_refactor_planning_authority_cleanup.md) |
-| Completed 003-A summary | [docs/planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md](docs/planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md) |
-| Completed 003-B summary | [docs/planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md](docs/planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md) |
-| Completed 003-C summary | [docs/planning/phases/003c_data_lifecycle_retention_foundation_implementation_plan.md](docs/planning/phases/003c_data_lifecycle_retention_foundation_implementation_plan.md) |
-| Completed 003-D summary | [docs/planning/phases/003d_privacy_boundary_encryption_baseline_implementation_plan.md](docs/planning/phases/003d_privacy_boundary_encryption_baseline_implementation_plan.md) |
-| Completed 003-E summary | [docs/planning/phases/003e_analysis_boundary_validation_implementation_plan.md](docs/planning/phases/003e_analysis_boundary_validation_implementation_plan.md) |
-| Completed 003-F summary | [docs/planning/phases/003f_cost_state_control_plane_implementation_plan.md](docs/planning/phases/003f_cost_state_control_plane_implementation_plan.md) |
-| Completed 003-G summary | [docs/planning/phases/003g_ui_report_alignment_implementation_plan.md](docs/planning/phases/003g_ui_report_alignment_implementation_plan.md) |
+| Completed Phase 003 overview | [docs/planning/phases/003_foundation_refactor_planning_authority_cleanup.md](docs/planning/phases/003_foundation_refactor_planning_authority_cleanup.md) |
+| Phase 003 exit review | [docs/planning/phases/003h_phase_exit_review_consolidation.md](docs/planning/phases/003h_phase_exit_review_consolidation.md) |
+| Phase 004 authorized scope | [docs/planning/inventories/003h_phase_004_authorized_scope.md](docs/planning/inventories/003h_phase_004_authorized_scope.md) |
 | Completed Phase 002 roadmap | [docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md](docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md) |
 | Phase 002 exit review | [docs/planning/phases/002i_phase_exit_review_consolidation.md](docs/planning/phases/002i_phase_exit_review_consolidation.md) |
 | Documentation index | [docs/README.md](docs/README.md) |
