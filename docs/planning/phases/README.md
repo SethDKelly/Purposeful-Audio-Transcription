@@ -10,18 +10,20 @@ The concept foundation remains the highest planning authority:
 docs/concepts/
 ```
 
-Phase 002 is now complete and consolidated.
+Phase 002 is complete and consolidated.
 
-The next authorized phase is:
+The current active phase is:
 
 ```text
 Phase 003 — Foundation Refactor Planning and Authority Cleanup
 ```
 
-Recommended next subgroup:
+Current status:
 
 ```text
-003-A — Documentation Authority Cleanup and Historical Material Reconciliation
+003-A complete
+003-B next
+003-H mandatory exit gate
 ```
 
 Older v2.1 numeric phase files remain reference material until they are reconciled, archived, or superseded during Phase 003 or later work.
@@ -56,20 +58,19 @@ Broad implementation rewrite remains blocked.
 
 ---
 
-# Authorized Phase 003 Sequence
+# Active Phase 003 Sequence
 
-Phase 003 has been authorized by 002-I with this recommended sequence:
-
-| Group | Status | Role |
+| File | Status | Role |
 |---|---|---|
-| 003-A — Documentation Authority Cleanup and Historical Material Reconciliation | Next | Reconcile stale docs and lock current authority |
-| 003-B — Domain Terminology and Concept Mapping Implementation Plan | Planned | Convert mappings into implementation planning targets |
-| 003-C — Data Lifecycle / Retention Foundation Implementation Plan | Planned | Prepare lifecycle and retention implementation plan |
-| 003-D — Privacy Boundary / Encryption Baseline Implementation Plan | Planned | Prepare owner scope, logs, encryption baseline and target plan |
-| 003-E — Analysis Boundary / Validation Implementation Plan | Planned | Prepare analysis contracts, validators, prompts, reports, and eval plan |
-| 003-F — Cost-State Control Plane Implementation Plan | Planned | Prepare sleep/wake, job safety, and workflow replacement plan |
-| 003-G — UI/Report Alignment Implementation Plan | Planned | Prepare UI/report terminology, evidence scope, and safety/corpus surfaces |
-| 003-H — Phase 003 Exit Review and Consolidation | Mandatory gate | Consolidate Phase 003 and authorize or block next phase |
+| [003_foundation_refactor_planning_authority_cleanup.md](003_foundation_refactor_planning_authority_cleanup.md) | Active | Phase 003 overview and sequence |
+| [003a_documentation_authority_cleanup_historical_material_reconciliation.md](003a_documentation_authority_cleanup_historical_material_reconciliation.md) | Complete | Documentation authority cleanup and historical material reconciliation |
+| 003b_domain_terminology_concept_mapping_implementation_plan.md | Next | Domain terminology and concept mapping implementation plan |
+| 003c_data_lifecycle_retention_foundation_implementation_plan.md | Planned | Data lifecycle / retention foundation implementation plan |
+| 003d_privacy_boundary_encryption_baseline_implementation_plan.md | Planned | Privacy boundary / encryption baseline implementation plan |
+| 003e_analysis_boundary_validation_implementation_plan.md | Planned | Analysis boundary / validation implementation plan |
+| 003f_cost_state_control_plane_implementation_plan.md | Planned | Cost-state control plane implementation plan |
+| 003g_ui_report_alignment_implementation_plan.md | Planned | UI/report alignment implementation plan |
+| 003h_phase_exit_review_consolidation.md | Mandatory gate | Phase 003 exit review and consolidation |
 
 ---
 
