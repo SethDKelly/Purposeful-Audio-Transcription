@@ -26,7 +26,8 @@ Current status:
 003-C complete
 003-D complete
 003-E complete
-003-F next
+003-F complete
+003-G next
 003-H mandatory exit gate
 ```
 
@@ -72,8 +73,8 @@ Broad implementation rewrite remains blocked.
 | [003c_data_lifecycle_retention_foundation_implementation_plan.md](003c_data_lifecycle_retention_foundation_implementation_plan.md) | Complete | Data lifecycle / retention foundation implementation plan |
 | [003d_privacy_boundary_encryption_baseline_implementation_plan.md](003d_privacy_boundary_encryption_baseline_implementation_plan.md) | Complete | Privacy boundary / encryption baseline implementation plan |
 | [003e_analysis_boundary_validation_implementation_plan.md](003e_analysis_boundary_validation_implementation_plan.md) | Complete | Analysis boundary / validation implementation plan |
-| 003f_cost_state_control_plane_implementation_plan.md | Next | Cost-state control plane implementation plan |
-| 003g_ui_report_alignment_implementation_plan.md | Planned | UI/report alignment implementation plan |
+| [003f_cost_state_control_plane_implementation_plan.md](003f_cost_state_control_plane_implementation_plan.md) | Complete | Cost-state control plane implementation plan |
+| 003g_ui_report_alignment_implementation_plan.md | Next | UI/report alignment implementation plan |
 | 003h_phase_exit_review_consolidation.md | Mandatory gate | Phase 003 exit review and consolidation |
 
 ---
