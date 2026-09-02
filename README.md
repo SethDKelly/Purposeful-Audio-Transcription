@@ -24,16 +24,17 @@ Completed architecture/refactor planning:
 docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md
 ```
 
-The next authorized phase is:
+The current active phase is:
 
 ```text
 Phase 003 — Foundation Refactor Planning and Authority Cleanup
 ```
 
-Recommended next subgroup:
+Current subgroup status:
 
 ```text
-003-A — Documentation Authority Cleanup and Historical Material Reconciliation
+003-A complete
+003-B next
 ```
 
 GitHub Actions workflows have been intentionally cleared. New workflows should be introduced only after the refactor roadmap and cost-state/control-plane planning define the new pipeline and gate model.
@@ -49,6 +50,8 @@ The product is a secure conversation analysis and reflection system that uses ev
 | Concept authority | [docs/concepts/README.md](docs/concepts/README.md) |
 | Planning authority | [docs/planning/README.md](docs/planning/README.md) |
 | Phase sequence | [docs/planning/phases/README.md](docs/planning/phases/README.md) |
+| Active Phase 003 overview | [docs/planning/phases/003_foundation_refactor_planning_authority_cleanup.md](docs/planning/phases/003_foundation_refactor_planning_authority_cleanup.md) |
+| Completed 003-A summary | [docs/planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md](docs/planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md) |
 | Completed Phase 002 roadmap | [docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md](docs/planning/phases/002_concept_to_architecture_refactor_roadmap.md) |
 | Phase 002 exit review | [docs/planning/phases/002i_phase_exit_review_consolidation.md](docs/planning/phases/002i_phase_exit_review_consolidation.md) |
 | Documentation index | [docs/README.md](docs/README.md) |
@@ -61,6 +64,8 @@ The application may use therapeutic, psychological, behavioral, and diagnostic-f
 ## Legacy implementation
 
 The existing implementation remains valuable as a prototype/reference implementation. It should be mapped to the accepted concepts before broad code refactoring resumes.
+
+Legacy user, developer, design, release, planning, code, and infrastructure materials remain reference, historical, or implementation-reference material unless explicitly reconciled by Phase 003 or a later accepted phase.
 
 ## License
 
