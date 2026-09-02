@@ -97,7 +97,8 @@ Phase 004 is active.
 | Subphase | Status | Planning Doc |
 |---|---|---|
 | 004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails | Complete | `../planning/phases/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md` |
-| 004-B — Domain Terminology Compatibility and Concept Contract Implementation | Next | TBD |
+| 004-B — Domain Terminology Compatibility and Concept Contract Implementation | Complete | `../planning/phases/004b_domain_terminology_compatibility_concept_contract_implementation.md` |
+| 004-C — Lifecycle, Retention, SourceArtifact, and Deletion-Cascade Foundation | Next | TBD |
 | 004-I — Phase 004 Exit Review and Consolidation | Mandatory gate | TBD |
 
 Implementation guardrail entry points:
@@ -107,6 +108,13 @@ Implementation guardrail entry points:
 ../.cursor/rules/concept-refactor-guardrails.mdc
 ../planning/implementation_guardrails.md
 ../planning/phases/004_controlled_foundation_refactor_implementation.md
+```
+
+Domain compatibility foundation:
+
+```text
+../domain/README.md
+../backend/domain/concept_contracts.py
 ```
 
 Broad implementation rewrite remains blocked. Implementation must follow Phase 003 gates and Phase 004 subgroup authorization.
@@ -139,13 +147,14 @@ Secure Conversation Analysis and Reflection System
 | Cost-state control plane | Explicit owner-visible sleep/wake; job-safe shutdown; content-free power events; GitHub Actions restoration gated |
 | UI/report alignment | Reflection-first navigation; ReportScope display; hypothesis/support separation; safety/corpus/export/deletion/cost-state UI gates |
 | Implementation guardrails | Agent rules, Cursor rules, compact implementation guardrails, and Phase 004 subgroup gates |
+| Domain compatibility | Additive concept contracts and aliases; no destructive rename-first refactor |
 
 ## Next phase
 
 Proceed to:
 
 ```text
-004-B — Domain Terminology Compatibility and Concept Contract Implementation
+004-C — Lifecycle, Retention, SourceArtifact, and Deletion-Cascade Foundation
 ```
 
 Do not begin broad implementation refactoring outside the Phase 004 authorized controlled foundation scope.
