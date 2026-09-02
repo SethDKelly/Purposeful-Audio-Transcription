@@ -12,10 +12,12 @@ docs/concepts/
 
 Phase 002 is complete and consolidated.
 
-The current active phase is:
+Phase 003 is complete and consolidated.
+
+The next authorized phase is:
 
 ```text
-Phase 003 — Foundation Refactor Planning and Authority Cleanup
+Phase 004 — Controlled Foundation Refactor Implementation
 ```
 
 Current status:
@@ -28,10 +30,12 @@ Current status:
 003-E complete
 003-F complete
 003-G complete
-003-H next mandatory exit gate
+003-H complete
+004-A next
+004-I mandatory exit gate
 ```
 
-Older v2.1 numeric phase files remain reference material until they are reconciled, archived, or superseded during Phase 003 or later work.
+Older v2.1 numeric phase files remain reference material until they are reconciled, archived, or superseded during Phase 004 or later work.
 
 ---
 
@@ -52,22 +56,11 @@ Older v2.1 numeric phase files remain reference material until they are reconcil
 
 ---
 
-# Phase 002 Exit Result
-
-```text
-Phase 002 passes exit review.
-Phase 002 is complete.
-Phase 003 is authorized with explicit scope.
-Broad implementation rewrite remains blocked.
-```
-
----
-
-# Active Phase 003 Sequence
+# Completed Phase 003 Sequence
 
 | File | Status | Role |
 |---|---|---|
-| [003_foundation_refactor_planning_authority_cleanup.md](003_foundation_refactor_planning_authority_cleanup.md) | Active | Phase 003 overview and sequence |
+| [003_foundation_refactor_planning_authority_cleanup.md](003_foundation_refactor_planning_authority_cleanup.md) | Complete | Phase 003 overview and sequence |
 | [003a_documentation_authority_cleanup_historical_material_reconciliation.md](003a_documentation_authority_cleanup_historical_material_reconciliation.md) | Complete | Documentation authority cleanup and historical material reconciliation |
 | [003b_domain_terminology_concept_mapping_implementation_plan.md](003b_domain_terminology_concept_mapping_implementation_plan.md) | Complete | Domain terminology and concept mapping implementation plan |
 | [003c_data_lifecycle_retention_foundation_implementation_plan.md](003c_data_lifecycle_retention_foundation_implementation_plan.md) | Complete | Data lifecycle / retention foundation implementation plan |
@@ -75,7 +68,40 @@ Broad implementation rewrite remains blocked.
 | [003e_analysis_boundary_validation_implementation_plan.md](003e_analysis_boundary_validation_implementation_plan.md) | Complete | Analysis boundary / validation implementation plan |
 | [003f_cost_state_control_plane_implementation_plan.md](003f_cost_state_control_plane_implementation_plan.md) | Complete | Cost-state control plane implementation plan |
 | [003g_ui_report_alignment_implementation_plan.md](003g_ui_report_alignment_implementation_plan.md) | Complete | UI/report alignment implementation plan |
-| 003h_phase_exit_review_consolidation.md | Next mandatory gate | Phase 003 exit review and consolidation |
+| [003h_phase_exit_review_consolidation.md](003h_phase_exit_review_consolidation.md) | Complete | Phase 003 exit review and consolidation |
+
+---
+
+# Phase 003 Exit Result
+
+```text
+Phase 003 passes exit review.
+Phase 003 is complete.
+Phase 004 is authorized with controlled implementation scope.
+Broad implementation rewrite remains blocked.
+```
+
+---
+
+# Authorized Phase 004 Sequence
+
+Phase 004 is authorized as:
+
+```text
+Phase 004 — Controlled Foundation Refactor Implementation
+```
+
+| File / Subphase | Status | Role |
+|---|---|---|
+| 004a_implementation_authority_lock_agent_rules_documentation_guardrails.md | Next | Implementation authority lock, agent rules, and documentation guardrails |
+| 004b_domain_terminology_compatibility_concept_contract_implementation.md | Planned | Domain terminology compatibility and concept contract implementation |
+| 004c_lifecycle_retention_sourceartifact_deletion_cascade_foundation.md | Planned | Lifecycle, retention, SourceArtifact, and deletion-cascade foundation |
+| 004d_privacy_boundary_owner_scope_route_redaction_encryption_baseline.md | Planned | Privacy boundary, owner scope, route, redaction, and encryption baseline |
+| 004e_analysis_scope_validation_safety_hypothesis_corpus_gates.md | Planned | AnalysisScope, ValidationResult, SafetyPosture, Hypothesis, and corpus gates |
+| 004f_cost_state_control_plane_blocking_jobs_idle_wake_shutdown_safety.md | Planned | Cost-state control plane, blocking jobs, idle, wake, and shutdown safety |
+| 004g_ui_report_alignment_scope_display_export_delete_status_surfaces.md | Planned | UI/report alignment, scope display, export/delete previews, and status surfaces |
+| 004h_evaluation_regression_release_readiness_backlog_closure.md | Planned | Evaluation, regression, release readiness, and implementation backlog closure |
+| 004i_phase_exit_review_consolidation.md | Mandatory gate | Phase 004 exit review and consolidation |
 
 ---
 
@@ -83,18 +109,20 @@ Broad implementation rewrite remains blocked.
 
 Every numbered phase must end with an exit review and consolidation subgroup.
 
-For Phase 003, the required final subgroup is:
+For Phase 004, the required final subgroup is:
 
 ```text
-003-H — Phase 003 Exit Review and Consolidation
+004-I — Phase 004 Exit Review and Consolidation
 ```
 
-The next numbered phase may not start until 003-H is complete.
+The next numbered phase may not start until 004-I is complete.
 
 ---
 
 # Non-Goals
 
-Do not start broad implementation refactoring from this folder merely because Phase 002 is complete.
+Do not start broad implementation refactoring merely because Phase 003 is complete.
 
-Do not restore GitHub Actions until the new cost-state/control-plane and workflow replacement approach is explicitly planned.
+Do not restore GitHub Actions until the new cost-state/control-plane and workflow replacement approach has passed the applicable Phase 004 gates.
+
+Do not introduce enterprise org/workspace/RBAC/SSO/compliance/billing or always-on availability as Phase 004 baseline scope.
