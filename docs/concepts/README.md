@@ -83,7 +83,8 @@ Phase 003 is active.
 | 003-A — Documentation Authority Cleanup and Historical Material Reconciliation | Complete | `../planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md` |
 | 003-B — Domain Terminology and Concept Mapping Implementation Plan | Complete | `../planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md` |
 | 003-C — Data Lifecycle / Retention Foundation Implementation Plan | Complete | `../planning/phases/003c_data_lifecycle_retention_foundation_implementation_plan.md` |
-| 003-D — Privacy Boundary / Encryption Baseline Implementation Plan | Next | TBD |
+| 003-D — Privacy Boundary / Encryption Baseline Implementation Plan | Complete | `../planning/phases/003d_privacy_boundary_encryption_baseline_implementation_plan.md` |
+| 003-E — Analysis Boundary / Validation Implementation Plan | Next | TBD |
 | 003-H — Phase 003 Exit Review and Consolidation | Mandatory gate | TBD |
 
 ## Current working identity
@@ -109,13 +110,14 @@ Secure Conversation Analysis and Reflection System
 | Report guidance | Reflection Point, not recommendation/intervention by default |
 | Multi-transcript reasoning | Case Evidence Corpus or explicit selected transcript scope |
 | Lifecycle and retention | Audio ephemeral; drafts temporary; saved/case transcripts durable until deletion; derived artifacts inherit evidence-basis retention |
+| Privacy and encryption | Owner-scoped retained artifacts; content-free logs; infrastructure encryption baseline; application/field-level encryption target |
 
 ## Next phase
 
 Proceed to:
 
 ```text
-003-D — Privacy Boundary / Encryption Baseline Implementation Plan
+003-E — Analysis Boundary / Validation Implementation Plan
 ```
 
 Do not begin broad implementation refactoring until Phase 003 reaches its mandatory exit review and consolidation gate.
