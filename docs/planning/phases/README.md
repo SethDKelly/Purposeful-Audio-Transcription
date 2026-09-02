@@ -10,11 +10,19 @@ The concept foundation remains the highest planning authority:
 docs/concepts/
 ```
 
+Implementation guardrails for Phase 004 are installed at:
+
+```text
+AGENTS.md
+.cursor/rules/concept-refactor-guardrails.mdc
+docs/planning/implementation_guardrails.md
+```
+
 Phase 002 is complete and consolidated.
 
 Phase 003 is complete and consolidated.
 
-The next authorized phase is:
+The current active phase is:
 
 ```text
 Phase 004 — Controlled Foundation Refactor Implementation
@@ -23,15 +31,8 @@ Phase 004 — Controlled Foundation Refactor Implementation
 Current status:
 
 ```text
-003-A complete
-003-B complete
-003-C complete
-003-D complete
-003-E complete
-003-F complete
-003-G complete
-003-H complete
-004-A next
+004-A complete
+004-B next
 004-I mandatory exit gate
 ```
 
@@ -83,7 +84,7 @@ Broad implementation rewrite remains blocked.
 
 ---
 
-# Authorized Phase 004 Sequence
+# Active Phase 004 Sequence
 
 Phase 004 is authorized as:
 
@@ -93,8 +94,9 @@ Phase 004 — Controlled Foundation Refactor Implementation
 
 | File / Subphase | Status | Role |
 |---|---|---|
-| 004a_implementation_authority_lock_agent_rules_documentation_guardrails.md | Next | Implementation authority lock, agent rules, and documentation guardrails |
-| 004b_domain_terminology_compatibility_concept_contract_implementation.md | Planned | Domain terminology compatibility and concept contract implementation |
+| [004_controlled_foundation_refactor_implementation.md](004_controlled_foundation_refactor_implementation.md) | Active | Phase 004 overview and sequence |
+| [004a_implementation_authority_lock_agent_rules_documentation_guardrails.md](004a_implementation_authority_lock_agent_rules_documentation_guardrails.md) | Complete | Implementation authority lock, agent rules, and documentation guardrails |
+| 004b_domain_terminology_compatibility_concept_contract_implementation.md | Next | Domain terminology compatibility and concept contract implementation |
 | 004c_lifecycle_retention_sourceartifact_deletion_cascade_foundation.md | Planned | Lifecycle, retention, SourceArtifact, and deletion-cascade foundation |
 | 004d_privacy_boundary_owner_scope_route_redaction_encryption_baseline.md | Planned | Privacy boundary, owner scope, route, redaction, and encryption baseline |
 | 004e_analysis_scope_validation_safety_hypothesis_corpus_gates.md | Planned | AnalysisScope, ValidationResult, SafetyPosture, Hypothesis, and corpus gates |
@@ -102,6 +104,20 @@ Phase 004 — Controlled Foundation Refactor Implementation
 | 004g_ui_report_alignment_scope_display_export_delete_status_surfaces.md | Planned | UI/report alignment, scope display, export/delete previews, and status surfaces |
 | 004h_evaluation_regression_release_readiness_backlog_closure.md | Planned | Evaluation, regression, release readiness, and implementation backlog closure |
 | 004i_phase_exit_review_consolidation.md | Mandatory gate | Phase 004 exit review and consolidation |
+
+---
+
+# Phase 004 Guardrails
+
+Before implementation work, read:
+
+```text
+AGENTS.md
+.cursor/rules/concept-refactor-guardrails.mdc
+docs/planning/implementation_guardrails.md
+```
+
+Every implementation subgroup must name Phase 003 work packages, applicable gates, compatibility posture, migration posture, tests/verification, and deferred work.
 
 ---
 
