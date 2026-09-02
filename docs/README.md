@@ -23,40 +23,35 @@ Start here:
 | Refactor readiness | [concepts/022_refactor_readiness_decision.md](concepts/022_refactor_readiness_decision.md) |
 | Planning index | [planning/README.md](planning/README.md) |
 | Phase sequence | [planning/phases/README.md](planning/phases/README.md) |
-| Active Phase 003 overview | [planning/phases/003_foundation_refactor_planning_authority_cleanup.md](planning/phases/003_foundation_refactor_planning_authority_cleanup.md) |
-| Completed 003-A summary | [planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md](planning/phases/003a_documentation_authority_cleanup_historical_material_reconciliation.md) |
-| Completed 003-B summary | [planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md](planning/phases/003b_domain_terminology_concept_mapping_implementation_plan.md) |
-| Completed 003-C summary | [planning/phases/003c_data_lifecycle_retention_foundation_implementation_plan.md](planning/phases/003c_data_lifecycle_retention_foundation_implementation_plan.md) |
-| Completed 003-D summary | [planning/phases/003d_privacy_boundary_encryption_baseline_implementation_plan.md](planning/phases/003d_privacy_boundary_encryption_baseline_implementation_plan.md) |
-| Completed 003-E summary | [planning/phases/003e_analysis_boundary_validation_implementation_plan.md](planning/phases/003e_analysis_boundary_validation_implementation_plan.md) |
-| Completed 003-F summary | [planning/phases/003f_cost_state_control_plane_implementation_plan.md](planning/phases/003f_cost_state_control_plane_implementation_plan.md) |
-| Completed 003-G summary | [planning/phases/003g_ui_report_alignment_implementation_plan.md](planning/phases/003g_ui_report_alignment_implementation_plan.md) |
+| Completed Phase 003 overview | [planning/phases/003_foundation_refactor_planning_authority_cleanup.md](planning/phases/003_foundation_refactor_planning_authority_cleanup.md) |
+| Phase 003 exit review | [planning/phases/003h_phase_exit_review_consolidation.md](planning/phases/003h_phase_exit_review_consolidation.md) |
+| Phase 003 output inventory | [planning/inventories/003h_phase_003_output_inventory.md](planning/inventories/003h_phase_003_output_inventory.md) |
+| Phase 004 authorized scope | [planning/inventories/003h_phase_004_authorized_scope.md](planning/inventories/003h_phase_004_authorized_scope.md) |
 | Completed Phase 002 roadmap | [planning/phases/002_concept_to_architecture_refactor_roadmap.md](planning/phases/002_concept_to_architecture_refactor_roadmap.md) |
 | Phase 002 exit review | [planning/phases/002i_phase_exit_review_consolidation.md](planning/phases/002i_phase_exit_review_consolidation.md) |
 | Mandatory exit gate policy | [planning/phase_exit_gate_policy.md](planning/phase_exit_gate_policy.md) |
 
 ## Current plan status
 
+Phase 001 is complete.
+
 Phase 002 is complete.
 
-The current active phase is:
+Phase 003 is complete.
+
+The next authorized phase is:
 
 ```text
-Phase 003 — Foundation Refactor Planning and Authority Cleanup
+Phase 004 — Controlled Foundation Refactor Implementation
 ```
 
-Current subgroup status:
+Current next subgroup:
 
 ```text
-003-A complete
-003-B complete
-003-C complete
-003-D complete
-003-E complete
-003-F complete
-003-G complete
-003-H next mandatory exit gate
+004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails
 ```
+
+Phase 004 is authorized with controlled, gate-driven implementation scope. Broad implementation rewrite remains blocked.
 
 ## Product identity
 
@@ -95,20 +90,23 @@ Current subgroup status:
 | UI/report surface matrix | [planning/inventories/003g_ui_report_surface_matrix.md](planning/inventories/003g_ui_report_surface_matrix.md) |
 | UI/report work packages | [planning/inventories/003g_ui_report_work_packages.md](planning/inventories/003g_ui_report_work_packages.md) |
 | UI/report gate checklist | [planning/inventories/003g_ui_report_gate_checklist.md](planning/inventories/003g_ui_report_gate_checklist.md) |
+| Phase 003 exit review | [planning/architecture/003h_phase_003_exit_review_consolidation.md](planning/architecture/003h_phase_003_exit_review_consolidation.md) |
+| Phase 003 output inventory | [planning/inventories/003h_phase_003_output_inventory.md](planning/inventories/003h_phase_003_output_inventory.md) |
+| Phase 004 authorized scope | [planning/inventories/003h_phase_004_authorized_scope.md](planning/inventories/003h_phase_004_authorized_scope.md) |
 
 ## User documentation
 
-Existing user documentation remains useful, but may contain legacy product names or workflow assumptions. It should be reconciled during Phase 003 and later refactor phases.
+Existing user documentation remains useful, but may contain legacy product names or workflow assumptions. It should be reconciled during Phase 004 and later refactor phases before being treated as current product authority.
 
 ## Developer documentation
 
 Developer documentation remains useful as implementation reference material, but it is not product authority when it conflicts with accepted concept decisions.
 
-Key developer references include development setup, architecture, API reference, AWS operations/deployment notes, and log-redaction notes. These remain pending reconciliation unless a Phase 003 subgroup explicitly accepts them.
+Key developer references include development setup, architecture, API reference, AWS operations/deployment notes, and log-redaction notes. These remain pending reconciliation unless Phase 004 or a later accepted phase explicitly accepts them.
 
 ## Design package
 
-The older design package is reference material. Phase 003 should determine which parts are accepted, superseded, renamed, or deferred for implementation refactor planning.
+The older design package is reference material. Phase 003 classified and reconciled its authority role; implementation must continue to prefer accepted concept and Phase 003 planning authority when conflicts exist.
 
 ## Planning
 
@@ -133,5 +131,5 @@ Living indexes, contributor instructions, and planning docs must not carry indep
 Next subgroup:
 
 ```text
-003-H — Phase 003 Exit Review and Consolidation
+004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails
 ```
