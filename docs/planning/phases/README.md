@@ -27,8 +27,8 @@ Current status:
 003-D complete
 003-E complete
 003-F complete
-003-G next
-003-H mandatory exit gate
+003-G complete
+003-H next mandatory exit gate
 ```
 
 Older v2.1 numeric phase files remain reference material until they are reconciled, archived, or superseded during Phase 003 or later work.
@@ -74,8 +74,8 @@ Broad implementation rewrite remains blocked.
 | [003d_privacy_boundary_encryption_baseline_implementation_plan.md](003d_privacy_boundary_encryption_baseline_implementation_plan.md) | Complete | Privacy boundary / encryption baseline implementation plan |
 | [003e_analysis_boundary_validation_implementation_plan.md](003e_analysis_boundary_validation_implementation_plan.md) | Complete | Analysis boundary / validation implementation plan |
 | [003f_cost_state_control_plane_implementation_plan.md](003f_cost_state_control_plane_implementation_plan.md) | Complete | Cost-state control plane implementation plan |
-| 003g_ui_report_alignment_implementation_plan.md | Next | UI/report alignment implementation plan |
-| 003h_phase_exit_review_consolidation.md | Mandatory gate | Phase 003 exit review and consolidation |
+| [003g_ui_report_alignment_implementation_plan.md](003g_ui_report_alignment_implementation_plan.md) | Complete | UI/report alignment implementation plan |
+| 003h_phase_exit_review_consolidation.md | Next mandatory gate | Phase 003 exit review and consolidation |
 
 ---
 
