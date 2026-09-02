@@ -32,7 +32,8 @@ Current status:
 
 ```text
 004-A complete
-004-B next
+004-B complete
+004-C next
 004-I mandatory exit gate
 ```
 
@@ -96,8 +97,8 @@ Phase 004 — Controlled Foundation Refactor Implementation
 |---|---|---|
 | [004_controlled_foundation_refactor_implementation.md](004_controlled_foundation_refactor_implementation.md) | Active | Phase 004 overview and sequence |
 | [004a_implementation_authority_lock_agent_rules_documentation_guardrails.md](004a_implementation_authority_lock_agent_rules_documentation_guardrails.md) | Complete | Implementation authority lock, agent rules, and documentation guardrails |
-| 004b_domain_terminology_compatibility_concept_contract_implementation.md | Next | Domain terminology compatibility and concept contract implementation |
-| 004c_lifecycle_retention_sourceartifact_deletion_cascade_foundation.md | Planned | Lifecycle, retention, SourceArtifact, and deletion-cascade foundation |
+| [004b_domain_terminology_compatibility_concept_contract_implementation.md](004b_domain_terminology_compatibility_concept_contract_implementation.md) | Complete | Domain terminology compatibility and concept contract implementation |
+| 004c_lifecycle_retention_sourceartifact_deletion_cascade_foundation.md | Next | Lifecycle, retention, SourceArtifact, and deletion-cascade foundation |
 | 004d_privacy_boundary_owner_scope_route_redaction_encryption_baseline.md | Planned | Privacy boundary, owner scope, route, redaction, and encryption baseline |
 | 004e_analysis_scope_validation_safety_hypothesis_corpus_gates.md | Planned | AnalysisScope, ValidationResult, SafetyPosture, Hypothesis, and corpus gates |
 | 004f_cost_state_control_plane_blocking_jobs_idle_wake_shutdown_safety.md | Planned | Cost-state control plane, blocking jobs, idle, wake, and shutdown safety |
