@@ -85,7 +85,8 @@ Phase 003 is active.
 | 003-C — Data Lifecycle / Retention Foundation Implementation Plan | Complete | `../planning/phases/003c_data_lifecycle_retention_foundation_implementation_plan.md` |
 | 003-D — Privacy Boundary / Encryption Baseline Implementation Plan | Complete | `../planning/phases/003d_privacy_boundary_encryption_baseline_implementation_plan.md` |
 | 003-E — Analysis Boundary / Validation Implementation Plan | Complete | `../planning/phases/003e_analysis_boundary_validation_implementation_plan.md` |
-| 003-F — Cost-State Control Plane Implementation Plan | Next | TBD |
+| 003-F — Cost-State Control Plane Implementation Plan | Complete | `../planning/phases/003f_cost_state_control_plane_implementation_plan.md` |
+| 003-G — UI/Report Alignment Implementation Plan | Next | TBD |
 | 003-H — Phase 003 Exit Review and Consolidation | Mandatory gate | TBD |
 
 ## Current working identity
@@ -113,13 +114,14 @@ Secure Conversation Analysis and Reflection System
 | Lifecycle and retention | Audio ephemeral; drafts temporary; saved/case transcripts durable until deletion; derived artifacts inherit evidence-basis retention |
 | Privacy and encryption | Owner-scoped retained artifacts; content-free logs; infrastructure encryption baseline; application/field-level encryption target |
 | Analysis validation | Explicit analysis scope; evidence-linked output; bounded hypotheses; structured safety posture; corpus lineage and staleness gates |
+| Cost-state control plane | Explicit owner-visible sleep/wake; job-safe shutdown; content-free power events; GitHub Actions restoration gated |
 
 ## Next phase
 
 Proceed to:
 
 ```text
-003-F — Cost-State Control Plane Implementation Plan
+003-G — UI/Report Alignment Implementation Plan
 ```
 
 Do not begin broad implementation refactoring until Phase 003 reaches its mandatory exit review and consolidation gate.
