@@ -41,7 +41,7 @@ Current subgroup status:
 | [../AGENTS.md](../AGENTS.md) | Repository-level agent/contributor rules |
 | [../.cursor/rules/concept-refactor-guardrails.mdc](../.cursor/rules/concept-refactor-guardrails.mdc) | Cursor-native always-applied guardrails |
 | [implementation_guardrails.md](implementation_guardrails.md) | Compact Phase 004 implementation guardrails |
-| [../docs/domain/README.md](../docs/domain/README.md) | Domain terminology compatibility guide |
+| [../domain/README.md](../domain/README.md) | Domain terminology compatibility guide |
 | [phase_exit_gate_policy.md](phase_exit_gate_policy.md) | Mandatory exit review / consolidation rule for every phase |
 | [phases/README.md](phases/README.md) | Phase sequence and current next subgroup |
 | [phases/004_controlled_foundation_refactor_implementation.md](phases/004_controlled_foundation_refactor_implementation.md) | Active Phase 004 overview |
