@@ -6,7 +6,7 @@ This folder is the current conceptual design authority for the conversation anal
 
 The application began from a plausible product idea and then moved quickly into implementation. That produced useful code, but implementation details began to become the design authority.
 
-This folder resets the design from ground zero and governs refactor planning.
+This folder resets the design from ground zero and governs refactor planning and controlled foundation implementation.
 
 ## Core premise
 
@@ -35,6 +35,7 @@ docs/concepts/
 → Phase 002 exit review and architecture outputs
 → Phase 003 exit review and accepted subgroup outputs
 → Phase 004 authorized scope and implementation guardrails
+→ accepted Phase 004 subgroup outputs
 → code
 ```
 
@@ -89,18 +90,23 @@ Phase 003 is complete and consolidated.
 | 003-G — UI/Report Alignment Implementation Plan | Complete | `../planning/phases/003g_ui_report_alignment_implementation_plan.md` |
 | 003-H — Phase 003 Exit Review and Consolidation | Complete | `../planning/phases/003h_phase_exit_review_consolidation.md` |
 
-## Phase 004 authorization
+## Phase 004 controlled implementation
 
-Phase 004 is authorized as:
+Phase 004 is active.
+
+| Subphase | Status | Planning Doc |
+|---|---|---|
+| 004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails | Complete | `../planning/phases/004a_implementation_authority_lock_agent_rules_documentation_guardrails.md` |
+| 004-B — Domain Terminology Compatibility and Concept Contract Implementation | Next | TBD |
+| 004-I — Phase 004 Exit Review and Consolidation | Mandatory gate | TBD |
+
+Implementation guardrail entry points:
 
 ```text
-Phase 004 — Controlled Foundation Refactor Implementation
-```
-
-Phase 004 begins with:
-
-```text
-004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails
+../AGENTS.md
+../.cursor/rules/concept-refactor-guardrails.mdc
+../planning/implementation_guardrails.md
+../planning/phases/004_controlled_foundation_refactor_implementation.md
 ```
 
 Broad implementation rewrite remains blocked. Implementation must follow Phase 003 gates and Phase 004 subgroup authorization.
@@ -132,13 +138,14 @@ Secure Conversation Analysis and Reflection System
 | Analysis validation | Explicit analysis scope; evidence-linked output; bounded hypotheses; structured safety posture; corpus lineage and staleness gates |
 | Cost-state control plane | Explicit owner-visible sleep/wake; job-safe shutdown; content-free power events; GitHub Actions restoration gated |
 | UI/report alignment | Reflection-first navigation; ReportScope display; hypothesis/support separation; safety/corpus/export/deletion/cost-state UI gates |
+| Implementation guardrails | Agent rules, Cursor rules, compact implementation guardrails, and Phase 004 subgroup gates |
 
 ## Next phase
 
 Proceed to:
 
 ```text
-004-A — Implementation Authority Lock, Agent Rules, and Documentation Guardrails
+004-B — Domain Terminology Compatibility and Concept Contract Implementation
 ```
 
 Do not begin broad implementation refactoring outside the Phase 004 authorized controlled foundation scope.
